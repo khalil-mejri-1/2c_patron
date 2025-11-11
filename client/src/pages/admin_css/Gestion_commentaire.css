@@ -1,0 +1,260 @@
+/* Variables de couleurs */
+:root {
+    --primary-color: #4f46e5; /* Indigo */
+    --primary-hover: #4338ca;
+    --bg-color: #f9fafb; /* Gris très clair */
+    --card-bg: #ffffff;
+    --text-color: #1f2937;
+    --text-muted: #6b7280;
+    --green-light: #d1fae5;
+    --green-dark: #065f46;
+    --red-light: #fee2e2;
+    --red-dark: #991b1b;
+    --yellow-light: #fffbeb;
+    --yellow-dark: #92400e;
+}
+
+/* --- CONTENEUR GLOBAL ET EN-TÊTE --- */
+
+.gestion-container {
+    padding: 1.5rem; /* p-6 */
+    background-color: var(--bg-color);
+    min-height: 100vh;
+}
+
+.gestion-header {
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #e5e7eb;
+    text-align: center;
+}
+
+.gestion-title {
+    font-size: 1.875rem; /* text-3xl */
+    font-weight: 800; /* font-extrabold */
+    color: var(--text-color);
+    letter-spacing: -0.025em; /* tracking-tight */
+}
+
+.gestion-subtitle {
+    color: var(--text-muted);
+    margin-top: 0.25rem;
+}
+
+/* --- ÉTAT DE CHARGEMENT ET AUCUN COMMENTAIRE --- */
+
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.no-comments {
+    text-align: center;
+    padding: 2.5rem;
+    border: 2px dashed #d1d5db;
+    border-radius: 0.5rem;
+    color: var(--text-muted);
+}
+
+.reload-button {
+    margin-top: 1rem;
+    padding: 0.5rem 1rem;
+    background-color: var(--primary-color);
+    color: var(--card-bg);
+    font-weight: 600;
+    border: none;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: background-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.reload-button:hover {
+    background-color: var(--primary-hover);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+}
+
+/* --- GRILLE DE COMMENTAIRES (RESPONSIVE) --- */
+
+.commentaires-grid {
+    display: grid;
+    grid-template-columns: 1fr; /* Mobile: 1 colonne */
+    gap: 1.5rem; /* gap-6 */
+    
+}
+
+/* responsive grid */
+@media (min-width: 768px) {
+    .commentaires-grid {
+        grid-template-columns: repeat(2, 1fr); /* Tablette: 2 colonnes */
+    }
+}
+
+@media (min-width: 1024px) {
+    .commentaires-grid {
+        grid-template-columns: repeat(3, 1fr); /* Ordinateur: 3 colonnes */
+    }
+}
+
+@media (min-width: 1280px) {
+    .commentaires-grid {
+        grid-template-columns: repeat(4, 1fr); /* Grand écran: 4 colonnes */
+    }
+}
+
+/* --- CARTE DE COMMENTAIRE --- */
+
+.commentaire-card {
+    background-color: var(--card-bg);
+    padding: 1.25rem; /* p-5 */
+    border-radius: 0.75rem; /* rounded-xl */
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1); /* shadow-lg */
+    border: 1px solid #f3f4f6;
+    transition: box-shadow 0.3s ease-in-out;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.commentaire-card:hover {
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1); /* shadow-xl */
+}
+
+.card-nom {
+    font-size: 1.125rem; /* text-lg */
+    font-weight: 700;
+    color: var(--text-color);
+    margin-bottom: 0.25rem;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.card-blockquote {
+    color: var(--text-muted);
+    font-style: italic;
+    border-left: 4px solid var(--primary-color);
+    padding-left: 0.75rem;
+    padding-top: 0.25rem;
+    padding-bottom: 0.25rem;
+    margin-bottom: 1rem;
+}
+
+.card-date {
+    font-size: 0.75rem; /* text-xs */
+    color: #9ca3af;
+    margin-top: 0.5rem;
+}
+
+/* --- BADGES DE STATUT --- */
+
+.statut-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem; /* px-3 py-1 */
+    font-size: 0.75rem; /* text-xs */
+    font-weight: 600;
+    border-radius: 9999px; /* rounded-full */
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+    border: 1px solid transparent;
+}
+
+.statut-attente {
+    background-color: var(--yellow-light);
+    color: var(--yellow-dark);
+    border-color: var(--yellow-dark);
+}
+
+.statut-approuve {
+    background-color: var(--green-light);
+    color: var(--green-dark);
+    border-color: var(--green-dark);
+}
+
+.statut-refuse {
+    background-color: var(--red-light);
+    color: var(--red-dark);
+    border-color: var(--red-dark);
+}
+
+/* --- ACTIONS ET BOUTONS --- */
+
+.card-actions {
+    margin-top: 1rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid #f3f4f6;
+    display: flex;
+    gap: 0.75rem; /* space-x-3 */
+}
+
+.action-button {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    padding: 0.75rem;
+    border: none;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    cursor: pointer;
+    transition: background-color 0.15s ease-in-out, opacity 0.15s ease-in-out;
+    font-size: 0.875rem; /* text-sm */
+}
+
+.action-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.action-button.approve {
+    background-color: #10b981; /* Green 500 */
+}
+
+.action-button.approve:hover:not(:disabled) {
+    background-color: #059669; /* Green 600 */
+}
+
+.action-button.reject {
+    background-color: #f59e0b; /* Yellow 500 */
+}
+
+.action-button.reject:hover:not(:disabled) {
+    background-color: #d97706; /* Yellow 600 */
+}
+
+.action-button.delete {
+    background-color: #ef4444; /* Red 500 */
+    flex: 0 0 auto; /* Empêche le bouton de s'étirer */
+    width: 3rem; /* Petite taille pour l'icône */
+    padding: 0.75rem 0;
+}
+
+.action-button.delete:hover:not(:disabled) {
+    background-color: #dc2626; /* Red 600 */
+}
+
+.action-button.delete svg {
+    margin: 0; /* Pas de marge pour le bouton poubelle */
+}
+
+.action-button svg {
+    margin-right: 0.25rem;
+}
+
+/* Adapter la taille du bouton delete pour les petits écrans où il doit être seul */
+@media (max-width: 640px) {
+    .action-button.delete {
+        width: 100%;
+        margin-top: 0.5rem;
+        flex: 1;
+    }
+    .card-actions {
+        flex-wrap: wrap;
+    }
+}

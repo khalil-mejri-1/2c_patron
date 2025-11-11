@@ -1,0 +1,195 @@
+/* GestionDeClient.css */
+
+/* --- Base Styles and Container --- */
+
+.client-container {
+    padding: 20px;
+    max-width: 1300px;
+    margin: 20px auto;
+    background-color: #ffffff; /* Lighter background */
+    border-radius: 12px;
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+}
+
+.client-title {
+    text-align: center;
+    color: #2c3e50;
+    margin-bottom: 30px;
+    font-size: 2.2em;
+    font-weight: 700;
+}
+
+/* --- Table Styles --- */
+
+.client-table {
+    width: 100%;
+    border-collapse: separate; /* Use separate for border-radius on cells */
+    border-spacing: 0;
+    margin-top: 20px;
+    overflow: hidden; /* For rounded corners on the whole table */
+    border-radius: 8px;
+}
+
+.client-table th, .client-table td {
+    padding: 15px 10px;
+    text-align: left;
+    font-size: 0.95em;
+}
+
+.client-table th {
+    background-color: #4f46e5; /* Darker header */
+    color: white;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.client-table tr:nth-child(even) {
+    background-color: #f8f8f8; /* Zebra striping */
+}
+
+.client-table tr:hover {
+    background-color: #f1f1f1; /* Hover effect */
+    transition: background-color 0.3s ease;
+}
+
+/* --- Status and Abonné Badges --- */
+
+.status-badge {
+    padding: 6px 12px;
+    border-radius: 20px; /* Pill shape */
+    font-size: 0.85em;
+    font-weight: bold;
+    color: white;
+    display: inline-block;
+    min-width: 70px;
+    text-align: center;
+}
+
+.status-badge.admin {
+    background-color: #e67e22; /* Admin Orange */
+}
+
+.status-badge.client {
+    background-color: #27ae60; /* Client Green */
+}
+
+.abonne-text {
+    font-weight: 700;
+}
+
+.abonne-oui {
+    color: #1abc9c; /* Subscription Green/Teal */
+}
+
+.abonne-non {
+    color: #c0392b; /* Non-Subscription Red */
+}
+
+/* --- Action Buttons --- */
+
+.action-button {
+    padding: 8px 15px;
+    margin-right: 8px;
+    margin-bottom: 5px; /* For stacking on smaller screens */
+    border: none;
+    border-radius: 5px;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.1s ease;
+    font-weight: 500;
+    white-space: nowrap; /* Prevent button text from wrapping */
+}
+
+.action-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.promouvoir-admin {
+    background-color: #3498db;
+}
+
+.retrograder-client {
+    background-color: #e74c3c;
+}
+
+.promouvoir-oui {
+    background-color: #2ecc71; /* Green for OUI */
+}
+
+.retrograder-non {
+    background-color: #9b59b6; /* Purple for NON */
+}
+
+/* --- Responsive Design (Pro) --- */
+
+@media (max-width: 1000px) {
+    /* Hide non-essential columns on medium screens */
+    .client-table td:nth-child(1), /* ID */
+    .client-table th:nth-child(1) {
+        display: none;
+    }
+}
+
+@media (max-width: 768px) {
+    .client-container {
+        padding: 15px;
+        margin: 10px;
+    }
+
+    .client-title {
+        font-size: 1.8em;
+    }
+
+    /* Stack buttons for better touch targets */
+    .client-table td:nth-child(5), /* Actions (Rôles) */
+    .client-table td:nth-child(7) { /* Actions (Abonnement) */
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .action-button {
+        width: 100%;
+        margin-right: 0;
+        margin-bottom: 8px;
+    }
+
+    /* Make the table scrollable */
+    .table-wrapper {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .client-table {
+        min-width: 700px; /* Ensure table minimum width for content */
+    }
+
+    .client-table th, .client-table td {
+        padding: 10px 8px;
+        font-size: 0.9em;
+    }
+}
+.loading-message{
+    text-align: center;
+    margin-top: 50px;
+}
+/* Styles pour le bouton de suppression */
+.action-button.delete-user {
+    background-color: #dc3545; /* Rouge pour l'alerte/suppression */
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s ease;
+    display: flex; /* Pour aligner l'icône */
+    align-items: center;
+    gap: 5px;
+}
+
+.action-button.delete-user:hover {
+    background-color: #c82333; /* Rouge plus foncé au survol */
+}

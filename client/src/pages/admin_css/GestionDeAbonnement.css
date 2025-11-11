@@ -1,0 +1,261 @@
+/* --- الأنماط العامة (General Styles) --- */
+.abonnement-container {
+    padding: 30px;
+    max-width: 1200px;
+    margin: 0 auto;
+    font-family: 'Arial', sans-serif;
+}
+
+.abonnement-title {
+    font-size: 2.2rem;
+    color: #333;
+    margin-bottom: 30px;
+    border-bottom: 3px solid #007bff;
+    padding-bottom: 10px;
+    text-align: center;
+}
+
+/* --- حالات التحميل والخطأ (Loading & Error States) --- */
+.loading-state, .error-state, .no-data-message {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 40vh;
+    padding: 20px;
+    border-radius: 10px;
+    background: #f8f9fa;
+    margin-top: 20px;
+    color: #6c757d;
+}
+
+.spinner {
+    font-size: 3rem;
+    animation: spin 1.5s linear infinite;
+    color: #007bff;
+    margin-bottom: 15px;
+}
+
+.error-icon {
+    font-size: 3rem;
+    color: #dc3545;
+    margin-bottom: 15px;
+}
+
+.retry-button {
+    background-color: #ffc107;
+    color: #333;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    margin-top: 15px;
+    transition: background-color 0.3s;
+}
+
+.retry-button:hover {
+    background-color: #e0a800;
+}
+
+.no-data-message {
+    background-color: #d4edda;
+    color: #155724;
+    font-size: 1.2rem;
+}
+
+.no-data-message svg {
+    font-size: 2rem;
+    margin-bottom: 10px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* --- قائمة البطاقات (Card List Wrapper) --- */
+.abonnement-list-wrapper {
+    display: grid;
+    /* تخطيط مستجيب: عمود واحد على الجوال، عمودان على شاشات الكمبيوتر اللوحي */
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
+}
+
+/* --- بطاقة الاشتراك (Abonnement Card) --- */
+.abonnement-card {
+    background-color: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    padding: 20px;
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.abonnement-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px dashed #ccc;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+}
+
+.card-title {
+    font-size: 1.5rem;
+    color: #007bff;
+    margin: 0;
+}
+
+.status-badge {
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-weight: bold;
+    font-size: 0.85rem;
+}
+
+/* ألوان الحالة (Status Colors) */
+.en_attente {
+    background-color: #ffc10720;
+    color: #ffc107;
+}
+.approuvé {
+    background-color: #28a74520;
+    color: #28a745;
+}
+.refusé {
+    background-color: #dc354520;
+    color: #dc3545;
+}
+
+.card-detail {
+    font-size: 0.95rem;
+    color: #555;
+    margin-bottom: 8px;
+    line-height: 1.4;
+}
+
+.card-detail strong {
+    color: #333;
+}
+
+/* --- قسم دليل الدفع (Proof Section) --- */
+.card-proof-section {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px;
+    border-top: 1px solid #eee;
+    margin-top: 15px;
+    border-radius: 5px;
+    background-color: #f7f7f7;
+}
+
+.proof-icon {
+    font-size: 1.5rem;
+    color: #6f42c1; /* لون بنفسجي لملف الدفع */
+}
+
+.view-proof-button {
+    text-decoration: none;
+    background-color: #6f42c1;
+    color: #fff;
+    padding: 8px 15px;
+    border-radius: 5px;
+    font-size: 0.9rem;
+    transition: background-color 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.view-proof-button:hover {
+    background-color: #5b35a3;
+}
+
+/* --- الأزرار (Action Buttons) --- */
+.card-actions_abonemment {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+    width: 100%;
+          box-sizing: border-box;
+
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+}
+
+.action-button_abonemment {
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 1rem;
+          box-sizing: border-box;
+width: 100%;
+    transition: background-color 0.3s;
+    gap: 8px;
+}
+
+.approve-button {
+    background-color: #28a745; /* أخضر */
+    color: white;
+}
+
+.approve-button:hover:not(:disabled) {
+    background-color: #1e7e34;
+}
+
+.reject-button {
+    background-color: #dc3545; /* أحمر */
+    color: white;
+}
+
+.reject-button:hover:not(:disabled) {
+    background-color: #bd2130;
+}
+
+.action-button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+/* --- استجابة الجوال (Responsiveness) --- */
+@media (max-width: 768px) {
+    .abonnement-container {
+        padding: 15px;
+    }
+    
+    .abonnement-title {
+        font-size: 1.8rem;
+    }
+
+    .card-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .card-title {
+        margin-bottom: 5px;
+    }
+
+    .card-actions {
+        flex-direction: column;
+    }
+}
+
+
+.swal2-proof-image {
+    width: 100%;          /* تجعل العرض يعتمد على حجم الصندوق */
+    max-width: 600px;     /* الحد الأقصى للعرض */
+    max-height: 500px;    /* الحد الأقصى للارتفاع */
+    object-fit: cover;  /* الصورة ستظل كاملة داخل الصندوق بدون قص */
+    border-radius: 8px;   /* لمسة جمالية */
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2); /* ظل خفيف */
+}

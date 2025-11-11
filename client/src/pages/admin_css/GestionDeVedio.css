@@ -1,0 +1,213 @@
+/* ---------------------------------------------------- */
+/* 1. أنماط الـ Notifications والـ Modals الأساسية */
+/* ---------------------------------------------------- */
+
+/* Notification Styles */
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    min-width: 300px;
+    padding: 15px 20px;
+    border-radius: 8px;
+    color: white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: bold;
+    z-index: 2000;
+    animation: slideIn 0.5s ease-out; 
+}
+
+.notification.success { background-color: #4CAF50; } /* أخضر */
+.notification.error { background-color: #F44336; }  /* أحمر */
+
+.notification button {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+    opacity: 0.7;
+}
+
+/* Modal Overlay & Content */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 550px;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+}
+
+.modal-content h3 {
+    margin-top: 0;
+    color: #333;
+    border-bottom: 2px solid #eee;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+/* Confirmation Modal Specifics */
+.confirmation-modal {
+    max-width: 400px; 
+    text-align: center;
+}
+.confirmation-modal h3 { color: #f44336; border-bottom: none; }
+.warning-text { color: #e65100; font-weight: bold; margin-bottom: 15px; }
+
+
+/* ---------------------------------------------------- */
+/* 2. أنماط الإدارة العامة والأزرار */
+/* ---------------------------------------------------- */
+
+.product-management-container {
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.card {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 30px;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+/* Common Buttons */
+.submit-button {
+    background-color: #007bff;
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.cancel-button {
+    background-color: #6c757d;
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.action-btn.edit-btn {
+    background-color: #28a745; /* أخضر */
+    color: white;
+    padding: 5px 10px;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.9em;
+}
+
+.action-btn.delete-btn {
+    background-color: #dc3545; /* أحمر */
+    color: white;
+    padding: 5px 10px;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.9em;
+}
+
+
+/* ---------------------------------------------------- */
+/* 3. أنماط عرض الفيديوهات (Grid & Player) */
+/* ---------------------------------------------------- */
+
+.videos-grid {
+    display: grid;
+    /* 3 أعمدة على الأجهزة الكبيرة */
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); 
+    gap: 25px;
+    padding: 20px 0;
+}
+
+.video-card {
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.2s;
+}
+
+.video-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+}
+
+.video-title {
+    padding: 10px 15px;
+    margin: 0;
+    color: #007bff;
+    font-size: 1.2em;
+    font-weight: 600;
+    border-bottom: 1px solid #eee;
+}
+
+.video-player-container {
+    position: relative;
+    width: 100%;
+    /* نسبة أبعاد 16:9 قياسية للفيديو */
+    padding-bottom: 56.25%; 
+    height: 0;
+    overflow: hidden;
+}
+
+.uploaded-video-player {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    /* مشغل الفيديو الافتراضي للمتصفح */
+}
+
+.video-desc {
+    padding: 10px 15px;
+    color: #495057;
+    font-size: 0.95em;
+    margin: 0;
+    flex-grow: 1; /* لضمان تساوي ارتفاع البطاقات إذا كان الوصف مختلف */
+}
+
+.video-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 10px 15px;
+    border-top: 1px solid #eee;
+    background-color: white;
+}

@@ -1,0 +1,6246 @@
+/*
+  لوحة الألوان:
+  الأسود الملكي: #000000
+  الأبيض النقي: #FFFFFF
+  الذهبي الخفيف/الوردي الناعم (Accent): #D4AF37 (ذهبي) أو #F0D5D8 (وردي ناعم)
+  اخترنا الذهبي هنا لإضفاء لمسة فخامة "الكوتور"
+*/
+* {
+  padding: 0;
+  margin: 0;
+
+}
+
+body {
+  font-family: "Stack Sans Text", sans-serif;
+  background-color: #f5f5f5;
+
+}
+
+.logo {
+  width: 140px;
+}
+
+.navbar-couture {
+  /* لضمان البساطة والأناقة، الشفافية تجعل الشعار والعناصر تطفو */
+  background-color: rgb(255, 255, 255);
+  color: #000000;
+  padding: 25px 5%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  /* خط عصري وواضح: استخدم Google Fonts مثلاً 'Cairo' أو 'Almarai' */
+  font-family: "Stack Sans Text", sans-serif;
+  position: fixed;
+  /* تثبيت شريط التنقل */
+  top: 0;
+  left: 0;
+  width: 90%;
+  z-index: 1000;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  /* ظل خفيف للتمييز */
+
+  /* 🌟 NEW: إضافة تأثير الضبابية (Background Blur) 🌟 */
+  backdrop-filter: blur(8px);
+  /* 🌟 مهم: لدعم المتصفحات الأقدم (Safari) 🌟 */
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* --- الأنماط الجديدة لحالة تسجيل الدخول --- */
+/* 🌟 النمط الذهبي للرابط النشط 🌟 */
+.nav-link-item.active-gold {
+  color: #D4AF37;
+  /* اللون الذهبي المطلوب */
+  font-weight: 700;
+  /* يمكن جعله أثقل قليلاً */
+  border-bottom: 2px solid #D4AF37;
+  /* إضافة خط تحت الرابط النشط لمزيد من الوضوح */
+  padding-bottom: 5px;
+  /* مسافة للخط السفلي */
+}
+
+.logged-in-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.user-profile-btn {
+  /* تصميم أيقونة المستخدم */
+  color: #D4AF37;
+  font-size: 1.2rem;
+  padding: 0px;
+  
+  border: 1px solid #D4AF37;
+  border-radius: 50%;
+}
+
+.logout-btn {
+  /* زر تسجيل الخروج (السهم) */
+  color: #333333;
+  transition: color 0.3s;
+}
+
+.logout-btn:hover {
+  color: #D4AF37;
+}
+
+/* 🌟 نمط زر تسجيل الخروج داخل قائمة الموبايل 🌟 */
+.mobile-logout-btn {
+  background: none;
+  border: none;
+  color: #333333;
+  font-weight: 600;
+  font-size: 1rem;
+  padding: 10px 0;
+  width: 100%;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+/* --- الأنماط المتعلقة بالقائمة المنسدلة للمستخدم --- */
+
+/* حاوية القائمة المنسدلة (لتحديد الموضع المطلق) */
+.user-menu-wrapper {
+  position: relative;
+  /* تأكد من أن زر المستخدم هو position: relative للسماح بـ z-index */
+  z-index: 20;
+}
+
+.user-dropdown {
+  position: absolute;
+  top: 100%;
+  /* تظهر أسفل زر المستخدم مباشرة */
+  right: 0;
+  /* تصميم البطاقة البيضاء النظيف */
+  background-color: #FFFFFF;
+  border: 1px solid #EEEEEE;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  min-width: 160px;
+  padding: 10px 0;
+  margin-top: 10px;
+  /* مسافة بسيطة بين الزر والقائمة */
+  z-index: 100;
+  /* يجب أن تكون أعلى من كل شيء */
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-sizing: border-box;
+
+  padding: 10px 15px;
+  color: #333333;
+  text-decoration: none;
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: background-color 0.2s;
+  width: 100%;
+  /* ضروري للزر لملء العرض */
+  border: none;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+}
+
+.dropdown-item:hover {
+  background-color: #F8F8F8;
+  /* تظليل خفيف عند المرور */
+}
+
+.logout-item {
+  color: #D4AF37;
+  /* تمييز زر تسجيل الخروج بالذهبي */
+  border-top: 1px solid #EEEEEE;
+  margin-top: 5px;
+  padding-top: 10px;
+}
+
+.logout-item:hover {
+  background-color: #fffaf0;
+  /* تظليل ذهبي خفيف عند المرور */
+}
+
+/* 🌟 أنماط زر المستخدم (للتذكير) 🌟 */
+.user-profile-btn {
+  color: #D4AF37;
+  font-size: 1.2rem;
+  padding: 8px;
+  border: 1px solid #D4AF37;
+  border-radius: 50%;
+}
+
+
+
+/* 1. الشعار */
+.navbar-logo a {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #000000;
+  text-decoration: none;
+  letter-spacing: 1px;
+}
+
+/* 2. قائمة التنقل الرئيسية */
+.navbar-links {
+  list-style: none;
+  display: flex;
+  margin: 0;
+  padding: 0;
+  gap: 30px;
+  /* مسافة واضحة بين العناصر لزيادة الأناقة */
+}
+
+.navbar-links a {
+  color: #000000;
+  text-decoration: none;
+  font-size: 1rem;
+  transition: color 0.3s, border-bottom 0.3s;
+  padding-bottom: 5px;
+  /* لإعطاء مساحة للتأثير */
+}
+
+.navbar-links a:hover {
+  color: #D4AF37;
+  /* لون مميز عند التحويم */
+  border-bottom: 2px solid #D4AF37;
+}
+
+/* 3. أيقونات الحساب والسلة */
+.navbar-icons {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.icon-btn {
+  background: none;
+  border: none;
+  color: #000000;
+  cursor: pointer;
+  font-size: 1.5rem;
+  transition: color 0.3s;
+  padding: 5px;
+  position: relative;
+  top: -10px;
+}
+
+.icon-btn:hover {
+  color: #D4AF37;
+  /* لون مميز عند التحويم */
+}
+
+.cart-count {
+  background-color: #F0D5D8;
+  /* الوردي الناعم */
+  color: #000000;
+  border-radius: 50%;
+  padding: 2px 6px;
+  font-size: 0.7rem;
+  position: absolute;
+  top: 10px;
+  right: -5px;
+}
+
+.cart-icon {
+  position: relative;
+  font-size: 20px;
+  margin-top: 15px;
+}
+.user-profile-btn,.search-btn{
+    margin-top: 15px;
+  font-size: 20px;
+
+}
+.cart-count-badge {
+    position: absolute;
+    top: -10px; /* Ajustez la position verticale */
+    right: -5px; /* Ajustez la position horizontale */
+    background-color: #fac004; /* Couleur Or/Accent */
+    color: rgb(3, 3, 3);
+    border-radius: 50%;
+    font-size: 0.8rem;
+    padding: 2px;
+    cursor: pointer;
+    font-weight: bold;
+    min-width: 20px; /* Assurez-vous qu'il y a assez d'espace pour 10+ */
+    text-align: center;
+    line-height: 1.4;
+    pointer-events: none; /* Pour ne pas bloquer les clics sur l'icône */
+}
+/* إخفاء زر القائمة المتجاوبة على شاشات سطح المكتب */
+.menu-toggle {
+  display: none;
+}
+
+
+/* الأنماط الحالية لـ navbar-couture (الخلفية الشفافة والضبابية) */
+.navbar-couture {
+  background-color: rgb(255, 255, 255);
+  color: #000000;
+  padding: 25px 5%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: "Stack Sans Text", sans-serif;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 90%;
+  z-index: 1000;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* ... الأنماط الحالية لـ navbar-logo و navbar-links ... */
+
+/* 🌟 الأنماط الجديدة لأزرار المصادقة (Login/Register) 🌟 */
+.auth-btn {
+  text-decoration: none;
+  font-size: 0.95rem;
+  font-weight: 600;
+  padding: 8px 15px;
+  border-radius: 5px;
+  transition: background-color 0.3s, color 0.3s, border 0.3s;
+  white-space: nowrap;
+  /* منع انقسام النص */
+}
+
+/* زر تسجيل الدخول (S'identifier) - تصميم خفيف */
+.login-btn {
+  color: #333333;
+  border: 1px solid transparent;
+        box-sizing: border-box;
+
+}
+
+.login-btn:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+  border-color: #D4AF37;
+}
+
+/* زر التسجيل (S'inscrire) - تصميم بارز بالذهبي */
+.register-btn {
+  background-color: #D4AF37;
+  /* ذهبي بارز */
+  color: #000000;
+  margin-right: 15px;
+  /* مسافة عن أيقونة السلة */
+  border: 1px solid #D4AF37;
+}
+
+.register-btn:hover {
+  background-color: #FFFFFF;
+  /* أبيض عند المرور */
+  color: #000000;
+  border-color: #000000;
+}
+
+/* تجميع الأيقونات والأزرار */
+.navbar-icons {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  /* مسافة بين العناصر */
+}
+.login_button{
+  display: none;
+  
+}
+/* 📱 شاشات صغيرة (Responsive - Mobile View) 📱 */
+@media (max-width: 1300px) {
+  .icon-btn {
+
+  top: -3px;
+}
+
+  .navbar-couture {
+    padding: 10px 5%;
+  }
+
+  .menu-toggle {
+    /* أساسيات الزر */
+    display: none;
+    cursor: pointer;
+    padding: 8px;
+    font-size: 1.5rem;
+    color: #FFFFFF;
+    /* لون النص أبيض ليبرز على الخلفية الذهبية */
+    transition: all 0.3s ease;
+
+    /* الخلفية والتصميم */
+    background-color: #D4AF37;
+    /* خلفية ذهبية */
+    border: 1px solid #D4AF37;
+    border-radius: 6px;
+    /* حواف ناعمة */
+    height: 40px;
+    width: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* تأثير التحويم */
+  .menu-toggle:hover {
+    background-color: #A38829;
+    /* ذهبي أغمق قليلاً عند التحويم */
+    color: #FFFFFF;
+  }
+  .login_button{
+  display: block;
+  
+}
+
+  /* 📱 إظهار الزر على الموبايل 📱 */
+  @media (max-width: 900px) {
+    .menu-toggle {
+      display: flex;
+    }
+  }
+
+  /* إخفاء القائمة الرئيسية وتحويلها إلى قائمة عمودية */
+  .navbar-links {
+    display: none;
+    flex-direction: column;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background-color: rgba(236, 236, 236, 0.95);
+    /* خلفية داكنة للقائمة المفتوحة */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    padding: 10px 0;
+    gap: 0;
+    /* إزالة الفراغات العمودية */
+  }
+
+  /* إظهار القائمة عند تفعيل حالة 'active' */
+  .navbar-links.active {
+    display: flex;
+  }
+
+  .navbar-links li {
+    width: 100%;
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .navbar-links a {
+    display: block;
+    padding: 15px 20px;
+  }
+
+  /* ترتيب الأيقونات على الموبايل */
+  .navbar-icons {
+    order: 3;
+    /* دفع الأيقونات إلى اليمين (في التصميم العربي) */
+    gap: 10px;
+  }
+
+  .auth-btn {
+    display: none;
+  }
+
+  /* جعل أيقونة البحث تظهر بدلاً من الأزرار */
+  .icon-btn.search-btn {
+    display: block;
+  }
+
+  /* إذا كنت تريد إظهار زر التسجيل (S'inscrire) فقط */
+  .register-btn {
+    display: none;
+  }
+
+  .user-dropdown {
+  position: absolute;
+  top: 100%;
+  /* تظهر أسفل زر المستخدم مباشرة */
+  right: -60px;
+  /* تصميم البطاقة البيضاء النظيف */
+  background-color: #FFFFFF;
+  border: 1px solid #EEEEEE;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  min-width: 160px;
+  padding: 1px 0;
+  margin-top: 10px;
+  /* مسافة بسيطة بين الزر والقائمة */
+  z-index: 100;  }
+
+  .auth-btn {
+    display: none;
+  }
+
+  /* عرض الأيقونات بدلاً من الأزرار النصية */
+  .logged-in-controls {
+    display: flex;
+    /* إظهار أيقونات المستخدم/الخروج */
+  }
+
+  /* إخفاء أيقونة البحث في قائمة الأيقونات الرئيسية (إذا كانت موجودة في قائمة الروابط) */
+  .icon-btn.search-btn {
+    /* يمكنك التحكم في إظهار وإخفاء أيقونات محددة حسب تفضيلك على الموبايل */
+    /* display: none; */
+  }
+
+  .logo {
+    width: 100px;
+  }
+}
+
+@media (max-width: 787px) {
+  .logo {
+    width: 80px;
+  }
+}
+
+@media (max-width: 425px) {
+  .logo {
+    width: 80px;
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*
+  Nouvelle approche : Section divisée (Split Section)
+  Utilisation du noir et du blanc pur avec des touches d'or/rose.
+*/
+
+/* ======================================= */
+/* ====== 🌟 أنماط شريط الأبطال (Hero) 🌟 ====== */
+/* ======================================= */
+
+.modern-hero-section {
+  display: flex;
+  min-height: 75vh;
+  margin-top: 170px;
+  
+  color: #000000;
+}
+
+/* 1. Bloc de Contenu (الكتلة النصية) */
+.hero-content-block {
+  flex: 1;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 5% 5% 5% 1%;
+  box-sizing: border-box;
+}
+
+/* 2. Bloc Visuel (كتلة الشريط المتحرك) */
+.hero-visual-block {
+  flex: 1;
+  background: #000000;
+  position: relative;
+  overflow: hidden;
+  box-shadow: inset 0 0 50px rgba(212, 175, 55, 0.05);
+}
+
+/* Typographie Audacieuse et Moderne */
+.hero-main-title {
+  font-family: 'Arial Black', sans-serif;
+  font-size: 5rem;
+  line-height: 1.1;
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.accent-text {
+  color: #D4AF37;
+  letter-spacing: 5px;
+  font-size: 5.5rem;
+  margin-left: -5px;
+}
+
+.hero-subline {
+  font-size: 1.2rem;
+  font-weight: 900;
+  letter-spacing: 3px;
+  margin-top: 15px;
+  font-family: "Stack Sans Text", sans-serif;
+  color: #2b2b2b;
+}
+
+.hero-intro-text {
+  font-size: 1.1rem;
+  line-height: 1.6;
+  margin-bottom: 40px;
+  max-width: 450px;
+  font-family: "Stack Sans Text", sans-serif;
+  font-weight: 300;
+}
+
+/* Bouton d'Action (CTA) */
+.hero-cta-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 15px 40px;
+  font-family: "Stack Sans Text", sans-serif;
+  text-decoration: none;
+  background-color: #D4AF37;
+  color: #000000;
+  font-size: 1rem;
+  font-weight: bold;
+  letter-spacing: 1px;
+  transition: background-color 0.3s;
+  border: 2px solid #D4AF37;
+}
+
+.hero-cta-button:hover {
+  background-color: #020202;
+  color: #ffffff;
+  border-color: #FFFFFF;
+}
+
+/* ======================================== */
+/* ====== 🖼️ أنماط شريط المنتجات المتحرك 🖼️ ====== */
+/* ======================================== */
+
+.product-carousel-container {
+  display: flex;
+  /* العرض يتم تحديده في JSX */
+  height: 100%;
+  transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.product-slide {
+  height: 100%;
+  flex-shrink: 0;
+  display: flex;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: 0;
+  position: relative;
+  overflow: hidden;
+  align-items: stretch;
+}
+
+.product-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* لضمان تغطية الصورة للارتفاع والعرض */
+}
+
+/* 🌟 نمط التدرج الأسود السفلي 🌟 */
+.image-gradient-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to top,
+      rgba(0, 0, 0, 0.897) 0%,
+      rgba(0, 0, 0, 0.11) 100%);
+  z-index: 2;
+}
+
+/* 🌟 حاوية التفاصيل (تظهر فوق التدرج) 🌟 */
+.product-details {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  padding: 20px;
+  color: #FFFFFF;
+  z-index: 3;
+}
+
+.product-name {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 10px;
+  color: #D4AF37;
+}
+
+.product-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.product-price {
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+/* زر الإضافة إلى السلة */
+.add-to-cart-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-right: 50px;
+  padding: 10px 30px;
+  background-color: #D4AF37;
+  color: #000000;
+  border: none;
+  cursor: pointer;
+  /* 🛑 التصحيح: إزالة الـ positioning المطلق لجعله يتجاوب */
+  position: static;
+  right: auto;
+  font-size: 1rem;
+  font-weight: bold;
+  transition: background-color 0.3s;
+}
+
+.add-to-cart-button:hover {
+  background-color: #FFFFFF;
+}
+
+
+/* ========================================= */
+/* ====== 🖥️ شاشات سطح المكتب المتوسطة (1200px) 🖥️ ====== */
+/* ========================================= */
+@media (max-width: 1200px) {
+  .hero-content-block {
+    padding: 0% 5% 5% 2%;
+  }
+
+  .hero-main-title {
+    font-size: 4.5rem;
+  }
+
+  .accent-text {
+    font-size: 5rem;
+  }
+
+  .hero-subline {
+    font-size: 1.1rem;
+  }
+
+  .hero-intro-text {
+    font-size: 1rem;
+  }
+
+  .hero-cta-button {
+    padding: 12px 30px;
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 1100px) {
+  .modern-hero-section {
+    margin-top: 105px;
+  }
+}
+
+@media (max-width: 788px) {
+  .modern-hero-section {
+    margin-top: 93px;
+  }
+}
+
+@media (max-width: 1000px) {
+  .hero-content-block {
+    padding: 0% 5% 5% 2%;
+  }
+
+  .hero-main-title {
+    font-size: 3rem;
+  }
+
+  .accent-text {
+    font-size: 3.5rem;
+  }
+
+
+}
+
+/* ========================================= */
+/* ====== 📱 شاشات التابلت/الموبايل الكبيرة (900px) 📱 ====== */
+/* هذا الحجم يغير التخطيط إلى عمودي (flex-direction: column) 
+    لذا، الترتيب الطبيعي لـ HTML يعمل (النص ثم الصورة). 
+*/
+@media (max-width: 700px) {
+
+  /* 1. الحاوية الرئيسية: يجب إزالة الارتفاع الثابت */
+  .modern-hero-section {
+    flex-direction: column;
+    /* 🛑 تصحيح: إزالة الارتفاع الثابت الذي يسبب الاختفاء 🛑 */
+    height: 900px;
+    min-height: auto;
+    /* لضمان مرونة الارتفاع حسب المحتوى */
+    margin-top: 10px;
+  }
+
+  /* 2. الكتلة المرئية (hero-visual-block): الآن ستظهر ضمن حدود الحاوية */
+  .hero-visual-block {
+    width: 100%;
+
+    z-index: 10;
+    margin-top: -100px;
+  }
+
+  /* 3. الكتلة النصية (hero-content-block): */
+  .hero-content-block {
+    padding: 10% 5%;
+    text-align: center;
+    width: 100%;
+
+  }
+
+  .hero-main-title {
+    font-size: 2.5rem;
+    align-items: center;
+  }
+
+  .accent-text {
+    font-size: 3rem;
+    margin-left: 0;
+  }
+
+  .product-price {
+    font-size: 1.4rem;
+  }
+
+  .product-name {
+    font-size: 1.1rem;
+  }
+}
+
+
+
+/* ========================================= */
+/* ====== 📱 شاشات الموبايل الصغيرة جداً (490px) 📱 ====== */
+/* ========================================= */
+@media (max-width: 490px) {
+
+  /* ---------------------------------- */
+  .modern-hero-section {
+    border: red solid 0px;
+    max-height: 700px;
+
+  }
+
+  .hero-visual-block {
+    order: 1;
+    max-height: 300px;
+
+
+  }
+
+  .hero-content-block {
+    padding: 00% 5%;
+    text-align: center;
+    width: 100%;
+
+  }
+
+  /* ---------------------------------- */
+  /* تصغير الخطوط والـ Padding (للتناسب) */
+
+  .hero-main-title {
+    font-size: 1.5rem;
+  }
+
+  .accent-text {
+    font-size: 2.3rem;
+  }
+
+  .hero-subline {
+    font-size: 0.8rem;
+    letter-spacing: 1px;
+  }
+
+  .hero-intro-text {
+    font-size: 0.85rem;
+  }
+
+  .hero-cta-button {
+    padding: 8px 15px;
+    font-size: 0.8rem;
+  }
+
+  /* ---------------------------------- */
+  /* تصغير تفاصيل المنتجات */
+  .product-price {
+    font-size: 1.1rem;
+  }
+
+  .product-name {
+    font-size: 0.9rem;
+  }
+
+  .add-to-cart-button {
+    padding: 6px 10px;
+    font-size: 0.8rem;
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* Section Caractéristiques Clés */
+.key-features-section {
+  /* Fond blanc pur pour contraste */
+  padding: 80px 5%;
+  text-align: center;
+}
+
+.features-grid {
+  display: grid;
+  /* Grille à 3 colonnes pour le desktop, avec des espaces généreux */
+  grid-template-columns: repeat(3, 1fr);
+  gap: 50px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.feature-card {
+  padding: 30px;
+  /* Style subtil : pas de bordure, concentration sur l'espace blanc */
+}
+
+.feature-icon {
+  font-size: 3rem;
+  color: #D4AF37;
+  /* L'icône est en doré, touche de luxe */
+  margin-bottom: 20px;
+}
+
+.feature-title {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #000000;
+  margin-bottom: 15px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+.feature-description {
+  font-size: 0.95rem;
+  color: #333333;
+  line-height: 1.6;
+  font-weight: 300;
+}
+
+/* 📱 Responsive Adjustments 📱 */
+@media (max-width: 900px) {
+  .features-grid {
+    /* Sur tablette et mobile, passage à 1 colonne */
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* Section Produit Mis en Avant */
+.featured-product-section {
+  display: flex;
+  min-height: 70vh;
+  /* Fond noir pour le luxe */
+  color: #000000;
+  padding: 0 5%;
+  align-items: center;
+}
+
+/* 1. Bloc Visuel (Image) */
+.product-visual-block {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  height: 100%;
+  /* Important pour l'alignement */
+}
+
+.featured-product-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.6s ease-in-out;
+  filter: grayscale(10%);
+  /* Légère désaturation pour le chic */
+}
+
+.product-visual-block:hover .featured-product-image {
+  transform: scale(1.05);
+  /* Effet d'agrandissement subtil au survol */
+}
+
+/* Overlay et Icône Play */
+.play-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(212, 175, 55, 0.9);
+  /* Doré semi-transparent */
+  border-radius: 50%;
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0.8;
+  transition: opacity 0.3s, transform 0.3s;
+}
+
+.play-overlay:hover {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1.1);
+}
+
+.play-icon {
+  font-size: 1.5rem;
+  color: #000000;
+}
+
+/* 2. Bloc de Contenu (Texte) */
+.product-content-block {
+  flex: 1;
+  padding: 50px 0 50px 70px;
+  /* Espace à gauche pour éloigner de l'image */
+}
+
+.product-tag {
+  color: #0e0e0e;
+  /* Rose doux */
+  font-size: 0.85rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  display: block;
+  margin-bottom: 15px;
+}
+
+.product-main-title {
+  font-size: 3rem;
+  font-weight: 300;
+  line-height: 1.2;
+  margin-bottom: 25px;
+}
+
+.product-main-title **strong** {
+  color: #D4AF37;
+  /* Le doré pour le mot clé */
+  font-weight: 600;
+}
+
+.product-description {
+  font-size: 1rem;
+  line-height: 1.7;
+  margin-bottom: 30px;
+  max-width: 500px;
+  color: #444444;
+}
+
+.product-highlights {
+  list-style: none;
+  padding: 0;
+  margin-bottom: 40px;
+}
+
+.product-highlights li {
+  font-size: 0.95rem;
+  color: #FFFFFF;
+  margin-bottom: 10px;
+  /* Ajout d'une puce dorée */
+  position: relative;
+  padding-left: 20px;
+}
+
+.product-highlights li::before {
+  content: "•";
+  color: #D4AF37;
+  font-weight: bold;
+  display: inline-block;
+  width: 1em;
+  margin-left: -1em;
+}
+
+/* Bouton CTA */
+.product-cta-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 15px 35px;
+  text-decoration: none;
+  background-color: #D4AF37;
+  color: #000000;
+  font-size: 1rem;
+  font-weight: bold;
+  letter-spacing: 1px;
+  transition: all 0.3s;
+  border: 2px solid #D4AF37;
+}
+
+.product-cta-button:hover {
+  background-color: transparent;
+  color: #D4AF37;
+}
+
+
+/* 📱 Responsive Adjustments 📱 */
+@media (max-width: 900px) {
+  .featured-product-section {
+    flex-direction: column;
+    padding: 50px 5%;
+  }
+
+  .product-visual-block {
+    flex: 1;
+    min-height: 40vh;
+    order: 1;
+  }
+
+  .product-content-block {
+    flex: 1;
+    padding: 30px 0;
+    text-align: center;
+    order: 2;
+  }
+
+  .product-main-title {
+    font-size: 2.5rem;
+  }
+
+  .product-highlights {
+    text-align: left;
+    /* Garder les puces à gauche */
+    margin: 0 auto 30px auto;
+    max-width: 350px;
+  }
+
+  .product-highlights li {
+    padding-left: 20px;
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* Section Galerie de Designs */
+.design-gallery-section {
+  background-color: #FFFFFF;
+  padding: 80px 5%;
+  text-align: center;
+}
+
+.gallery-header {
+  margin-bottom: 50px;
+}
+
+.gallery-title {
+  font-size: 2.5rem;
+  font-weight: 300;
+  color: #000000;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+}
+
+.gallery-subtitle {
+  font-size: 1.1rem;
+  color: #555555;
+}
+
+.gallery-grid {
+  display: grid;
+  /* Grille moderne : 3 colonnes avec des lignes fluides (auto-rows) pour l'effet Masonry */
+  grid-template-columns: repeat(3, 1fr);
+  grid-auto-rows: 250px;
+  /* Hauteur de base pour chaque ligne */
+  gap: 20px;
+  max-width: 1400px;
+  margin: 0 auto 50px auto;
+}
+
+.gallery-item {
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  /* Ombre très subtile */
+}
+
+.gallery-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.4s ease-in-out, filter 0.4s ease-in-out;
+  filter: brightness(0.95);
+  /* Légèrement assombri par défaut */
+}
+
+/* Effets de survol élégants */
+.gallery-item:hover .gallery-image {
+  transform: scale(1.05);
+  filter: brightness(1);
+}
+
+/* Classes pour l'effet asymétrique (Masonry) */
+.gallery-item.wide {
+  grid-column: span 2;
+  /* S'étend sur deux colonnes */
+}
+
+.gallery-item.tall {
+  grid-row: span 2;
+  /* S'étend sur deux lignes */
+}
+
+/* Bouton CTA sous la galerie */
+.gallery-cta-button {
+  display: inline-block;
+  padding: 12px 30px;
+  text-decoration: none;
+  background-color: transparent;
+  color: #000000;
+  border: 2px solid #000000;
+  font-size: 1rem;
+  font-weight: bold;
+  letter-spacing: 1px;
+  transition: all 0.3s;
+}
+
+.gallery-cta-button:hover {
+  background-color: #D4AF37;
+  border-color: #D4AF37;
+  color: #000000;
+}
+
+
+/* 📱 Responsive Adjustments 📱 */
+@media (max-width: 900px) {
+  .gallery-grid {
+    grid-template-columns: 1fr;
+    /* Une seule colonne sur mobile */
+    grid-auto-rows: 300px;
+    /* Hauteur fixe pour toutes les images sur mobile */
+  }
+
+  /* Annuler l'effet Masonry sur mobile pour une meilleure lisibilité */
+  .gallery-item.wide,
+  .gallery-item.tall {
+    grid-column: span 1;
+    grid-row: span 1;
+  }
+
+  .gallery-title {
+    font-size: 2rem;
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* Section Carrousel de la Boutique */
+.shop-carousel-section {
+  background-color: #000000;
+  /* Passage au fond noir pour un effet plus dramatique */
+  padding: 80px 0;
+  color: #FFFFFF;
+}
+
+.carousel-header {
+  max-width: 1400px;
+  margin: 0 auto 40px auto;
+  padding: 0 5%;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.carousel-title {
+  font-size: 2.5rem;
+  font-weight: 300;
+  color: #FFFFFF;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.view-all-link {
+  color: #D4AF37;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: color 0.3s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.view-all-link:hover {
+  color: #FFFFFF;
+}
+
+/* Conteneur du Carrousel */
+.products-carousel-container {
+  overflow-x: auto;
+  padding: 0 5%;
+  scrollbar-width: none;
+}
+
+.products-carousel-container::-webkit-scrollbar {
+  display: none;
+}
+
+/* Piste de Produits */
+.products-track {
+  display: flex;
+  gap: 40px;
+  /* Plus d'espace pour l'élégance */
+  padding-bottom: 20px;
+  width: max-content;
+}
+
+/* Carte de Produit Individuelle */
+.product-card {
+  min-width: 150px;
+  /* 🌟 العرض الأدنى الذي لا يمكن للعنصر أن يقل عنه 🌟 */
+  width: auto;
+  /* يمكن إعطائه قيمة مثل 30% إذا أردت ثلاثة عناصر في السطر */
+
+  flex-grow: 1;
+  /* السماح للعنصر بالتمدد لملء الفراغ إذا كان هناك مساحة */
+  flex-shrink: 1;
+  /* 🌟 السماح للعنصر بالتصغير عند الحاجة 🌟 */
+
+  /* أمثلة شكلية */
+  padding: 10px 15px;
+  background-color: #D4AF37;
+  color: white;
+  text-align: center;
+  border-radius: 5px;
+}
+
+/* Effet Unique et Dramatique au Survol */
+.product-card:hover {
+  transform: translateY(-8px);
+  /* Élève légèrement la carte */
+  box-shadow: 0 10px 20px rgba(212, 175, 55, 0.2);
+  /* Ombre dorée */
+  border-color: #D4AF37;
+  /* Bordure dorée intense */
+}
+
+.product-image-container {
+  overflow: hidden;
+  height: 400px;
+
+
+}
+
+.product-image {
+  border: red solid 0px;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+
+  object-fit: cover;
+  display: block;
+
+  transition: transform 0.5s, filter 0.5s;
+
+
+  /* 🌟 الإجراء الرئيسي: object-fit: cover 🌟 
+       هذا يضمن ملء الحاوية بالكامل. قد يتم قص جوانب الصورة إذا كانت نسبة أبعادها مختلفة. */
+}
+
+.product-card:hover .product-image {
+  transform: scale(1.03);
+  filter: grayscale(0%);
+  /* L'image retrouve ses couleurs au survol */
+}
+
+/* Tags Nouveauté */
+.new-tag {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  /* Déplacé à gauche */
+  background-color: #F0D5D8;
+  /* Rose doux */
+  color: #000000;
+  padding: 6px 12px;
+  font-size: 0.7rem;
+  font-weight: bold;
+  letter-spacing: 2px;
+}
+
+/* Overlay des icônes au survol (Plus visible et direct) */
+.card-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+  opacity: 0;
+  transition: opacity 0.4s;
+}
+
+.product-card:hover .card-overlay {
+  opacity: 1;
+}
+
+.overlay-btn {
+  border: 2px solid #FFFFFF;
+  background: transparent;
+  color: #FFFFFF;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: 1px;
+  transition: all 0.3s;
+}
+
+.overlay-btn.favorite-btn {
+  border-radius: 50%;
+  padding: 15px;
+  font-size: 1.1rem;
+}
+
+.overlay-btn:hover {
+  background-color: #D4AF37;
+  color: #000000;
+  border-color: #D4AF37;
+}
+
+
+
+/* 📱 Responsive Adjustments 📱 */
+@media (max-width: 600px) {
+  .product-card {
+    width: 250px;
+    min-width: 250px;
+  }
+
+  .product-image-container {
+    height: 300px;
+  }
+
+  .carousel-title {
+    font-size: 1.8rem;
+  }
+}
+
+
+
+/* Section Carrousel de la Boutique */
+.shop-carousel-section {
+  background-color: #000000;
+  padding: 80px 0;
+  color: #FFFFFF;
+}
+
+.carousel-header {
+  max-width: 1400px;
+  margin: 0 auto 40px auto;
+  padding: 0 5%;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.carousel-title {
+  font-size: 2.5rem;
+  font-weight: 300;
+  color: #FFFFFF;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.view-all-link {
+  color: #D4AF37;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: color 0.3s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.view-all-link:hover {
+  color: #FFFFFF;
+}
+
+/* Conteneur التمرير */
+.products-carousel-container {
+  overflow-x: auto;
+  padding: 0 5%;
+  scrollbar-width: none;
+}
+
+.products-carousel-container::-webkit-scrollbar {
+  display: none;
+}
+
+/* ------------------------------------------------ */
+/* Piste المنتجات (لتطبيق الحركة التلقائية) */
+/* ------------------------------------------------ */
+
+/* حسابات الديسكتوب: 10 بطاقات أساسية * (عرض 320px + فجوة 40px) = 3600px للمسافة التي يجب قطعها */
+.products-track {
+  display: flex;
+  gap: 40px;
+  padding-bottom: 20px;
+
+  /* العرض الإجمالي لـ 30 بطاقة: 30 * 360px = 10800px */
+  width: 10800px;
+
+  /* تطبيق حركة التمرير: 50 ثانية، خطي، لا نهائي */
+  animation: scroll-left 50s linear infinite;
+}
+
+/* إيقاف الحركة التلقائية عند مرور مؤشر الفأرة (الخاصية المطلوبة) */
+.products-track.paused {
+  animation-play-state: paused;
+}
+
+/* تعريف إطار الحركة CSS (@keyframes) */
+@keyframes scroll-left {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    /* التحرك بمقدار مسافة 10 بطاقات أساسية لإنشاء الحلقة اللانهائية */
+    transform: translateX(-3600px);
+  }
+}
+
+/* Carte de Produit Individuelle */
+.product-card {
+  width: 320px;
+  min-width: 300px;
+  background-color: #000000;
+  text-align: left;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
+}
+
+/* ... (بقية أنماط البطاقة والـ overlay والـ info كما هي) ... */
+
+/* 📱 تعديلات الاستجابة (Responsive) 📱 */
+@media (max-width: 600px) {
+
+  /* حسابات الجوال: 10 بطاقات أساسية * (عرض 250px + فجوة 40px) = 2900px للمسافة التي يجب قطعها */
+  .product-card {
+    width: 250px;
+    min-width: 250px;
+  }
+
+  /* العرض الإجمالي لـ 30 بطاقة: 30 * 290px = 8700px */
+  .products-track {
+    width: 8700px;
+    /* يجب إعادة تعريف الحركة لأبعاد الجوال */
+    animation: scroll-left-mobile 50s linear infinite;
+  }
+
+  /* تعريف إطار الحركة للجوال */
+  @keyframes scroll-left-mobile {
+    from {
+      transform: translateX(0);
+    }
+
+    to {
+      /* التحرك بمقدار مسافة 10 بطاقات للجوال */
+      transform: translateX(-2900px);
+    }
+  }
+}
+
+
+
+
+
+
+
+
+/* Pied de Page Couture (Fond Blanc) */
+.couture-footer {
+  background-color: #FFFFFF;
+  /* CHANGÉ : Blanc pur */
+  color: #000000;
+  /* CHANGÉ : Texte principal en noir */
+  padding: 150px 5% 20px 5%;
+  font-family: 'Arial', sans-serif;
+}
+
+.footer-content {
+  display: flex;
+  justify-content: space-between;
+  max-width: 1400px;
+  margin: 0 auto 40px auto;
+  flex-wrap: wrap;
+}
+
+.footer-section {
+  width: 22%;
+  min-width: 200px;
+  margin-bottom: 30px;
+}
+
+/* 1. Bloc Marque */
+.footer-logo {
+  font-size: 1.5rem;
+  font-weight: bold;
+  letter-spacing: 2px;
+  margin-bottom: 10px;
+  color: #D4AF37;
+  /* Logo reste en doré (Accentuation) */
+}
+
+.footer-tagline {
+  font-size: 0.9rem;
+  color: #555555;
+  /* CHANGÉ : Gris foncé pour la lisibilité */
+  margin-bottom: 20px;
+}
+
+.social-links a {
+  color: #000000;
+  /* CHANGÉ : Icônes en noir */
+  font-size: 1.2rem;
+  margin-right: 15px;
+  transition: color 0.3s;
+}
+
+.social-links a:hover {
+  color: #D4AF37;
+  /* Le doré reste au survol */
+}
+
+/* 2 & 3. Liens de Navigation */
+.footer-section h4 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 20px;
+  color: #000000;
+  /* CHANGÉ : Titres en noir */
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.footer-section ul {
+  list-style: none;
+  padding: 0;
+}
+
+.footer-section ul li {
+  margin-bottom: 10px;
+}
+
+.footer-section a {
+  color: #555555;
+  /* CHANGÉ : Gris foncé pour les liens */
+  text-decoration: none;
+  font-size: 0.95rem;
+  transition: color 0.3s, padding-left 0.3s;
+}
+
+.footer-section a:hover {
+  color: #D4AF37;
+  /* Le doré reste au survol */
+  padding-left: 5px;
+}
+
+/* 4. Newsletter (Design Unique) */
+.footer-newsletter {
+  padding-left: 20px;
+}
+
+.newsletter-form {
+  display: flex;
+  margin-top: 15px;
+  border-bottom: 2px solid #000000;
+  /* CHANGÉ : Bordure sous le champ en noir */
+  width: 100%;
+}
+
+.newsletter-form input {
+  flex-grow: 1;
+  background: transparent;
+  border: none;
+  padding: 10px 0;
+  color: #000000;
+  /* CHANGÉ : Texte saisi en noir */
+  font-size: 1rem;
+  outline: none;
+}
+
+.newsletter-form input::placeholder {
+  color: #AAAAAA;
+}
+
+.newsletter-form button {
+  background: transparent;
+  border: none;
+  color: #D4AF37;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 10px;
+  transition: color 0.3s;
+}
+
+.newsletter-form button:hover {
+  color: #000000;
+  /* Changement au survol */
+}
+
+/* Bloc Copyright */
+.footer-bottom {
+  text-align: center;
+  padding-top: 20px;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  /* CHANGÉ : Ligne de séparation subtile en noir/gris */
+}
+
+.footer-bottom p {
+  color: #555555;
+  /* CHANGÉ : Texte du copyright en gris */
+  font-size: 0.8rem;
+}
+
+/* ... (Les ajustements responsives restent inchangés) ... */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* --- Styles Généraux و Section Principale (Fond Blanc) --- */
+.reviews-section-white {
+    color: #333333;
+    padding: 80px 5%;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    text-align: center;
+    overflow: hidden;
+}
+
+.reviews-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+    color: #111111;
+}
+
+.reviews-subtitle {
+    font-size: 1.1rem;
+    color: #555555;
+    margin-bottom: 40px;
+}
+
+/* --- Styles du Carrousel --- */
+
+.carousel-container-wrapper {
+    position: relative;
+    max-width: 1000px;
+    margin: 0 auto;
+    overflow: hidden;
+}
+
+.reviews-carousel-track {
+    display: flex;
+    transition: transform 0.6s ease-in-out;
+}
+
+/* --- Design de la Carte d'Avis --- */
+.review-card {
+    min-width: 100%;
+    box-sizing: border-box;
+    padding: 40px 60px;
+    margin: 20px 0;
+
+    /* Design Blanc Net */
+    background-color: #F8F8F8;
+    border: 1px solid #EEEEEE;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+/* --- En-tête de l'Avis --- */
+.review-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+/* ❌ Style original d'image AVATAR non utilisé (maintenu en commentaire si nécessaire) */
+/* .reviewer-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-right: 15px;
+    border: 2px solid #D4AF37;
+} */
+
+/* 🎨 NOUVEAU: Style pour l'Avatar basé sur l'initiale */
+.reviewer-avatar-initial {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    font-weight: bold;
+    color: #ffffff; /* Texte blanc */
+    margin-right: 15px;
+    flex-shrink: 0;
+    /* Ombre subtile pour le rendre plus joli */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); 
+    border: 3px solid #D4AF37; /* إطار ذهبي ليتناسب مع النجوم */
+}
+
+.reviewer-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.reviewer-name {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #111111;
+}
+
+/* Gardé caché car le schéma de DB ne fournit pas de titre */
+.reviewer-title {
+    font-size: 0.9rem;
+    color: #888888;
+    /* display: none; */ 
+}
+
+/* --- Notation (Étoiles) --- */
+.rating-stars {
+    margin-bottom: 0px; /* Augmenté l'espacement pour plus de clarté */
+margin-top: -15px;
+  }
+
+.star {
+    color: #E0E0E0;
+    font-size: 1.2rem; /* Légèrement augmenté la taille */
+    margin-right: 2px;
+}
+
+.star.active {
+    /* 🌟 Utilisation de la couleur définie pour l'accentuation */
+    color: #D4AF37; 
+}
+
+/* --- Texte de l'Avis --- */
+.review-text {
+    font-size: 1.1rem;
+    line-height: 1.7;
+    margin: auto;
+
+    color: #333333;
+    text-align: center;
+    position: relative;
+    padding-top: 30px;
+    /* Utiliser le padding horizontal pour centrer le texte dans la carte */
+}
+
+.quote-icon {
+    color: #D4AF37;
+    font-size: 1.8rem; /* Augmenté la taille */
+    position: absolute;
+    top: 5px; /* Déplacé vers le haut */
+    right: -20px; /* Déplacé légèrement vers la gauche du texte */
+    opacity: 0.8;
+}
+
+/* --- Boutons de Contrôle (Flèches) --- */
+.carousel-control {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    /* Design plus propre pour les contrôles */
+    background: rgba(255, 255, 255, 0.9);
+    color: #D4AF37;
+    border: 2px solid #D4AF37;
+    border-radius: 50%;
+    width: 45px; /* Légèrement plus grand */
+    height: 45px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    padding: 12px;
+    z-index: 10;
+    transition: background-color 0.3s, color 0.3s, transform 0.3s;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.carousel-control:hover {
+    background-color: #D4AF37;
+    color: #FFFFFF;
+    transform: translateY(-50%) scale(1.05);
+}
+
+.carousel-control.prev {
+    left: 20px;
+}
+
+.carousel-control.next {
+    right: 20px;
+}
+
+/* --- Indicateurs de Carrousel (Points) --- */
+.carousel-indicators {
+    margin-top: 35px; /* Plus d'espace */
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+}
+
+.indicator-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: #CCCCCC;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.3s;
+}
+
+.indicator-dot.active {
+    background-color: #D4AF37;
+    transform: scale(1.25);
+}
+
+/* ⚙️ Style de l'icône de chargement (Spinner) */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+.spinner {
+    animation: spin 2s linear infinite;
+    font-size: 40px;
+    color: #d7b33f;
+    display: block; /* S'assure qu'il est sur sa propre ligne si nécessaire */
+}
+
+.loading-state {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 16rem; /* h-64 */
+    flex-direction: column;
+    color: #d7b33f;
+    font-size: 1.125rem;
+}
+
+/* 📱 Ajustements Responsifs 📱 */
+@media (max-width: 768px) {
+    .reviews-section-white {
+        padding: 50px 2%;
+    }
+    
+    .reviews-title {
+        font-size: 2rem;
+    }
+
+    .review-card {
+        padding: 30px 20px;
+        margin: 10px 0;
+        text-align: center;
+        align-items: center;
+    }
+
+    .review-header {
+        flex-direction: column;
+        text-align: center;
+        margin-bottom: 15px;
+    }
+
+    /* Centrer l'avatar pour le mode mobile */
+    .reviewer-avatar-initial { 
+        margin: 0 0 10px 0;
+    }
+
+    .quote-icon {
+        display: none;
+    }
+
+    .review-text {
+        font-size: 1rem;
+        padding-top: 0;
+    }
+
+ 
+    
+    .carousel-control.prev {
+        left: 5px;
+    }
+    
+    .carousel-control.next {
+        right: 5px;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*======================================================*/
+/* 1. الأنماط العامة والقسم الرئيسي                  */
+/*======================================================*/
+.product-grid-section {
+  background-color: #F8F8F8;
+  color: #333333;
+  padding: 80px 5%;
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+  text-align: center;
+}
+
+.grid-header {
+  margin-bottom: 50px;
+}
+
+.grid-main-title {
+  font-size: 2.8rem;
+  font-weight: 800;
+  color: #D4AF37;
+  letter-spacing: 2px;
+}
+
+.grid-sub-text {
+  font-size: 1.1rem;
+  color: #666666;
+  margin-top: 10px;
+}
+
+/* 🌟 حاوية المحتوى الرئيسية: Flexbox (الشريط الجانبي + الشبكة) 🌟 */
+.shop-content-wrapper {
+  display: flex;
+  max-width: 1300px;
+  margin: 0 auto;
+  text-align: left;
+  gap: 40px;
+}
+
+/*======================================================*/
+/* 2. شريط الفلاتر (SIDEBAR) والأزرار المتجاوبة           */
+/*======================================================*/
+
+/* الزر الجديد لإظهار/إخفاء الفلاتر (يظهر فقط في التابلت والهاتف) */
+.toggle-filters-button {
+  display: none;
+  width: 100%;
+  padding: 12px;
+  background-color: #D4AF37;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 5px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  font-size: 1rem;
+}
+
+.toggle-filters-button:hover {
+  background-color: #C0A030;
+}
+
+.filter-sidebar {
+  width: 600px;
+  padding: 20px;
+  background-color: #FFFFFF;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  align-self: flex-start;
+  position: sticky;
+  /* ثابت على الديسكتوب */
+  top: 100px;
+  transition: all 0.3s ease-in-out;
+}
+
+.sidebar-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #111111;
+  margin-bottom: 30px;
+  border-bottom: 2px solid #D4AF37;
+  padding-bottom: 10px;
+}
+
+/* مجموعات الفلترة */
+.filter-group {
+  margin-bottom: 25px;
+  border-bottom: 1px solid #EEEEEE;
+  padding-bottom: 15px;
+}
+
+.filter-group-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #333333;
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+}
+
+.search-input {
+  width: 100%;
+  padding: 10px 10px 10px 40px;
+  border: 1px solid #DDDDDD;
+  border-radius: 5px;
+  box-sizing: border-box;
+  /* 🌟 مهم للتجاوب: لضمان أن العرض 100% يشمل البادينغ 🌟 */
+  transition: border-color 0.3s;
+}
+
+.search-filter {
+  position: relative;
+  margin-bottom: 25px;
+}
+
+.search-icon {
+  position: absolute;
+  top: 12px;
+  left: 15px;
+  color: #888888;
+}
+
+.category-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.category-item {
+  padding: 8px 10px;
+  cursor: pointer;
+  color: #666666;
+  transition: color 0.2s, background-color 0.2s;
+  border-radius: 4px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.95rem;
+}
+
+.category-item:hover {
+  color: #D4AF37;
+  background-color: #FFFDF5;
+}
+
+.category-item.active {
+  color: #FFFFFF;
+  background-color: #D4AF37;
+  font-weight: bold;
+}
+
+.price-range {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.price-slider {
+  width: 100%;
+}
+
+.price-display {
+  margin-top: 10px;
+  font-size: 0.9rem;
+  color: #333333;
+  font-weight: 600;
+}
+
+.reset-filters-button {
+  width: 100%;
+  padding: 12px;
+  background-color: #333333;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 5px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.reset-filters-button:hover {
+  background-color: #555555;
+}
+
+
+/*======================================================*/
+/* 3. شبكة المنتجات الرئيسية (Flex Container)           */
+/*======================================================*/
+.product-grid-main {
+  flex-grow: 1;
+}
+
+.grid-info-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+  font-size: 0.95rem;
+  color: #666666;
+  padding: 10px 0;
+  border-bottom: 1px solid #EEEEEE;
+}
+
+.sort-select {
+  padding: 10px;
+  border: 1px solid #DDDDDD;
+  border-radius: 5px;
+  background-color: #FFFFFF;
+  cursor: pointer;
+}
+
+.no-results {
+  /* تستخدم width: 100% داخل Flex container */
+  width: 100%;
+  text-align: center;
+  padding: 50px;
+  background-color: #FFFFFF;
+  border: 1px dashed #D4AF37;
+  color: #666666;
+  border-radius: 8px;
+  font-size: 1.2rem;
+}
+
+/* 🌟 حاوية شبكة المنتجات: Flexbox مع النزول للسطر 🌟 */
+.product-grid-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  align-items: stretch;
+  /* لضمان تساوي ارتفاع البطاقات */
+  justify-content: flex-start;
+  width: 100%;
+}
+
+/*======================================================*/
+/* 4. بطاقة المنتج (Flex Item) وتعديل حجم العناصر       */
+/*======================================================*/
+.product-card {
+  /* الخصائص الشكلية */
+  background-color: #FFFFFF;
+  border: 1px solid #EEEEEE;
+  border-radius: 16px;
+  overflow: hidden;
+  transition: transform 0.3s, box-shadow 0.3s;
+  text-align: left;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+
+  /* 🌟 خصائص المرونة (Flex Item): 4 أعمدة افتراضية 🌟 */
+  flex-basis: calc(25% - 15px);
+  /* العرض الأساسي لـ 4 عناصر في السطر */
+  flex-shrink: 1;
+  /* يسمح بالتصغير */
+  min-width: 200px;
+  /* الحد الأدنى للعرض قبل النزول للسطر */
+}
+
+.product-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 12px 25px rgba(0, 0, 0, 0.15);
+}
+
+.product-image-wrapper {
+  position: relative;
+  height: 220px;
+  /* تقليل ارتفاع الصورة لتناسب الحجم الأصغر */
+  overflow: hidden;
+  border-bottom: 4px solid #D4AF37;
+}
+
+.category-badge {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background-color: rgba(212, 175, 55, 0.9);
+  color: white;
+  padding: 5px 10px;
+  border-radius: 5px;
+  font-size: 0.85rem;
+  font-weight: bold;
+  z-index: 10;
+}
+
+.product-grid-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.product-card:hover .product-grid-image {
+  transform: scale(1.1);
+}
+
+.product-details-grid {
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+}
+
+.product-name-grid {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: #111111;
+  min-height: 2.2rem;
+}
+
+.product-info-row-grid {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
+}
+
+.product-price-grid {
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #D4AF37;
+}
+
+.add-to-cart-button-grid {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 15px;
+  background-color: #333333;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: bold;
+  transition: background-color 0.3s, transform 0.2s;
+}
+
+.add-to-cart-button-grid:hover {
+  background-color: #D4AF37;
+  transform: scale(1.05);
+}
+
+/*======================================================*/
+/* 5. التجاوب (Responsive Design)             */
+/*======================================================*/
+
+/* 1. للأجهزة اللوحية (Tablets - أقل من 992 بكسل) */
+@media (max-width: 992px) {
+  .shop-content-wrapper {
+    flex-direction: column;
+    gap: 30px;
+  }
+
+  /* إظهار زر التبديل */
+  .toggle-filters-button {
+    display: flex;
+  }
+
+  /* الفلاتر القابلة للطي (Accordion) */
+  .filter-sidebar {
+    width: 95%;
+margin-top: -130px;
+    position: relative;
+    margin-bottom: 150px;
+      max-height: 0;
+    padding: 0 20px;
+    overflow: hidden;
+    box-shadow: none;
+    opacity: 0;
+  }
+
+  .filter-sidebar.is-open {
+    max-height: 1000px;
+    position: relative;
+    padding: 20px;
+    border: 1px solid #DDDDDD;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    opacity: 1;
+  }
+
+  /* التعديل للتابلت: 3 أعمدة */
+  .product-card {
+    flex-basis: calc(33.33% - 15px);
+    min-width: 200px;
+  }
+
+  .product-image-wrapper {
+    height: 250px;
+  }
+}
+@media (max-width: 1300px) {
+  .product-grid-section {
+  padding: 0px 5%;
+}
+
+
+}
+@media (max-width: 768px) {
+    .filter-sidebar {
+    width: 93%;
+
+  }
+
+
+
+}@media (max-width: 640px) {
+    .filter-sidebar {
+    width: 90%;
+
+  }
+}
+@media (max-width: 425px) {
+    .filter-sidebar {
+    width: 88%;
+
+  }
+}
+@media (max-width: 330px) {
+    .filter-sidebar {
+    width: 85%;
+
+  }
+}
+/* 2. للهواتف الذكية (Mobiles - أقل من 600 بكسل) */
+@media (max-width: 600px) {
+  .product-grid-section {
+    padding: 40px 5%;
+  }
+
+  /* التعديل للهاتف: عمود واحد */
+  .product-card {
+    flex-basis: 100%;
+    min-width: 90%;
+  }
+
+  .product-image-wrapper {
+    height: 200px;
+  }
+
+  .grid-info-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    margin-top: -50px;
+  }
+
+  .sort-select {
+    width: 100%;
+  }
+
+  .product-details-grid {
+    padding: 15px;
+  }
+
+  .product-name-grid {
+    font-size: 1.1rem;
+    min-height: auto;
+    margin-bottom: 10px;
+  }
+
+  .product-info-row-grid {
+    /* ترتيب السعر والزر عمودياً */
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .add-to-cart-button-grid {
+    width: 100%;
+    justify-content: center;
+    padding: 10px;
+  }
+
+  .product-price-grid {
+    font-size: 1.1rem;
+  }
+}
+
+
+@media (max-width: 480px) {
+  .grid-main-title {
+    font-size: 2rem;
+
+  }
+
+  .product-grid-section {
+    padding: 10px 5%;
+
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* --- 1. القسم الرئيسي (VIP Section) --- */
+.vip-section {
+  background-color: #F8F8F8;
+  /* خلفية فاتحة */
+  color: #333333;
+  /* مسافة بادئة كبيرة من الأعلى لتجنب تداخل شريط التنقل الثابت */
+  padding: 150px 5% 80px 5%;
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+  text-align: center;
+}
+
+/* --- 2. رأس الصفحة (العنوان) --- */
+.vip-header {
+  margin-bottom: 60px;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.vip-main-title {
+  font-size: 2.8rem;
+  font-weight: 800;
+  margin-bottom: 15px;
+}
+
+.vip-accent-text {
+  color: #D4AF37;
+  /* اللون الذهبي المميز */
+  letter-spacing: 2px;
+
+}
+
+.vip-sub-text {
+  font-size: 1.2rem;
+  color: #666666;
+}
+
+/* --- 3. شبكة الكورسات (Grid) --- */
+.courses-grid-container {
+  display: grid;
+  /* 3 أعمدة على الشاشات الكبيرة */
+  grid-template-columns: repeat(3, 1fr);
+  gap: 30px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* 🌟 4. بطاقة الكورس (Course Card) 🌟 */
+.course-card {
+  background-color: #FFFFFF;
+  border: 1px solid #EEEEEE;
+  border-radius: 10px;
+  overflow: hidden;
+  transition: transform 0.3s, box-shadow 0.3s;
+  text-align: left;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+.course-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+}
+
+.course-image-wrapper {
+  position: relative;
+  height: 220px;
+  overflow: hidden;
+  /* لمسة ذهبية: حد سفلي سميك */
+  border-bottom: 5px solid #D4AF37;
+}
+
+.course-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.course-card:hover .course-image {
+  transform: scale(1.1);
+}
+
+.course-level-tag {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  background-color: #D4AF37;
+  color: #FFFFFF;
+  padding: 5px 10px;
+  border-radius: 5px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  z-index: 2;
+  text-transform: uppercase;
+}
+
+/* --- 5. محتوى الكورس --- */
+.course-content {
+  padding: 20px;
+}
+
+.course-title {
+  font-size: 1.4rem;
+  font-weight: bold;
+  color: #111111;
+  margin-bottom: 10px;
+}
+
+.course-description {
+  font-size: 1rem;
+  color: #666666;
+  margin-bottom: 20px;
+  min-height: 4.5rem;
+  /* ارتفاع ثابت للوصف */
+}
+
+.course-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  color: #888888;
+  margin-bottom: 20px;
+  padding-top: 15px;
+  border-top: 1px solid #EEEEEE;
+}
+
+.course-meta svg {
+  margin-right: 5px;
+  color: #D4AF37;
+}
+
+/* 6. زر الوصول */
+.access-button {
+  width: 100%;
+  padding: 12px;
+  background-color: #111111;
+  /* زر أسود لتمييز محتوى VIP */
+  color: #D4AF37;
+  border: 2px solid #D4AF37;
+  border-radius: 5px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+.access-button:hover {
+  background-color: #D4AF37;
+  color: #111111;
+  border-color: #D4AF37;
+}
+/* 📱 7. التجاوب (Responsive) 📱 */
+@media (max-width: 1300px) {
+/* --- 1. القسم الرئيسي (VIP Section) --- */
+.vip-section {
+  /* خلفية فاتحة */
+  /* مسافة بادئة كبيرة من الأعلى لتجنب تداخل شريط التنقل الثابت */
+  padding: 70px 5% 80px 5%;
+}
+}
+/* 📱 7. التجاوب (Responsive) 📱 */
+@media (max-width: 768px) {
+
+.vip-main-title {
+  font-size: 2.5rem;
+}
+}
+
+/* 📱 7. التجاوب (Responsive) 📱 */
+@media (max-width: 992px) {
+  .courses-grid-container {
+    /* عمودان على الأجهزة اللوحية */
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .vip-main-title {
+    font-size: 2.5rem;
+  }
+
+  .courses-grid-container {
+    /* عمود واحد على الهواتف */
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .course-description {
+    min-height: auto;
+  }
+
+  /* --- 1. القسم الرئيسي (VIP Section) --- */
+  .vip-section {
+    /* مسافة بادئة كبيرة من الأعلى لتجنب تداخل شريط التنقل الثابت */
+    padding: 80px 5% 80px 5%;
+  }
+
+}
+
+
+@media (max-width: 425px) {
+    .vip-main-title {
+        font-size: 2rem;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* --- 1. القسم الرئيسي (Leçons Section) --- */
+.lessons-section {
+  background-color: #F8F8F8;
+  color: #333333;
+  padding: 150px 5% 80px 5%;
+  /* مسافة بادئة كبيرة من الأعلى للـ Navbar */
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+  text-align: center;
+}
+
+/* --- 2. رأس الصفحة (العنوان) --- */
+.lessons-header {
+  margin-bottom: 60px;
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.lessons-main-title {
+  font-size: 3.2rem;
+  font-weight: 800;
+  margin-bottom: 10px;
+}
+
+.lessons-accent-text {
+  color: #D4AF37;
+  letter-spacing: 1px;
+}
+
+.lessons-sub-text {
+  font-size: 1.1rem;
+  color: #666666;
+}
+
+/* --- 3. شبكة بطاقات الدروس (Grid) --- */
+.lessons-grid-container {
+  display: grid;
+  /* 🌟 4 أعمدة على الشاشات الكبيرة 🌟 */
+  grid-template-columns: repeat(4, 1fr);
+  gap: 30px;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+/* 🌟 4. بطاقة الدرس (Lesson Card) 🌟 */
+.lesson-card {
+  background-color: #FFFFFF;
+  border-radius: 10px;
+  overflow: hidden;
+  transition: transform 0.3s, box-shadow 0.3s;
+  text-align: left;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  cursor: pointer;
+}
+
+.lesson-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+.lesson-image-wrapper {
+  position: relative;
+  height: 180px;
+  /* ارتفاع ثابت للصورة المصغرة */
+  overflow: hidden;
+}
+
+.lesson-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.lesson-card:hover .lesson-image {
+  transform: scale(1.05);
+}
+
+/* --- طبقة التراكب (Overlay) والمدة والأيقونات --- */
+.lesson-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: background-color 0.3s;
+}
+
+.lesson-overlay.locked {
+  background-color: rgba(0, 0, 0, 0.6);
+  /* خلفية داكنة للقفل */
+}
+
+.lesson-overlay.free {
+  background-color: rgba(0, 0, 0, 0.2);
+  /* خلفية أخف للمجاني */
+  opacity: 0;
+  /* إخفاء افتراضياً */
+}
+
+.lesson-card:hover .lesson-overlay.free {
+  opacity: 1;
+}
+
+.overlay-icon {
+  font-size: 3rem;
+  color: #D4AF37;
+  text-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
+}
+
+.lesson-duration-tag {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  background-color: rgba(0, 0, 0, 0.7);
+  color: #FFFFFF;
+  padding: 4px 8px;
+  border-radius: 3px;
+  font-size: 0.8rem;
+  z-index: 2;
+}
+
+/* --- 5. محتوى الدرس --- */
+.lesson-content {
+  padding: 15px;
+}
+
+.lesson-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #111111;
+  margin-bottom: 10px;
+  line-height: 1.4;
+}
+
+.lesson-status-badge {
+  font-size: 0.8rem;
+  font-weight: bold;
+  padding: 5px 10px;
+  border-radius: 3px;
+  display: inline-block;
+}
+
+.lesson-status-badge.vip {
+  background-color: #D4AF37;
+  color: #111111;
+}
+
+.lesson-status-badge.free {
+  background-color: #5cb85c;
+  /* أخضر للمجاني */
+  color: #FFFFFF;
+}
+
+/* 📱 6. التجاوب (Responsive) 📱 */
+@media (max-width: 1200px) {
+  .lessons-grid-container {
+    /* 3 أعمدة على الأجهزة اللوحية الكبيرة */
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .lessons-grid-container {
+    /* عمودان على الأجهزة اللوحية الصغيرة */
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+
+  .lessons-main-title {
+    font-size: 2.5rem;
+  }
+}
+
+@media (max-width: 500px) {
+  .lessons-grid-container {
+    /* عمود واحد على الهواتف */
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  .lesson-image-wrapper {
+    height: 200px;
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* --- 1. القسم الرئيسي --- */
+.auth-section {
+  background-color: #F8F8F8;
+  /* خلفية فاتحة */
+  padding: 180px 20px 80px 20px;
+  /* مسافة بادئة كبيرة للـ Navbar */
+  min-height: 100vh;
+  /* لضمان ملء الشاشة قبل التذييل */
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  /* يبدأ المحتوى من الأعلى */
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+}
+
+
+/* 3. العنوان */
+.auth-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.auth-main-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #111111;
+}
+
+.auth-subtitle {
+  font-size: 1rem;
+  color: #D4AF37;
+  /* لون التمييز */
+  font-weight: 500;
+  margin-top: 5px;
+}
+
+/* 4. النموذج والحقول */
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-top: -30px;
+}
+
+
+.auth-form input {
+  width: 100%;
+  padding: 15px 15px 15px 45px;
+  /* مساحة لأيقونة */
+  border: 1px solid #DDDDDD;
+  border-radius: 5px;
+  font-size: 1rem;
+  box-sizing: border-box;
+
+  transition: border-color 0.3s;
+}
+
+.auth-form input:focus {
+  outline: none;
+  border-color: #D4AF37;
+  box-shadow: 0 0 5px rgba(212, 175, 55, 0.5);
+}
+
+/* 5. خيارات تسجيل الدخول (تذكّرني/نسيت كلمة المرور) */
+.auth-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+  margin-top: 20px;
+  
+}
+.remember-me{
+}
+.remember-me input {
+  width: auto;
+  margin-right: 8px;
+  /* إزالة الأنماط المخصصة للـ inputs العادية */
+  padding: 0;
+  border: 1px solid #ccc;
+  box-shadow: none;
+  
+}
+
+.forgot-password-link {
+  color: #666666;
+  text-decoration: none;
+  transition: color 0.3s;
+}
+
+.forgot-password-link:hover {
+  color: #D4AF37;
+  text-decoration: underline;
+}
+
+
+/* 6. زر الإرسال (Submit) */
+.submit-btn {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  padding: 15px;
+  margin-top: 0px;
+  background-color: #D4AF37;
+  /* اللون الذهبي المميز */
+  color: #111111;
+  border: none;
+  border-radius: 5px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.submit-btn:hover {
+  background-color: #C0A030;
+}
+
+/* 7. رابط التبديل */
+.switch-auth-link {
+  text-align: center;
+  font-size: 0.95rem;
+  color: #666666;
+  margin-top: 10px;
+}
+
+.switch-auth-link a {
+  color: #D4AF37;
+  text-decoration: none;
+  font-weight: bold;
+}
+@media (max-width: 1300px) {
+  .auth-card-container {
+    margin-top: -100px;
+    padding: 30px 20px;
+  }
+  
+/* --- 1. القسم الرئيسي --- */
+.auth-section {
+  /* خلفية فاتحة */
+  padding: 100px 20px 80px 20px;
+
+}
+
+}
+/* 📱 التجاوب (Responsive) 📱 */
+@media (max-width: 600px) {
+
+
+  .auth-main-title {
+    font-size: 1.8rem;
+  }
+
+
+}
+
+/* --- نمط رسالة الخطأ --- */
+.error-message {
+  background-color: #ffe0e0;
+  /* خلفية حمراء فاتحة */
+  color: #cc0000;
+  /* نص أحمر داكن */
+  border: 1px solid #ff9999;
+  padding: 10px;
+  margin-bottom: 20px;
+  border-radius: 5px;
+  text-align: center;
+  font-weight: 500;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* --- 1. القسم الرئيسي --- */
+.about-section {
+  /* الخلفية بيضاء ناصعة */
+  color: #333333;
+  /* مسافة بادئة كبيرة من الأعلى للـ Navbar */
+  padding: 200px 5% 80px 5%;
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+}
+
+/* --- 2. قسم الرؤية (Hero) --- */
+.about-hero {
+  text-align: center;
+  padding-bottom: 70px;
+  border-bottom: 1px solid #EEEEEE;
+  margin-bottom: 70px;
+}
+
+.about-main-title {
+  font-size: 2.8rem;
+  font-weight: 800;
+  margin-bottom: 15px;
+  color: #333333;
+}
+
+.about-accent {
+  color: #D4AF37;
+  /* اللون الذهبي */
+}
+
+.about-tagline {
+  font-size: 1.3rem;
+  color: #666666;
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+/* --- 3. قسم قصتنا (Story) --- */
+.about-story-container {
+  display: flex;
+  align-items: center;
+  gap: 60px;
+  max-width: 1200px;
+  margin: 0 auto 100px auto;
+}
+
+.story-content {
+  flex: 1;
+}
+
+.story-image {
+  flex: 1;
+  overflow: hidden;
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+
+.about-image-style {
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: cover;
+}
+
+.story-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #D4AF37;
+  margin-bottom: 20px;
+}
+
+.story-paragraph {
+  font-size: 1rem;
+  line-height: 1.8;
+  color: #444444;
+  margin-bottom: 20px;
+}
+
+.contact-link-btn {
+  display: inline-block;
+  padding: 12px 25px;
+  background-color: #111111;
+  color: #D4AF37;
+  text-decoration: none;
+  font-weight: bold;
+  border-radius: 5px;
+  transition: background-color 0.3s, color 0.3s;
+  margin-top: 10px;
+}
+
+.contact-link-btn:hover {
+  background-color: #D4AF37;
+  color: #111111;
+}
+
+/* --- 4. قسم القيم الأساسية (Values) --- */
+.about-values-section {
+  background-color: #F8F8F8;
+  /* خلفية رمادية فاتحة لتمييز القسم */
+  padding: 70px 5%;
+  text-align: center;
+}
+
+.values-title {
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: #111111;
+  margin-bottom: 50px;
+}
+
+.values-grid {
+  display: grid;
+  /* 4 أعمدة للقِيَم */
+  grid-template-columns: repeat(4, 1fr);
+  gap: 30px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.value-card {
+  background-color: #FFFFFF;
+  padding: 30px;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  border-top: 3px solid #D4AF37;
+}
+
+.value-icon {
+  font-size: 2.5rem;
+  color: #D4AF37;
+  margin-bottom: 15px;
+}
+
+.value-card h3 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #111111;
+  margin-bottom: 10px;
+}
+
+.value-card p {
+  font-size: 0.95rem;
+  color: #666666;
+  line-height: 1.6;
+}
+
+@media (max-width: 1300px) {
+  .about-section {
+    /* مسافة بادئة كبيرة من الأعلى للـ Navbar */
+    padding: 130px 5% 80px 5%;
+  }
+}
+
+@media (max-width: 1024px) {
+  .about-section {
+    /* مسافة بادئة كبيرة من الأعلى للـ Navbar */
+    padding: 150px 5% 80px 5%;
+  }
+
+  .story-title {
+    font-size: 1.7rem;
+  }
+}
+
+/* 📱 5. التجاوب (Responsive) 📱 */
+@media (max-width: 992px) {
+  .about-story-container {
+    flex-direction: column;
+    /* تحويل إلى عمودي */
+    gap: 30px;
+    margin-bottom: 70px;
+  }
+
+  .values-grid {
+    grid-template-columns: repeat(2, 1fr);
+    /* عمودان */
+    gap: 20px;
+  }
+
+  .about-main-title {
+    font-size: 3rem;
+  }
+}
+@media (max-width: 768px) {
+.about-main-title {
+  font-size: 2.7rem;
+
+}
+
+  .about-section {
+    /* مسافة بادئة كبيرة من الأعلى للـ Navbar */
+    padding: 130px 5% 80px 5%;
+  }
+  }
+
+@media (max-width: 600px) {
+  .about-main-title {
+    font-size: 2.5rem;
+  }
+
+  .story-title {
+    font-size: 2rem;
+  }
+
+  .values-grid {
+    grid-template-columns: 1fr;
+    /* عمود واحد على الهاتف */
+  }
+}
+
+
+@media (max-width: 430px) {
+
+  .story-title {
+    font-size: 1.4rem;
+  }
+
+  .about-main-title {
+    font-size: 2rem;
+  }
+
+  .about-section {
+    /* مسافة بادئة كبيرة من الأعلى للـ Navbar */
+    padding: 130px 5% 80px 5%;
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*======================================================*/
+/* 1. الأنماط العامة والقسم الرئيسي                  */
+/*======================================================*/
+.contact-section {
+  color: #333333;
+  /* تم تعديل البادينغ العلوي ليكون أقل اعتمادًا على شاشات الديسكتوب */
+  padding: 150px 5% 8px 5%;
+  margin-top: 70px;
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+  text-align: center;
+}
+
+/* --- 2. رأس الصفحة --- */
+.contact-header {
+  margin-bottom: 60px;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.contact-main-title {
+  font-size: 3.2rem;
+  font-weight: 800;
+  margin-bottom: 10px;
+}
+
+.contact-accent-text {
+  color: #D4AF37;
+}
+
+.contact-sub-text {
+  font-size: 1.1rem;
+  color: #666666;
+}
+
+/* --- 3. حاوية المحتوى الرئيسية (نموذج + معلومات) --- */
+.contact-content-wrapper {
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+  max-width: 1200px;
+  margin: 0 auto;
+  text-align: left;
+}
+
+/* --- 4. نموذج الاتصال --- */
+.contact-form-block {
+  /* تقسيم 60% على الديسكتوب */
+  flex: 3;
+  background-color: #F8F8F8;
+  padding: 35px;
+  border-radius: 10px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+}
+
+.form-title {
+  font-size: 1.8rem;
+  color: #111111;
+  margin-bottom: 25px;
+  border-bottom: 2px solid #D4AF37;
+  padding-bottom: 10px;
+  font-weight: 600;
+}
+
+.contact-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.contact-form .input-group {
+  position: relative;
+  border-top: 2px solid transparent;
+  transition: border-top 0.3s ease;
+
+}
+
+.contact-form input,
+.contact-form textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 1px 10px 45px;
+  border: none;
+  border-radius: 8px;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.08);
+  font-size: 1rem;
+  resize: vertical;
+}
+
+
+
+.contact-form .input-icon {
+  top: 50%;
+  z-index: 0;
+  left: 15px;
+  transform: translateY(-50%);
+  color: #999;
+  font-size: 1rem;
+}
+.input-group .input-icon{
+  transform: translateY(220%);
+  color: #999;
+  left: 10px;
+  position: relative;
+  font-size: 1rem;
+}
+
+/* تعديل البادينغ للحقول التي لا تحتوي على أيقونة (Subject و Message) */
+.contact-form-block .input-group:nth-child(3) input,
+/* حقل Subject */
+.contact-form-block textarea {
+  padding-left: 15px;
+        box-sizing: border-box;
+
+}
+
+.contact-form input:focus,
+.contact-form textarea:focus {
+  outline: none;
+  box-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
+}
+
+.contact-form-block .input-group:focus-within {
+  border-top-color: #D4AF37;
+}
+
+.contact-submit-btn {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  padding: 15px;
+  background-color: #D4AF37;
+  color: #111111;
+  border: none;
+  border-radius: 5px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.contact-submit-btn:hover {
+  background-color: #CDBA59;
+}
+
+/* رسائل الحالة (النجاح/الفشل) */
+.status-message {
+  padding: 15px;
+  margin-bottom: 20px;
+  border-radius: 5px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.status-message.success {
+  background-color: #e6ffe6;
+  color: #28a745;
+  border: 1px solid #c3e6cb;
+}
+
+.status-message.error {
+  background-color: #ffe6e6;
+  color: #dc3545;
+  border: 1px solid #f5c6cb;
+}
+
+/* --- 5. معلومات الاتصال الجانبية --- */
+.contact-info-block {
+  /* تقسيم 40% على الديسكتوب */
+  flex: 2;
+  padding: 35px;
+  background-color: #FFFFFF;
+  border-radius: 10px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+}
+
+.info-title {
+  font-size: 1.5rem;
+  color: #D4AF37;
+  margin-bottom: 30px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #EEEEEE;
+  font-weight: 600;
+}
+
+.contact-detail {
+  display: flex;
+  align-items: flex-start;
+  gap: 15px;
+  margin-bottom: 25px;
+}
+
+.detail-icon {
+  font-size: 1.5rem;
+  color: #111111;
+  min-width: 20px;
+  padding-top: 0px;
+  position: relative;
+  top: -3px;
+  /* تعديل بسيط لمركزة الأيقونة مع النص */
+}
+
+.contact-detail h4 {
+  font-size: 1rem;
+  font-weight: bold;
+  color: #111111;
+}
+
+.contact-detail p {
+  font-size: 0.95rem;
+  color: #666666;
+  margin-top: 5px;
+}
+
+/* 6. مكان الخريطة الوهمية */
+.map-placeholder {
+  width: 100%;
+  height: 180px;
+  background-color: #EEEEEE;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 0.9rem;
+  color: #999999;
+  border-radius: 5px;
+  margin-top: 30px;
+}
+@media (max-width: 1300px){
+  .contact-section {
+
+   padding: 60px 5% 8px 5%;
+
+}
+
+}
+/* 1. للأجهزة اللوحية (Tablets - 768px إلى 992px) */
+
+/*======================================================*/
+/* 7. التجاوب (Responsive) - الاحترافي والمحسن          */
+/*======================================================*/
+
+/* 1. للأجهزة اللوحية (Tablets - 768px إلى 992px) */
+@media (min-width: 768px) and (max-width: 992px) {
+
+  /* 🌟 الحفاظ على عرض العمودين مع تقسيم مرن 🌟 */
+  .contact-content-wrapper {
+    gap: 20px;
+    flex-direction: row;
+    /* التأكد من أنها في سطر واحد */
+  }
+
+  /* إعادة تحديد توزيع المساحة على التابلت (أكثر توازناً) */
+  .contact-form-block {
+    flex: 6;
+    /* 60% للنموذج */
+    padding: 25px;
+  }
+
+  .contact-info-block {
+    flex: 4;
+    /* 40% للمعلومات */
+    padding: 25px;
+  }
+
+  /* تقليل حجم الخط في العناوين لتناسب المساحة */
+  .form-title {
+    font-size: 1.6rem;
+  }
+
+  .info-title {
+    font-size: 1.4rem;
+  }
+
+  .contact-submit-btn {
+    font-size: 1rem;
+    padding: 12px;
+  }
+}
+
+
+/* 2. للأجهزة الصغيرة (Mobile - أقل من 768px) */
+@media (max-width: 767px) {
+  .contact-section {
+  }
+
+  .contact-content-wrapper {
+    /* 🌟 نمط العمود الواحد على الهواتف 🌟 */
+    flex-direction: column;
+    gap: 30px;
+  }
+
+  .contact-form-block,
+  .contact-info-block {
+    flex: none;
+
+
+
+  }
+
+  .contact-main-title {
+    font-size: 2.5rem;
+  }
+
+  .form-title,
+  .info-title {
+    font-size: 1.4rem;
+    margin-bottom: 20px;
+  }
+
+
+
+  .contact-submit-btn {
+    font-size: 1rem;
+    padding: 12px;
+  }
+
+  .map-placeholder {
+    height: 150px;
+  }
+
+  /* تقليل البادينغ في التفاصيل */
+  .contact-detail {
+    margin-bottom: 20px;
+    gap: 10px;
+  }
+}
+
+
+
+
+
+@media (max-width: 425px) {
+    .contact-main-title {
+    font-size: 2rem;
+  }
+  .form-title{
+        font-size: 1.1rem;
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* --- 1. القسم الرئيسي --- */
+.profile-section {
+  background-color: #F8F8F8;
+  /* خلفية فاتحة */
+  padding: 250px 5% 80px 5%;
+  min-height: 80vh;
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+}
+
+/* --- 2. رأس الملف الشخصي --- */
+.profile-header-container {
+  text-align: center;
+  margin-bottom: 60px;
+  padding-bottom: 30px;
+  border-bottom: 1px solid #EEEEEE;
+}
+
+.profile-avatar-icon {
+  font-size: 4rem;
+  color: #D4AF37;
+  margin-bottom: 10px;
+}
+
+.profile-main-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #111111;
+}
+
+.profile-accent {
+  color: #D4AF37;
+}
+
+.profile-status {
+  font-size: 1rem;
+  color: #666666;
+  margin-top: 5px;
+}
+
+/* --- 3. حاوية المحتوى الرئيسية (شريط جانبي + محتوى) --- */
+.profile-content-wrapper {
+  display: flex;
+  max-width: 1200px;
+  margin: 0 auto;
+  gap: 40px;
+}
+
+/* --- 4. الشريط الجانبي (Sidebar) --- */
+.profile-sidebar {
+  width: 280px;
+  padding: 20px;
+  background-color: #FFFFFF;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  height: fit-content;
+  /* يحدد الارتفاع تلقائياً */
+}
+
+.nav-title {
+  font-size: 1.2rem;
+  color: #111111;
+  font-weight: bold;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #EEEEEE;
+}
+
+.profile-nav ul {
+  list-style: none;
+  padding: 0;
+  margin-bottom: 30px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 10px;
+  color: #666666;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+  border-radius: 5px;
+}
+
+.nav-item:hover,
+.nav-item.active {
+  background-color: #fffaf0;
+  /* خلفية ذهبية فاتحة */
+  color: #D4AF37;
+  font-weight: 600;
+}
+
+.nav-item svg {
+  font-size: 1.1rem;
+}
+
+.profile-logout-btn {
+  width: 100%;
+  padding: 10px;
+  background-color: #dc3545;
+  /* زر أحمر قياسي للخروج */
+  color: #FFFFFF;
+  border: none;
+  border-radius: 5px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: background-color 0.3s;
+}
+
+.profile-logout-btn:hover {
+  background-color: #c82333;
+}
+
+/* --- 5. محتوى الصفحة الرئيسي --- */
+.profile-main-content {
+  flex-grow: 1;
+}
+
+.info-block {
+  background-color: #FFFFFF;
+  padding: 30px;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  margin-bottom: 30px;
+}
+
+.block-title {
+  font-size: 1.8rem;
+  color: #111111;
+  margin-bottom: 25px;
+  border-bottom: 2px solid #EEEEEE;
+  padding-bottom: 10px;
+  font-weight: 600;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.info-detail {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid #F0F0F0;
+  border-radius: 5px;
+}
+
+.info-detail h4 {
+  color: #D4AF37;
+  font-weight: bold;
+  min-width: 60px;
+}
+
+.info-detail p {
+  color: #444444;
+}
+
+.edit-btn {
+  background-color: #D4AF37;
+  color: #111111;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  font-weight: bold;
+  transition: opacity 0.3s;
+}
+
+.edit-btn:hover {
+  opacity: 0.8;
+}
+
+/* --- 6. تاريخ الطلبات --- */
+.orders-list {
+  list-style: none;
+  padding: 0;
+}
+
+.order-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 0;
+  border-bottom: 1px dashed #EEEEEE;
+  font-size: 0.95rem;
+}
+
+.order-item:last-child {
+  border-bottom: none;
+}
+
+.order-item span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.order-total {
+  font-weight: bold;
+  color: #D4AF37;
+}
+
+.order-status {
+  padding: 5px 10px;
+  border-radius: 5px;
+  font-weight: 600;
+}
+
+.status-livré {
+  background-color: #e6ffe6;
+  color: #28a745;
+}
+
+.status-encours {
+  background-color: #fff3cd;
+  color: #ffc107;
+}
+
+.view-all-link {
+  display: block;
+  text-align: right;
+  margin-top: 20px;
+  color: #D4AF37;
+  text-decoration: none;
+  font-weight: 600;
+}
+@media (max-width: 1300px) {
+
+  /* --- 1. القسم الرئيسي --- */
+.profile-section {
+  /* خلفية فاتحة */
+  padding: 150px 5% 80px 5%;
+}
+
+}
+@media (max-width: 430px) {
+
+  /* --- 1. القسم الرئيسي --- */
+.profile-section {
+  /* خلفية فاتحة */
+  padding: 120px 5% 80px 5%;
+}
+
+.profile-main-title {
+  font-size: 2rem;
+}
+}
+.order-name{
+  margin-left: 10px;
+  margin-right: 20px;
+  font-weight: 600;
+}
+/* 📱 7. التجاوب (Responsive) 📱 */
+@media (max-width: 992px) {
+  .profile-content-wrapper {
+    flex-direction: column;
+  }
+
+  .profile-sidebar {
+    width: 100%;
+  }
+
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .order-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .order-total {
+    margin-left: 28px;
+  }
+}
+
+
+
+
+
+
+
+
+
+
+.order-product-img{
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+}
+
+
+/* مثال لتنسيق CSS أساسي (يمكنك تكييفه ليناسب مشروعك) */
+
+/* تنسيق قسم Google */
+.google-auth-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+/* فاصل "أو" */
+.separator {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    margin: 20px 0;
+    width: 100%; /* يجب أن يتطابق مع عرض نموذجك */
+    max-width: 350px;
+}
+
+.separator::before,
+.separator::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid #ddd;
+}
+
+.separator:not(:empty)::before {
+    margin-right: .5em;
+}
+
+.separator:not(:empty)::after {
+    margin-left: .5em;
+}
+
+.separator span {
+    font-size: 0.85em;
+    color: #888;
+    background-color: white; /* يجب أن يتطابق مع خلفية النموذج */
+    padding: 0 10px;
+    font-weight: bold;
+}
+
+/* تنسيق رسالة الخطأ */
+.error-message {
+    background-color: #fce8e8;
+    color: #c00;
+    border: 1px solid #c00;
+    padding: 10px 15px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    max-width: 350px;
+    width: 100%;
+    text-align: center;
+    font-size: 0.95em;
+}
+
+/* تأكد من أن auth-card-container يحدد أقصى عرض (max-width) */
+.auth-card-container {
+    /* ... التنسيقات الحالية ... */
+    max-width: 400px; 
+    margin: 50px auto; 
+    padding: 20px 20px 20px 20px; 
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1); 
+    border-radius: 8px;
+width: 100%;
+    /* 2. حاوية البطاقة */
+  background-color: #FFFFFF;
+  border-top: 5px solid #D4AF37;
+  /* لمسة ذهبية في الأعلى */
+}
+
+
+
+
+
+
+
+
+
+
+
+/* هذا الكلاس يمنع التمرير */
+.no-scroll {
+    overflow: hidden;
+}
+
+
+/* --- Overlay (Arrière-plan gris foncé semi-transparent) --- */
+/* --- Overlay (Calque de superposition pour assombrir la page) --- */
+.modal-overlay {
+  /* This darkens the entire viewport behind the modal */
+  background-color: rgba(0, 0, 0, 0.6);
+  height: 100%;
+  /* Make sure it covers the whole screen and stays in place */
+  position: fixed;
+  top: 0;
+  left: 0;
+width: 100%;  
+  /* Ensure the overlay is on top of page content but below the modal itself */
+  z-index: 1000; 
+  
+  /* Set up for centering the modal inside */
+  display: flex;
+  justify-content: center; /* Center horizontally */
+  align-items: center;   /* Center vertically */
+}
+
+/* --- Confirmation Modal (La boîte elle-même) --- */
+.confirmation-modal {
+  /* Style for the modal box itself */
+  background-color: white;
+  padding: 20px;
+  margin: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  
+  /* Ensure it appears above the dark overlay */
+  z-index: 1001; 
+  
+  /* Optional: Limit the size */
+  max-width: 400px; 
+  width: 90%; 
+  text-align: center;
+}
+.confirmation-modal p {
+    font-size: 1.1em;
+    margin-bottom: 25px;
+    font-weight: 500;
+}
+
+/* --- Section des Boutons (Actions) --- */
+.modal-actions {
+    display: flex;
+    justify-content: space-around;
+    gap: 15px; /* Espacement entre les boutons */
+}
+
+.modal-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+    font-weight: bold;
+    transition: background-color 0.2s ease;
+    flex-grow: 1; /* Permet aux boutons de prendre la même largeur */
+}
+
+/* Style du bouton de confirmation (Déconnexion) */
+.confirm-btn {
+    background-color: #e53935; /* Rouge pour l'action destructive */
+    color: white;
+}
+
+.confirm-btn:hover {
+    background-color: #c62828;
+}
+
+/* Style du bouton d'annulation */
+.cancel-btn {
+    background-color: #f0f0f0; /* Gris clair */
+    color: #333;
+    border: 1px solid #ccc;
+}
+
+.cancel-btn:hover {
+    background-color: #e0e0e0;
+}
+
+/* --- Animation (Optionnel) --- */
+@keyframes fadeIn {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    from {
+        opacity: 0;
+    }
+}
+
+@media (max-width: 600px) {
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*
+ * Abonnementvip.css
+ * Styles pour la page d'abonnement VIP
+ */
+
+/* Définition des variables de couleurs pour une gestion plus facile */
+:root {
+  --background-color: #f5f5f5;
+  --heading-primary-color: #333333;
+  --accent-color: #d4af37; /* Or/Bronze */
+  --text-color: #444444;
+  --white-color: #ffffff;
+  --border-color: #cccccc;
+}
+
+/* --- Section Générale et Conteneur de Page --- */
+.page-container {
+  background-color: var(--background-color);
+  min-height: 100vh;
+  padding: 240px 20px;
+  text-align: center;
+  /* Direction par défaut LTR pour le français */
+}
+
+.title {
+  color: var(--heading-primary-color);
+  font-size: 3.2em;
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+  margin-bottom: 30px;
+  font-weight: 800;
+}
+
+.subtitle {
+  color: var(--text-color);
+  font-size: 1.2em;
+  margin-bottom: 40px;
+}
+
+/* --- Carte de l'Abonnement (Pricing Card) --- */
+.pricing-card {
+  max-width: 400px;
+  margin: 0 auto 40px;
+  padding: 30px;
+  background-color: var(--white-color);
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+  border: 2px solid var(--accent-color);
+  transition: transform 0.3s ease-in-out;
+}
+
+.card-title_vip {
+  color: var(--accent-color);
+  font-size: 1.8em;
+  margin-bottom: 20px;
+  font-weight: 600;
+}
+
+.price {
+  color: var(--heading-primary-color);
+  font-size: 3em;
+  font-weight: 800;
+  margin-bottom: 15px;
+}
+
+.features-list {
+  list-style-type: none;
+  padding: 0;
+  text-align: left;
+  margin-bottom: 30px;
+}
+
+.feature-item {
+  color: var(--text-color);
+  padding: 8px 0;
+  border-bottom: 1px dashed var(--border-color);
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 10px;
+}
+
+.check-icon {
+  color: var(--accent-color);
+  font-size: 1.2em;
+}
+
+.cta-button {
+  background-color: var(--accent-color);
+  color: var(--white-color);
+  border: none;
+  padding: 12px 30px;
+  font-size: 1.1em;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  width: 100%;
+  transition: background-color 0.3s;
+}
+
+.cta-button:hover {
+    background-color: #bfa02e; /* Une nuance légèrement plus foncée pour l'effet hover */
+}
+
+/* --- Section des Méthodes de Paiement (Cartes) --- */
+.payment-section {
+  max-width: 1200px;
+  margin: 50px auto;
+}
+
+.payment-title {
+  color: var(--heading-primary-color);
+  font-size: 2em;
+  margin-bottom: 30px;
+  border-bottom: 3px solid var(--accent-color);
+  padding-bottom: 10px;
+  text-align: center;
+}
+
+.payment-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 30px;
+  text-align: left;
+}
+
+.payment-card {
+  background-color: var(--white-color);
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  border-top: 5px solid var(--accent-color);
+  transition: transform 0.3s ease-in-out;
+}
+
+.payment-card:hover {
+    transform: translateY(-5px); /* Léger soulèvement au survol */
+}
+
+.method-icon {
+  color: var(--accent-color);
+  font-size: 2.5em;
+  margin-bottom: 15px;
+}
+
+.method-name {
+  color: var(--heading-primary-color);
+  font-size: 1.4em;
+  margin-bottom: 15px;
+  font-weight: 700;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 10px;
+}
+
+.method-details {
+  color: var(--text-color);
+  line-height: 1.7;
+  font-size: 0.95em;
+}
+
+.highlight-box {
+  background-color: var(--background-color);
+  color: var(--heading-primary-color);
+  padding: 12px;
+  border-radius: 6px;
+  font-weight: bold;
+  margin-top: 10px;
+  margin-bottom: 15px;
+  font-family: monospace;
+  overflow-wrap: break-word;
+}
+
+.contact-info {
+    margin-top: 50px; 
+    color: var(--heading-primary-color); 
+    font-weight: bold; 
+    text-align: center;
+}
+
+@media (max-width: 1300px) {
+/* --- Section Générale et Conteneur de Page --- */
+.page-container {
+
+  padding: 150px 20px;
+
+}
+}
+@media (max-width: 768px) {
+  
+.title {
+  font-size: 2.5rem;
+}
+.page-container {
+
+  padding: 130px 20px;
+
+}
+}
+
+@media (max-width: 425px) {
+  
+.title {
+  font-size: 2rem;
+}}
+/* --- Style du bouton de vérification dans les cartes de paiement --- */
+.verify-button {
+    background-color: var(--heading-primary-color); /* رمادي داكن لتمييزه عن زر الاشتراك */
+    color: var(--white-color);
+    border: none;
+    padding: 10px 20px;
+    font-size: 0.9em;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    width: 100%;
+    margin-top: 20px; /* فصله عن المحتوى */
+    transition: background-color 0.3s, transform 0.1s;
+}
+
+.verify-button:hover {
+    background-color: var(--accent-color); /* يصبح ذهبياً عند المرور لربطه بالـ VIP */
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* تعديل عرض الموبايل (لتجنب ضيق البطاقات) */
+@media (max-width: 768px) {
+    .payment-card-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+
+.vip-button{
+  border: red solid 0px;
+  background-color: #f0c846;
+  padding: 9px 10px;
+  margin-top: -9px;
+  transition: 0.2s;
+  cursor: pointer;
+}
+.vip-button:hover{
+  background-color: #f0c84615;
+  color: red;
+}
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+.modal-content {
+  background: #fff;
+  padding: 25px;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 420px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+.modal-content h2 {
+  margin-bottom: 15px;
+  text-align: center;
+  color: #333;
+}
+
+.modal-content input[type="text"],
+.modal-content input[type="email"],
+.modal-content input[type="file"] {
+  width: 100%;
+  margin-bottom: 12px;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
+
+.modal-buttons {
+  display: flex;
+  justify-content: space-between;
+}
+
+.submit-btn {
+  background: #d4af37;
+  color: white;
+  padding: 10px 15px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+}
+
+.cancel-btn {
+  background: #ccc;
+  color: #333;
+  padding: 10px 15px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+}
+
+.confirmation-message {
+  background: #e0ffe0;
+  color: #2c662d;
+  text-align: center;
+  padding: 15px;
+  margin: 20px auto;
+  width: 80%;
+  border-radius: 8px;
+  font-weight: bold;
+}
+
+
+
+
+
+/* نافذة منبثقة */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+.modal-content {
+  background: #fff;
+  border-radius: 12px;
+  padding: 25px;
+  width: 90%;
+  max-width: 420px;
+  text-align: left;
+  box-shadow: 0 5px 25px rgba(0, 0, 0, 0.3);
+}
+
+.modal-content h2 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.modal-content label {
+  display: block;
+  margin-bottom: 10px;
+  font-weight: 500;
+}
+
+.modal-content input {
+  width: 100%;
+  padding: 8px;
+  margin-top: 4px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.modal-actions button {
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+}
+
+.modal-actions .send-button {
+  background: #d4af37;
+  color: white;
+}
+
+/* ✅ رسالة النجاح */
+.success-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.success-box {
+  background: #fff;
+  color: #222;
+  border-radius: 12px;
+  padding: 25px 35px;
+  font-size: 16px;
+  font-weight: 500;
+  max-width: 450px;
+  text-align: center;
+  line-height: 1.5;
+  box-shadow: 0 5px 25px rgba(0, 0, 0, 0.3);
+}
+
+
+
+
+
+
+.error-message {
+    color: #cc0000;
+    background-color: #ffebeb;
+    padding: 10px;
+    border: 1px solid #cc0000;
+    border-radius: 4px;
+    margin-bottom: 15px;
+    text-align: center;
+    font-weight: bold;
+}
+
+.success-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start; /* Afficher en haut */
+    z-index: 1000; /* Assurez-vous qu'il est au-dessus des autres éléments */
+    pointer-events: none; /* Permet de cliquer à travers l'overlay */
+    padding-top: 50px;
+}
+
+.success-box {
+    background-color: #e6ffed;
+    color: #007c2a;
+    padding: 20px;
+    border: 1px solid #007c2a;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    text-align: center;
+    max-width: 400px;
+}
+
+/* Assurez-vous que modal-overlay et modal-content sont bien stylisés aussi */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 999;
+}
+
+.modal-content {
+    background-color: white;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    width: 90%;
+    max-width: 500px;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+:root {
+    --color-background: #f5f5f5; /* Gris très clair, fond */
+    --color-text-dark: #333333; /* Texte et titres sombres */
+    --color-accent-gold: #dabb57; /* Or Chic, pour boutons et accents */
+    --color-link-hover: #c99e40; /* Or légèrement plus foncé pour le hover */
+    --color-border-light: #e0e0e0; /* Bordure plus claire */
+    --color-error: #e74c3c;
+    --color-subtle-text: #666666; /* Pour les textes secondaires */
+}
+
+/* --- MISE EN PAGE GÉNÉRALE & FOND --- */
+
+.cart-page-wrapper {
+    max-width: 1200px;
+    margin: 40px auto;
+    padding: 0 20px;
+    margin-top: 200px; 
+    font-family: 'Helvetica Neue', Arial, sans-serif; 
+}
+
+.cart-title {
+    text-align: center;
+    margin-bottom: 50px; 
+    font-size: 3em;
+    color: var(--color-text-dark); 
+    font-weight: 800; 
+    letter-spacing: 1px; 
+    display: block;
+    width: fit-content;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.cart-content {
+    display: flex;
+    gap: 30px;
+    align-items: flex-start;
+}
+
+/* ------------------ LISTE DES ARTICLES (GAUCHE) ------------------ */
+
+.cart-items-list {
+    flex: 2;
+    background-color: white; 
+    border-radius: 10px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08); 
+    padding: 0 20px;
+}
+
+.cart-item {
+    display: grid;
+    /* CORRIGÉ: Nouvelle grille pour l'alignement à droite */
+    /* Colonnes: Image | Détails (2fr) | Espace Vide (auto) | Actions Groupées (200px) */
+display: flex;
+    align-items: center;
+    gap: 15px; 
+    
+    border-bottom: 1px solid var(--color-border-light);
+    padding: 25px 0; 
+}
+
+.cart-item:last-child {
+    border-bottom: none;
+}
+
+.item-image {
+    width: 100px;
+    height: 90px;
+    object-fit: cover;
+    border-radius: 8px; 
+    border: 1px solid var(--color-border-light);
+}
+
+.item-details h3 {
+    margin: 0;
+    font-size: 1.3em;
+    font-weight: 500;
+    color: var(--color-text-dark);
+}
+
+.item-price-unit {
+    margin: 5px 0 0;
+    font-size: 1.1em;
+    color:#d4af37; 
+    font-weight: 600;
+        font-family: 'Helvetica Neue', Arial, sans-serif; 
+
+}
+
+/* GROUPE D'ACTION (Quantité, Sous-total, Suppression) */
+.item-actions-group {
+    display: flex; 
+    align-items: center;
+    justify-content: flex-end; /* Pousse tout le groupe à droite */
+    gap: 25px; 
+    white-space: nowrap; 
+}
+
+/* Contrôle de la quantité */
+.item-quantity-control {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100px; 
+    border: 1px solid var(--color-border-light);
+    border-radius: 50px; 
+    padding: 5px;
+    box-sizing: border-box;
+}
+
+.quantity-btn {
+    background: none;
+    border: none;
+    color: var(--color-accent-gold);
+    padding: 5px 8px;
+    cursor: pointer;
+    font-size: 0.9em;
+    border-radius: 50%;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.quantity-btn:hover:not(:disabled) {
+    background-color: #f0f0f0;
+    color: var(--color-link-hover);
+}
+
+.quantity-btn:disabled {
+    color: #cccccc;
+    cursor: not-allowed;
+}
+
+.item-quantity {
+    min-width: 20px;
+    text-align: center;
+    font-weight: 600; 
+    color: var(--color-text-dark);
+}
+
+.item-subtotal {
+    font-weight: 700;
+    color: var(--color-text-dark); 
+    font-size: 1.2em;
+    text-align: right; 
+    min-width: 60px;
+}
+
+.remove-item-btn {
+    background: none;
+    border: none;
+    color: var(--color-border-light); 
+    cursor: pointer;
+    font-size: 1.1em;
+    padding: 10px;
+    transition: color 0.2s;
+}
+
+.remove-item-btn:hover {
+    color: var(--color-error);
+}
+
+/* ------------------ RÉSUMÉ DU PANIER (DROITE) ------------------ */
+
+.cart-summary {
+    background-color: white; 
+    padding: 30px; 
+    border-radius: 10px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+    height: fit-content; /* Assure que le conteneur ne dépasse pas le contenu */
+    top: 20px; 
+}
+
+.cart-summary h3 {
+    color: var(--color-text-dark);
+    font-size: 1em;
+    font-weight: 600;
+    border-bottom: 1px solid var(--color-border-light); 
+    padding-bottom: 15px;
+    margin-top: 0;
+    margin-bottom: 25px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.summary-line {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 15px;
+    font-size: 1.05em;
+    color: var(--color-subtle-text);
+}
+
+.summary-line span:last-child {
+    color: var(--color-text-dark);
+    font-weight: 500;
+}
+
+.tax-line {
+    border-top: 1px solid var(--color-border-light); 
+    padding-top: 15px;
+    margin-top: 15px;
+}
+
+.total-line {
+    border-top: 2px solid var(--color-accent-gold);
+    padding-top: 20px;
+    font-size: 1.0em; 
+    margin-bottom: 30px;
+}
+
+.total-line strong {
+    color: var(--color-accent-gold); 
+    font-weight: 700;
+}
+
+.checkout-btn {
+    width: 100%;
+    padding: 18px 30px;
+    background-color: var(--color-accent-gold); 
+    color: white;
+    border: none;
+    border-radius: 8px; 
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s, box-shadow 0.2s;
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 1px;
+    box-shadow: 0 4px 10px rgba(218, 187, 87, 0.3);
+}
+
+.checkout-btn:hover {
+    background-color: var(--color-link-hover);
+    box-shadow: 0 6px 15px rgba(201, 158, 64, 0.4);
+}
+
+.continue-shopping-link {
+    display: block;
+    text-align: center;
+    margin-top: 25px;
+    color:rgba(0, 0, 0, 0.63);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s;
+}
+
+.continue-shopping-link:hover {
+    color: var(--color-link-hover);
+}
+
+/* ------------------ PANIER VIDE ------------------ */
+
+.empty-cart {
+    text-align: center;
+    padding: 80px 40px;
+    border: 2px solid var(--color-border-light);
+    border-radius: 10px;
+    max-width: 600px;
+    margin: 80px auto;
+    background-color: white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.empty-cart .cart-title {
+    color: var(--color-accent-gold);
+    font-size: 2.2em;
+    border-bottom: none;
+    margin-bottom: 10px;
+}
+
+.empty-cart p {
+    margin: 20px 0 40px;
+    font-size: 1.1em;
+    color: var(--color-subtle-text);
+}
+
+.continue-shopping-btn {
+    display: inline-block;
+    padding: 15px 30px;
+    background-color: var(--color-accent-gold);
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    transition: background-color 0.3s;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.continue-shopping-btn:hover {
+    background-color: var(--color-link-hover);
+}
+
+.dasable_phone{
+  display: none;
+}
+/* ------------------ RESPONSIVE (MOBILE) ------------------ */
+
+@media (max-width: 1300px) {
+    .cart-page-wrapper {
+        margin-top: 140px;
+    }
+}
+@media (max-width: 992px) {
+    .cart-item {
+        /* Ajustement de la grille pour les tablettes */
+        grid-template-columns: 100px 1.5fr auto 180px; 
+    }
+}
+
+@media (max-width: 768px) {
+    .cart-page-wrapper {
+        margin: 20px 10px;
+        padding: 0;
+        margin-top: 100px;
+    }
+    
+    .cart-title {
+        font-size: 2.2em;
+        margin-bottom: 30px;
+    }
+
+    .cart-content {
+        flex-direction: column;
+        gap: 30px;
+    }
+    
+    .cart-items-list {
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08); 
+              box-sizing: border-box;
+              width: 100%;
+
+    }
+
+    .cart-item {
+        /* CORRIGÉ: Structure mobile simplifiée */
+        grid-template-columns: 80px 1fr 30px; 
+        grid-template-areas: 
+            "image details remove"
+            "image actions actions"; /* Nouvelle zone pour regrouper les actions en bas */
+        gap: 5px 10px;
+        padding: 15px 0;
+        margin-left: 0;
+        align-items: flex-start;
+    }
+
+    .item-image {
+        grid-area: image;
+        height: 70px;
+    }
+
+    .item-details {
+        grid-area: details;
+        padding-left: 5px;
+      font-size:0.8rem;
+    }
+
+    .item-price-unit {
+        display: block; 
+        padding-left: 5px;
+    }
+
+    /* Regrouper les actions */
+    .item-actions-group {
+        grid-area: actions;
+        justify-content: space-between; /* Pour étaler Quantité et Sous-total */
+        padding-top: 10px;
+        margin-left: -5px; /* Décalage pour l'alignement */
+        gap: 0;
+    }
+    
+    .remove-item-btn {
+        grid-area: remove;
+        justify-self: end;
+        align-self: center;
+        margin-right: -10px; /* Aligner l'icône sur le bord */
+    }
+
+    .item-quantity-control {
+        border: 1px solid var(--color-border-light);
+        width: 120px;
+        padding: 3px;
+    }
+    
+    .item-subtotal {
+        min-width: unset;
+    }
+    
+    .cart-summary {
+        width: 100%;
+              box-sizing: border-box;
+
+    }
+}
+@media (max-width: 600px) {
+  .dasable_phone{
+   display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100px; 
+    border: 1px solid var(--color-border-light);
+    border-radius: 50px; 
+    padding: 5px;
+    box-sizing: border-box;
+  
+}
+.dasable_phoneono{
+  display: none;
+}
+
+}
+
+@media (max-width: 600px) {
+  .cart-page-wrapper{
+        margin-top: 120px; 
+
+
+  }
+}
+.bloc_button{
+  display: flex;
+  position: relative;
+  float: right;
+  margin-left: auto;
+}
+.button_Continuer{
+  width: 100%;
+        box-sizing: border-box;
+
+}
+
+
+
+
+/* Styles pour empêcher le défilement du corps */
+.no-scroll {
+    overflow: hidden;
+}
+
+/* 1. Overlay (Fond gris transparent) */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000; /* Assurez-vous qu'il est au-dessus de tout */
+ 
+}
+
+/* 2. Contenu de la Modale */
+.modal-content {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    position: relative;
+    max-width: 500px;
+    margin: 20px;
+}
+
+.modal-content h3 {
+    color: #333;
+    margin-top: 0;
+    border-bottom: 2px solid #eee;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+.modal-content input{
+        box-sizing: border-box;
+
+}
+
+.modal-btn {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    margin-top: 20px;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    cursor: pointer;
+    text-align: center;
+    text-decoration: none;
+}
+
+/* Style spécifique pour la confirmation */
+.confirmation-modal .confirm-btn {
+    background-color: #A9844A; /* Couleur dorée */
+    color: white;
+    font-weight: bold;
+}
+
+/* Style du formulaire invité */
+.guest-form-modal input {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.guest-form-modal hr {
+    margin: 20px 0;
+    border: 0;
+    border-top: 1px dashed #ddd;
+}
+
+.guest-form-modal .login-btn {
+    background-color: #1a1a1a;
+    color: white;
+    margin-top: 10px;
+}
+
+.guest-form-modal .guest-btn {
+    background-color: #d4af37;
+    color: white;
+}
+
+.guest-form-modal .small-text {
+    font-size: 0.85rem;
+    margin-bottom: 20px;
+    color: #666;
+}
+
+/* Bouton de fermeture */
+.close-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #aaa;
+}
+
+
+
+
+
+
+
+
+
+
+/* Styles pour rendre le lien VIP grisé s'il est désactivé */
+.disabled-vip-link {
+    color: #aaa !important; /* Couleur gris clair pour le texte */
+    pointer-events: auto !important; /* Garder l'événement de clic actif pour le modal */
+    cursor: default !important; /* Changer le curseur */
+    opacity: 0.6; /* Le rendre légèrement transparent */
+    transition: none; /* Enlever la transition de survol normale */
+}
+
+/* Enlever les effets de survol pour le lien désactivé */
+.disabled-vip-link:hover, 
+.disabled-vip-link:focus {
+    color: #aaa !important;
+    background-color: transparent !important;
+    text-decoration: none !important;
+}
+
+/* Styles pour les modales */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.confirmation-modal {
+    background: white;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    text-align: center;
+    max-width: 400px;
+    width: 90%;
+}
+
+.vip-modal h3 {
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.vip-modal p {
+    color: #555;
+    margin-bottom: 20px;
+    line-height: 1.4;
+}
+
+.modal-actions {
+    margin-top: 20px;
+    display: flex;
+    justify-content: space-around;
+    gap: 10px;
+}
+
+.modal-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    text-decoration: none; /* Important pour le Link */
+}
+
+.confirm-btn {
+    background-color: #FFD700; /* Couleur dorée */
+    color: #333;
+}
+
+.cancel-btn {
+    background-color: #ccc;
+    color: #333;
+}
+
+/* Bloquer le scroll du body quand un modal est ouvert */
+.no-scroll {
+    overflow: hidden;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* --- Overlay et Modal général --- */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.order-modal-content {
+    background: white;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    max-width: 550px;
+    width: 90%;
+    position: relative;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-close-btn {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    color: #333;
+}
+
+.modal-title {
+    color: #444;
+    border-bottom: 2px solid #f0f0f0;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+/* Bloquer le scroll du body quand un modal est ouvert */
+.no-scroll {
+    overflow: hidden;
+}
+
+
+/* --- Section Résumé Produit --- */
+.product-summary {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px;
+    background: #f9f9f9;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.summary-image {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 4px;
+}
+
+.summary-name {
+    font-weight: bold;
+    color: #333;
+    margin: 0;
+}
+
+.summary-price {
+    color: #666;
+    font-size: 0.9em;
+    margin: 0;
+}
+
+/* --- Contrôle de la Quantité --- */
+.quantity-control-group {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 0;
+    border-top: 1px dashed #ddd;
+    border-bottom: 1px dashed #ddd;
+    margin-bottom: 20px;
+}
+
+.quantity-controls {
+    display: flex;
+    align-items: center;
+}
+
+.quantity-controls button {
+    background: none;
+    border: none;
+    color: #007bff; /* Ou votre couleur d'accent, ex: #FFD700 */
+    font-size: 24px;
+    cursor: pointer;
+    padding: 0 10px;
+    transition: color 0.2s;
+}
+
+.quantity-controls button:hover:not(:disabled) {
+    color: #0056b3;
+}
+
+.quantity-controls button:disabled {
+    color: #ccc;
+    cursor: not-allowed;
+}
+
+.current-qty {
+    font-size: 1.2em;
+    font-weight: bold;
+    padding: 0 15px;
+}
+
+.total-price-display strong {
+    color: #d6b600; /* Couleur d'accentuation pour le prix */
+    font-size: 1.1em;
+}
+
+/* --- Formulaire Client (Non Logged In) --- */
+.customer-form-group {
+    margin-bottom: 25px;
+    padding: 15px;
+    border: 1px solid #eee;
+    border-radius: 8px;
+}
+
+.form-subtitle {
+    color: #555;
+    margin-top: 0;
+    margin-bottom: 15px;
+    border-bottom: 1px dotted #ddd;
+    padding-bottom: 5px;
+}
+
+.input-row {
+    display: flex;
+    flex-direction: column; 
+    gap: 15px;
+}
+
+.input-group {
+    display: flex;
+    align-items: center;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 5px 10px;
+}
+
+.input-icon {
+    color: #aaa;
+    margin-right: 20px;
+    margin-left: -10px;
+    margin-top: -70px;
+}
+
+.input-group input {
+    flex-grow: 1;
+    border: none;
+    padding: 8px 0;
+    font-size: 1em;
+    outline: none;
+}
+
+/* --- Actions du Modal --- */
+.modal-actions-order {
+    display: flex;
+    justify-content: flex-end; /* Aligner à droite */
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.confirm-order-btn, .cancel-order-btn {
+    padding: 12px 25px;
+    border: none;
+    border-radius: 5px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.confirm-order-btn {
+    background-color: #d4af37; 
+    color: #333;
+}
+
+.confirm-order-btn:hover {
+    background-color: #e6c200;
+}
+
+.cancel-order-btn {
+    background-color: #e0e0e0;
+    color: #555;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* ================================================= */
+/* Base Styles (Desktop First)                       */
+/* ================================================= */
+
+.navbar-admin {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 30px;
+    background-color: #2c3e50; /* Dark Blue/Grey */
+    color: white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    position: relative;
+    z-index: 1000; /* Ensure navbar is above content */
+}
+
+.navbar-admin-brand {
+    font-size: 1.5em;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+/* Desktop Links */
+.navbar-admin-links {
+    display: flex;
+    gap: 20px;
+    transition: all 0.3s ease-in-out;
+}
+
+.navbar-admin-link {
+    color: white;
+    text-decoration: none;
+    padding: 8px 15px;
+    border-radius: 5px;
+    transition: background-color 0.2s;
+}
+
+.navbar-admin-link:hover {
+    background-color: #34495e;
+}
+
+/* Hamburger Button (Hidden on Desktop) */
+.menu-toggle-button {
+    display: none;
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    font-size: 1.5em;
+    padding: 0;
+}
+
+/* ================================================= */
+/* Responsive Styles (Mobile View)                   */
+/* ================================================= */
+
+@media (max-width: 1400px) {
+    
+    .navbar-admin {
+        /* Align items differently on mobile */
+        flex-direction: row; 
+        align-items: center;
+    }
+
+    /* 1. Show the hamburger button */
+    .menu-toggle-button {
+        display: block; 
+    }
+
+    /* 2. Style the links container */
+    .navbar-admin-links {
+        /* Initial state: Hidden off-screen */
+        position: absolute;
+        top: 100%; /* Position right below the navbar */
+        left: 0;
+        width: 100%;
+        
+        /* Make it vertical */
+        flex-direction: column; 
+        
+        /* Hide by default and animate it */
+        max-height: 0;
+        overflow: hidden;
+        
+        background-color: #2c3e50;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+        transition: max-height 0.3s ease-in-out;
+    }
+    
+    /* 3. State when the menu is OPEN */
+    .navbar-admin-links.open {
+        /* Show the menu by giving it a large max-height */
+        max-height: 500px; /* Needs to be larger than content height */
+        padding: 10px 0;
+    }
+
+    /* 4. Style individual links in the collapsed menu */
+    .navbar-admin-link {
+        padding: 12px 30px;
+        width: 100%;
+        text-align: left;
+        border-bottom: 1px solid #34495e;
+    }
+
+    .navbar-admin-link:last-child {
+        border-bottom: none;
+    }
+}
+
+
+
+/* ------------------------------------------- */
+/* أنماط الـ Modal (للتحديث) */
+/* ------------------------------------------- */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    animation: fadeIn 0.3s ease-out;
+}
+
+.modal-content h3 {
+    margin-top: 0;
+    color: #333;
+    border-bottom: 2px solid #eee;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.modal-actions .cancel-button {
+    background-color: #aaa;
+}
+
+/* ------------------------------------------- */
+/* أنماط التنبيهات (Notification/Toast) */
+/* ------------------------------------------- */
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    min-width: 300px;
+    padding: 15px 20px;
+    border-radius: 8px;
+    color: white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: bold;
+    z-index: 2000;
+    animation: slideIn 0.5s ease-out, fadeOut 0.5s 2.5s forwards; 
+}
+
+.notification.success {
+    background-color: #4CAF50; /* أخضر */
+}
+
+.notification.error {
+    background-color: #F44336; /* أحمر */
+}
+
+.notification button {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+    margin-left: 15px;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+.notification button:hover {
+    opacity: 1;
+}
+
+/* ------------------------------------------- */
+/* مفاتيح الحركة (Keyframes) */
+/* ------------------------------------------- */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes fadeOut {
+    to { opacity: 0; visibility: hidden; }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+.custom-modal-backdrop-success {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modern-modal-content-success {
+    background: white;
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    width: 90%;
+    max-width: 450px;
+    text-align: center;
+    position: relative;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.close-btn-success {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    color: #999;
+    transition: color 0.2s;
+}
+
+.close-btn-success:hover {
+    color: #333;
+}
+
+.success-icon-section {
+    margin-bottom: 20px;
+}
+
+.check-icon-large {
+    color: #4CAF50; 
+    font-size: 60px;
+    animation: bounceIn 0.5s ease-out;
+}
+
+.success-modal-title {
+    color: #333;
+    font-size: 24px;
+    margin-bottom: 10px;
+    font-weight: 700;
+}
+
+.success-message-text {
+    color: #666;
+    font-size: 16px;
+    line-height: 1.5;
+    margin-bottom: 30px;
+}
+
+.modal-action-buttons-success {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.feedback-button-success {
+    background-color:#d7b33f;
+    color: black;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    transition: background-color 0.2s, transform 0.1s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.feedback-button-success:hover {
+    background-color: #a88307;
+    transform: translateY(-1px);
+}
+
+.return-button-success {
+    background-color: #e9ecef; 
+    color: #333;
+    padding: 12px 20px;
+    border: 1px solid #ced4da;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    transition: background-color 0.2s;
+}
+
+.return-button-success:hover {
+    background-color: #d8d8d8;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes bounceIn {
+    0% { transform: scale(0.3); opacity: 0; }
+    50% { transform: scale(1.1); opacity: 1; }
+    70% { transform: scale(0.9); }
+    100% { transform: scale(1); }
+}
+
+.feedback-textarea {
+    width: 100%;
+    padding: 15px;
+    margin-bottom: 20px;
+    border: 1px solid #ced4da;
+    border-radius: 8px;
+    box-sizing: border-box;
+    font-size: 16px;
+    resize: vertical;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.feedback-textarea:focus {
+    border-color: #d7b33f;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    outline: none;
+}
+
+
+
+
+
+
+
+
+.navbar-admin-link.active {
+    background-color: #D4AF37;
+    color: #333333;
+    font-weight: 700;
+    box-shadow: 0 2px 8px rgba(212, 175, 55, 0.4);
+}
