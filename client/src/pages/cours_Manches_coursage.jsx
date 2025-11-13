@@ -5,47 +5,9 @@ import Footer from '../comp/Footer';
 import { Link, useParams } from 'react-router-dom';
 import axios from 'axios';
 
-// **********************************************
-// ********* Composant de l'introduction vidéo *********
-// **********************************************
-const VideoIntroduction = ({ videoUrl, title }) => {
-    const actualTitle = decodeURIComponent(title);
-
-    return (
-        <div className="video-intro-container">
-            <div className="video-content-text">
-                <h2 className="video-title">Regardez : Introduction à l'Art de {actualTitle}</h2>
-                <p className="video-subtitle">
-                    Commencez votre voyage dans le monde de la conception et de la couture des manches. 
-                    Cette vidéo vous donne un aperçu des techniques que vous découvrirez dans les cours ci-dessous.
-                </p>
-                <div className="key-features">
-                    <span className="feature-item"><FaCheckCircle /> Bases du patron de manche</span>
-                    <span className="feature-item"><FaCheckCircle /> Types de manches avancées</span>
-                    <span className="feature-item"><FaCheckCircle /> Secrets de la couture haute gamme</span>
-                </div>
-            </div>
-            
-            <div className="video-player-wrapper">
-                <div className="video-responsive">
-                    <iframe
-                        src={videoUrl}
-                        title="Vidéo d'Introduction - Les Manches"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen
-                    ></iframe>
-                </div>
-            </div>
-        </div>
-    );
-};
-
-// **********************************************
-// *************** PAGE PRINCIPALE **************
-// **********************************************
-export default function Cours() {
-    const { courseTitle } = useParams();
-    const actualTitle = decodeURIComponent(courseTitle);
+export default function Leçons_Manches_coursage() {
+   const { leconTitle } = useParams();
+    const actualTitle = decodeURIComponent(leconTitle); 
 
     const [groups, setGroups] = useState([]); // تحتوي على كل المجموعات (object واحد يحتوي على courses[])
     const [loading, setLoading] = useState(true);

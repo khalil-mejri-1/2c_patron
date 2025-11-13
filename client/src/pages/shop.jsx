@@ -3,14 +3,215 @@ import { FaShoppingCart, FaSearch, FaChevronDown, FaTimes, FaUser, FaEnvelope, F
 import Navbar from '../comp/navbar';
 import Footer from '../comp/Footer';
 
-// 🚨 Les catégories sont maintenant générées dynamiquement ou définies comme un ensemble de base
-const categories = ['Tous', 'Robes', 'Tissus', 'Matériels', 'Accessoires'];
+// 🚨 قائمة الفئات النهائية بناءً على طلبك
+const categories = ['Tous', 'Homme', 'Famme', 'Enfant'];
 
-// ⚠️ Assurez-vous que cette URL est correcte pour votre environnement backend (par exemple, http://localhost:5000)
-const API_URL = '/api/products';
-const API_COMMAND_URL = '/api/commands';
+// ⚠️ Assurez-vous que cette URL est correctة pour votre environnement backend (par exemple, http://localhost:5000)
+const API_URL = 'https://2c-patron.vercel.app/api/products';
+const API_COMMAND_URL = 'https://2c-patron.vercel.app/api/commands';
 // 🆕 NOUVELLE URL POUR LES COMMENTAIRES
-const API_COMMENTAIRE_URL = '/api/commentaires';
+const API_COMMENTAIRE_URL = 'https://2c-patron.vercel.app/api/commentaires';
+
+
+// ====================================================================
+// 🚨 المكون المنفصل للنافذة المنبثقة (MODAL) - مع إضافة حالة الانتظار ⏳
+// ====================================================================
+
+const OrderModalComponent = ({ selectedProduct, quantity, handleQuantityChange, closeOrderModal, isLoggedIn, currentUserEmail, onOrderSuccess, onCustomerDataUpdate }) => {
+    
+    // 1. نقل حالة بيانات العميل إلى داخل المودال (الحل الجذري)
+    const [customerData, setCustomerData] = useState({
+        firstName: '',
+        adresse: '',
+        phone: ''
+    });
+    // 🆕 حالة الانتظار لزر الإرسال
+    const [isSubmittingOrder, setIsSubmittingOrder] = useState(false); 
+
+    const handleCustomerDataChange = (e) => {
+        const { name, value } = e.target;
+        
+        // تحديث الحالة الداخلية للمودال
+        const newData = { ...customerData, [name]: value };
+        setCustomerData(newData);
+        
+        // إرسال البيانات المحدثة للمكون الأب لتخزينها قبل الإغلاق (للاستخدام في Feedback)
+        onCustomerDataUpdate(newData); 
+    };
+
+    const handleConfirmOrder = async (e) => {
+        e.preventDefault();
+
+        if (!selectedProduct) return;
+
+        const calculatedTotal = selectedProduct.price * quantity;
+
+        const clientName = customerData.firstName;
+        const clientPhone = customerData.phone;
+        const shippingAddress = customerData.adresse;
+
+        // التحقق من صحة الحقول
+        if (!clientName || clientName.trim() === '' || !shippingAddress || !clientPhone) {
+            alert("Veuillez remplir toutes les informations de contact (Nom, Adresse, Téléphone).");
+            return;
+        }
+
+        // 🚨 تفعيل حالة الانتظار
+        setIsSubmittingOrder(true);
+
+        const orderData = {
+            totalAmount: calculatedTotal,
+            items: [{
+                productId: selectedProduct.id,
+                productName: selectedProduct.name,
+                productImage: selectedProduct.url,
+                quantity: quantity,
+                price: selectedProduct.price,
+            }],
+            clientName: clientName,
+            clientPhone: clientPhone,
+            shippingAddress: shippingAddress,
+            ...(isLoggedIn && { clientEmail: currentUserEmail }),
+        };
+
+        try {
+            const response = await fetch(API_COMMAND_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(orderData),
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                onOrderSuccess(result.commandId);
+            } else {
+                console.error("Échec de l'enregistrement de la commande:", result);
+                alert(`❌ Erreur lors de la soumission de la commande : ${result.message || 'Problème de connexion au serveur.'}`);
+            }
+
+        } catch (error) {
+            console.error("Erreur de réseau lors de la soumission:", error);
+            alert("❌ Erreur de réseau. Veuillez réessayer.");
+        } finally {
+            // 🚨 إيقاف حالة الانتظار سواء نجحت العملية أم فشلت
+            setIsSubmittingOrder(false); 
+        }
+    };
+
+
+    const totalPrice = (selectedProduct.price * quantity).toFixed(2);
+
+    return (
+        <div className="modal-overlay">
+            <div className="order-modal-content">
+                {/* 🚨 تعطيل زر الإغلاق أثناء الإرسال */}
+                <button className="modal-close-btn" onClick={closeOrderModal} disabled={isSubmittingOrder}><FaTimes /></button> 
+
+                <h2 className="modal-title">
+                    {isLoggedIn ? `Confirmer votre commande (Connecté)` : "Passer votre commande (Visiteur)"}
+                </h2>
+
+                <div className="product-summary">
+                    <img src={selectedProduct.url} alt={selectedProduct.alt} className="summary-image" />
+                    <div className="summary-details">
+                        <p className="summary-name">{selectedProduct.name}</p>
+                        <p className="summary-price">{selectedProduct.price.toFixed(2)} {selectedProduct.currency} / unité</p>
+                    </div>
+                </div>
+
+                <div className="quantity-control-group">
+                    <label>Quantité :</label>
+                    <div className="quantity-controls">
+                        <button type="button" onClick={() => handleQuantityChange(-1)} disabled={quantity <= 1 || isSubmittingOrder}>
+                            <FaMinusCircle />
+                        </button>
+                        <span className="current-qty">{quantity}</span>
+                        <button type="button" onClick={() => handleQuantityChange(1)} disabled={isSubmittingOrder}>
+                            <FaPlusCircle />
+                        </button>
+                    </div>
+                    <p className="total-price-display">
+                        Total : <strong>{totalPrice} {selectedProduct.currency}</strong>
+                    </p>
+                </div>
+
+                <form onSubmit={handleConfirmOrder}>
+                    <div className="customer-form-group">
+                        <h4 className="form-subtitle">Vos informations de contact</h4>
+
+                        <div className="input-row">
+                            <div className="input-group">
+                                <FaUser className="input-icon" />
+                                <input
+                                    type="text"
+                                    name="firstName"
+                                    placeholder="Nom et Prénom (Obligatoire)"
+                                    value={customerData.firstName}
+                                    onChange={handleCustomerDataChange}
+                                    required
+                                    disabled={isSubmittingOrder}
+                                />
+                            </div>
+
+                            <div className="input-group">
+                                <FaMapMarkerAlt className="input-icon" />
+                                <input
+                                    type="text"
+                                    name="adresse"
+                                    placeholder="Adresse (Obligatoire)"
+                                    value={customerData.adresse}
+                                    onChange={handleCustomerDataChange}
+                                    required
+                                    disabled={isSubmittingOrder}
+                                />
+                            </div>
+
+                            <div className="input-group">
+                                <FaPhoneAlt className="input-icon" />
+                                <input
+                                    type="tel"
+                                    name="phone"
+                                    placeholder="Numéro de Téléphone (Obligatoire)"
+                                    value={customerData.phone}
+                                    onChange={handleCustomerDataChange}
+                                    required
+                                    disabled={isSubmittingOrder}
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="modal-actions-order">
+                        <button 
+                            type="submit" 
+                            className="confirm-order-btn"
+                            // 🚨 تعطيل الزر في حال الإرسال
+                            disabled={isSubmittingOrder} 
+                        >
+                            {isSubmittingOrder ? (
+                                // 🚨 عرض أيقونة الانتظار عند الإرسال
+                                <> <FaSpinner className="spinner" style={{ animation: 'spin 1s linear infinite' }} /> Envoi...</>
+                            ) : (
+                                isLoggedIn ? "Confirmer la Commande" : "Soumettre la Demande"
+                            )}
+                        </button>
+                        <button type="button" onClick={closeOrderModal} className="cancel-order-btn" disabled={isSubmittingOrder}>
+                            Annuler
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+};
+
+
+// ====================================================================
+// المكون الرئيسي: ProductGrid
+// ====================================================================
 
 export default function ProductGrid() {
     // 🌟 NOUVEAUX ÉTATS لحالة المستخدم
@@ -40,14 +241,13 @@ export default function ProductGrid() {
     // 🆕 NOUVEL ÉTAT POUR LE MODAL DE COMMENTAIRE
     const [showFeedbackModal, setShowFeedbackModal] = useState(false); // <--- NOUVEL ÉTAT
 
-    // 📝 بيانات العميل (firstName الآن مطلوب دائمًا)
-    const [customerData, setCustomerData] = useState({
-        firstName: '', // يستخدم الآن دائماً
-        adresse: '',
-        phone: ''
-    });
+    // 📝 بيانات العميل (تم نقلها للمودال، لكن نحتاج نسخة للـ Feedback)
+    const [finalCustomerData, setFinalCustomerData] = useState({ firstName: '', adresse: '', phone: '' });
 
-    // 1. Logique d'authentification ET RÉCUPÉRATION DE DONNÉES
+
+    // ====================================================================
+    // 1A. CORRECTION : Logique d'authentification et Récupération des produits (S'exécute UNE SEULE FOIS)
+    // ====================================================================
     useEffect(() => {
         // Logique d'authentification والبيانات الأساسية
         const status = localStorage.getItem('login') === 'true';
@@ -89,8 +289,14 @@ export default function ProductGrid() {
 
         fetchProducts();
 
+    }, []); // ⬅️ DÉPENDANCE VIDE : Chargement unique.
+
+    // ====================================================================
+    // 1B. Logique de gestion du Scroll (Dépend uniquement من Modals)
+    // ====================================================================
+    useEffect(() => {
         // Gérer le scroll du body - MIS À JOUR
-        if (showOrderModal || showSuccessModal || showFeedbackModal) { // <--- AJOUT DE showFeedbackModal
+        if (showOrderModal || showSuccessModal || showFeedbackModal) {
             document.body.classList.add('no-scroll');
         } else {
             document.body.classList.remove('no-scroll');
@@ -99,18 +305,13 @@ export default function ProductGrid() {
         return () => {
             document.body.classList.remove('no-scroll');
         };
-    }, [showOrderModal, showSuccessModal, showFeedbackModal]); // <--- AJOUT DE showFeedbackModal
+    }, [showOrderModal, showSuccessModal, showFeedbackModal]);
 
-    // 2. Fonctions de gestion du modal والطلب (مُعدّلة)
+
+    // 2. Fonctions de gestion du modal والطلب 
     const handleOrderClick = (product) => {
         setSelectedProduct(product);
         setQuantity(1);
-        // إعادة تعيين بيانات العميل عند فتح المودال
-        setCustomerData({
-            firstName: '',
-            adresse: '',
-            phone: ''
-        });
         setShowOrderModal(true);
     };
 
@@ -124,7 +325,6 @@ export default function ProductGrid() {
         setLastCommandRef(null);
     };
     
-    // 🆕 Fonction pour fermer le modal de commentaire
     const closeFeedbackModal = () => {
         setShowFeedbackModal(false);
     };
@@ -137,98 +337,47 @@ export default function ProductGrid() {
         });
     };
 
-    const handleCustomerDataChange = (e) => {
-        const { name, value } = e.target;
-        setCustomerData(prev => ({ ...prev, [name]: value }));
+    // 🚨 دالة رد نداء تُستدعى من المودال عند نجاح الإرسال
+    const handleOrderSuccessCallback = (commandId) => {
+        setLastCommandRef(commandId);
+        closeOrderModal();
+        setShowSuccessModal(true);
     };
 
-    const handleConfirmOrder = async (e) => {
-        e.preventDefault();
-
-        if (!selectedProduct) return;
-
-        const calculatedTotal = selectedProduct.price * quantity;
-
-        // ✅ الآن نستخدم دائماً القيمة المُدخلة كاسم العميل
-        const clientName = customerData.firstName;
-        const clientPhone = customerData.phone;
-        const shippingAddress = customerData.adresse;
-
-        // ❌ تحقق من صحة الحقول الإجبارية (الاسم الآن مطلوب دائماً)
-        if (!clientName || clientName.trim() === '') {
-            alert("Veuillez remplir votre Nom et Prénom (Obligatoire).");
-            return;
-        }
-        if (!shippingAddress || !clientPhone) {
-            alert("Veuillez remplir l'Adresse et le Numéro de Téléphone (Obligatoire).");
-            return;
-        }
-
-        // 1. إعداد بيانات الطلب مع تضمين البريد للمسجلين فقط
-        const orderData = {
-            totalAmount: calculatedTotal,
-            items: [{
-                productId: selectedProduct.id,
-                productName: selectedProduct.name,
-                productImage: selectedProduct.url, // 🖼️ الإضافة الجديدة: إرسال صورة المنتج
-                quantity: quantity,
-                price: selectedProduct.price,
-            }],
-            clientName: clientName, // الاسم المُدخل يدوياً
-            clientPhone: clientPhone,
-            shippingAddress: shippingAddress,
-            // 🔑 إضافة البريد الإلكتروني إذا كان المستخدم مسجلاً
-            ...(isLoggedIn && { clientEmail: currentUserEmail }),
-        };
-
-        try {
-            // 2. إرسال الطلب إلى API
-            const response = await fetch(API_COMMAND_URL, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(orderData),
-            });
-
-            const result = await response.json();
-
-            if (response.ok) {
-                // 3. نجاح التسجيل: إغلاق مودال الطلب وعرض مودال النجاح
-                console.log("Commande Confirmée et enregistres:", result);
-                
-                // حفظ رقم الطلب
-                setLastCommandRef(result.commandId); 
-                
-                closeOrderModal(); // إغلاق مودال الطلب
-                setShowSuccessModal(true); // فتح مودال النجاح
-                
-            } else {
-                // 4. خطأ من API
-                console.error("Échec de l'enregistrement de la commande:", result);
-                alert(`❌ Erreur lors de la soumission de la commande : ${result.message || 'Problème de connexion au serveur.'}`);
-                return;
-            }
-
-        } catch (error) {
-            console.error("Erreur de réseau lors de la soumission:", error);
-            alert("❌ Erreur de réseau. Veuillez réessayer.");
-            return;
-        }
+    // 🚨 دالة لتخزين بيانات العميل من المودال قبل إغلاقه (لإرسالها للـ Feedback)
+    const handleCustomerDataUpdate = (data) => {
+        setFinalCustomerData(data);
     };
 
 
-    // 3. Logique de filtrage (unchanged)
+    // 3. Logique de filtrage (MODIFIÉ POUR INCLURE LA RECHERCHE PAR CATÉGORIE)
     const productsToFilter = fetchedProducts;
+    const lowerSearchTerm = searchTerm.toLowerCase();
 
     const filteredProducts = productsToFilter
+        .filter(product => {
+            
+            const isCategoryMatch = selectedCategory === 'Tous' || product.category === selectedCategory;
+            
+            if (!lowerSearchTerm) {
+                // Si le champ de recherche est vide, on se base uniquement sur la catégorie sélectionnée
+                return isCategoryMatch;
+            } else {
+                // Si le champ de recherche n'est PAS vide, on cherche dans le nom OU la catégorie
+                const isNameMatch = product.name.toLowerCase().includes(lowerSearchTerm);
+                const isSearchCategoryMatch = product.category.toLowerCase().includes(lowerSearchTerm);
+
+                // Si une catégorie spécifique est sélectionnée, le produit doit appartenir à cette catégorie ET correspondre au terme de recherche (soit par nom, soit par catégorie)
+                if (selectedCategory !== 'Tous') {
+                    return isCategoryMatch && (isNameMatch || isSearchCategoryMatch);
+                } else {
+                    // Si 'Tous' est sélectionné, le produit doit correspondre au terme de recherche dans le nom OU la catégorie
+                    return isNameMatch || isSearchCategoryMatch;
+                }
+            }
+        })
         .filter(product =>
-            selectedCategory === 'Tous' || product.category === selectedCategory
-        )
-        .filter(product =>
-            product.name.toLowerCase().includes(searchTerm.toLowerCase())
-        )
-        .filter(product =>
+            // Le filtre par prix reste simple
             product.price <= priceRange
         );
 
@@ -239,115 +388,13 @@ export default function ProductGrid() {
         setIsFilterOpen(false);
     };
 
-    // 4. Composant du Modal de Commande (unchanged)
-    const OrderModal = () => {
-        if (!selectedProduct) return null;
-
-        const totalPrice = (selectedProduct.price * quantity).toFixed(2);
-
-        return (
-            <div className="modal-overlay">
-                <div className="order-modal-content">
-                    <button className="modal-close-btn" onClick={closeOrderModal}><FaTimes /></button>
-
-                    <h2 className="modal-title">
-                        {isLoggedIn ? `Confirmer votre commande (Connecté)` : "Passer votre commande (Visiteur)"}
-                    </h2>
-
-                    {/* ... تفاصيل المنتج والكمية (unchanged) ... */}
-                    <div className="product-summary">
-                        <img src={selectedProduct.url} alt={selectedProduct.alt} className="summary-image" />
-                        <div className="summary-details">
-                            <p className="summary-name">{selectedProduct.name}</p>
-                            <p className="summary-price">{selectedProduct.price.toFixed(2)} {selectedProduct.currency} / unité</p>
-                        </div>
-                    </div>
-
-                    <div className="quantity-control-group">
-                        <label>Quantité :</label>
-                        <div className="quantity-controls">
-                            <button type="button" onClick={() => handleQuantityChange(-1)} disabled={quantity <= 1}>
-                                <FaMinusCircle />
-                            </button>
-                            <span className="current-qty">{quantity}</span>
-                            <button type="button" onClick={() => handleQuantityChange(1)}>
-                                <FaPlusCircle />
-                            </button>
-                        </div>
-                        <p className="total-price-display">
-                            Total : <strong>{totalPrice} {selectedProduct.currency}</strong>
-                        </p>
-                    </div>
-                    {/* ... نهاية تفاصيل المنتج والكمية ... */}
-
-                    <form onSubmit={handleConfirmOrder}>
-                        <div className="customer-form-group">
-                            <h4 className="form-subtitle">Vos informations de contact</h4>
-
-                            <div className="input-row">
-                                {/* 👤 حقل الاسم: يُعرض دائماً الآن */}
-                                <div className="input-group">
-                                    <FaUser className="input-icon" />
-                                    <input
-                                        type="text"
-                                        name="firstName"
-                                        placeholder="Nom et Prénom (Obligatoire)"
-                                        value={customerData.firstName}
-                                        onChange={handleCustomerDataChange}
-                                        required
-                                    />
-                                </div>
-
-                                {/* 🏠 حقل العنوان: يُعرض دائماً */}
-                                <div className="input-group">
-                                    <FaMapMarkerAlt className="input-icon" />
-                                    <input
-                                        type="text"
-                                        name="adresse"
-                                        placeholder="Adresse (Obligatoire)"
-                                        value={customerData.adresse}
-                                        onChange={handleCustomerDataChange}
-                                        required
-                                    />
-                                </div>
-
-                                {/* 📞 حقل الهاتف: يُعرض دائماً */}
-                                <div className="input-group">
-                                    <FaPhoneAlt className="input-icon" />
-                                    <input
-                                        type="tel"
-                                        name="phone"
-                                        placeholder="Numéro de Téléphone (Obligatoire)"
-                                        value={customerData.phone}
-                                        onChange={handleCustomerDataChange}
-                                        required
-                                    />
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="modal-actions-order">
-                            <button type="submit" className="confirm-order-btn">
-                                {isLoggedIn ? "Confirmer la Commande" : "Soumettre la Demande"}
-                            </button>
-                            <button type="button" onClick={closeOrderModal} className="cancel-order-btn">
-                                Annuler
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        );
-    };
-    
     // 5. NOUVEAU Composant du Modal de Succès (avec design moderne)
     const OrderSuccessModal = () => {
         if (!showSuccessModal) return null;
 
-        // MODIFIÉ : Met à jour la visibilité du modal de feedback
         const handleFeedbackClick = () => {
-            closeSuccessModal(); // Fermer le modal de succès
-            setShowFeedbackModal(true); // Ouvrir le modal de commentaire
+            closeSuccessModal();
+            setShowFeedbackModal(true); 
         };
 
         return (
@@ -403,8 +450,7 @@ export default function ProductGrid() {
             e.preventDefault();
             setSubmitStatus({ loading: true, error: null, success: false });
             
-            // 🚨 الحصول على اسم العميل من customerData (وهو اسم المستخدم الذي أدخله في نموذج الطلب)
-            const clientName = customerData.firstName;
+            const clientName = finalCustomerData.firstName; 
             const commentContent = reviewText.trim();
             
             if (!clientName || clientName === '') {
@@ -417,7 +463,7 @@ export default function ProductGrid() {
             }
 
             const commentData = {
-                nom: clientName, // 🎯 هذا هو المطلوب: إرسال اسم المستخدم
+                nom: clientName, 
                 commentaire: commentContent,
             };
 
@@ -435,14 +481,12 @@ export default function ProductGrid() {
                 if (response.ok) {
                     setSubmitStatus({ loading: false, error: null, success: true });
                     setIsSubmitted(true);
-                    setReviewText(''); // تفريغ حقل التعليق
+                    setReviewText('');
 
-                    // إغلاق تلقائي بعد النجاح
                     setTimeout(() => {
                         closeFeedbackModal();
                     }, 3000);
                 } else {
-                    // Mongoose Validation Error (Code 400) ou autre erreur serveur (Code 500)
                     const errorMessage = Array.isArray(result.error) ? result.error.join(', ') : result.error || 'Erreur inconnue lors de la soumission.';
                     setSubmitStatus({ loading: false, error: `Erreur d'enregistrement : ${errorMessage}`, success: false });
                 }
@@ -453,14 +497,15 @@ export default function ProductGrid() {
         };
 
         return (
-            <div className="custom-modal-backdrop-success"> {/* Réutiliser le style d'arrière-plan */}
-                <div className="modern-modal-content-success"> {/* Réutiliser le style de contenu */}
-                    <button className="close-btn-success" onClick={closeFeedbackModal}><FaTimes /></button>
+            <div className="custom-modal-backdrop-success">
+                <div className="modern-modal-content-success">
+                    {/* 🚨 تعطيل زر الإغلاق أثناء الإرسال */}
+                    <button className="close-btn-success" onClick={closeFeedbackModal} disabled={submitStatus.loading}><FaTimes /></button>
 
                     {isSubmitted ? (
                         <>
                             <div className="success-icon-section">
-                                <FaCheckCircle className="check-icon-large" style={{ color: '#ffc107' }} /> {/* Couleur Jaune/Or pour le feedback */}
+                                <FaCheckCircle className="check-icon-large" style={{ color: '#ffc107' }} />
                             </div>
                             <h2 className="success-modal-title" style={{ color: '#007bff' }}>
                                 Merci pour votre Avis Précieux ! 🌟
@@ -468,7 +513,7 @@ export default function ProductGrid() {
                             <p className="success-message-text">
                                 Votre commentaire a été enregistré. Votre **satisfaction** هي notre plus belle récompense et nous aide à nous améliorer continuellement.
                             </p>
-                            <button type="button" onClick={closeFeedbackModal} className="return-button-success">
+                            <button type="button" onClick={closeFeedbackModal} className="return-button-success" disabled={submitStatus.loading}>
                                 Retour à la Boutique
                             </button>
                         </>
@@ -483,24 +528,21 @@ export default function ProductGrid() {
                             <p className="success-message-text">
                                 Partagez votre expérience avec notre service. Qu'avez-vous pensé de l'achat ?
                                 <br/>
-                                <small>Votre nom sera enregistré comme : **{customerData.firstName || 'Non spécifié'}**</small>
+                                <small>Votre nom sera enregistré comme : **{finalCustomerData.firstName || 'Non spécifié'}**</small>
                             </p>
                             
                             <textarea
-                                className="feedback-textarea" // Nouvelle classe CSS à ajouter
+                                className="feedback-textarea"
                                 placeholder="Écrivez votre commentaire ici..."
                                 value={reviewText}
                                 onChange={(e) => setReviewText(e.target.value)}
                                 rows="5"
                                 required
+                                disabled={submitStatus.loading}
                             />
                             
                             {/* Affichage des messages d'état/erreur */}
-                            {submitStatus.loading && (
-                                <p className="status-message" style={{ color: '#007bff' }}>
-                                    <FaSpinner className="spinner" style={{ animation: 'spin 1s linear infinite' }} /> Envoi en cours...
-                                </p>
-                            )}
+                            
                             {submitStatus.error && (
                                 <p className="status-message" style={{ color: 'red' }}>
                                     ❌ {submitStatus.error}
@@ -511,9 +553,15 @@ export default function ProductGrid() {
                                 <button 
                                     type="submit" 
                                     className="feedback-button-success" 
+                                    // 🚨 تعطيل الزر في حال الإرسال أو عدم كفاية النص
                                     disabled={reviewText.trim().length < 5 || submitStatus.loading}
                                 >
-                                    Soumettre le Commentaire
+                                    {submitStatus.loading ? (
+                                        // 🚨 عرض أيقونة الانتظار عند الإرسال
+                                        <> <FaSpinner className="spinner" style={{ animation: 'spin 1s linear infinite' }} /> Envoi...</>
+                                    ) : (
+                                        'Soumettre le Commentaire'
+                                    )}
                                 </button>
                                 
                             </div>
@@ -621,11 +669,7 @@ export default function ProductGrid() {
                     <main className="product-grid-main">
                         <div className="grid-info-bar">
                             <p className="info-text">Affichage de {filteredProducts.length} produit(s) sur {productsToFilter.length}</p>
-                            <select className="sort-select">
-                                <option>Trier par popularité</option>
-                                <option>Trier par prix croissant</option>
-                                <option>Trier par prix décroissant</option>
-                            </select>
+                          
                         </div>
 
                         <div className="product-grid-container">
@@ -672,13 +716,26 @@ export default function ProductGrid() {
 
             </section>
 
-            {/* 4. Rendu du modal de commande */}
-            {showOrderModal && <OrderModal />}
+            {/* 4. Rendu du modal de commande المُحدَّث */}
+            {showOrderModal && (
+                <OrderModalComponent 
+                    selectedProduct={selectedProduct}
+                    quantity={quantity}
+                    handleQuantityChange={handleQuantityChange}
+                    closeOrderModal={closeOrderModal}
+                    isLoggedIn={isLoggedIn}
+                    currentUserEmail={currentUserEmail}
+                    // دالة رد نداء للنجاح
+                    onOrderSuccess={handleOrderSuccessCallback} 
+                    // دالة رد نداء لتخزين بيانات العميل
+                    onCustomerDataUpdate={handleCustomerDataUpdate}
+                />
+            )}
             
-            {/* 5. Rendu du NOUVEAU modal de succès */}
+            {/* 5. Rendu du modal de succès */}
             {showSuccessModal && <OrderSuccessModal />}
 
-            {/* 🆕 6. Rendu du NOUVEAU modal de commentaire */}
+            {/* 6. Rendu du modal de commentaire */}
             {showFeedbackModal && <FeedbackModal />}
 
             <Footer />

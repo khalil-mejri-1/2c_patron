@@ -1,53 +1,55 @@
+// Leçons.jsx
+
 import React, { useState, useEffect } from 'react';
-import { FaPlayCircle,FaSpinner } from 'react-icons/fa'; // لم نعد نحتاج FaLock
+import { FaSpinner } from 'react-icons/fa'; // FaPlayCircle is unused, removed for cleanup
 import Navbar from '../comp/navbar';
 import Footer from '../comp/Footer';
+import { useParams } from 'react-router-dom';
+import axios from 'axios';
+// Importez FaSpinner si vous l'utilisez, assurez-vous que l'animation 'spin' est définie dans votre CSS
 
 export default function Leçons() {
-    // 1. حالة لتخزين الفيديوهات التي تم جلبها
     const [videos, setVideos] = useState([]);
-    // 2. حالة التحميل
     const [loading, setLoading] = useState(true);
-    // 3. حالة الخطأ
     const [error, setError] = useState(null);
 
-    // 🚀 قيم افتراضية للصورة والمدة
-    // سنستخدم هذه القيم لأنك لا تريد جلبها من قاعدة البيانات
-    const DEFAULT_THUMBNAIL = "https://via.placeholder.com/400x225?text=Leçon+de+Couture";
-    const DEFAULT_DURATION = "20 min";
+    const { leconTitle } = useParams();
+    // 🔑 Décodage du titre de la catégorie pour l'utiliser dans la requête
+    const actualTitle = decodeURIComponent(leconTitle); 
 
-       const fetchVideos = async () => {
+    const fetchVideos = async () => {
         setLoading(true);
         try {
-            const response = await fetch('http://localhost:3000/api/videos');
-            if (!response.ok) throw new Error(`Erreur HTTP: ${response.status}. Vérifiez le serveur Node.js.`);
-
-            const data = await response.json();
-            setVideos(data);
+            // Envoi de la requête avec le titre de la catégorie comme paramètre de requête
+            const res = await axios.get('http://localhost:3000/api/specialized-videos', {
+                params: { category: actualTitle }
+            });
+            setVideos(res.data);
+            setError(null); // Réinitialiser l'erreur en cas de succès
         } catch (err) {
             console.error("Erreur de récupération des vidéos:", err);
-            showNotification(err.message || 'Échec de la récupération des vidéos.', 'error');
+            setError("Échec de la récupération des vidéos. Vérifiez la connexion au serveur et le titre de la catégorie.");
         } finally {
             setLoading(false);
         }
     };
 
-        useEffect(() => {
-            fetchVideos();
-        }, []);
-    
-    // عرض حالة التحميل أو الخطأ
+    // 🔄 Le useEffect est correct : il se déclenche à l'initialisation et à chaque changement de catégorie
+    useEffect(() => {
+        fetchVideos();
+    }, [actualTitle]); 
+
+    // --- Rendu du Chargement / Erreur ---
+
     if (loading) {
         return (
             <>
-                <Navbar/>
+                <Navbar />
                 <div className="lessons-section" style={{ textAlign: 'center', marginTop: '100px' }}>
-                                      <div className="loading-state">
-                                                           <FaSpinner className="spinner" />
-                                                           <p>Chargement des Cours...</p>
-                                                       </div>
+                    <FaSpinner className="spinner" style={{ animation: 'spin 1s linear infinite' }} />
+                    <p>Chargement des Cours...</p>
                 </div>
-                <Footer/>
+                <Footer />
             </>
         );
     }
@@ -55,76 +57,62 @@ export default function Leçons() {
     if (error) {
         return (
             <>
-                <Navbar/>
+                <Navbar />
                 <div className="lessons-section" style={{ textAlign: 'center', marginTop: '100px', color: 'red' }}>
                     <h2>{error}</h2>
                 </div>
-                <Footer/>
+                <Footer />
             </>
         );
     }
 
+    // --- Rendu des Leçons ---
 
-    // 7. عرض قائمة الفيديوهات
     return (
         <>
-            <Navbar/>
-            <br /> <br /> <br />
+            <Navbar />
+            <br /><br /><br />
             <section className="lessons-section">
-                
-                {/* 1. رأس الصفحة (Hero Section مُصغر) */}
                 <div className="lessons-header">
                     <h1 className="lessons-main-title">
-                        Bibliothèque de <span className="lessons-accent-text">Leçons Vidéo</span>
+                        Leçons pour <span className="lessons-accent-text">{actualTitle}</span>
                     </h1>
                     <p className="lessons-sub-text">
                         Accédez aux tutoriels détaillés pour maîtriser l'art de la couture.
                     </p>
                 </div>
 
-                {/* 2. شبكة بطاقات الدروس */}
                 <div className="lessons-grid-container">
                     {videos.length > 0 ? (
-                        videos.map(lesson => (
-                            <div key={lesson.id} className="lesson-card">
-                                
+                        videos.map(video => (
+                            <div key={video._id} className="lesson-card">
                                 <div className="lesson-image-wrapper">
-                                   <video
-                                            controls
-                                            src={`http://localhost:3000/api/videos/stream/${lesson._id}`}
-                                            className="uploaded-video-player"
-                                            onContextMenu={(e) => e.preventDefault()}
-                                            // ✅ إضافة الخاصية لمنع زر التحميل من الظهور في قائمة التحكم (النقاط الثلاث)
-                                            controlsList="nodownload"
-                                        >
-                                            Votre navigateur ne supporte pas la balise vidéo.
-                                        </video>
-                                    {/* 💡 تم إزالة التحقق من حالة VIP وعرض أيقونة التشغيل فقط */}
-                                  
-                                    
-                                    {/* شارة المدة */}
-                                    <span className="lesson-duration-tag">{lesson.duration}</span>
+                                    <video
+                                        controls
+                                        // ✅ CORRECTION CONFIRMÉE : Pointage vers le chemin statique du fichier
+                                        // Assurez-vous que video.url contient bien /uploads/videos/nomdufichier.mp4
+                                        src={`http://localhost:3000${video.url}`} 
+                                        className="uploaded-video-player"
+                                        onContextMenu={(e) => e.preventDefault()}
+                                        controlsList="nodownload"
+                                    >
+                                        Votre navigateur ne supporte pas la balise vidéo.
+                                    </video>
                                 </div>
-                                
                                 <div className="lesson-content">
-                                    <h3 className="lesson-title">{lesson.titre}</h3>
-                                    {/* 💡 تم تعيين الشارة دائمًا على "Gratuit" */}
-                                   
+                                    <h3 className="lesson-title">{video.title}</h3>
+                                    {video.description && <p>{video.description}</p>}
                                 </div>
                             </div>
                         ))
                     ) : (
                         <p style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '50px 0' }}>
-                            Aucune vidéo disponible pour le moment.
+                            Aucune vidéo disponible pour la catégorie **"{actualTitle}"**.
                         </p>
                     )}
                 </div>
-
-
-             
-
-            </section> 
-            <Footer/>
+            </section>
+            <Footer />
         </>
     );
 }

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import NavbarAdmin from '../../comp/Navbar_admin';
 import '../admin_css/GestionDeProduit.css';
+import {FaSpinner} from 'react-icons/fa';
 
 export default function Gestion_de_Produit() {
 
@@ -78,7 +79,7 @@ export default function Gestion_de_Produit() {
         setLoading(true);
         setError(null);
         try {
-            const response = await fetch('http://localhost:3000/api/products');
+            const response = await fetch('https://2c-patron.vercel.app/api/products');
 
             if (!response.ok) {
                 throw new Error(`Erreur HTTP: ${response.status}. Vérifiez le serveur.`);
@@ -113,7 +114,7 @@ export default function Gestion_de_Produit() {
         };
 
         try {
-            const response = await fetch('http://localhost:3000/api/products', {
+            const response = await fetch('https://2c-patron.vercel.app/api/products', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(productData),
@@ -149,7 +150,7 @@ export default function Gestion_de_Produit() {
         setLoading(true);
         setError(null);
 
-        const deleteUrl = `http://localhost:3000/api/products/${productId}`;
+        const deleteUrl = `https://2c-patron.vercel.app/api/products/${productId}`;
 
         try {
             const response = await fetch(deleteUrl, { method: 'DELETE' });
@@ -188,7 +189,7 @@ export default function Gestion_de_Produit() {
             prix: parseFloat(currentProduct.prix),
         };
 
-        const updateUrl = `http://localhost:3000/api/products/${currentProduct._id}`;
+        const updateUrl = `https://2c-patron.vercel.app/api/products/${currentProduct._id}`;
 
         try {
             const response = await fetch(updateUrl, {
@@ -255,10 +256,11 @@ export default function Gestion_de_Produit() {
                         <div className="form-group"><label htmlFor="categorie">Catégorie</label>
                             <select id="categorie" name="categorie" value={newProduct.categorie} onChange={handleInputChange} required>
                                 <option value="" disabled>Sélectionner une catégorie</option>
-                                <option value="Robes" >Robes</option>
-                                <option value="Tissus" >Tissus</option>
-                                <option value="Matériels" >Matériels</option>
-                                <option value="Accessoires" >Accessoires</option>
+                          
+                            
+                                <option value="Homme" >Homme</option>
+                                <option value="Famme" >Famme</option>
+                                <option value="Enfant" >Enfant</option>
 
 
                             </select>
@@ -275,7 +277,18 @@ export default function Gestion_de_Produit() {
                 <div className="product-list-section">
                     <h3>📦 Liste des Produits Actuels ({products.length})</h3>
 
-                    {loading && <p>Chargement des produits...</p>}
+                    {loading && <>
+
+                        <div className="abonnement-container loading-state">
+                            <FaSpinner className="spinner" />
+                            <p>Chargement des Produits...</p>
+                        </div>
+                    </>}
+
+
+
+
+
 
                     {!loading && products.length > 0 && (
                         <div className="table-wrapper">
@@ -328,12 +341,12 @@ export default function Gestion_de_Produit() {
                             <div className="form-group"><label htmlFor="edit_prix">Prix (€)</label>
                                 <input type="number" id="edit_prix" name="prix" value={currentProduct.prix} onChange={handleEditChange} step="0.01" min="0" required />
                             </div>
+
                             <div className="form-group"><label htmlFor="edit_categorie">Catégorie</label>
                                 <select id="edit_categorie" name="categorie" value={currentProduct.categorie} onChange={handleEditChange} required>
-                                    <option value="إلكترونيات">Électronique</option>
-                                    <option value="ملابس">Vêtements</option>
-                                    <option value="إكسسوارات">Accessoires</option>
-                                    <option value="أخرى">Autres</option>
+                                    <option value="Homme">Homme</option>
+                                    <option value="Famme">Famme</option>
+                                    <option value="Enfant">Enfant</option>
                                 </select>
                             </div>
 

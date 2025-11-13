@@ -29,13 +29,6 @@
     color: #6c757d;
 }
 
-.spinner {
-    font-size: 3rem;
-    animation: spin 1.5s linear infinite;
-    color: #007bff;
-    margin-bottom: 15px;
-}
-
 .error-icon {
     font-size: 3rem;
     color: #dc3545;

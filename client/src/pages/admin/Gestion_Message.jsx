@@ -133,6 +133,15 @@ export default function Gestion_Message() {
     };
 
     // -------------------- 🎨 Rendu --------------------
+ if (loading) return (
+        <>
+            <NavbarAdmin />
+            <div className="abonnement-container loading-state">
+                <FaSpinner className="spinner" />
+                <p>Chargement des  messages...</p>
+            </div>
+        </>
+    );
 
     return (
         <>
@@ -140,10 +149,7 @@ export default function Gestion_Message() {
             <div className="admin-page-container">
                 <h2 className="client-title">📧 Gestion des messages clients</h2>
 
-                {/* --- Chargement et Erreur --- */}
-                {loading && (
-                    <div className="loading-message"><FaSpinner className="fa-spin" /> Chargement des messages...</div>
-                )}
+               
                 {error && (
                     <div className="alert-danger text-center">{error}</div>
                 )}

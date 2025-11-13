@@ -37,9 +37,9 @@ export default function NavbarAdmin() { // Renamed to PascalCase for convention
                </NavLink>
                
 
-                <NavLink to="/admin_videos" className="navbar-admin-link" onClick={isMenuOpen ? toggleMenu : null}>
+                {/* <NavLink to="/admin_videos" className="navbar-admin-link" onClick={isMenuOpen ? toggleMenu : null}>
                     Gestion de Vidéo
-               </NavLink>
+               </NavLink> */}
                 
                 <NavLink to="/admin_command" className="navbar-admin-link" onClick={isMenuOpen ? toggleMenu : null}>
                     Gestion de Commande
@@ -54,6 +54,9 @@ export default function NavbarAdmin() { // Renamed to PascalCase for convention
 
                  <NavLink to="/admin_abonnement" className="navbar-admin-link" onClick={isMenuOpen ? toggleMenu : null}>
                     Gestion de Abonnement
+               </NavLink>
+                  <NavLink to="/admin_espace_vip" className="navbar-admin-link" onClick={isMenuOpen ? toggleMenu : null}>
+                    Gestion de Espace Vip
                </NavLink>
             </div>
         </nav>

@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import NavbarAdmin from '../../comp/Navbar_admin';
 // نفترض أن لديك ملف أنماط CSS:
 import '../admin_css/GestionDeCommand.css'; 
-import { FaImage } from 'react-icons/fa'; // Import pour l'icône de placeholder
+import { FaImage,FaSpinner } from 'react-icons/fa'; // Import pour l'icône de placeholder
 
-const API_BASE_URL = 'http://localhost:3000/api/commands';
+const API_BASE_URL = 'https://2c-patron.vercel.app/api/commands';
 
 // قائمة بحالات الطلب المتاحة
 const statusOptions = [
@@ -179,6 +179,17 @@ export default function Gestion_de_Command() {
         return date.toLocaleDateString('fr-FR', options);
     };
 
+     if (loading) return (
+        <>
+            <NavbarAdmin />
+            <div className="abonnement-container loading-state">
+                <FaSpinner className="spinner" />
+                <p>Chargement des Commandes...</p>
+            </div>
+        </>
+    );
+
+
     // -------------------- 4. Rendu du Composant --------------------
     return (
         <>
@@ -196,9 +207,7 @@ export default function Gestion_de_Command() {
                 <h2 className="client-title">🛒 Gestion des Commandes</h2>
                 <hr />
 
-                {loading ? (
-                    <p>Chargement des commandes...</p>
-                ) : commands.length === 0 ? (
+                {  commands.length === 0 ? (
                     <p className="no-data-message">Aucune commande trouvée.</p>
                 ) : (
                     <table className="commands-table">

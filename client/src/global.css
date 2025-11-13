@@ -2739,206 +2739,308 @@ margin-top: -130px;
 
 
 
-
-
-
-/* --- 1. القسم الرئيسي (VIP Section) --- */
+/* --- 1. Section Principale (VIP Section) --- */
 .vip-section {
-  background-color: #F8F8F8;
-  /* خلفية فاتحة */
-  color: #333333;
-  /* مسافة بادئة كبيرة من الأعلى لتجنب تداخل شريط التنقل الثابت */
-  padding: 150px 5% 80px 5%;
-  font-family: 'Helvetica Neue', Arial, sans-serif;
-  text-align: center;
+    background-color: #F8F8F8;
+    /* Fond clair */
+    color: #333333;
+    /* Grande marge intérieure en haut pour éviter le chevauchement avec la barre de navigation fixe */
+    padding: 150px 5% 80px 5%;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    text-align: center;
 }
 
-/* --- 2. رأس الصفحة (العنوان) --- */
+/* --- 2. Entête de la page (Titre) --- */
 .vip-header {
-  margin-bottom: 60px;
-  max-width: 800px;
-  margin-left: auto;
-  margin-right: auto;
+    margin-bottom: 60px;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .vip-main-title {
-  font-size: 2.8rem;
-  font-weight: 800;
-  margin-bottom: 15px;
+    font-size: 2.8rem;
+    font-weight: 800;
+    margin-bottom: 15px;
 }
 
 .vip-accent-text {
-  color: #D4AF37;
-  /* اللون الذهبي المميز */
-  letter-spacing: 2px;
-
+    color: #D4AF37;
+    /* Couleur Or */
+    letter-spacing: 2px;
 }
 
 .vip-sub-text {
-  font-size: 1.2rem;
-  color: #666666;
+    font-size: 1.2rem;
+    color: #666666;
 }
 
-/* --- 3. شبكة الكورسات (Grid) --- */
+/* 🌟🌟🌟 Styles de l'Introduction Vidéo 🌟🌟🌟 */
+.video-intro-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 40px;
+    max-width: 1200px;
+    margin: 0px auto 80px auto;
+    padding: 40px;
+    background-color: #FFFFFF;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    border-left: 6px solid #D4AF37; /* Touche Or */
+}
+
+.video-content-text {
+    flex: 1;
+    text-align: left; /* Alignement du texte à gauche pour le français */
+}
+
+.video-title {
+    font-size: 2rem;
+    color: #111111;
+    font-weight: 700;
+    margin-bottom: 15px;
+}
+
+.video-subtitle {
+    font-size: 1.1rem;
+    color: #555555;
+    line-height: 1.6;
+    margin-bottom: 25px;
+}
+
+.key-features {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: flex-start;
+}
+
+.feature-item {
+    font-size: 1rem;
+    color: #333333;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+}
+
+.feature-item svg {
+    color: #111111; /* Icône noire */
+    margin-right: 8px; /* Marge à droite pour le français */
+    margin-left: 0; /* Annulation de la marge gauche précédente */
+    font-size: 1.2rem;
+}
+
+.video-player-wrapper {
+    flex: 1;
+    min-width: 400px;
+}
+
+/* Style Responsive de la Vidéo (Ratio 16:9) */
+.video-responsive {
+    position: relative;
+    padding-bottom: 56.25%; 
+    height: 0;
+    overflow: hidden;
+    max-width: 100%;
+    background: #000;
+    border-radius: 8px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+}
+
+.video-responsive iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+}
+/* 🌟🌟🌟 Fin des styles Vidéo 🌟🌟🌟 */
+
+
+/* --- 3. Grille des Cours (Grid) --- */
 .courses-grid-container {
-  display: grid;
-  /* 3 أعمدة على الشاشات الكبيرة */
-  grid-template-columns: repeat(3, 1fr);
-  gap: 30px;
-  max-width: 1200px;
-  margin: 0 auto;
+    display: grid;
+    /* 3 colonnes sur les grands écrans */
+    grid-template-columns: repeat(3, 1fr);
+    gap: 30px;
+    max-width: 1200px;
+    margin: 0 auto;
 }
 
-/* 🌟 4. بطاقة الكورس (Course Card) 🌟 */
+/* 🌟 4. Carte de Cours (Course Card) 🌟 */
 .course-card {
-  background-color: #FFFFFF;
-  border: 1px solid #EEEEEE;
-  border-radius: 10px;
-  overflow: hidden;
-  transition: transform 0.3s, box-shadow 0.3s;
-  text-align: left;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    background-color: #FFFFFF;
+    border: 1px solid #EEEEEE;
+    border-radius: 10px;
+    overflow: hidden;
+    transition: transform 0.3s, box-shadow 0.3s;
+    text-align: left;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
 }
 
 .course-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+    transform: translateY(-8px);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
 }
 
 .course-image-wrapper {
-  position: relative;
-  height: 220px;
-  overflow: hidden;
-  /* لمسة ذهبية: حد سفلي سميك */
-  border-bottom: 5px solid #D4AF37;
+    position: relative;
+    height: 220px;
+    overflow: hidden;
+    border-bottom: 5px solid #D4AF37;
 }
 
 .course-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.5s ease;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
 }
 
 .course-card:hover .course-image {
-  transform: scale(1.1);
+    transform: scale(1.1);
 }
 
 .course-level-tag {
-  position: absolute;
-  top: 15px;
-  left: 15px;
-  background-color: #D4AF37;
-  color: #FFFFFF;
-  padding: 5px 10px;
-  border-radius: 5px;
-  font-size: 0.8rem;
-  font-weight: bold;
-  z-index: 2;
-  text-transform: uppercase;
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    background-color: #D4AF37;
+    color: #FFFFFF;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    z-index: 2;
+    text-transform: uppercase;
 }
 
-/* --- 5. محتوى الكورس --- */
+/* --- 5. Contenu du Cours --- */
 .course-content {
-  padding: 20px;
+    padding: 20px;
 }
 
 .course-title {
-  font-size: 1.4rem;
-  font-weight: bold;
-  color: #111111;
-  margin-bottom: 10px;
+    font-size: 1.4rem;
+    font-weight: bold;
+    color: #111111;
+    margin-bottom: 10px;
 }
 
 .course-description {
-  font-size: 1rem;
-  color: #666666;
-  margin-bottom: 20px;
-  min-height: 4.5rem;
-  /* ارتفاع ثابت للوصف */
+    font-size: 1rem;
+    color: #666666;
+    margin-bottom: 20px;
+    min-height: 4.5rem;
 }
 
 .course-meta {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.9rem;
-  color: #888888;
-  margin-bottom: 20px;
-  padding-top: 15px;
-  border-top: 1px solid #EEEEEE;
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    color: #888888;
+    margin-bottom: 20px;
+    padding-top: 15px;
+    border-top: 1px solid #EEEEEE;
 }
 
 .course-meta svg {
-  margin-right: 5px;
-  color: #D4AF37;
+    margin-right: 5px;
+    color: #D4AF37;
 }
 
-/* 6. زر الوصول */
+/* 6. Bouton d'Accès */
 .access-button {
-  width: 100%;
-  padding: 12px;
-  background-color: #111111;
-  /* زر أسود لتمييز محتوى VIP */
-  color: #D4AF37;
-  border: 2px solid #D4AF37;
-  border-radius: 5px;
-  font-size: 1rem;
-  font-weight: bold;
-  cursor: pointer;
-  transition: background-color 0.3s, color 0.3s;
+    width: 100%;
+    padding: 12px;
+    background-color: #111111;
+    /* Bouton noir pour le contenu VIP */
+    color: #D4AF37;
+    border: 2px solid #D4AF37;
+    border-radius: 5px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s, color 0.3s;
 }
 
 .access-button:hover {
-  background-color: #D4AF37;
-  color: #111111;
-  border-color: #D4AF37;
+    background-color: #D4AF37;
+    color: #111111;
+    border-color: #D4AF37;
 }
-/* 📱 7. التجاوب (Responsive) 📱 */
+/* 📱 7. Responsif 📱 */
 @media (max-width: 1300px) {
-/* --- 1. القسم الرئيسي (VIP Section) --- */
-.vip-section {
-  /* خلفية فاتحة */
-  /* مسافة بادئة كبيرة من الأعلى لتجنب تداخل شريط التنقل الثابت */
-  padding: 70px 5% 80px 5%;
-}
-}
-/* 📱 7. التجاوب (Responsive) 📱 */
-@media (max-width: 768px) {
-
-.vip-main-title {
-  font-size: 2.5rem;
-}
+    /* --- 1. Section Principale (VIP Section) --- */
+    .vip-section {
+        padding: 70px 5% 80px 5%;
+    }
 }
 
-/* 📱 7. التجاوب (Responsive) 📱 */
 @media (max-width: 992px) {
-  .courses-grid-container {
-    /* عمودان على الأجهزة اللوحية */
-    grid-template-columns: repeat(2, 1fr);
-  }
+    /* Réponse de la section vidéo : passage en colonne */
+    .video-intro-container {
+        flex-direction: column;
+        padding: 30px;
+        margin-bottom: 50px;
+    }
+
+    .video-content-text {
+        text-align: center;
+    }
+
+    .key-features {
+        justify-content: center;
+        margin-bottom: 30px;
+    }
+
+    .video-player-wrapper {
+        min-width: 100%;
+    }
+    
+    .courses-grid-container {
+        /* 2 colonnes sur tablettes */
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .vip-main-title {
+        font-size: 2.5rem;
+    }
 }
 
 @media (max-width: 600px) {
-  .vip-main-title {
-    font-size: 2.5rem;
-  }
+    .vip-main-title {
+        font-size: 2.5rem;
+    }
 
-  .courses-grid-container {
-    /* عمود واحد على الهواتف */
-    grid-template-columns: 1fr;
-    gap: 20px;
-  }
+    .courses-grid-container {
+        /* 1 colonne sur téléphones */
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
 
-  .course-description {
-    min-height: auto;
-  }
+    .course-description {
+        min-height: auto;
+    }
 
-  /* --- 1. القسم الرئيسي (VIP Section) --- */
-  .vip-section {
-    /* مسافة بادئة كبيرة من الأعلى لتجنب تداخل شريط التنقل الثابت */
-    padding: 80px 5% 80px 5%;
-  }
-
+    .vip-section {
+        padding: 80px 5% 80px 5%;
+    }
+    
+    .video-title {
+        font-size: 1.5rem;
+    }
+    .video-subtitle {
+        font-size: 1rem;
+    }
+    
+    .key-features {
+        gap: 15px;
+    }
 }
 
 
@@ -2947,7 +3049,6 @@ margin-top: -130px;
         font-size: 2rem;
     }
 }
-
 
 
 
@@ -5916,7 +6017,7 @@ display: flex;
 /* Responsive Styles (Mobile View)                   */
 /* ================================================= */
 
-@media (max-width: 1400px) {
+@media (max-width: 1700px) {
     
     .navbar-admin {
         /* Align items differently on mobile */
@@ -6243,4 +6344,253 @@ display: flex;
     color: #333333;
     font-weight: 700;
     box-shadow: 0 2px 8px rgba(212, 175, 55, 0.4);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* --- Modal Overlay & Contenu Général --- */
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.75); /* Fond sombre semi-transparent */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.modal-content.pro-modal {
+    background: #ffffff; /* Fond blanc propre */
+    color: #333;
+    padding: 30px 40px;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 550px; /* Taille élégante */
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    position: relative;
+    animation: slideIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.modal-header {
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+.header-icon {
+    font-size: 3rem;
+    display: block;
+    margin-bottom: 10px;
+}
+
+.modal-content.pro-modal h2 {
+    color: #007bff; /* Couleur d'accentuation élégante (bleu pro) */
+    margin: 0;
+    font-size: 1.8rem;
+    font-weight: 600;
+}
+
+.modal-subtitle {
+    color: #666;
+    margin-top: 5px;
+    font-size: 0.95rem;
+}
+
+/* --- Bouton de Fermeture --- */
+
+.close-button {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: #aaa;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.close-button:hover {
+    color: #333;
+}
+
+/* --- Champ d'Upload (Dropzone) --- */
+
+.dropzone {
+    border: 3px dashed #ddd; /* Bordure discrète */
+    background: #f9f9f9;
+    padding: 30px;
+    text-align: center;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    margin-bottom: 20px;
+}
+
+.dropzone:hover {
+    border-color: #007bff; /* Interaction élégante au survol */
+    background: #f0f8ff;
+}
+
+.dropzone.is-dragging {
+    border-color: #007bff;
+    background: #e6f7ff;
+    box-shadow: 0 0 10px rgba(0, 123, 255, 0.3);
+}
+
+.dropzone.has-error {
+    border: 3px dashed #dc3545; /* Rouge pour l'erreur */
+    background: #fffafa;
+}
+
+.upload-icon {
+    font-size: 2.5rem;
+    color: #007bff;
+    display: block;
+    margin-bottom: 10px;
+}
+
+.file-name-display {
+    color: #28a745; /* Vert pour succès de sélection */
+    font-weight: 500;
+}
+
+.small-text {
+    font-size: 0.8rem;
+    color: #999;
+    margin-top: 5px;
+}
+
+/* --- Messages d'Erreur --- */
+
+.error-message {
+    background: #ffe0e6;
+    color: #dc3545;
+    padding: 10px 15px;
+    border: 1px solid #dc3545;
+    border-radius: 6px;
+    margin-bottom: 15px;
+    font-weight: 500;
+}
+
+/* Shake animation pour l'erreur (facultatif mais chic) */
+.shake-animation {
+    animation: shake 0.5s;
+}
+@keyframes shake {
+    0%, 100% {transform: translateX(0);}
+    20%, 60% {transform: translateX(-5px);}
+    40%, 80% {transform: translateX(5px);}
+}
+
+
+/* --- Boutons d'Action --- */
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end; /* Aligner à droite */
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.cancel-button {
+    background-color: #6c757d;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background-color 0.2s;
+}
+
+.cancel-button:hover {
+    background-color: #5a6268;
+}
+
+.send-button {
+    background-color: #28a745; /* Vert pour confirmer */
+    color: white;
+    padding: 10px 25px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: background-color 0.2s, transform 0.1s;
+}
+
+.send-button:hover:not(:disabled) {
+    background-color: #218838;
+    transform: translateY(-1px);
+}
+
+.send-button:disabled {
+    background-color: #90ee90; /* Couleur plus claire pour désactivé */
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+/* Animation Modale */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+@keyframes slideIn {
+    from { transform: translateY(-50px) scale(0.9); opacity: 0; }
+    to { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+/* --- Success Modal (Pour la cohérence) --- */
+
+.success-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(40, 167, 69, 0.1); /* Fond vert très léger */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1100;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.success-box {
+    background: #e6ffed; /* Boîte de succès verte */
+    color: #155724;
+    padding: 30px;
+    border-radius: 10px;
+    text-align: center;
+    border: 2px solid #28a745;
+    box-shadow: 0 5px 15px rgba(40, 167, 69, 0.2);
+    width: 90%;
+    max-width: 400px;
+}
+
+.success-icon {
+    font-size: 2.5rem;
+    display: block;
+    margin-bottom: 10px;
 }

@@ -17,7 +17,7 @@ export default function Contact() {
         e.preventDefault();
 
         try {
-            const response = await fetch('http://localhost:3000/api/messages', { // ← backend port
+            const response = await fetch('https://2c-patron.vercel.app/api/messages', { // ← backend port
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

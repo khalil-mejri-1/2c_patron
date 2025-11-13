@@ -45,7 +45,7 @@ const performLogin = (user) => {
     // 2. التحقق من حالة المستخدم (statut) وإعادة التوجيه بناءً عليها
     if (user.statut === 'admin') {
         // إذا كان المستخدم مسؤولًا، أعد التوجيه إلى صفحة الإدارة
-        window.location.href = '/admin';
+        window.location.href = '/admin_clients';
     } else {
         // أي حالة أخرى (مثل 'client' أو null) تعود للصفحة الرئيسية
         window.location.href = '/';
@@ -70,7 +70,7 @@ const performLogin = (user) => {
         if (isLogin) {
             try {
                 // استدعاء مسار التحقق من الدخول الخاص بـ Google في الخادم
-                const loginResponse = await fetch('/api/login-google', {
+                const loginResponse = await fetch('https://2c-patron.vercel.app/api/login-google', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ mail: authData.mail, mot_de_pass: authData.mot_de_pass }),
@@ -104,7 +104,7 @@ const performLogin = (user) => {
         // B. منطق التسجيل عبر Google (فقط في وضع التسجيل - Register) 
         try {
             // استدعاء مسار التسجيل العام في الخادم
-            const response = await fetch('/api/users', {
+            const response = await fetch('https://2c-patron.vercel.app/api/users', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(authData),
@@ -205,7 +205,7 @@ const performLogin = (user) => {
             };
 
             try {
-                const response = await fetch('/api/users', {
+                const response = await fetch('https://2c-patron.vercel.app/api/users', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(newUserForDB),
@@ -244,7 +244,7 @@ const performLogin = (user) => {
             };
 
             try {
-                const response = await fetch('/api/login-traditional', {
+                const response = await fetch('https://2c-patron.vercel.app/api/login-traditional', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(loginCredentials),

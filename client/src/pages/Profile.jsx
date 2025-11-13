@@ -24,7 +24,7 @@ export default function Profile() {
             }
 
             // 🔹 جلب الطلبات من قاعدة البيانات
-            fetch(`http://localhost:3000/api/commands_user?email=${userEmail}`)
+            fetch(`https://2c-patron.vercel.app/api/commands_user?email=${userEmail}`)
                 .then(res => res.json())
                 .then(data => {
                     setOrders(data); // data يجب أن يكون مصفوفة الطلبات

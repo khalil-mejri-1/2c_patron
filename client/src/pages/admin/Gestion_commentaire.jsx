@@ -15,7 +15,7 @@ export default function Gestion_commentaire() {
     const fetchCommentaires = async () => {
         setLoading(true);
         try {
-            const res = await axios.get('http://localhost:3000/api/commentaires');
+            const res = await axios.get('https://2c-patron.vercel.app/api/commentaires');
             const sortedComments = res.data.sort((a, b) => {
                 if (a.statut === 'en attente' && b.statut !== 'en attente') return -1;
                 if (a.statut !== 'en attente' && b.statut === 'en attente') return 1;
@@ -31,7 +31,7 @@ export default function Gestion_commentaire() {
 
     const deleteCommentaire = async (id) => {
         try {
-            await axios.delete(`http://localhost:3000/api/commentaires/${id}`);
+            await axios.delete(`https://2c-patron.vercel.app/api/commentaires/${id}`);
             fetchCommentaires();
         } catch (err) {
             console.error('Erreur lors de la suppression', err);
@@ -43,7 +43,7 @@ const updateStatut = async (id, statut) => {
     const correctedStatut = statut.charAt(0).toUpperCase() + statut.slice(1).toLowerCase();
 
     try {
-        await axios.put(`http://localhost:3000/api/commentaires/statut/${id}`, { statut: correctedStatut });
+        await axios.put(`https://2c-patron.vercel.app/api/commentaires/statut/${id}`, { statut: correctedStatut });
         fetchCommentaires();
     } catch (err) {
         console.error('Erreur lors de la mise à jour du statut', err);

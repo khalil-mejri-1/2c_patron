@@ -109,7 +109,7 @@ export default function Navbar({ initialCartCount = 0 }) {
     const checkVipStatusFromDB = useCallback(async (email) => {
         try {
             // غيّر هذا الرابط حسب عنوان API الخاص بك
-            const response = await fetch(`http://localhost:3000/api/users/${email}`);
+            const response = await fetch(`https://2c-patron.vercel.app/api/users/${email}`);
             const data = await response.json();
 
             if (data && data.abonne === "oui") {
