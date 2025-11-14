@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import NavbarAdmin from '../../comp/Navbar_admin';
 import '../admin_css/GestionDeProduit.css';
 import {FaSpinner} from 'react-icons/fa';
+import AddHomeProductModal from './AddHomeProductModal'; // Importation du modal d'accueil
 
 export default function Gestion_de_Produit() {
 
@@ -10,6 +11,9 @@ export default function Gestion_de_Produit() {
     const [newProduct, setNewProduct] = useState({ nom: '', image: '', prix: '', categorie: '' });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+
+    // États spécifiques à la gestion des produits d'accueil (DEMANDÉ)
+    const [isHomeModalOpen, setIsHomeModalOpen] = useState(false);
 
     // حالات التحديث (Edit Modal)
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -31,6 +35,11 @@ export default function Gestion_de_Produit() {
         setTimeout(() => {
             setNotification({ message: '', type: '' });
         }, 3000);
+    };
+
+    // NOUVEAU: Gère la notification après l'ajout d'un produit à l'accueil
+    const handleHomeProductAdded = (newProduct) => {
+        showNotification(`Produit "${newProduct.nom || 'Inconnu'}" ajouté à la page d'accueil avec succès.`, 'success');
     };
 
     // إضافة منتج جديد: معالجة تغيير حقول الإدخال
@@ -236,8 +245,20 @@ export default function Gestion_de_Produit() {
             )}
 
             <div className="product-management-container">
-                <h2 className="client-title"> Gestion des Produits</h2>
+                
+                {/* NOUVEAU: Bouton d'ajout de produit à l'accueil */}
+                <div className="admin-header-actions">
+                    <h2 className="client-title">Gestion des Produits</h2>
 
+                    <button 
+                        className="product-home-add-btn"
+                        onClick={() => setIsHomeModalOpen(true)}
+                        disabled={loading}
+                    >
+                        + Ajouter Produit Accueil
+                    </button>
+                </div>
+                
                 {/* -------------------- A. إضافة منتج -------------------- */}
                 <div className="card add-product-section">
                     <h3>➕ Ajouter un Nouveau Produit</h3>
@@ -249,20 +270,16 @@ export default function Gestion_de_Produit() {
                             <input type="text" id="image" name="image" value={newProduct.image} onChange={handleInputChange} required />
                         </div>
                         <div className="form-row">
-                            <div className="form-group full-width"><label htmlFor="prix">Prix (€)</label>
+                            <div className="form-group full-width"><label htmlFor="prix">Prix (DT)</label>
                                 <input type="number" id="prix" name="prix" value={newProduct.prix} onChange={handleInputChange} step="0.01" min="0" required />
                             </div>
                         </div>
                         <div className="form-group"><label htmlFor="categorie">Catégorie</label>
                             <select id="categorie" name="categorie" value={newProduct.categorie} onChange={handleInputChange} required>
                                 <option value="" disabled>Sélectionner une catégorie</option>
-                          
-                            
                                 <option value="Homme" >Homme</option>
                                 <option value="Famme" >Famme</option>
                                 <option value="Enfant" >Enfant</option>
-
-
                             </select>
                         </div>
                         <button type="submit" className="submit-button" disabled={loading}>
@@ -278,17 +295,11 @@ export default function Gestion_de_Produit() {
                     <h3>📦 Liste des Produits Actuels ({products.length})</h3>
 
                     {loading && <>
-
                         <div className="abonnement-container loading-state">
                             <FaSpinner className="spinner" />
                             <p>Chargement des Produits...</p>
                         </div>
                     </>}
-
-
-
-
-
 
                     {!loading && products.length > 0 && (
                         <div className="table-wrapper">
@@ -395,6 +406,14 @@ export default function Gestion_de_Produit() {
                         </div>
                     </div>
                 </div>
+            )}
+            
+            {/* NOUVEAU: Modal d'ajout de produit à l'accueil */}
+            {isHomeModalOpen && (
+                <AddHomeProductModal 
+                    onClose={() => setIsHomeModalOpen(false)}
+                    onProductAdded={handleHomeProductAdded} // Ajout de la fonction de notification
+                />
             )}
         </>
     );

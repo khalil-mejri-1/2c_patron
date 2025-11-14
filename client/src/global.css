@@ -716,7 +716,7 @@ body {
   position: absolute;
   bottom: 0;
   left: 0;
-  width: 100%;
+  width: 90%;
   padding: 20px;
   color: #FFFFFF;
   z-index: 3;
@@ -1008,7 +1008,7 @@ body {
 }
 
 .feature-card {
-  padding: 30px;
+  padding: 10px;
   /* Style subtil : pas de bordure, concentration sur l'espace blanc */
 }
 
@@ -1040,9 +1040,19 @@ body {
   .features-grid {
     /* Sur tablette et mobile, passage à 1 colonne */
     grid-template-columns: 1fr;
-    gap: 40px;
+    gap: 0px;
   }
 }
+
+/* 📱 Responsive Adjustments 📱 */
+@media (max-width: 900px) {
+  .features-grid {
+    /* Sur tablette et mobile, passage à 1 colonne */
+    grid-template-columns: 1fr;
+    gap: 0px;
+  }
+}
+
 
 
 
@@ -1060,10 +1070,13 @@ body {
 /* Section Produit Mis en Avant */
 .featured-product-section {
   display: flex;
-  min-height: 70vh;
   /* Fond noir pour le luxe */
   color: #000000;
-  padding: 0 5%;
+  max-width: 1300px;
+ margin: auto;
+ position: relative;
+margin-bottom: 100px;
+margin-top: 100px;
   align-items: center;
 }
 
@@ -1072,13 +1085,14 @@ body {
   flex: 1;
   position: relative;
   overflow: hidden;
-  height: 100%;
+
   /* Important pour l'alignement */
 }
 
 .featured-product-image {
-  width: 100%;
-  height: 100%;
+  width: 80%;
+  position: relative;
+
   object-fit: cover;
   display: block;
   transition: transform 0.6s ease-in-out;
@@ -1092,38 +1106,13 @@ body {
 }
 
 /* Overlay et Icône Play */
-.play-overlay {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: rgba(212, 175, 55, 0.9);
-  /* Doré semi-transparent */
-  border-radius: 50%;
-  width: 80px;
-  height: 80px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  opacity: 0.8;
-  transition: opacity 0.3s, transform 0.3s;
-}
 
-.play-overlay:hover {
-  opacity: 1;
-  transform: translate(-50%, -50%) scale(1.1);
-}
-
-.play-icon {
-  font-size: 1.5rem;
-  color: #000000;
-}
 
 /* 2. Bloc de Contenu (Texte) */
 .product-content-block {
   flex: 1;
-  padding: 50px 0 50px 70px;
+  margin-left: 10px;
+  margin-right: 10px;
   /* Espace à gauche pour éloigner de l'image */
 }
 
@@ -1138,17 +1127,13 @@ body {
 }
 
 .product-main-title {
-  font-size: 3rem;
+  font-size: 2rem;
   font-weight: 300;
   line-height: 1.2;
   margin-bottom: 25px;
 }
 
-.product-main-title **strong** {
-  color: #D4AF37;
-  /* Le doré pour le mot clé */
-  font-weight: 600;
-}
+
 
 .product-description {
   font-size: 1rem;
@@ -1215,17 +1200,18 @@ body {
     flex: 1;
     min-height: 40vh;
     order: 1;
+    width: 100%;
   }
+
 
   .product-content-block {
     flex: 1;
-    padding: 30px 0;
     text-align: center;
     order: 2;
   }
 
   .product-main-title {
-    font-size: 2.5rem;
+    font-size: 2rem;
   }
 
   .product-highlights {
@@ -1244,7 +1230,33 @@ body {
 
 
 
+@media (max-width: 450px) {
+ 
+  .product-content-block {
+ margin-top: -70px;
+  }
+}
 
+@media (max-width: 425px) {
+ 
+  .product-content-block {
+ margin-top: -90px;
+  }
+  .product-main-title{
+    font-size: 1.5rem;
+  }
+}
+
+
+@media (max-width: 375px) {
+ 
+  .product-content-block {
+ margin-top: -110px;
+  }
+  .product-main-title{
+    font-size: 1.5rem;
+  }
+}
 
 
 
@@ -1682,6 +1694,7 @@ body {
   /* حسابات الجوال: 10 بطاقات أساسية * (عرض 250px + فجوة 40px) = 2900px للمسافة التي يجب قطعها */
   .product-card {
     width: 250px;
+
     min-width: 250px;
   }
 
@@ -1985,6 +1998,7 @@ body {
 .reviewer-info {
     display: flex;
     flex-direction: column;
+
 }
 
 .reviewer-name {
@@ -2001,10 +2015,7 @@ body {
 }
 
 /* --- Notation (Étoiles) --- */
-.rating-stars {
-    margin-bottom: 0px; /* Augmenté l'espacement pour plus de clarté */
-margin-top: -15px;
-  }
+
 
 .star {
     color: #E0E0E0;
@@ -3013,9 +3024,7 @@ margin-top: -130px;
 }
 
 @media (max-width: 600px) {
-    .vip-main-title {
-        font-size: 2.5rem;
-    }
+
 
     .courses-grid-container {
         /* 1 colonne sur téléphones */
@@ -3071,198 +3080,174 @@ margin-top: -130px;
 
 
 
-
-
-/* --- 1. القسم الرئيسي (Leçons Section) --- */
+/* --- Styles de Base (Garder les polices/couleurs pro) --- */
 .lessons-section {
-  background-color: #F8F8F8;
-  color: #333333;
-  padding: 150px 5% 80px 5%;
-  /* مسافة بادئة كبيرة من الأعلى للـ Navbar */
-  font-family: 'Helvetica Neue', Arial, sans-serif;
-  text-align: center;
+    background-color: #f4f7f9; /* Fond très clair, presque blanc */
+    color: #333;
+    padding: 100px 3% 80px 3%; /* Ajustement du padding */
+    font-family: 'Poppins', 'Helvetica Neue', Arial, sans-serif;
+    text-align: left; /* Alignement à gauche pour le layout de cours */
 }
 
-/* --- 2. رأس الصفحة (العنوان) --- */
+/* --- En-tête (Garder pour la cohérence) --- */
 .lessons-header {
-  margin-bottom: 60px;
-  max-width: 900px;
-  margin-left: auto;
-  margin-right: auto;
+    margin-bottom: 50px;
+    max-width: 100%; /* S'étend sur toute la largeur si nécessaire */
+    padding: 0 2%;
+    text-align: center;
 }
 
 .lessons-main-title {
-  font-size: 3.2rem;
-  font-weight: 800;
-  margin-bottom: 10px;
+    font-size: 2.8rem; /* Plus petit car le focus est sur le contenu */
+    font-weight: 700;
+    color: #1a1a1a;
 }
 
 .lessons-accent-text {
-  color: #D4AF37;
-  letter-spacing: 1px;
+    color: #D4AF37;
 }
 
 .lessons-sub-text {
-  font-size: 1.1rem;
-  color: #666666;
+    font-size: 1.1rem;
+    color: #7f8c8d;
 }
 
-/* --- 3. شبكة بطاقات الدروس (Grid) --- */
-.lessons-grid-container {
-  display: grid;
-  /* 🌟 4 أعمدة على الشاشات الكبيرة 🌟 */
-  grid-template-columns: repeat(4, 1fr);
-  gap: 30px;
-  max-width: 1280px;
-  margin: 0 auto;
+/* --- NOUVEAU: Conteneur Principal pour le Layout 2-Colonnes --- */
+.main-content-wrapper {
+    display: flex;
+    gap: 30px;
+    max-width: 1300px;
+    margin: 0 auto;
 }
 
-/* 🌟 4. بطاقة الدرس (Lesson Card) 🌟 */
-.lesson-card {
-  background-color: #FFFFFF;
-  border-radius: 10px;
-  overflow: hidden;
-  transition: transform 0.3s, box-shadow 0.3s;
-  text-align: left;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-  cursor: pointer;
+/* 1. Zone Vidéo Principale (70% de la largeur) */
+.main-video-area {
+    flex: 3; /* Prend 60-70% de l'espace */
+    background-color: #2c3e50; /* Fond foncé pour contraster avec la vidéo */
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
 }
 
-.lesson-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+.main-video-player {
+    position: relative;
+    width: 100%;
+    padding-top: 56.25%; /* Ratio 16:9 pour l'iframe/vidéo */
+    background-color: #000;
 }
 
-.lesson-image-wrapper {
-  position: relative;
-  height: 180px;
-  /* ارتفاع ثابت للصورة المصغرة */
-  overflow: hidden;
+/* Assure que l'iframe ou la balise video remplit le conteneur */
+.main-video-player > * {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
 }
 
-.lesson-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.5s ease;
+.video-details {
+    padding: 20px 25px;
+    background-color: #FFFFFF;
+    border-top: 1px solid #eee;
 }
 
-.lesson-card:hover .lesson-image {
-  transform: scale(1.05);
+.video-details h2 {
+    font-size: 1.8rem;
+    color: #1a1a1a;
+    margin-bottom: 10px;
 }
 
-/* --- طبقة التراكب (Overlay) والمدة والأيقونات --- */
-.lesson-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  transition: background-color 0.3s;
-}
-
-.lesson-overlay.locked {
-  background-color: rgba(0, 0, 0, 0.6);
-  /* خلفية داكنة للقفل */
-}
-
-.lesson-overlay.free {
-  background-color: rgba(0, 0, 0, 0.2);
-  /* خلفية أخف للمجاني */
-  opacity: 0;
-  /* إخفاء افتراضياً */
-}
-
-.lesson-card:hover .lesson-overlay.free {
-  opacity: 1;
-}
-
-.overlay-icon {
-  font-size: 3rem;
-  color: #D4AF37;
-  text-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
-}
-
-.lesson-duration-tag {
-  position: absolute;
-  bottom: 10px;
-  right: 10px;
-  background-color: rgba(0, 0, 0, 0.7);
-  color: #FFFFFF;
-  padding: 4px 8px;
-  border-radius: 3px;
-  font-size: 0.8rem;
-  z-index: 2;
-}
-
-/* --- 5. محتوى الدرس --- */
-.lesson-content {
-  padding: 15px;
-}
-
-.lesson-title {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #111111;
-  margin-bottom: 10px;
-  line-height: 1.4;
-}
-
-.lesson-status-badge {
-  font-size: 0.8rem;
-  font-weight: bold;
-  padding: 5px 10px;
-  border-radius: 3px;
-  display: inline-block;
-}
-
-.lesson-status-badge.vip {
-  background-color: #D4AF37;
-  color: #111111;
-}
-
-.lesson-status-badge.free {
-  background-color: #5cb85c;
-  /* أخضر للمجاني */
-  color: #FFFFFF;
-}
-
-/* 📱 6. التجاوب (Responsive) 📱 */
-@media (max-width: 1200px) {
-  .lessons-grid-container {
-    /* 3 أعمدة على الأجهزة اللوحية الكبيرة */
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-@media (max-width: 768px) {
-  .lessons-grid-container {
-    /* عمودان على الأجهزة اللوحية الصغيرة */
-    grid-template-columns: repeat(2, 1fr);
-    gap: 20px;
-  }
-
-  .lessons-main-title {
-    font-size: 2.5rem;
-  }
-}
-
-@media (max-width: 500px) {
-  .lessons-grid-container {
-    /* عمود واحد على الهواتف */
-    grid-template-columns: 1fr;
-    gap: 15px;
-  }
-
-  .lesson-image-wrapper {
-    height: 200px;
-  }
+.video-details p {
+    color: #7f8c8d;
+    line-height: 1.6;
+    font-size: 1rem;
 }
 
 
+/* 2. Liste des Leçons (30% de la largeur) */
+.lessons-list-sidebar {
+    flex: 2; /* Prend 30-40% de l'espace */
+    background-color: #FFFFFF;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+}
+
+.sidebar-title {
+    font-size: 1.3rem;
+    font-weight: 600;
+    padding: 15px 20px;
+    background-color: #ecf0f1;
+    border-bottom: 1px solid #dcdfe1;
+    color: #333;
+}
+
+.lesson-item {
+    padding: 15px 20px;
+    border-bottom: 1px solid #f0f0f0;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.lesson-item:hover {
+    background-color: #f8f9fa;
+}
+
+/* Leçon sélectionnée ou active */
+.lesson-item.active {
+    background-color: #D4AF37;
+    color: #FFFFFF;
+    font-weight: 600;
+}
+
+.lesson-item.active .lesson-title-list, .lesson-item.active .lesson-status-list {
+    color: #FFFFFF;
+}
+
+.lesson-title-list {
+    font-size: 1rem;
+    font-weight: 500;
+    color: #444;
+    max-width: 80%;
+}
+
+.lesson-status-list {
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 5px;
+    color: #2ecc71; /* Gratuit */
+    border: 1px solid #2ecc71;
+}
+
+.lesson-status-list.vip {
+    color: #D4AF37; /* VIP */
+    border: 1px solid #D4AF37;
+}
+
+/* 📱 Responsive : Mise en page 1 colonne sur Mobile/Tablette 📱 */
+@media (max-width: 992px) {
+    .main-content-wrapper {
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .main-video-area {
+        order: 1; /* La vidéo principale reste en haut */
+    }
+
+    .lessons-list-sidebar {
+        order: 2; /* La liste suit */
+    }
+
+    .lesson-item {
+        padding: 12px 15px;
+    }
+}
 
 
 
@@ -4567,9 +4552,6 @@ width: 100%;
     }
 }
 
-@media (max-width: 600px) {
-
-}
 
 
 
@@ -5823,58 +5805,28 @@ display: flex;
     margin: 0;
 }
 
-/* --- Contrôle de la Quantité --- */
-.quantity-control-group {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 15px 0;
-    border-top: 1px dashed #ddd;
-    border-bottom: 1px dashed #ddd;
-    margin-bottom: 20px;
-}
 
-.quantity-controls {
-    display: flex;
-    align-items: center;
-}
 
-.quantity-controls button {
-    background: none;
-    border: none;
-    color: #007bff; /* Ou votre couleur d'accent, ex: #FFD700 */
-    font-size: 24px;
-    cursor: pointer;
-    padding: 0 10px;
-    transition: color 0.2s;
-}
 
-.quantity-controls button:hover:not(:disabled) {
-    color: #0056b3;
-}
 
-.quantity-controls button:disabled {
-    color: #ccc;
-    cursor: not-allowed;
-}
 
-.current-qty {
-    font-size: 1.2em;
-    font-weight: bold;
-    padding: 0 15px;
-}
+
 
 .total-price-display strong {
     color: #d6b600; /* Couleur d'accentuation pour le prix */
     font-size: 1.1em;
 }
 
-/* --- Formulaire Client (Non Logged In) --- */
-.customer-form-group {
-    margin-bottom: 25px;
-    padding: 15px;
-    border: 1px solid #eee;
-    border-radius: 8px;
+.comment-input-group textarea {
+    width: 100%;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    resize: vertical;
+          box-sizing: border-box;
+
+padding: 20px;    min-height: 100px;
+    font-family: inherit;
+    font-size: 14px;
 }
 
 .form-subtitle {
@@ -6593,4 +6545,1623 @@ display: flex;
     font-size: 2.5rem;
     display: block;
     margin-bottom: 10px;
+}
+
+
+
+
+
+
+
+
+.button_retour {
+    position: fixed;
+    top: 200px; /* Espace en haut */
+    left: 10px; /* Espace à gauche */
+    z-index: 1000; /* Assure qu'il est au-dessus du contenu */
+    background-color: #2c3e50; /* Couleur sombre */
+    color: #ffffff;
+    border: none;
+    padding: 8px 15px;
+
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: background-color 0.3s, transform 0.1s;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.button_retour:hover {
+    background-color: #34495e;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* ----------------------------------- */
+/* --- Bouton de Profil Utilisateur Chic --- */
+/* ----------------------------------- */
+
+.user-profile-btn {
+    /* Rendre le bouton plus visible qu'une simple icône */
+    background-color: #f8f8f8; /* Fond légèrement gris */
+    border: 2px solid #D4AF37; /* Bordure fine couleur Or */
+    width: 40px;
+    height: 40px;
+    border-radius: 50%; /* Forme ronde */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0;
+    font-size: 1.1rem; /* Icône FaUser */
+    color: #333; /* Couleur de l'utilisateur */
+    position: relative; /* Nécessaire pour positionner le badge VIP */
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
+}
+
+.user-profile-btn:hover {
+    background-color: #FFF8E1; /* Léger changement au survol */
+    box-shadow: 0 0 5px rgba(212, 175, 55, 0.5); /* Effet lumineux Or */
+    transform: scale(1.05);
+}
+
+/* ----------------------------------- */
+/* --- Badge VIP (Couronne) --- */
+/* ----------------------------------- */
+
+.vip-icon-badge {
+    /* Positionnement du badge */
+    position: absolute;
+    top: -5px; /* Déplacer légèrement au-dessus du bord */
+    right: -5px; /* Déplacer légèrement à droite du bord */
+    
+    /* Style du badge */
+    font-size: 0.8rem; /* Taille de l'icône FaCrown */
+    color: #FFD700; /* Or vif */
+    background-color: #2c3e50; /* Fond foncé pour un meilleur contraste */
+    border-radius: 50%;
+    padding: 3px;
+    
+    /* Ombre pour effet de profondeur */
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+    
+    /* Assurer que la couronne est visible */
+    z-index: 10; 
+    
+    /* Animation subtile (optionnel) */
+    animation: sparkle 1.5s infinite alternate;
+}
+
+/* Keyframe pour l'effet de scintillement */
+@keyframes sparkle {
+    from {
+        opacity: 0.9;
+        transform: scale(1);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1.05);
+    }
+}
+
+/* ----------------------------------- */
+/* --- Ajustement de la Dropdown --- */
+/* ----------------------------------- */
+
+/* Assurez-vous que les marges du dropdown sont correctes */
+@media (min-width: 993px) {
+    .user-dropdown {
+        top: 130%; /* Descendre légèrement pour éviter de coller au bouton */
+    }
+}
+
+/* ----------------------------------- */
+/* --- Mobile/Tablette Ajustement --- */
+/* ----------------------------------- */
+
+@media (max-width: 576px) {
+ 
+    .vip-icon-badge {
+        font-size: 0.7rem;
+        top: -3px;
+        right: -3px;
+    }
+}
+
+
+@media (max-width: 1300px) {
+ 
+
+.button_retour {
+    position: fixed;
+    top: 120px; /* Espace en haut */
+  
+}
+
+}
+
+@media (max-width: 787px) {
+ 
+
+.button_retour {
+    position: fixed;
+    top: 100px; /* Espace en haut */
+  
+}
+
+}
+
+
+
+
+
+
+
+.user-dropdown {
+    position: absolute;
+    top: 75%;
+    right: 0;
+    width: 200px;
+    background-color: #ffffff;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    border-radius: 8px;
+    overflow: hidden;
+    z-index: 1000;
+    padding: 10px 0;
+}
+
+.dropdown-header {
+    padding: 5px 15px 10px;
+    border-bottom: 1px solid #eee;
+    margin-bottom: 5px;
+}
+
+.user-email-display {
+    font-size: 0.9rem;
+    color: #7f8c8d;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* ----------------------------------- */
+/* --- Sélecteur de Langue (Drapeaux) --- */
+/* ----------------------------------- */
+
+.language-selector-desktop {
+    display: flex;
+
+    gap: 5px; /* Petit espace entre les drapeaux */
+    margin-right: 10px; /* Espace avant le panier/auth */
+}
+.bloc_language-selector-desktop{
+  display: block;
+        margin: auto;
+        text-align: center;
+
+
+}
+
+/* Masquer le sélecteur desktop sur mobile */
+
+
+.flag-btn {
+    background: none;
+    border: none;
+
+    padding: 3px 10px 0px 10px;
+    cursor: pointer;
+    font-size: 1.0rem; /* Taille visible des emojis de drapeau */
+    opacity: 0.6; /* Les drapeaux inactifs sont un peu transparents */
+    transition: opacity 0.3s, transform 0.2s, border 0.3s;
+    /* border-radius: 50%; */
+    line-height: 1; /* Assure que le drapeau ne crée pas de padding excessif */
+}
+.flag-icon{
+  width: 25px;
+}
+.flag-btn:hover {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+.flag-btn.active-flag {
+    opacity: 1;
+    /* Mettre en évidence le drapeau actif avec une bordure fine */
+    border: 1px solid #D4AF37; 
+}
+
+
+/* --- Styles spécifiques pour le Menu Mobile (dans le menu burger) --- */
+
+.mobile-language-menu {
+    display: none; /* Masqué sur Desktop */
+    padding: 10px 5%;
+    border-bottom: 1px solid #f0f0f0;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap; /* Pour s'assurer que les drapeaux ne débordent pas */
+}
+
+.mobile-language-menu .nav-link-item {
+    padding: 0;
+    font-weight: 600;
+    color: #333;
+}
+
+.language-selector-mobile {
+    display: flex;
+    gap: 10px;
+}
+
+.language-selector-mobile .flag-btn {
+    font-size: 1.8rem; /* Un peu plus grand sur mobile */
+}
+
+
+/* --- Ajustement général du Navbar-Links (Mobile) --- */
+@media (max-width: 992px) {
+    .navbar-links.active {
+        padding-bottom: 20px; /* Espace après la liste */
+    }
+}
+
+
+
+
+
+
+
+
+
+
+/* --- Styles de Base pour le Modal (Réutilisés du Navbar) --- */
+
+/* La classe .no-scroll doit être dans votre CSS global ou l'index CSS */
+/* .no-scroll { overflow: hidden; } */ 
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7); /* Fond plus sombre pour le VIP */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 3000; /* Assurez-vous qu'il est au-dessus de tout */
+}
+
+.certification-modal {
+    background-color: #ffffff;
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    text-align: center;
+    max-width: 450px;
+    width: 90%;
+    transform: scale(1);
+    transition: transform 0.3s ease-out;
+    border: 3px solid #D4AF37; /* Bordure dorée pour l'effet premium */
+}
+
+.modal-title {
+    font-size: 1.8rem;
+    color: #2c3e50;
+    margin-bottom: 15px;
+    font-weight: 700;
+}
+
+.modal-text {
+    font-size: 1rem;
+    color: #555;
+    margin-bottom: 10px;
+    line-height: 1.5;
+}
+
+.modal-text strong {
+    color: #D4AF37;
+    font-weight: 800;
+}
+
+.small-text {
+    font-size: 0.9rem;
+    color: #7f8c8d;
+    margin-top: 20px;
+}
+
+.modal-actions {
+    margin-top: 30px;
+}
+
+.modal-btn.confirm-btn {
+    background-color: #D4AF37;
+    color: #ffffff;
+    padding: 12px 25px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.modal-btn.confirm-btn:hover {
+    background-color: #C0A132;
+}
+
+
+
+
+
+.vip-accent-text {
+    color: #D4AF37;
+}
+
+.vip-sub-text {
+    font-size: 1.1rem;
+    color: #7f8c8d;
+}
+
+.courses-grid-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* 3 colonnes pour un look pro */
+    gap: 30px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.course-card {
+    background-color: #ffffff;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    transition: transform 0.3s, box-shadow 0.3s;
+    text-align: left;
+}
+
+.course-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+
+.course-image-wrapper {
+    width: 100%;
+    height: 200px;
+    overflow: hidden;
+    position: relative;
+}
+
+.course-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+}
+
+.course-card:hover .course-image {
+    transform: scale(1.05);
+}
+
+.course-content {
+    padding: 20px;
+}
+
+.course-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 10px;
+}
+
+.course-description {
+    font-size: 0.95rem;
+    color: #7f8c8d;
+    margin-bottom: 20px;
+}
+
+.course-meta {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+    color: #7f8c8d;
+    font-size: 0.9rem;
+}
+
+.course-meta svg {
+    margin-right: 5px;
+    color: #D4AF37;
+}
+
+.access-button {
+    width: 100%;
+    padding: 12px;
+    background-color: #D4AF37;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.access-button:hover {
+    background-color: #C0A132;
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+    .courses-grid-container {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 600px) {
+    .courses-grid-container {
+        grid-template-columns: 1fr;
+    }
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+.certificate-box {
+    margin-top: 20px;
+    background: #f5f7fa;
+    border-left: 4px solid #4CAF50;
+    padding: 12px 14px;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.certificate-text {
+    margin: 0;
+    color: #333;
+    font-weight: 700;
+    
+}
+
+.certificate-whatsapp {
+    margin-top: 6px;
+    color: #2e7d32;
+    font-weight: bold;
+    font-size: 15px;
+}
+
+
+
+
+
+
+
+
+
+
+
+/* --- Base Modal Styles --- */
+
+.home-product-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1050; /* Doit être au-dessus des autres modales */
+}
+
+.home-product-modal-content {
+    background-color: #ffffff;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 5px 25px rgba(0, 0, 0, 0.3);
+    width: 90%;
+    max-width: 550px;
+    animation: slideIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* --- Header and Close Button --- */
+
+.home-product-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid #f0f0f0;
+    padding-bottom: 15px;
+    margin-bottom: 20px;
+}
+
+.home-product-modal-header h3 {
+    margin: 0;
+    color: #007bff; /* Couleur primaire */
+    font-size: 1.5em;
+    font-weight: 600;
+}
+
+.home-product-close-btn {
+    background: none;
+    border: none;
+    font-size: 1.5em;
+    color: #333;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.home-product-close-btn:hover {
+    color: #dc3545; /* Rouge pour le danger/fermeture */
+}
+
+/* --- Form Styles --- */
+
+.home-product-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.home-product-form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.home-product-form-group label {
+    font-weight: 600;
+    margin-bottom: 5px;
+    color: #555;
+    font-size: 0.95em;
+}
+
+.home-product-form-group input[type="text"],
+.home-product-form-group input[type="url"],
+.home-product-form-group input[type="number"],
+.home-product-form-group textarea {
+    padding: 10px 12px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 1em;
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.home-product-form-group input:focus,
+.home-product-form-group textarea:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+    outline: none;
+}
+
+.home-product-form-group textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.home-product-error-message {
+    color: #dc3545;
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    padding: 10px;
+    border-radius: 4px;
+    margin-bottom: 15px;
+    font-weight: 500;
+}
+
+/* --- Actions/Buttons --- */
+
+.home-product-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+    margin-top: 25px;
+}
+
+.home-product-submit-btn,
+.home-product-cancel-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s, opacity 0.3s;
+}
+
+.home-product-submit-btn {
+    background-color: #28a745; /* Vert pour Soumettre */
+    color: white;
+}
+
+.home-product-submit-btn:hover:not(:disabled) {
+    background-color: #218838;
+}
+
+.home-product-cancel-btn {
+    background-color: #6c757d; /* Gris pour Annuler */
+    color: white;
+}
+
+.home-product-cancel-btn:hover:not(:disabled) {
+    background-color: #5a6268;
+}
+
+.home-product-submit-btn:disabled,
+.home-product-cancel-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Keyframe pour l'animation */
+@keyframes slideIn {
+    0% { transform: scale(0.9) translateY(20px); opacity: 0; }
+    100% { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+
+
+
+/* --- Styles pour le Header de la Page d'Administration (Général) --- */
+
+.admin-header-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    padding: 0 10px; 
+}
+
+.client-title {
+    /* Assurez-vous que le titre conserve son style de base */
+    font-size: 2em;
+    color: #333;
+    font-weight: 700;
+}
+
+/* --- Styles pour le Bouton 'Ajouter Produit Accueil' --- */
+
+.product-home-add-btn {
+    /* Style de base */
+    background-color: #007bff; /* Bleu vif/primaire */
+    color: white;
+    padding: 10px 18px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 8px rgba(0, 123, 255, 0.2);
+    transition: background-color 0.3s ease, transform 0.1s ease;
+}
+
+.product-home-add-btn:hover {
+    background-color: #0056b3; /* Bleu plus foncé au survol */
+    transform: translateY(-1px);
+    box-shadow: 0 6px 10px rgba(0, 123, 255, 0.3);
+}
+
+.product-home-add-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 3px 6px rgba(0, 123, 255, 0.2);
+}
+
+.product-home-add-btn:disabled {
+    background-color: #ccc;
+    color: #888;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+
+
+
+
+
+
+
+/* Container for form group */
+.home-product-form-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 15px;
+}
+
+/* Label styling */
+.home-product-form-group label {
+  font-weight: 500;
+  margin-bottom: 5px;
+  color: #333;
+}
+
+/* Select styling */
+.home-product-form-group select {
+  padding: 10px 12px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background-color: #fff;
+  font-size: 16px;
+  color: #333;
+  transition: border-color 0.3s, box-shadow 0.3s;
+  cursor: pointer;
+}
+
+/* Hover state */
+.home-product-form-group select:hover {
+  border-color: #b59f3b; /* Doré */
+}
+
+/* Focus state */
+.home-product-form-group select:focus {
+  outline: none;
+  border-color: #b59f3b; /* Doré */
+  box-shadow: 0 0 5px rgba(181, 159, 59, 0.5);
+}
+
+/* Placeholder option style */
+.home-product-form-group select option[value=""] {
+  color: #999;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+:root {
+    /* Couleurs primaires */
+    --color-primary: #3498db; /* Bleu vif pour les actions principales */
+    --color-primary-hover: #2980b9;
+    --color-danger: #e74c3c; /* Rouge pour la suppression */
+    --color-danger-hover: #c0392b;
+    --color-success: #2ecc71; /* Vert pour le succès */
+    
+    /* Couleurs de fond et de texte */
+    --color-bg-light: #f4f7f6; /* Fond général */
+    --color-bg-dark: #ecf0f1; /* Fond du modal */
+    --color-text-dark: #2c3e50; /* Texte principal */
+    --color-text-light: #7f8c8d; /* Texte secondaire, labels */
+    --color-border: #bdc3c7;
+    --color-shadow: rgba(0, 0, 0, 0.15);
+    --color-editing-highlight: #fcf3cf; /* Jaune très clair pour le mode édition */
+
+    /* Espacement et coins */
+    --spacing-unit: 1rem;
+    --border-radius-sm: 4px;
+    --border-radius-lg: 8px;
+}
+
+/* 1. Style Global du Modal et de l'Overlay */
+.home-product-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(44, 62, 80, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    /* Pour l'animation d'ouverture (doit être contrôlé via JS en ajoutant/retirant une classe 'open') */
+    opacity: 1; 
+    transition: opacity 0.3s ease-in-out;
+}
+
+.home-product-modal-content {
+    background-color: var(--color-bg-dark);
+    color: var(--color-text-dark);
+    width: 90%;
+    max-width: 800px;
+    border-radius: var(--border-radius-lg);
+    box-shadow: 0 10px 30px var(--color-shadow);
+    padding: var(--spacing-unit) calc(var(--spacing-unit) * 2);
+    max-height: 90vh;
+    overflow-y: auto;
+    /* Pour l'animation d'ouverture */
+    transform: translateY(0);
+    transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+}
+
+.home-product-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-unit);
+    border-bottom: 2px solid var(--color-border);
+    padding-bottom: var(--spacing-unit);
+}
+
+.home-product-modal-header h3 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--color-primary);
+}
+
+.home-product-close-btn {
+    background: none;
+    border: none;
+    color: var(--color-text-light);
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.home-product-close-btn:hover {
+    color: var(--color-danger);
+}
+
+
+/* 2. Style du Formulaire et des Erreurs */
+.home-product-separator {
+    border: 0;
+    height: 1px;
+    background-image: linear-gradient(to right, rgba(0, 0, 0, 0), var(--color-border), rgba(0, 0, 0, 0));
+    margin: calc(var(--spacing-unit) * 2) 0;
+}
+
+.home-product-modal-section-header h4 {
+    margin-top: 0;
+    font-size: 1.3rem;
+    color: var(--color-text-dark);
+    display: flex;
+    align-items: center;
+}
+
+.home-product-modal-subheader {
+    font-size: 0.9rem;
+    color: var(--color-text-light);
+    margin-bottom: var(--spacing-unit);
+}
+
+.home-product-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: calc(var(--spacing-unit) * 1.5);
+}
+
+.home-product-form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Description, Catégorie et Actions prennent toute la largeur */
+.home-product-form-group:nth-child(3),
+.home-product-form-group:nth-child(4),
+.home-product-modal-actions {
+    grid-column: 1 / -1; 
+}
+
+.home-product-form-group.half-width {
+    grid-column: span 1;
+}
+
+.home-product-form-group label {
+    font-weight: 600;
+    color: var(--color-text-dark);
+    margin-bottom: 0.4rem;
+    font-size: 0.9rem;
+}
+
+.home-product-form input, 
+.home-product-form textarea,
+.home-product-form select {
+    padding: 0.75rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-sm);
+    font-size: 1rem;
+    color: var(--color-text-dark);
+    background-color: white;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.home-product-form input:focus, 
+.home-product-form textarea:focus,
+.home-product-form select:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+    outline: none;
+}
+
+.home-product-error-message {
+    color: var(--color-danger);
+    background-color: rgba(231, 76, 60, 0.1);
+    padding: 0.75rem;
+    border-radius: var(--border-radius-sm);
+    margin-bottom: var(--spacing-unit);
+    font-size: 0.9rem;
+    border-left: 4px solid var(--color-danger);
+}
+
+
+/* 3. Style des Boutons d'Action du Formulaire */
+.home-product-modal-actions {
+    display: flex;
+    gap: var(--spacing-unit);
+    margin-top: var(--spacing-unit);
+}
+
+.home-product-submit-btn,
+.home-product-cancel-btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: var(--border-radius-sm);
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s, opacity 0.2s;
+}
+
+.home-product-submit-btn {
+    flex-grow: 1;
+    background-color: var(--color-primary);
+    color: white;
+}
+
+.home-product-submit-btn:hover:not(:disabled) {
+    background-color: var(--color-primary-hover);
+}
+
+.home-product-cancel-btn {
+    background-color: var(--color-border);
+    color: var(--color-text-dark);
+    flex-grow: 0.5;
+}
+
+.home-product-cancel-btn:hover:not(:disabled) {
+    background-color: #abb3b7;
+}
+
+.home-product-submit-btn:disabled,
+.home-product-cancel-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* 4. Style de la Liste des Produits */
+.home-product-list-container {
+    margin-top: calc(var(--spacing-unit) * 2);
+}
+
+.home-product-list-header h4 {
+    border-bottom: 1px solid var(--color-border);
+    padding-bottom: 0.5rem;
+    margin-bottom: var(--spacing-unit);
+}
+
+.home-product-list {
+    display: grid;
+    gap: var(--spacing-unit);
+    grid-template-columns: 1fr; 
+}
+
+.home-product-list-item {
+    display: flex;
+    align-items: center;
+    background-color: white;
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-sm);
+    padding: var(--spacing-unit);
+    transition: box-shadow 0.2s, border-color 0.2s, background-color 0.2s;
+}
+
+.home-product-list-item:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.home-product-list-item.editing {
+    border-color: var(--color-primary);
+    background-color: var(--color-editing-highlight);
+    box-shadow: 0 0 5px rgba(52, 152, 219, 0.5);
+}
+
+.home-product-media-placeholder {
+    width: 80px;
+    height: 80px;
+    background-color: var(--color-bg-light);
+    border-radius: var(--border-radius-sm);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 0.8rem;
+    color: var(--color-text-light);
+    flex-shrink: 0;
+    margin-right: var(--spacing-unit);
+    overflow: hidden;
+}
+
+.home-product-list-details {
+    flex-grow: 1;
+}
+
+.home-product-list-details h5 {
+    margin: 0 0 0.2rem 0;
+    font-size: 1.1rem;
+    color: var(--color-primary-hover);
+}
+
+.category-tag {
+    font-size: 0.85rem;
+    color: var(--color-text-light);
+    margin: 0 0 0.5rem 0;
+}
+
+.price-tag {
+    font-size: 1rem;
+    color: var(--color-success);
+    font-weight: 700;
+    margin: 0;
+}
+
+.home-product-list-actions {
+    flex-shrink: 0;
+    display: flex;
+    gap: 0.5rem;
+}
+
+.home-product-action-btn {
+    background: none;
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-sm);
+    width: 35px;
+    height: 35px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--color-text-light);
+}
+
+.home-product-action-btn.edit:hover {
+    color: var(--color-primary);
+    border-color: var(--color-primary);
+    background-color: rgba(52, 152, 219, 0.1);
+}
+
+.home-product-action-btn.delete {
+    color: var(--color-danger);
+    border-color: var(--color-danger);
+}
+
+.home-product-action-btn.delete:hover {
+    background-color: var(--color-danger);
+    color: white;
+}
+
+.home-product-action-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    border-color: var(--color-border);
+    background: none;
+    color: var(--color-text-light);
+}
+
+.home-product-loading,
+.home-product-no-items {
+    text-align: center;
+    padding: calc(var(--spacing-unit) * 1.5);
+    color: var(--color-text-light);
+}
+
+.home-product-error-message.error-list {
+    margin: var(--spacing-unit) 0;
+}
+
+/* 5. Media Query (Réactivité) */
+@media (max-width: 768px) {
+    .home-product-modal-content {
+        width: 95%;
+        padding: var(--spacing-unit);
+    }
+    
+    .home-product-form {
+        /* Revenir à une seule colonne pour le formulaire sur mobile */
+        grid-template-columns: 1fr;
+        gap: var(--spacing-unit);
+    }
+    
+    .home-product-form-group.half-width {
+        grid-column: 1 / -1; 
+    }
+
+    .home-product-list-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .home-product-media-placeholder {
+        margin-right: 0;
+        margin-bottom: 0.5rem;
+    }
+
+    .home-product-list-details {
+        margin-bottom: 0.5rem;
+    }
+
+    .home-product-list-actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
+}
+
+
+
+
+
+/* Style du Modal de Confirmation */
+
+.confirmation-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(44, 62, 80, 0.9); /* Fond très sombre */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1001; /* Doit être au-dessus du AddHomeProductModal */
+}
+
+.confirmation-modal-content {
+    background-color: white;
+    width: 90%;
+    max-width: 400px;
+    border-radius: var(--border-radius-lg, 8px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+    padding: calc(var(--spacing-unit, 1rem) * 1.5);
+    text-align: center;
+    transform: scale(1.05); /* Petite animation */
+    animation: bounceIn 0.3s ease-out forwards;
+}
+
+@keyframes bounceIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.confirmation-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: var(--spacing-unit, 1rem);
+    border-bottom: 1px solid var(--color-border, #bdc3c7);
+    margin-bottom: var(--spacing-unit, 1rem);
+}
+
+.confirmation-modal-header h4 {
+    margin: 0;
+    flex-grow: 1;
+    text-align: left;
+    padding-left: 10px;
+    font-size: 1.2rem;
+    color: var(--color-text-dark, #2c3e50);
+}
+
+.confirmation-modal-header .header-icon {
+    font-size: 1.5rem;
+    color: var(--color-danger, #e74c3c);
+    flex-shrink: 0;
+}
+
+.confirmation-modal-body {
+    padding: 0 0 calc(var(--spacing-unit, 1rem) * 1.5) 0;
+}
+
+.confirmation-modal-body .main-message {
+    font-size: 1.1rem;
+    color: var(--color-text-dark, #2c3e50);
+    margin-bottom: 0.5rem;
+}
+
+.confirmation-modal-body .details-text {
+    font-size: 0.9rem;
+    color: var(--color-text-light, #7f8c8d);
+    margin: 0 0 1rem 0;
+}
+
+.confirmation-modal-body .warning-text {
+    font-size: 0.85rem;
+    color: var(--color-danger, #e74c3c);
+    background-color: rgba(231, 76, 60, 0.05);
+    padding: 0.75rem;
+    border-radius: var(--border-radius-sm, 4px);
+    border: 1px dashed var(--color-danger, #e74c3c);
+}
+
+.confirmation-modal-actions {
+    display: flex;
+    gap: var(--spacing-unit, 1rem);
+    justify-content: space-between;
+}
+
+.confirm-action-btn,
+.cancel-action-btn {
+    padding: 0.75rem 1rem;
+    border-radius: var(--border-radius-sm, 4px);
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    flex: 1;
+}
+
+.confirm-action-btn {
+    background-color: var(--color-danger, #e74c3c);
+    color: white;
+    border: 1px solid var(--color-danger, #e74c3c);
+}
+
+.confirm-action-btn:hover {
+    background-color: var(--color-danger-hover, #c0392b);
+}
+
+.cancel-action-btn {
+    background-color: var(--color-bg-light, #f4f7f6);
+    color: var(--color-text-dark, #2c3e50);
+    border: 1px solid var(--color-border, #bdc3c7);
+}
+
+.cancel-action-btn:hover {
+    background-color: var(--color-border, #bdc3c7);
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    color: var(--color-text-light, #7f8c8d);
+    font-size: 1.2rem;
+    cursor: pointer;
+}
+
+.close-btn:hover {
+    color: var(--color-danger, #e74c3c);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+/* ==================================== */
+/* 1. التنسيقات المشتركة لكل النوافذ المنبثقة (Modals) */
+/* ==================================== */
+
+/* الخلفية المظللة لجميع النوافذ */
+.modal-overlay, .custom-modal-backdrop-success {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7); /* لون شفاف داكن */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000; /* يجب أن يكون فوق كل شيء */
+}
+
+/* محتوى النافذة المشترك (لتوسطها وتنسيقها) */
+.order-modal-content, .comment-modal-content, .modern-modal-content-success {
+    background: #ffffff;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+    max-width: 500px;
+    width: 90%;
+    position: relative;
+    animation: fadeIn 0.3s ease-out;
+}
+
+/* زر الإغلاق العام */
+.modal-close-btn, .close-btn-success {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    color: #333;
+    transition: color 0.2s;
+}
+.modal-close-btn:hover, .close-btn-success:hover {
+    color: #ff5722;
+}
+
+/* تأثير ظهور النافذة */
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+/* العناوين والفرعية */
+.modal-title {
+    color: #333333;
+    font-size: 24px;
+    margin-bottom: 20px;
+    text-align: center;
+    border-bottom: 2px solid #f0f0f0;
+    padding-bottom: 10px;
+}
+.form-subtitle {
+    color: #555;
+    font-size: 18px;
+    margin-top: 15px;
+    margin-bottom: 10px;
+}
+
+/* ==================================== */
+/* 2. تنسيقات نافذة الطلب (OrderModalComponent) */
+/* ==================================== */
+.product-summary {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 10px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+}
+
+.summary-image {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 6px;
+}
+
+.summary-name {
+    font-weight: bold;
+    color: #222;
+    margin: 0;
+}
+
+.summary-price {
+    color: #777;
+    font-size: 14px;
+}
+
+/* التحكم بالكمية */
+.quantity-control-group {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    padding: 10px 0;
+    border-top: 1px dashed #ddd;
+}
+.quantity-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.quantity-controls button {
+    background-color: #eee;
+    border: 1px solid #ccc;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.total-price-display {
+    font-size: 18px;
+    font-weight: 500;
+}
+
+/* حقول الإدخال */
+.input-row {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+.input-group {
+    position: relative;
+}
+.input-group input {
+    width: 100%;
+    padding: 10px 10px 10px 4px; /* مساحة للأيقونة */
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 16px;
+}
+
+
+/* أزرار الإجراءات */
+.modal-actions-order {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 25px;
+}
+.confirm-order-btn, .cancel-order-btn {
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+
+.cancel-order-btn {
+    background-color: #f0f0f0;
+    color: #555;
+}
+.cancel-order-btn:hover:not(:disabled) {
+    background-color: #e0e0e0;
+}
+.spinner {
+    margin: 0 5px;
+}
+
+/* ==================================== */
+/* 3. تنسيقات نافذة التأكيد (SuccessModalComponent) */
+/* ==================================== */
+.success-icon-section {
+    text-align: center;
+    margin-bottom: 15px;
+}
+.check-icon-large {
+    font-size: 60px;
+    color: #4CAF50; /* أخضر للنجاح */
+}
+.success-modal-title {
+    color: #4CAF50;
+    font-size: 28px;
+    text-align: center;
+    margin-bottom: 15px;
+    border: none;
+}
+.success-message-text {
+    text-align: center;
+    font-size: 16px;
+    color: #555;
+    line-height: 1.5;
+    margin-bottom: 30px;
+}
+
+.modal-action-buttons-success {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
+.feedback-button-success, .return-button-success {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+.feedback-button-success {
+    background-color: #007bff; /* أزرق لزر التعليق */
+    color: white;
+}
+.return-button-success {
+    background-color: #ccc;
+    color: #333;
+}
+
+/* ==================================== */
+/* 4. تنسيقات نافذة التعليق (CommentModalComponent) */
+/* ==================================== */
+.rating-control-group {
+    text-align: center;
+    margin-bottom: 20px;
+}
+.rating-stars {
+
+}
+
+[dir='rtl'] .rating-stars{
+    margin-top: -20px;
+    margin-left: -20px;
+}
+[dir='ltr'] .rating-stars{
+    margin-top: -20px;
+    margin-left: -5px;
+}
+
+.star {
+    margin: 0 3px;
+    transition: color 0.2s;
+}
+
+.modal-actions-comment {
+    display: flex;
+    justify-content: flex-end; /* لجهة اليمين/اليسار */
+    gap: 10px;
+    margin-top: 20px;
+}
+.send-comment-btn, .skip-comment-btn {
+    padding: 10px 15px;
+    border-radius: 6px;
+    font-size: 15px;
+    font-weight: bold;
+    cursor: pointer;
+    border: none;
+    transition: background-color 0.2s;
+}
+.send-comment-btn {
+    background-color: #28a745; /* أخضر للإرسال */
+    color: white;
+}
+.skip-comment-btn {
+    background-color: #f8d7da; /* لون فاتح للإلغاء */
+    color: #721c24;
+}
+
+
+[dir='rtl'] .input-group .input-icon {
+margin-left: 20px;
+}
+[dir='ltr'] .modal-actions-comment {
+ margin-left: 0px;
+ margin-right: 20px;
+
 }

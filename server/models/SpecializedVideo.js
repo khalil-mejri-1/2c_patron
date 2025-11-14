@@ -1,9 +1,8 @@
-// models/SpecializedVideo.js - AUCUN CHANGEMENT NÉCESSAIRE
-
+// models/SpecializedVideo.js
 const mongoose = require('mongoose');
 
 const specializedVideoSchema = new mongoose.Schema({
-    url: { type: String, required: true }, // Stockera maintenant le chemin du fichier (ex: /uploads/videos/12345.mp4)
+    url: { type: String, required: true }, // ⬅️ Stocke l'URL ou le chemin
     title: { type: String, required: true },
     description: { type: String },
     category: { type: String, required: true },

@@ -9,6 +9,7 @@ const fs = require('fs');
 const multer = require('multer');
 const Command = require('./models/command.js');
 // استيراد النماذج
+const HomeProduct = require("./models/HomeProduct.js");
 
 const Commentaire = require("./models/Commentaire.js");
 const Abonnement = require('./models/Abonnement.js');
@@ -139,6 +140,7 @@ mongoose.connect(MONGODB_URI)
 
 
 // -------------------- C. ROUTES --------------------
+app.get('/favicon.ico', (req, res) => res.status(204).end());
 
 app.get('/', (req, res) => {
   res.send('Hello World! Connected to Express and MongoDB.');
@@ -748,15 +750,28 @@ app.get('/api/commentaires', async (req, res) => {
 // ===================================================
 app.post('/api/commentaires', async (req, res) => {
   try {
-    const nouveauCommentaire = await Commentaire.create(req.body);
-    res.status(201).json({ success: true, data: nouveauCommentaire });
+    // البيانات القادمة من React هي: { nom, commentaire, rating, productId }
+    const newCommentaire = new Commentaire(req.body); 
+    
+    // حفظ الكائن الجديد في قاعدة البيانات
+    const savedCommentaire = await newCommentaire.save();
+
+    // إرسال استجابة نجاح
+    res.status(201).json({ 
+        message: 'Commentaire créé avec succès', 
+        commentId: savedCommentaire._id 
+    });
   } catch (error) {
-    // Gère les erreurs de validation Mongoose
+    // معالجة أخطاء التحقق (Validation Errors) مثل الحقول المفقودة
     if (error.name === 'ValidationError') {
       const messages = Object.values(error.errors).map(val => val.message);
-      return res.status(400).json({ success: false, error: messages });
+      return res.status(400).json({ 
+        message: 'Erreur de validation', 
+        errors: messages 
+      });
     }
-    res.status(500).json({ success: false, error: 'Erreur serveur lors de la création du commentaire' });
+    // معالجة الأخطاء الأخرى
+    res.status(500).json({ message: 'Erreur serveur lors de l\'enregistrement du commentaire', error: error.message });
   }
 });
 // ===================================================
@@ -1184,54 +1199,39 @@ app.post('/api/specialized-courses/group', async (req, res) => {
 
 
 
-app.post('/api/specialized-videos/', (req, res) => {
-  // 1. Gérer l'upload du fichier en premier
-  upload(req, res, async (err) => {
-    if (err) {
-      // Gérer les erreurs de Multer (taille limite, type de fichier)
-      if (err instanceof multer.MulterError) {
-        return res.status(400).json({ message: `Erreur Multer: ${err.message}` });
-      }
-      return res.status(400).json({ message: err.message || "Erreur lors du téléchargement du fichier." });
-    }
+app.post('/api/specialized-videos/', async (req, res) => {
+    
+    // 1. Désormais, pas de gestion de fichier uploadé
+    const { title, description, category, videoUrl } = req.body; // 💡 videoUrl est le nouveau champ
 
-    // 2. Vérifier les données du corps (maintenant que le fichier est traité)
-    const { title, description, category } = req.body;
-    // Le chemin du fichier est stocké dans req.file.filename
-    const videoFileName = req.file ? req.file.filename : null;
-
-    if (!videoFileName || !title || !category) {
-      // Si le fichier n'est pas là, mais que Multer n'a pas renvoyé d'erreur (cas où 'videoFile' n'a pas été envoyé)
-      return res.status(400).json({ message: "Le fichier vidéo, le titre et la catégorie sont obligatoires." });
+    // 2. Vérification des données (y compris la nouvelle URL)
+    if (!videoUrl || !title || !category) {
+        // Le message d'erreur est mis à jour
+        return res.status(400).json({ message: "Le titre, la catégorie et l'URL de la vidéo sont obligatoires." });
     }
 
     try {
-      // 3. Sauvegarder les métadonnées dans MongoDB
-      // Le champ 'url' dans le modèle va stocker le nom du fichier pour la reconstruction de l'URL d'accès.
-      const newVideo = new SpecializedVideo({
-        url: `/uploads/videos/${videoFileName}`, // Chemin d'accès statique au fichier
-        title,
-        description,
-        category
-      });
+        // 3. Sauvegarder les métadonnées dans MongoDB
+        // Le champ 'url' dans le modèle va maintenant stocker l'URL du lien.
+        const newVideo = new SpecializedVideo({ // Renommé 'SpecializedVideo' ici pour correspondre à votre usage dans la route
+            url: videoUrl, // 💡 Stocke l'URL externe fournie par l'utilisateur
+            title,
+            description,
+            category
+        });
 
-      await newVideo.save();
+        await newVideo.save();
 
-      res.status(201).json({
-        message: "Vidéo ajoutée avec succès et fichier téléversé.",
-        data: newVideo
-      });
+        res.status(201).json({
+            message: "Vidéo ajoutée avec succès via lien URL.",
+            data: newVideo
+        });
     } catch (dbErr) {
-      console.error(dbErr);
-      // En cas d'erreur de DB après l'upload, vous devriez idéalement supprimer le fichier uploadé.
-      if (videoFileName) {
-        fs.unlink(req.file.path, (e) => e && console.error("Erreur de nettoyage du fichier:", e));
-      }
-      res.status(500).json({ message: "Erreur serveur lors de la sauvegarde des données." });
+        console.error(dbErr);
+        // Plus besoin de fs.unlink car aucun fichier local n'est uploadé
+        res.status(500).json({ message: "Erreur serveur lors de la sauvegarde des données." });
     }
-  });
 });
-
 
 
 // app.post('/api/specialized-videos/', async (req, res) => {
@@ -1352,5 +1352,77 @@ app.delete('/api/specialized-videos/:id', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Erreur serveur." });
+  }
+});
+
+
+
+
+
+// ------------------------- POST (ADD) -------------------------
+app.post("/api/home-products", async (req, res) => {
+  try {
+    const newProduct = new HomeProduct(req.body);
+    const saved = await newProduct.save();
+    res.status(201).json(saved);
+  } catch (err) {
+    res.status(400).json({ message: "Erreur lors de l'ajout.", error: err.message });
+  }
+});
+
+
+app.get("/api/home-products", async (req, res) => {
+  try {
+    const products = await HomeProduct.find().sort({ createdAt: -1 });
+    res.json(products);
+  } catch (err) {
+    res.status(500).json({ message: "Erreur lors de la récupération." });
+  }
+});
+
+// ------------------------- GET ONE -------------------------
+app.get("/api/home-products/:id", async (req, res) => {
+  try {
+    const product = await HomeProduct.findById(req.params.id);
+
+    if (!product) return res.status(404).json({ message: "Produit introuvable." });
+
+    res.json(product);
+  } catch (err) {
+    res.status(500).json({ message: "Erreur serveur." });
+  }
+});
+
+
+
+// ------------------------- PUT (UPDATE) -------------------------
+app.put("/api/home-products/:id", async (req, res) => {
+  try {
+    const updatedProduct = await HomeProduct.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true }
+    );
+
+    if (!updatedProduct)
+      return res.status(404).json({ message: "Produit introuvable." });
+
+    res.json(updatedProduct);
+  } catch (err) {
+    res.status(400).json({ message: "Erreur de mise à jour." });
+  }
+});
+
+// ------------------------- DELETE -------------------------
+app.delete("/api/home-products/:id", async (req, res) => {
+  try {
+    const deleted = await HomeProduct.findByIdAndDelete(req.params.id);
+
+    if (!deleted)
+      return res.status(404).json({ message: "Produit introuvable." });
+
+    res.json({ message: "Produit supprimé avec succès !" });
+  } catch (err) {
+    res.status(500).json({ message: "Erreur lors de la suppression." });
   }
 });

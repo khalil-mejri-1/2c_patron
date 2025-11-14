@@ -57,7 +57,6 @@ export default function Leçons_Manches_coursage() {
                 </div>
                 
                 {/* ⚡️ Bloc Vidéo Introduction - يظهر فقط إذا كان الفيديو موجود */}
-                {videoUrl && <VideoIntroduction videoUrl={videoUrl} title={actualTitle} />}
 
                 <br />
                 <div className="vip-header" style={{ marginBottom: '40px' }}>

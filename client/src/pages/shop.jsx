@@ -1,43 +1,203 @@
 import React, { useState, useEffect } from 'react';
-import { FaShoppingCart, FaSearch, FaChevronDown, FaTimes, FaUser, FaEnvelope, FaMapMarkerAlt, FaPhoneAlt, FaMinusCircle, FaPlusCircle, FaSpinner, FaCheckCircle, FaCommentAlt } from 'react-icons/fa';
+import { FaShoppingCart, FaSearch, FaChevronDown, FaTimes, FaUser, FaMapMarkerAlt, FaPhoneAlt, FaMinusCircle, FaPlusCircle, FaSpinner, FaCheckCircle, FaCommentAlt } from 'react-icons/fa';
 import Navbar from '../comp/navbar';
 import Footer from '../comp/Footer';
 
 // 🚨 قائمة الفئات النهائية بناءً على طلبك
-const categories = ['Tous', 'Homme', 'Famme', 'Enfant'];
+const categoriesFr = ['Tous', 'Homme', 'Famme', 'Enfant'];
+const categoriesAr = ['الكل', 'رجال', 'نساء', 'أطفال'];
+const categoriesEn = ['All', 'Men', 'Women', 'Children'];
 
-// ⚠️ Assurez-vous que cette URL est correctة pour votre environnement backend (par exemple, http://localhost:5000)
+// ⚠️ Assurez-vous que cette URL est correctة
 const API_URL = 'https://2c-patron.vercel.app/api/products';
 const API_COMMAND_URL = 'https://2c-patron.vercel.app/api/commands';
-// 🆕 NOUVELLE URL POUR LES COMMENTAIRES
 const API_COMMENTAIRE_URL = 'https://2c-patron.vercel.app/api/commentaires';
 
+// 🌐 كائن الترجمة
+const translations = {
+    ar: {
+        categories: categoriesAr,
+        categoryMapping: { 'Tous': 'الكل', 'Homme': 'رجال', 'Famme': 'نساء', 'Enfant': 'أطفال' },
+        unitPrice: "/ وحدة",
+        modalTitleGuest: "إرسال طلبك (زائر)",
+        modalTitleUser: "تأكيد طلبك (متصل)",
+        qtyLabel: "الكمية :",
+        total: "الإجمالي :",
+        contactInfo: "بيانات الاتصال الخاصة بك",
+        namePlaceholder: "الاسم واللقب (إلزامي)",
+        addressPlaceholder: "العنوان (إلزامي)",
+        phonePlaceholder: "رقم الهاتف (إلزامي)",
+        validationError: "يرجى ملء جميع معلومات الاتصال (الاسم، العنوان، الهاتف).",
+        submitBtn: "تأكيد الطلب",
+        submitBtnGuest: "إرسال الطلب",
+        submitting: "جاري الإرسال...",
+        cancelBtn: "إلغاء",
+        loading: "جاري تحميل المنتجات...",
+        loadingTitle: "تحميل",
+        error: (err) => `❌ **خطأ :** ${err}`,
+        collectionTitle: "مجموعة",
+        collectionAccent: "حصرية",
+        collectionSubtitle: "اكتشف أحدث منتجاتنا والأدوات الأساسية للخياطة الراقية.",
+        toggleFiltersClose: "إغلاق الفلاتر",
+        toggleFiltersShow: (cat) => `عرض الفلاتر (${cat})`,
+        sidebarTitle: "تصفية",
+        navTitle:"الفئات  ",
+        searchPlaceholder: "البحث عن منتج...",
+        filterCategory: (cat) => `${cat}`,
+        resetFilters: "إعادة تعيين",
+        infoBar: (filtered, total) => `عرض ${filtered} منتج(ات) من أصل ${total}`,
+        addToCart: "شراء",
+        noResultsTitle: "😞 **لم يتم العثور على أي منتج**",
+        noResultsMsg: "للفلاتر المحددة.",
+        successTitle: "تم إرسال الطلب بنجاح!",
+        successMessage: (ref) => `تم تسجيل طلبك بنجاح. سيتصل بك مسؤول في أقرب وقت لتأكيد عملية الشراء.
+        <br/><br/>
+        **مرجع الطلب :** **${ref || 'N/A'}**`,
+        feedbackBtn: "ترك تعليق على الخدمة",
+        closeBtn: "إغلاق",
+        feedbackModalTitle: "رأيك يهمنا كثيرًا!",
+        feedbackModalSubtitle: "شارك تجربتك مع خدمتنا. ما رأيك في عملية الشراء؟",
+        feedbackModalSmallText: (name) => `سيتم تسجيل اسمك كـ : **${name || 'غير محدد'}**`,
+        feedbackPlaceholder: "اكتب تعليقك هنا...",
+        feedbackErrorName: "تعذر العثور على اسم العميل. يرجى محاولة الطلب مرة أخرى.",
+        feedbackErrorLength: "يجب أن يحتوي التعليق على 5 أحرف على الأقل.",
+        feedbackErrorSubmit: (err) => `خطأ في التسجيل : ${err}`,
+        feedbackSubmit: "إرسال التعليق",
+        feedbackSuccessTitle: "شكرًا لك على رأيك الثمين! 🌟",
+        feedbackSuccessMsg: "تم تسجيل تعليقك. رضاك هو أعظم مكافأة لنا ويساعدنا على التحسن المستمر.",
+        backToShop: "العودة إلى المتجر",
+        networkError: "خطأ في الشبكة. الرجاء المحاولة مرة أخرى.",
+        
+    },
+    fr: {
+        categories: categoriesFr,
+        categoryMapping: { 'Tous': 'Tous', 'Homme': 'Homme', 'Famme': 'Famme', 'Enfant': 'Enfant' },
+        unitPrice: "/ unité",
+        navTitle:"catégorie  ",
+        modalTitleGuest: "Passer votre commande (Visiteur)",
+        modalTitleUser: "Confirmer votre commande (Connecté)",
+        qtyLabel: "Quantité :",
+        total: "Total :",
+        contactInfo: "Vos informations de contact",
+        namePlaceholder: "Nom et Prénom (Obligatoire)",
+        addressPlaceholder: "Adresse (Obligatoire)",
+        phonePlaceholder: "Numéro de Téléphone (Obligatoire)",
+        validationError: "Veuillez remplir toutes les informations de contact (Nom, Adresse, Téléphone).",
+        submitBtn: "Confirmer la Commande",
+        submitBtnGuest: "Soumettre la Demande",
+        submitting: "Envoi...",
+        cancelBtn: "Annuler",
+        loading: "Chargement des produits...",
+        loadingTitle: "Chargement",
+        error: (err) => `❌ **Erreur :** ${err}`,
+        collectionTitle: "Collection",
+        collectionAccent: "Exclusive",
+        collectionSubtitle: "Découvrez nos nouveautés et les outils essentiels pour la haute couture.",
+        toggleFiltersClose: "Fermer les filtres",
+        toggleFiltersShow: (cat) => `Afficher les filtres (${cat})`,
+        sidebarTitle: "Filtrer",
+        searchPlaceholder: "Rechercher un produit...",
+        filterCategory: (cat) => `${cat} `,
+        resetFilters: "Réinitialiser",
+        infoBar: (filtered, total) => `Affichage de ${filtered} produit(s) sur ${total}`,
+        addToCart: "Achat",
+        noResultsTitle: "😞 **Aucun produit trouvé**",
+        noResultsMsg: "pour les filtres sélectionnés.",
+        successTitle: "Commande Envoyée avec Succès !",
+        successMessage: (ref) => `Votre commande a été enregistrée avec succès. Un responsable vous contactera dans les plus brefs délais pour confirmer votre achat.
+        <br/><br/>
+        **Référence de la commande :** **${ref || 'N/A'}**`,
+        feedbackBtn: "Laissez un Commentaire sur la Service",
+        closeBtn: "Fermer",
+        feedbackModalTitle: "Votre Avis Compte Énormément !",
+        feedbackModalSubtitle: "Partagez votre expérience avec notre service. Qu'avez-vous pensé de l'achat ?",
+        feedbackModalSmallText: (name) => `Votre nom sera enregistré comme : **${name || 'Non spécifié'}**`,
+        feedbackPlaceholder: "Écrivez votre commentaire ici...",
+        feedbackErrorName: "Nom du client introuvable. Veuillez réessayer de commander.",
+        feedbackErrorLength: "Le commentaire doit contenir au moins 5 caractères.",
+        feedbackErrorSubmit: (err) => `Erreur d'enregistrement : ${err}`,
+        feedbackSubmit: "Soumettre le Commentaire",
+        feedbackSuccessTitle: "Merci pour votre Avis Précieux ! 🌟",
+        feedbackSuccessMsg: "Votre commentaire a été enregistré. Votre **satisfaction** est notre plus belle récompense et nous aide à nous améliorer continuellement.",
+        backToShop: "Retour à la Boutique",
+        networkError: "Erreur de réseau. Veuillez réessayer.",
+    },
+    en: {
+        categories: categoriesEn,
+        categoryMapping: { 'Tous': 'All', 'Homme': 'Men', 'Famme': 'Women', 'Enfant': 'Children' },
+        unitPrice: "/ unit",
+        modalTitleGuest: "Place Your Order (Guest)",
+        modalTitleUser: "Confirm Your Order (Logged In)",
+        qtyLabel: "Quantity :",
+        total: "Total :",
+        contactInfo: "Your Contact Information",
+        namePlaceholder: "First and Last Name (Required)",
+        addressPlaceholder: "Address (Required)",
+        phonePlaceholder: "Phone Number (Required)",
+        validationError: "Please fill in all contact information (Name, Address, Phone).",
+        submitBtn: "Confirm Order",
+        submitBtnGuest: "Submit Request",
+        submitting: "Submitting...",
+        navTitle:"category  ",
+        cancelBtn: "Cancel",
+        loading: "Loading products...",
+        loadingTitle: "Loading",
+        error: (err) => `❌ **Error:** ${err}`,
+        collectionTitle: "Exclusive",
+        collectionAccent: "Collection",
+        collectionSubtitle: "Discover our new arrivals and essential tools for haute couture.",
+        toggleFiltersClose: "Close filters",
+        toggleFiltersShow: (cat) => `Show filters (${cat})`,
+        sidebarTitle: "Filter",
+        searchPlaceholder: "Search for a product...",
+        filterCategory: (cat) => `${cat} `,
+        resetFilters: "Reset",
+        infoBar: (filtered, total) => `Displaying ${filtered} product(s) out of ${total}`,
+        addToCart: "Purchase",
+        noResultsTitle: "😞 **No products found**",
+        noResultsMsg: "for the selected filters.",
+        successTitle: "Order Submitted Successfully!",
+        successMessage: (ref) => `Your order has been successfully recorded. A representative will contact you shortly to confirm your purchase.
+        <br/><br/>
+        **Order Reference:** **${ref || 'N/A'}**`,
+        feedbackBtn: "Leave a Service Review",
+        closeBtn: "Close",
+        feedbackModalTitle: "Your Review Matters Hugely!",
+        feedbackModalSubtitle: "Share your experience with our service. What did you think of the purchase?",
+        feedbackModalSmallText: (name) => `Your name will be registered as: **${name || 'Unspecified'}**`,
+        feedbackPlaceholder: "Write your comment here...",
+        feedbackErrorName: "Client name not found. Please try ordering again.",
+        feedbackErrorLength: "The comment must contain at least 5 characters.",
+        feedbackErrorSubmit: (err) => `Registration Error: ${err}`,
+        feedbackSubmit: "Submit Review",
+        feedbackSuccessTitle: "Thank You for Your Valuable Feedback! 🌟",
+        feedbackSuccessMsg: "Your comment has been recorded. Your **satisfaction** is our greatest reward and helps us continually improve.",
+        backToShop: "Return to Shop",
+        networkError: "Network error. Please try again.",
+    }
+};
 
 // ====================================================================
-// 🚨 المكون المنفصل للنافذة المنبثقة (MODAL) - مع إضافة حالة الانتظار ⏳
+// 🚨 المكون المنفصل للنافذة المنبثقة (MODAL)
 // ====================================================================
 
-const OrderModalComponent = ({ selectedProduct, quantity, handleQuantityChange, closeOrderModal, isLoggedIn, currentUserEmail, onOrderSuccess, onCustomerDataUpdate }) => {
+const OrderModalComponent = ({ selectedProduct, quantity, handleQuantityChange, closeOrderModal, isLoggedIn, currentUserEmail, onOrderSuccess, onCustomerDataUpdate, appLanguage }) => {
+    const t = translations[appLanguage] || translations.fr;
     
-    // 1. نقل حالة بيانات العميل إلى داخل المودال (الحل الجذري)
     const [customerData, setCustomerData] = useState({
         firstName: '',
         adresse: '',
         phone: ''
     });
-    // 🆕 حالة الانتظار لزر الإرسال
     const [isSubmittingOrder, setIsSubmittingOrder] = useState(false); 
 
     const handleCustomerDataChange = (e) => {
         const { name, value } = e.target;
-        
-        // تحديث الحالة الداخلية للمودال
         const newData = { ...customerData, [name]: value };
         setCustomerData(newData);
-        
-        // إرسال البيانات المحدثة للمكون الأب لتخزينها قبل الإغلاق (للاستخدام في Feedback)
         onCustomerDataUpdate(newData); 
     };
+
 
     const handleConfirmOrder = async (e) => {
         e.preventDefault();
@@ -50,13 +210,11 @@ const OrderModalComponent = ({ selectedProduct, quantity, handleQuantityChange, 
         const clientPhone = customerData.phone;
         const shippingAddress = customerData.adresse;
 
-        // التحقق من صحة الحقول
         if (!clientName || clientName.trim() === '' || !shippingAddress || !clientPhone) {
-            alert("Veuillez remplir toutes les informations de contact (Nom, Adresse, Téléphone).");
+            alert(t.validationError);
             return;
         }
 
-        // 🚨 تفعيل حالة الانتظار
         setIsSubmittingOrder(true);
 
         const orderData = {
@@ -89,41 +247,40 @@ const OrderModalComponent = ({ selectedProduct, quantity, handleQuantityChange, 
                 onOrderSuccess(result.commandId);
             } else {
                 console.error("Échec de l'enregistrement de la commande:", result);
-                alert(`❌ Erreur lors de la soumission de la commande : ${result.message || 'Problème de connexion au serveur.'}`);
+                alert(`❌ ${t.networkError} : ${result.message || 'Problème de connexion au serveur.'}`);
             }
 
         } catch (error) {
             console.error("Erreur de réseau lors de la soumission:", error);
-            alert("❌ Erreur de réseau. Veuillez réessayer.");
+            alert(`❌ ${t.networkError}`);
         } finally {
-            // 🚨 إيقاف حالة الانتظار سواء نجحت العملية أم فشلت
             setIsSubmittingOrder(false); 
         }
     };
 
 
     const totalPrice = (selectedProduct.price * quantity).toFixed(2);
+    const direction = appLanguage === 'ar' ? 'rtl' : 'ltr';
 
     return (
         <div className="modal-overlay">
-            <div className="order-modal-content">
-                {/* 🚨 تعطيل زر الإغلاق أثناء الإرسال */}
+            <div className="order-modal-content" dir={direction}>
                 <button className="modal-close-btn" onClick={closeOrderModal} disabled={isSubmittingOrder}><FaTimes /></button> 
 
                 <h2 className="modal-title">
-                    {isLoggedIn ? `Confirmer votre commande (Connecté)` : "Passer votre commande (Visiteur)"}
+                    {isLoggedIn ? t.modalTitleUser : t.modalTitleGuest}
                 </h2>
 
                 <div className="product-summary">
                     <img src={selectedProduct.url} alt={selectedProduct.alt} className="summary-image" />
                     <div className="summary-details">
                         <p className="summary-name">{selectedProduct.name}</p>
-                        <p className="summary-price">{selectedProduct.price.toFixed(2)} {selectedProduct.currency} / unité</p>
+                        <p className="summary-price">{selectedProduct.price.toFixed(2)} {selectedProduct.currency} {t.unitPrice}</p>
                     </div>
                 </div>
 
                 <div className="quantity-control-group">
-                    <label>Quantité :</label>
+                    <label>{t.qtyLabel}</label>
                     <div className="quantity-controls">
                         <button type="button" onClick={() => handleQuantityChange(-1)} disabled={quantity <= 1 || isSubmittingOrder}>
                             <FaMinusCircle />
@@ -134,13 +291,13 @@ const OrderModalComponent = ({ selectedProduct, quantity, handleQuantityChange, 
                         </button>
                     </div>
                     <p className="total-price-display">
-                        Total : <strong>{totalPrice} {selectedProduct.currency}</strong>
+                        {t.total} <strong>{totalPrice} {selectedProduct.currency}</strong>
                     </p>
                 </div>
 
                 <form onSubmit={handleConfirmOrder}>
                     <div className="customer-form-group">
-                        <h4 className="form-subtitle">Vos informations de contact</h4>
+                        <h4 className="form-subtitle">{t.contactInfo}</h4>
 
                         <div className="input-row">
                             <div className="input-group">
@@ -148,11 +305,12 @@ const OrderModalComponent = ({ selectedProduct, quantity, handleQuantityChange, 
                                 <input
                                     type="text"
                                     name="firstName"
-                                    placeholder="Nom et Prénom (Obligatoire)"
+                                    placeholder={t.namePlaceholder}
                                     value={customerData.firstName}
                                     onChange={handleCustomerDataChange}
                                     required
                                     disabled={isSubmittingOrder}
+                                    dir={appLanguage === 'ar' ? 'rtl' : 'ltr'}
                                 />
                             </div>
 
@@ -161,11 +319,12 @@ const OrderModalComponent = ({ selectedProduct, quantity, handleQuantityChange, 
                                 <input
                                     type="text"
                                     name="adresse"
-                                    placeholder="Adresse (Obligatoire)"
+                                    placeholder={t.addressPlaceholder}
                                     value={customerData.adresse}
                                     onChange={handleCustomerDataChange}
                                     required
                                     disabled={isSubmittingOrder}
+                                    dir={appLanguage === 'ar' ? 'rtl' : 'ltr'}
                                 />
                             </div>
 
@@ -174,11 +333,12 @@ const OrderModalComponent = ({ selectedProduct, quantity, handleQuantityChange, 
                                 <input
                                     type="tel"
                                     name="phone"
-                                    placeholder="Numéro de Téléphone (Obligatoire)"
+                                    placeholder={t.phonePlaceholder}
                                     value={customerData.phone}
                                     onChange={handleCustomerDataChange}
                                     required
                                     disabled={isSubmittingOrder}
+                                    dir={appLanguage === 'ar' ? 'rtl' : 'ltr'}
                                 />
                             </div>
                         </div>
@@ -188,18 +348,16 @@ const OrderModalComponent = ({ selectedProduct, quantity, handleQuantityChange, 
                         <button 
                             type="submit" 
                             className="confirm-order-btn"
-                            // 🚨 تعطيل الزر في حال الإرسال
                             disabled={isSubmittingOrder} 
                         >
                             {isSubmittingOrder ? (
-                                // 🚨 عرض أيقونة الانتظار عند الإرسال
-                                <> <FaSpinner className="spinner" style={{ animation: 'spin 1s linear infinite' }} /> Envoi...</>
+                                <> <FaSpinner className="spinner" style={{ animation: 'spin 1s linear infinite' }} /> {t.submitting}</>
                             ) : (
-                                isLoggedIn ? "Confirmer la Commande" : "Soumettre la Demande"
+                                isLoggedIn ? t.submitBtn : t.submitBtnGuest
                             )}
                         </button>
                         <button type="button" onClick={closeOrderModal} className="cancel-order-btn" disabled={isSubmittingOrder}>
-                            Annuler
+                            {t.cancelBtn}
                         </button>
                     </div>
                 </form>
@@ -214,18 +372,28 @@ const OrderModalComponent = ({ selectedProduct, quantity, handleQuantityChange, 
 // ====================================================================
 
 export default function ProductGrid() {
-    // 🌟 NOUVEAUX ÉTATS لحالة المستخدم
+    const [appLanguage, setAppLanguage] = useState('fr'); // حالة اللغة الافتراضية
+    
+    // 1. ⚙️ جلب اللغة من LocalStorage
+    useEffect(() => {
+        const lang = localStorage.getItem('appLanguage') || 'fr';
+        setAppLanguage(lang);
+    }, []);
+
+    const t = translations[appLanguage] || translations.fr;
+    const currentCategories = t.categories;
+
     const [fetchedProducts, setFetchedProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
     // États de filtrage
-    const [selectedCategory, setSelectedCategory] = useState('Tous');
+    const [selectedCategory, setSelectedCategory] = useState(currentCategories[0]);
     const [searchTerm, setSearchTerm] = useState('');
     const [priceRange, setPriceRange] = useState(1000);
     const [isFilterOpen, setIsFilterOpen] = useState(false);
 
-    // 🔑 États مُعدّلة للأصالة وبيانات المستخدم
+    // États مُعدّلة للأصالة وبيانات المستخدم
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [currentUserEmail, setCurrentUserEmail] = useState('');
 
@@ -239,14 +407,14 @@ export default function ProductGrid() {
     const [lastCommandRef, setLastCommandRef] = useState(null);
     
     // 🆕 NOUVEL ÉTAT POUR LE MODAL DE COMMENTAIRE
-    const [showFeedbackModal, setShowFeedbackModal] = useState(false); // <--- NOUVEL ÉTAT
+    const [showFeedbackModal, setShowFeedbackModal] = useState(false); 
 
-    // 📝 بيانات العميل (تم نقلها للمودال، لكن نحتاج نسخة للـ Feedback)
+    // 📝 بيانات العميل 
     const [finalCustomerData, setFinalCustomerData] = useState({ firstName: '', adresse: '', phone: '' });
 
 
     // ====================================================================
-    // 1A. CORRECTION : Logique d'authentification et Récupération des produits (S'exécute UNE SEULE FOIS)
+    // 1A. Logique d'authentification et Récupération des produits (محدثة)
     // ====================================================================
     useEffect(() => {
         // Logique d'authentification والبيانات الأساسية
@@ -274,7 +442,8 @@ export default function ProductGrid() {
                     currency: 'DT',
                     url: p.image,
                     alt: p.nom,
-                    category: p.categorie
+                    // نستخدم مفاتيح فرنسية للتصنيف لتسهيل الفلترة (لأنها ثابتة في قاعدة البيانات)
+                    category: p.categorie 
                 }));
 
                 setFetchedProducts(mappedProducts);
@@ -289,26 +458,32 @@ export default function ProductGrid() {
 
         fetchProducts();
 
-    }, []); // ⬅️ DÉPENDANCE VIDE : Chargement unique.
+    }, []); 
+    
+    // 💡 تحديث الفلتر الافتراضي عند تغيير اللغة 
+    useEffect(() => {
+        setSelectedCategory(currentCategories[0]);
+    }, [appLanguage]);
+
 
     // ====================================================================
-    // 1B. Logique de gestion du Scroll (Dépend uniquement من Modals)
+    // 1B. Logique de gestion du Scroll (محدثة)
     // ====================================================================
     useEffect(() => {
-        // Gérer le scroll du body - MIS À JOUR
+        const body = document.body;
         if (showOrderModal || showSuccessModal || showFeedbackModal) {
-            document.body.classList.add('no-scroll');
+            body.classList.add('no-scroll');
         } else {
-            document.body.classList.remove('no-scroll');
+            body.classList.remove('no-scroll');
         }
 
         return () => {
-            document.body.classList.remove('no-scroll');
+            body.classList.remove('no-scroll');
         };
     }, [showOrderModal, showSuccessModal, showFeedbackModal]);
 
 
-    // 2. Fonctions de gestion du modal والطلب 
+    // 2. Fonctions de gestion du modal والطلب (محدثة)
     const handleOrderClick = (product) => {
         setSelectedProduct(product);
         setQuantity(1);
@@ -337,60 +512,58 @@ export default function ProductGrid() {
         });
     };
 
-    // 🚨 دالة رد نداء تُستدعى من المودال عند نجاح الإرسال
     const handleOrderSuccessCallback = (commandId) => {
         setLastCommandRef(commandId);
         closeOrderModal();
         setShowSuccessModal(true);
     };
 
-    // 🚨 دالة لتخزين بيانات العميل من المودال قبل إغلاقه (لإرسالها للـ Feedback)
     const handleCustomerDataUpdate = (data) => {
         setFinalCustomerData(data);
     };
 
 
-    // 3. Logique de filtrage (MODIFIÉ POUR INCLURE LA RECHERCHE PAR CATÉGORIE)
+    // 3. Logique de filtrage (محدثة باستخدام المفاتيح الفرنسية للعمل على البيانات الثابتة)
     const productsToFilter = fetchedProducts;
     const lowerSearchTerm = searchTerm.toLowerCase();
 
+    // نستخدم هنا المفاتيح الفرنسية الثابتة في قاعدة البيانات
+    const selectedCategoryKey = categoriesFr[currentCategories.indexOf(selectedCategory)] || 'Tous'; 
+    
     const filteredProducts = productsToFilter
         .filter(product => {
-            
-            const isCategoryMatch = selectedCategory === 'Tous' || product.category === selectedCategory;
+            // 💡 ملاحظة: 'category' المنتج مأخوذ من قاعدة البيانات الفرنسية الثابتة. 
+            // نقارن بينه وبين المفتاح الفرنسي للفئة المحددة
+            const isCategoryMatch = selectedCategoryKey === 'Tous' || product.category === selectedCategoryKey;
             
             if (!lowerSearchTerm) {
-                // Si le champ de recherche est vide, on se base uniquement sur la catégorie sélectionnée
                 return isCategoryMatch;
             } else {
-                // Si le champ de recherche n'est PAS vide, on cherche dans le nom OU la catégorie
                 const isNameMatch = product.name.toLowerCase().includes(lowerSearchTerm);
                 const isSearchCategoryMatch = product.category.toLowerCase().includes(lowerSearchTerm);
 
-                // Si une catégorie spécifique est sélectionnée, le produit doit appartenir à cette catégorie ET correspondre au terme de recherche (soit par nom, soit par catégorie)
-                if (selectedCategory !== 'Tous') {
+                if (selectedCategoryKey !== 'Tous') {
                     return isCategoryMatch && (isNameMatch || isSearchCategoryMatch);
                 } else {
-                    // Si 'Tous' est sélectionné, le produit doit correspondre au terme de recherche dans le nom OU la catégorie
                     return isNameMatch || isSearchCategoryMatch;
                 }
             }
         })
         .filter(product =>
-            // Le filtre par prix reste simple
             product.price <= priceRange
         );
 
     const resetFilters = () => {
-        setSelectedCategory('Tous');
+        setSelectedCategory(currentCategories[0]);
         setSearchTerm('');
         setPriceRange(1000);
         setIsFilterOpen(false);
     };
 
-    // 5. NOUVEAU Composant du Modal de Succès (avec design moderne)
+    // 5. NOUVEAU Composant du Modal de Succès (محدث باللغات)
     const OrderSuccessModal = () => {
         if (!showSuccessModal) return null;
+        const direction = appLanguage === 'ar' ? 'rtl' : 'ltr';
 
         const handleFeedbackClick = () => {
             closeSuccessModal();
@@ -399,7 +572,7 @@ export default function ProductGrid() {
 
         return (
             <div className="custom-modal-backdrop-success">
-                <div className="modern-modal-content-success">
+                <div className="modern-modal-content-success" dir={direction}>
                     <button className="close-btn-success" onClick={closeSuccessModal}><FaTimes /></button>
                     
                     <div className="success-icon-section">
@@ -407,15 +580,10 @@ export default function ProductGrid() {
                     </div>
 
                     <h2 className="success-modal-title">
-                        Commande Envoyée avec Succès !
+                        {t.successTitle}
                     </h2>
                     
-                    <p className="success-message-text">
-                        Votre commande a été enregistrée avec succès. 
-                        Un responsable vous contactera dans les plus brefs délais pour confirmer votre achat.
-                        <br/><br/>
-                        **Référence de la commande :** **{lastCommandRef || 'N/A'}**
-                    </p>
+                    <p className="success-message-text" dangerouslySetInnerHTML={{ __html: t.successMessage(lastCommandRef) }}></p>
 
                     <div className="modal-action-buttons-success">
                         <button 
@@ -423,7 +591,7 @@ export default function ProductGrid() {
                             onClick={handleFeedbackClick} 
                             className="feedback-button-success"
                         >
-                            <FaCommentAlt /> Laissez un Commentaire sur la Service
+                            <FaCommentAlt /> {t.feedbackBtn}
                         </button>
                         
                         <button 
@@ -431,7 +599,7 @@ export default function ProductGrid() {
                             onClick={closeSuccessModal} 
                             className="return-button-success"
                         >
-                            Fermer
+                            {t.closeBtn}
                         </button>
                     </div>
 
@@ -440,28 +608,32 @@ export default function ProductGrid() {
         );
     };
 
-    // 🆕 6. NOUVEAU Composant du Modal de Commentaire (Feedback Modal)
+    // 🆕 6. NOUVEAU Composant du Modal de Commentaire (Feedback Modal) (محدث باللغات)
     const FeedbackModal = () => {
         const [reviewText, setReviewText] = useState('');
         const [isSubmitted, setIsSubmitted] = useState(false);
         const [submitStatus, setSubmitStatus] = useState({ loading: false, error: null, success: false });
+        const direction = appLanguage === 'ar' ? 'rtl' : 'ltr';
 
         const handleReviewSubmit = async (e) => {
             e.preventDefault();
+            
+            // 🚨 1. تعيين حالة التحميل
             setSubmitStatus({ loading: true, error: null, success: false });
             
             const clientName = finalCustomerData.firstName; 
             const commentContent = reviewText.trim();
             
-            if (!clientName || clientName === '') {
-                setSubmitStatus({ loading: false, error: 'Nom du client introuvable. Veuillez réessayer de commander.', success: false });
+            if (!clientName || clientName.trim() === '') {
+                setSubmitStatus({ loading: false, error: t.feedbackErrorName, success: false });
                 return;
             }
             if (commentContent.length < 5) {
-                setSubmitStatus({ loading: false, error: 'Le commentaire doit contenir au moins 5 caractères.', success: false });
+                setSubmitStatus({ loading: false, error: t.feedbackErrorLength, success: false });
                 return;
             }
 
+            // 🚨 2. كائن البيانات المرسل
             const commentData = {
                 nom: clientName, 
                 commentaire: commentContent,
@@ -475,8 +647,17 @@ export default function ProductGrid() {
                     },
                     body: JSON.stringify(commentData),
                 });
-
-                const result = await response.json();
+                
+                // 🚨 محاولة قراءة النتيجة كـ JSON حتى لو كان هناك خطأ
+                let result;
+                try {
+                    result = await response.json();
+                } catch (jsonError) {
+                    if (!response.ok) {
+                        throw new Error(`Server responded with status ${response.status} but no valid JSON body.`);
+                    }
+                    result = {}; // استجابة فارغة لكن ناجحة
+                }
 
                 if (response.ok) {
                     setSubmitStatus({ loading: false, error: null, success: true });
@@ -487,18 +668,22 @@ export default function ProductGrid() {
                         closeFeedbackModal();
                     }, 3000);
                 } else {
-                    const errorMessage = Array.isArray(result.error) ? result.error.join(', ') : result.error || 'Erreur inconnue lors de la soumission.';
-                    setSubmitStatus({ loading: false, error: `Erreur d'enregistrement : ${errorMessage}`, success: false });
+                    // 🚨 تحسين معالجة أخطاء الاستجابة غير الناجحة (4xx, 5xx)
+                    const errorMessage = Array.isArray(result.error) 
+                        ? result.error.join(', ') 
+                        : result.message || result.error || t.networkError;
+                    
+                    setSubmitStatus({ loading: false, error: t.feedbackErrorSubmit(errorMessage), success: false });
                 }
             } catch (error) {
-                console.error("Erreur de réseau lors de la soumission du commentaire:", error);
-                setSubmitStatus({ loading: false, error: "Erreur de réseau. Veuillez réessayer.", success: false });
+                console.error("Erreur de réseau ou du serveur lors de la soumission du commentaire:", error);
+                setSubmitStatus({ loading: false, error: t.networkError, success: false });
             }
         };
 
         return (
             <div className="custom-modal-backdrop-success">
-                <div className="modern-modal-content-success">
+                <div className="modern-modal-content-success" dir={direction}>
                     {/* 🚨 تعطيل زر الإغلاق أثناء الإرسال */}
                     <button className="close-btn-success" onClick={closeFeedbackModal} disabled={submitStatus.loading}><FaTimes /></button>
 
@@ -508,13 +693,11 @@ export default function ProductGrid() {
                                 <FaCheckCircle className="check-icon-large" style={{ color: '#ffc107' }} />
                             </div>
                             <h2 className="success-modal-title" style={{ color: '#007bff' }}>
-                                Merci pour votre Avis Précieux ! 🌟
+                                {t.feedbackSuccessTitle}
                             </h2>
-                            <p className="success-message-text">
-                                Votre commentaire a été enregistré. Votre **satisfaction** هي notre plus belle récompense et nous aide à nous améliorer continuellement.
-                            </p>
+                            <p className="success-message-text" dangerouslySetInnerHTML={{ __html: t.feedbackSuccessMsg.replace('هي', 'is').replace('satisfaction', `**${t.backToShop.includes('satisfaction') ? 'satisfaction' : 'satisfaction'}**`) }}></p>
                             <button type="button" onClick={closeFeedbackModal} className="return-button-success" disabled={submitStatus.loading}>
-                                Retour à la Boutique
+                                {t.backToShop}
                             </button>
                         </>
                     ) : (
@@ -523,26 +706,26 @@ export default function ProductGrid() {
                                 <FaCommentAlt className="check-icon-large" style={{ color: '#d7b33f' }} />
                             </div>
                             <h2 className="success-modal-title">
-                                Votre Avis Compte Énormément ! 
+                                {t.feedbackModalTitle}
                             </h2>
                             <p className="success-message-text">
-                                Partagez votre expérience avec notre service. Qu'avez-vous pensé de l'achat ?
+                                {t.feedbackModalSubtitle}
                                 <br/>
-                                <small>Votre nom sera enregistré comme : **{finalCustomerData.firstName || 'Non spécifié'}**</small>
+                                <small dir={appLanguage === 'ar' ? 'rtl' : 'ltr'}>{t.feedbackModalSmallText(finalCustomerData.firstName)}</small>
                             </p>
                             
                             <textarea
                                 className="feedback-textarea"
-                                placeholder="Écrivez votre commentaire ici..."
+                                placeholder={t.feedbackPlaceholder}
                                 value={reviewText}
                                 onChange={(e) => setReviewText(e.target.value)}
                                 rows="5"
                                 required
                                 disabled={submitStatus.loading}
+                                dir={appLanguage === 'ar' ? 'rtl' : 'ltr'}
                             />
                             
                             {/* Affichage des messages d'état/erreur */}
-                            
                             {submitStatus.error && (
                                 <p className="status-message" style={{ color: 'red' }}>
                                     ❌ {submitStatus.error}
@@ -553,14 +736,12 @@ export default function ProductGrid() {
                                 <button 
                                     type="submit" 
                                     className="feedback-button-success" 
-                                    // 🚨 تعطيل الزر في حال الإرسال أو عدم كفاية النص
                                     disabled={reviewText.trim().length < 5 || submitStatus.loading}
                                 >
                                     {submitStatus.loading ? (
-                                        // 🚨 عرض أيقونة الانتظار عند الإرسال
-                                        <> <FaSpinner className="spinner" style={{ animation: 'spin 1s linear infinite' }} /> Envoi...</>
+                                        <> <FaSpinner className="spinner" style={{ animation: 'spin 1s linear infinite' }} /> {t.submitting}</>
                                     ) : (
-                                        'Soumettre le Commentaire'
+                                        t.feedbackSubmit
                                     )}
                                 </button>
                                 
@@ -573,14 +754,16 @@ export default function ProductGrid() {
     };
 
 
-    // 7. Rendu Principal - Ajout du nouveau modal de feedback
+    // 7. Rendu Principal - Ajout du nouveau modal de feedback (محدث باللغات)
+    const direction = appLanguage === 'ar' ? 'rtl' : 'ltr';
+
     if (loading) {
         return (
             <>
                 <Navbar/>
-                <div className="loading-state" style={{ textAlign: 'center', padding: '100px', fontSize: '24px' }}>
+                <div className="loading-state" style={{ textAlign: 'center', padding: '100px', fontSize: '24px' }} dir={direction}>
                     <FaSpinner className="spinner" style={{ animation: 'spin 1s linear infinite', marginRight: '10px' }} />
-                    Chargement des produits...
+                    {t.loading}
                 </div>
             </>
 
@@ -589,8 +772,8 @@ export default function ProductGrid() {
 
     if (error) {
         return (
-            <div className="error-state" style={{ textAlign: 'center', padding: '100px', color: 'red', fontSize: '18px' }}>
-                ❌ **Erreur :** {error}
+            <div className="error-state" style={{ textAlign: 'center', padding: '100px', color: 'red', fontSize: '18px' }} dir={direction}>
+                <p>{t.error(error)}</p>
             </div>
         );
     }
@@ -599,60 +782,74 @@ export default function ProductGrid() {
         <>
             <Navbar />
             <br /><br /><br /><br /><br /><br />
-            <section className="product-grid-section">
+            <section className="product-grid-section" dir={direction}>
 
                 <div className="grid-header">
-                    <h2 className="grid-main-title"><span style={{ color: "#333333", marginRight: "-00px" }}> Collection </span> Exclusive</h2>
+                    <h2 className="grid-main-title">
+                        <span style={{ color: "#333333", marginRight: "-00px" }}> 
+                            {appLanguage === 'en' ? t.collectionTitle : t.collectionTitle} 
+                        </span> 
+                        <span className="vip-accent-text" style={{ color: "#D4AF37" }}>
+                            {appLanguage === 'en' ? t.collectionAccent : t.collectionAccent}
+                        </span>
+                    </h2>
                     <p className="grid-sub-text">
-                        Découvrez nos nouveautés et les outils essentiels pour la haute couture.
+                        {t.collectionSubtitle}
                     </p>
                 </div>
 
                 <div className="shop-content-wrapper">
 
-                    {/* 1. Bouton bascule Filtres (unchanged) */}
+                    {/* 1. Bouton bascule Filtres (محدث باللغات) */}
                     <button
-                        className="toggle-filters-button"
+                        className={`toggle-filters-button ${appLanguage === 'ar' ? 'rtl-align-text' : ''}`}
                         onClick={() => setIsFilterOpen(!isFilterOpen)}
                     >
                         {isFilterOpen ? (
-                            <> <FaTimes /> Fermer les filtres</>
+                            <> <FaTimes /> {t.toggleFiltersClose}</>
                         ) : (
-                            <> <FaSearch /> Afficher les filtres ({selectedCategory === 'Tous' ? 'Tous' : selectedCategory})</>
+                            <> <FaSearch /> {t.toggleFiltersShow(selectedCategory)}</>
                         )}
                     </button>
 
 
-                    {/* 2. Barre latérale des filtres (unchanged) */}
-                    <aside className={`filter-sidebar ${isFilterOpen ? 'is-open' : ''}`}>
-                        <h3 className="sidebar-title">Filtrer</h3>
+                    {/* 2. Barre latérale des filtres (محدث باللغات) */}
+                    <aside className={`filter-sidebar ${isFilterOpen ? 'is-open' : ''} ${appLanguage === 'ar' ? 'rtl-sidebar' : ''}`}>
+                        <h3 className="sidebar-title">{t.sidebarTitle}</h3>
 
                         <div className="filter-group search-filter">
                             <input
                                 type="text"
-                                placeholder="Rechercher un produit..."
+                                placeholder={t.searchPlaceholder}
                                 className="search-input"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
+                                dir={appLanguage === 'ar' ? 'rtl' : 'ltr'}
                             />
                             <FaSearch className="search-icon" />
                         </div>
 
                         <div className="filter-group">
-                            <h4 className="filter-group-title">Catégories <FaChevronDown className="dropdown-icon" /></h4>
+                            <h4 className="filter-group-title">{t.filterCategory(t.navTitle)} <FaChevronDown className="dropdown-icon" /></h4>
                             <ul className="category-list">
-                                {categories.map((cat, index) => (
-                                    <li
-                                        key={index}
-                                        className={`category-item ${cat === selectedCategory ? 'active' : ''}`}
-                                        onClick={() => {
-                                            setSelectedCategory(cat);
-                                            if (window.innerWidth <= 992) setIsFilterOpen(false);
-                                        }}
-                                    >
-                                        {cat} ({productsToFilter.filter(p => cat === 'Tous' || p.category === cat).length})
-                                    </li>
-                                ))}
+                                {currentCategories.map((cat, index) => {
+                                    // نستخدم المفتاح الفرنسي لعملية الفلترة
+                                    const categoryKey = categoriesFr[index]; 
+                                    const count = productsToFilter.filter(p => categoryKey === 'Tous' || p.category === categoryKey).length;
+                                    
+                                    return (
+                                        <li
+                                            key={index}
+                                            className={`category-item ${cat === selectedCategory ? 'active' : ''}`}
+                                            onClick={() => {
+                                                setSelectedCategory(cat);
+                                                if (window.innerWidth <= 992) setIsFilterOpen(false);
+                                            }}
+                                        >
+                                            {cat} ({count})
+                                        </li>
+                                    );
+                                })}
                             </ul>
                         </div>
 
@@ -660,16 +857,15 @@ export default function ProductGrid() {
                             className="reset-filters-button"
                             onClick={resetFilters}
                         >
-                            Réinitialiser
+                            {t.resetFilters}
                         </button>
 
                     </aside>
 
-                    {/* 3. Grille des produits */}
+                    {/* 3. Grille des produits (محدث باللغات) */}
                     <main className="product-grid-main">
                         <div className="grid-info-bar">
-                            <p className="info-text">Affichage de {filteredProducts.length} produit(s) sur {productsToFilter.length}</p>
-                          
+                            <p className="info-text">{t.infoBar(filteredProducts.length, productsToFilter.length)}</p>
                         </div>
 
                         <div className="product-grid-container">
@@ -682,7 +878,8 @@ export default function ProductGrid() {
                                                 src={product.url}
                                                 alt={product.alt}
                                             />
-                                            <div className="category-badge">{product.category}</div>
+                                            {/* هنا نستخدم الترجمة للعرض، لكن الفلترة مازالت تستخدم القيمة الثابتة */}
+                                            <div className="category-badge">{t.categoryMapping[product.category] || product.category}</div> 
                                         </div>
 
                                         <div className="product-details-grid">
@@ -695,7 +892,7 @@ export default function ProductGrid() {
                                                     className="add-to-cart-button-grid"
                                                     onClick={() => handleOrderClick(product)}
                                                 >
-                                                    <FaShoppingCart /> Achat
+                                                    <FaShoppingCart /> {t.addToCart}
                                                 </button>
                                             </div>
                                         </div>
@@ -703,9 +900,9 @@ export default function ProductGrid() {
                                 ))
                             ) : (
                                 <div className="no-results">
-                                    <p>😞 **Aucun produit trouvé** pour les filtres sélectionnés.</p>
+                                    <p>{t.noResultsTitle} {t.noResultsMsg}</p>
                                     <button className="reset-filters-button" onClick={resetFilters}>
-                                        Réinitialiser les filtres
+                                        {t.resetFilters}
                                     </button>
                                 </div>
                             )}
@@ -717,7 +914,7 @@ export default function ProductGrid() {
             </section>
 
             {/* 4. Rendu du modal de commande المُحدَّث */}
-            {showOrderModal && (
+            {showOrderModal && selectedProduct && (
                 <OrderModalComponent 
                     selectedProduct={selectedProduct}
                     quantity={quantity}
@@ -725,10 +922,9 @@ export default function ProductGrid() {
                     closeOrderModal={closeOrderModal}
                     isLoggedIn={isLoggedIn}
                     currentUserEmail={currentUserEmail}
-                    // دالة رد نداء للنجاح
                     onOrderSuccess={handleOrderSuccessCallback} 
-                    // دالة رد نداء لتخزين بيانات العميل
                     onCustomerDataUpdate={handleCustomerDataUpdate}
+                    appLanguage={appLanguage}
                 />
             )}
             
