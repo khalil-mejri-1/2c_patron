@@ -50,7 +50,7 @@ function AppContent() {
             // ✅ إذا المستخدم مسجل الدخول، نتحقق من قاعدة البيانات
             if (authStatus && userEmail) {
                 try {
-                    const response = await fetch(`https://2c-patron.vercel.app/api/users/${userEmail}`);
+                    const response = await fetch(`http://localhost:3000/api/users/${userEmail}`);
                     const data = await response.json();
                     if (data && data.abonne === "oui") {
                         vipStatus = true;
@@ -225,7 +225,7 @@ export default App;
 //             // ✅ Check VIP status from DB
 //             if (authStatus && userEmail) {
 //                 try {
-//                     const response = await fetch(`https://2c-patron.vercel.app/api/users/${userEmail}`);
+//                     const response = await fetch(`http://localhost:3000/api/users/${userEmail}`);
 //                     const data = await response.json();
 //                     if (data && data.abonne === "oui") {
 //                         vipStatus = true;

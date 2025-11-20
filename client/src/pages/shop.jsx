@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaShoppingCart, FaSearch, FaChevronDown, FaTimes, FaUser, FaMapMarkerAlt, FaPhoneAlt, FaMinusCircle, FaPlusCircle, FaSpinner, FaCheckCircle, FaCommentAlt } from 'react-icons/fa';
+import { FaShoppingCart, FaSearch, FaChevronDown, FaTimes, FaUser, FaMapMarkerAlt, FaPhoneAlt, FaMinusCircle, FaPlusCircle, FaSpinner, FaCheckCircle, FaCommentAlt, FaStar, FaRegStar } from 'react-icons/fa';
 import Navbar from '../comp/navbar';
 import Footer from '../comp/Footer';
 
@@ -8,12 +8,12 @@ const categoriesFr = ['Tous', 'Homme', 'Famme', 'Enfant'];
 const categoriesAr = ['الكل', 'رجال', 'نساء', 'أطفال'];
 const categoriesEn = ['All', 'Men', 'Women', 'Children'];
 
-// ⚠️ Assurez-vous que cette URL est correctة
-const API_URL = 'https://2c-patron.vercel.app/api/products';
-const API_COMMAND_URL = 'https://2c-patron.vercel.app/api/commands';
-const API_COMMENTAIRE_URL = 'https://2c-patron.vercel.app/api/commentaires';
+// ⚠️ Assurez-وا أن هذه URL صحيحة
+const API_URL = 'http://localhost:3000/api/products';
+const API_COMMAND_URL = 'http://localhost:3000/api/commands';
+const API_COMMENTAIRE_URL = 'http://localhost:3000/api/commentaires';
 
-// 🌐 كائن الترجمة
+// 🌐 كائن الترجمة - تم تحديث مفاتيح الأخطاء
 const translations = {
     ar: {
         categories: categoriesAr,
@@ -41,7 +41,7 @@ const translations = {
         toggleFiltersClose: "إغلاق الفلاتر",
         toggleFiltersShow: (cat) => `عرض الفلاتر (${cat})`,
         sidebarTitle: "تصفية",
-        navTitle:"الفئات  ",
+        navTitle: "الفئات  ",
         searchPlaceholder: "البحث عن منتج...",
         filterCategory: (cat) => `${cat}`,
         resetFilters: "إعادة تعيين",
@@ -55,25 +55,32 @@ const translations = {
         **مرجع الطلب :** **${ref || 'N/A'}**`,
         feedbackBtn: "ترك تعليق على الخدمة",
         closeBtn: "إغلاق",
-        feedbackModalTitle: "رأيك يهمنا كثيرًا!",
+        feedbackModalTitle: "رأيك يهمنا كثيرًا! 📝",
         feedbackModalSubtitle: "شارك تجربتك مع خدمتنا. ما رأيك في عملية الشراء؟",
         feedbackModalSmallText: (name) => `سيتم تسجيل اسمك كـ : **${name || 'غير محدد'}**`,
         feedbackPlaceholder: "اكتب تعليقك هنا...",
         feedbackErrorName: "تعذر العثور على اسم العميل. يرجى محاولة الطلب مرة أخرى.",
-        feedbackErrorLength: "يجب أن يحتوي التعليق على 5 أحرف على الأقل.",
+        // 🛑 رسالة الخطأ الجديدة التي ستظهر أسفل التعليق
+        feedbackErrorLength: "يجب عليك إما **إضافة تقييم بالنجوم** أو كتابة تعليق لا يقل عن **5 أحرف**.",
         feedbackErrorSubmit: (err) => `خطأ في التسجيل : ${err}`,
         feedbackSubmit: "إرسال التعليق",
         feedbackSuccessTitle: "شكرًا لك على رأيك الثمين! 🌟",
         feedbackSuccessMsg: "تم تسجيل تعليقك. رضاك هو أعظم مكافأة لنا ويساعدنا على التحسن المستمر.",
         backToShop: "العودة إلى المتجر",
         networkError: "خطأ في الشبكة. الرجاء المحاولة مرة أخرى.",
-        
+        ratingLabel: "تقييمك للخدمة:",
+        commentFormTitle: "إضافة تقييم/تعليق",
+        commentSuccessMsg: "تم إرسال تعليقك بنجاح. شكراً لك!",
+        commentErrorMsg: "حدث خطأ أثناء إرسال التعليق. الرجاء المحاولة مجدداً.",
+        sendCommentBtn: "إرسال التعليق",
+        skipCommentBtn: "تخطي",
+
     },
     fr: {
         categories: categoriesFr,
         categoryMapping: { 'Tous': 'Tous', 'Homme': 'Homme', 'Famme': 'Famme', 'Enfant': 'Enfant' },
         unitPrice: "/ unité",
-        navTitle:"catégorie  ",
+        navTitle: "catégorie  ",
         modalTitleGuest: "Passer votre commande (Visiteur)",
         modalTitleUser: "Confirmer votre commande (Connecté)",
         qtyLabel: "Quantité :",
@@ -96,6 +103,7 @@ const translations = {
         toggleFiltersClose: "Fermer les filtres",
         toggleFiltersShow: (cat) => `Afficher les filtres (${cat})`,
         sidebarTitle: "Filtrer",
+        navTitle: "catégorie  ",
         searchPlaceholder: "Rechercher un produit...",
         filterCategory: (cat) => `${cat} `,
         resetFilters: "Réinitialiser",
@@ -109,18 +117,26 @@ const translations = {
         **Référence de la commande :** **${ref || 'N/A'}**`,
         feedbackBtn: "Laissez un Commentaire sur la Service",
         closeBtn: "Fermer",
-        feedbackModalTitle: "Votre Avis Compte Énormément !",
+        feedbackModalTitle: "Votre Avis Compte Énormément ! 📝",
         feedbackModalSubtitle: "Partagez votre expérience avec notre service. Qu'avez-vous pensé de l'achat ?",
         feedbackModalSmallText: (name) => `Votre nom sera enregistré comme : **${name || 'Non spécifié'}**`,
         feedbackPlaceholder: "Écrivez votre commentaire ici...",
         feedbackErrorName: "Nom du client introuvable. Veuillez réessayer de commander.",
-        feedbackErrorLength: "Le commentaire doit contenir au moins 5 caractères.",
+        // 🛑 رسالة الخطأ الجديدة التي ستظهر أسفل التعليق
+        feedbackErrorLength: "Vous devez soit **ajouter une note en étoiles** ou écrire un commentaire d'au moins **5 caractères**.",
         feedbackErrorSubmit: (err) => `Erreur d'enregistrement : ${err}`,
         feedbackSubmit: "Soumettre le Commentaire",
         feedbackSuccessTitle: "Merci pour votre Avis Précieux ! 🌟",
         feedbackSuccessMsg: "Votre commentaire a été enregistré. Votre **satisfaction** est notre plus belle récompense et nous aide à nous améliorer continuellement.",
         backToShop: "Retour à la Boutique",
         networkError: "Erreur de réseau. Veuillez réessayer.",
+        ratingLabel: "Votre note pour le service:",
+        commentFormTitle: "Ajouter une note/un commentaire",
+        commentSuccessMsg: "Votre commentaire a été soumis avec succès. Merci !",
+        commentErrorMsg: "Une erreur est survenue lors de l'envoi du commentaire. Veuillez réessayer.",
+        sendCommentBtn: "Soumettre le Commentaire",
+        skipCommentBtn: "Ignorer",
+
     },
     en: {
         categories: categoriesEn,
@@ -138,7 +154,7 @@ const translations = {
         submitBtn: "Confirm Order",
         submitBtnGuest: "Submit Request",
         submitting: "Submitting...",
-        navTitle:"category  ",
+        navTitle: "category  ",
         cancelBtn: "Cancel",
         loading: "Loading products...",
         loadingTitle: "Loading",
@@ -162,40 +178,45 @@ const translations = {
         **Order Reference:** **${ref || 'N/A'}**`,
         feedbackBtn: "Leave a Service Review",
         closeBtn: "Close",
-        feedbackModalTitle: "Your Review Matters Hugely!",
+        feedbackModalTitle: "Your Review Matters Hugely! 📝",
         feedbackModalSubtitle: "Share your experience with our service. What did you think of the purchase?",
         feedbackModalSmallText: (name) => `Your name will be registered as: **${name || 'Unspecified'}**`,
         feedbackPlaceholder: "Write your comment here...",
         feedbackErrorName: "Client name not found. Please try ordering again.",
-        feedbackErrorLength: "The comment must contain at least 5 characters.",
+        // 🛑 رسالة الخطأ الجديدة التي ستظهر أسفل التعليق
+        feedbackErrorLength: "You must either **add a star rating** or write a comment of at least **5 characters**.",
         feedbackErrorSubmit: (err) => `Registration Error: ${err}`,
         feedbackSubmit: "Submit Review",
         feedbackSuccessTitle: "Thank You for Your Valuable Feedback! 🌟",
         feedbackSuccessMsg: "Your comment has been recorded. Your **satisfaction** is our greatest reward and helps us continually improve.",
         backToShop: "Return to Shop",
         networkError: "Network error. Please try again.",
+        ratingLabel: "Your service rating:",
+        commentFormTitle: "Add a Rating/Review",
+        commentSuccessMsg: "Your comment has been submitted successfully. Thank you!",
+        commentErrorMsg: "An error occurred while submitting the comment. Please try again.",
+        sendCommentBtn: "Submit Review",
+        skipCommentBtn: "Skip",
     }
 };
 
-// ====================================================================
-// 🚨 المكون المنفصل للنافذة المنبثقة (MODAL)
-// ====================================================================
+// ... (OrderModalComponent is omitted for brevity as it is unchanged) ...
 
 const OrderModalComponent = ({ selectedProduct, quantity, handleQuantityChange, closeOrderModal, isLoggedIn, currentUserEmail, onOrderSuccess, onCustomerDataUpdate, appLanguage }) => {
     const t = translations[appLanguage] || translations.fr;
-    
+
     const [customerData, setCustomerData] = useState({
         firstName: '',
         adresse: '',
         phone: ''
     });
-    const [isSubmittingOrder, setIsSubmittingOrder] = useState(false); 
+    const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
 
     const handleCustomerDataChange = (e) => {
         const { name, value } = e.target;
         const newData = { ...customerData, [name]: value };
         setCustomerData(newData);
-        onCustomerDataUpdate(newData); 
+        onCustomerDataUpdate(newData);
     };
 
 
@@ -254,7 +275,7 @@ const OrderModalComponent = ({ selectedProduct, quantity, handleQuantityChange, 
             console.error("Erreur de réseau lors de la soumission:", error);
             alert(`❌ ${t.networkError}`);
         } finally {
-            setIsSubmittingOrder(false); 
+            setIsSubmittingOrder(false);
         }
     };
 
@@ -265,7 +286,7 @@ const OrderModalComponent = ({ selectedProduct, quantity, handleQuantityChange, 
     return (
         <div className="modal-overlay">
             <div className="order-modal-content" dir={direction}>
-                <button className="modal-close-btn" onClick={closeOrderModal} disabled={isSubmittingOrder}><FaTimes /></button> 
+                <button className="modal-close-btn" onClick={closeOrderModal} disabled={isSubmittingOrder}><FaTimes /></button>
 
                 <h2 className="modal-title">
                     {isLoggedIn ? t.modalTitleUser : t.modalTitleGuest}
@@ -345,10 +366,10 @@ const OrderModalComponent = ({ selectedProduct, quantity, handleQuantityChange, 
                     </div>
 
                     <div className="modal-actions-order">
-                        <button 
-                            type="submit" 
+                        <button
+                            type="submit"
                             className="confirm-order-btn"
-                            disabled={isSubmittingOrder} 
+                            disabled={isSubmittingOrder}
                         >
                             {isSubmittingOrder ? (
                                 <> <FaSpinner className="spinner" style={{ animation: 'spin 1s linear infinite' }} /> {t.submitting}</>
@@ -368,13 +389,12 @@ const OrderModalComponent = ({ selectedProduct, quantity, handleQuantityChange, 
 
 
 // ====================================================================
-// المكون الرئيسي: ProductGrid
+// المكون الرئيسي: ProductGrid (مع دالة FeedbackModal المعدلة)
 // ====================================================================
 
 export default function ProductGrid() {
-    const [appLanguage, setAppLanguage] = useState('fr'); // حالة اللغة الافتراضية
-    
-    // 1. ⚙️ جلب اللغة من LocalStorage
+    const [appLanguage, setAppLanguage] = useState('fr');
+
     useEffect(() => {
         const lang = localStorage.getItem('appLanguage') || 'fr';
         setAppLanguage(lang);
@@ -387,44 +407,35 @@ export default function ProductGrid() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // États de filtrage
     const [selectedCategory, setSelectedCategory] = useState(currentCategories[0]);
     const [searchTerm, setSearchTerm] = useState('');
     const [priceRange, setPriceRange] = useState(1000);
     const [isFilterOpen, setIsFilterOpen] = useState(false);
 
-    // États مُعدّلة للأصالة وبيانات المستخدم
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [currentUserEmail, setCurrentUserEmail] = useState('');
 
-    // États المودال والكمية
     const [showOrderModal, setShowOrderModal] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState(null);
     const [quantity, setQuantity] = useState(1);
 
-    // 🏆 NOUVEL ÉTAT POUR LE MODAL DE SUCCÈس
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [lastCommandRef, setLastCommandRef] = useState(null);
-    
-    // 🆕 NOUVEL ÉTAT POUR LE MODAL DE COMMENTAIRE
-    const [showFeedbackModal, setShowFeedbackModal] = useState(false); 
 
-    // 📝 بيانات العميل 
+    const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+
     const [finalCustomerData, setFinalCustomerData] = useState({ firstName: '', adresse: '', phone: '' });
 
 
-    // ====================================================================
-    // 1A. Logique d'authentification et Récupération des produits (محدثة)
-    // ====================================================================
     useEffect(() => {
         // Logique d'authentification والبيانات الأساسية
         const status = localStorage.getItem('login') === 'true';
         const userEmail = localStorage.getItem('currentUserEmail') || '';
-        
+
         setIsLoggedIn(status);
         setCurrentUserEmail(userEmail);
 
-        // 🌟 LOGIQUE DE RÉCUPÉRATION DES PRODUITS DEPUIS L'API
+        // 🌟 LOGIQUE DE RÉCUPÉRATION DES PRODUجTS DEPUIS L'API
         const fetchProducts = async () => {
             setLoading(true);
             setError(null);
@@ -442,8 +453,7 @@ export default function ProductGrid() {
                     currency: 'DT',
                     url: p.image,
                     alt: p.nom,
-                    // نستخدم مفاتيح فرنسية للتصنيف لتسهيل الفلترة (لأنها ثابتة في قاعدة البيانات)
-                    category: p.categorie 
+                    category: p.categorie
                 }));
 
                 setFetchedProducts(mappedProducts);
@@ -458,17 +468,13 @@ export default function ProductGrid() {
 
         fetchProducts();
 
-    }, []); 
-    
-    // 💡 تحديث الفلتر الافتراضي عند تغيير اللغة 
+    }, []);
+
     useEffect(() => {
         setSelectedCategory(currentCategories[0]);
     }, [appLanguage]);
 
 
-    // ====================================================================
-    // 1B. Logique de gestion du Scroll (محدثة)
-    // ====================================================================
     useEffect(() => {
         const body = document.body;
         if (showOrderModal || showSuccessModal || showFeedbackModal) {
@@ -483,7 +489,6 @@ export default function ProductGrid() {
     }, [showOrderModal, showSuccessModal, showFeedbackModal]);
 
 
-    // 2. Fonctions de gestion du modal والطلب (محدثة)
     const handleOrderClick = (product) => {
         setSelectedProduct(product);
         setQuantity(1);
@@ -492,16 +497,18 @@ export default function ProductGrid() {
 
     const closeOrderModal = () => {
         setShowOrderModal(false);
-        setSelectedProduct(null);
     };
 
     const closeSuccessModal = () => {
         setShowSuccessModal(false);
-        setLastCommandRef(null);
     };
-    
+
     const closeFeedbackModal = () => {
         setShowFeedbackModal(false);
+        // ✅ Clear data after the cycle
+        setSelectedProduct(null);
+        setLastCommandRef(null);
+        setFinalCustomerData({ firstName: '', adresse: '', phone: '' });
     };
 
 
@@ -523,19 +530,13 @@ export default function ProductGrid() {
     };
 
 
-    // 3. Logique de filtrage (محدثة باستخدام المفاتيح الفرنسية للعمل على البيانات الثابتة)
     const productsToFilter = fetchedProducts;
     const lowerSearchTerm = searchTerm.toLowerCase();
+    const selectedCategoryKey = categoriesFr[currentCategories.indexOf(selectedCategory)] || 'Tous';
 
-    // نستخدم هنا المفاتيح الفرنسية الثابتة في قاعدة البيانات
-    const selectedCategoryKey = categoriesFr[currentCategories.indexOf(selectedCategory)] || 'Tous'; 
-    
     const filteredProducts = productsToFilter
         .filter(product => {
-            // 💡 ملاحظة: 'category' المنتج مأخوذ من قاعدة البيانات الفرنسية الثابتة. 
-            // نقارن بينه وبين المفتاح الفرنسي للفئة المحددة
             const isCategoryMatch = selectedCategoryKey === 'Tous' || product.category === selectedCategoryKey;
-            
             if (!lowerSearchTerm) {
                 return isCategoryMatch;
             } else {
@@ -560,21 +561,21 @@ export default function ProductGrid() {
         setIsFilterOpen(false);
     };
 
-    // 5. NOUVEAU Composant du Modal de Succès (محدث باللغات)
+    // 5. NOUVEAU Composant du Modal de Succès 
     const OrderSuccessModal = () => {
         if (!showSuccessModal) return null;
         const direction = appLanguage === 'ar' ? 'rtl' : 'ltr';
 
         const handleFeedbackClick = () => {
             closeSuccessModal();
-            setShowFeedbackModal(true); 
+            setShowFeedbackModal(true);
         };
 
         return (
             <div className="custom-modal-backdrop-success">
                 <div className="modern-modal-content-success" dir={direction}>
                     <button className="close-btn-success" onClick={closeSuccessModal}><FaTimes /></button>
-                    
+
                     <div className="success-icon-section">
                         <FaCheckCircle className="check-icon-large" />
                     </div>
@@ -582,21 +583,21 @@ export default function ProductGrid() {
                     <h2 className="success-modal-title">
                         {t.successTitle}
                     </h2>
-                    
+
                     <p className="success-message-text" dangerouslySetInnerHTML={{ __html: t.successMessage(lastCommandRef) }}></p>
 
                     <div className="modal-action-buttons-success">
-                        <button 
-                            type="button" 
-                            onClick={handleFeedbackClick} 
+                        <button
+                            type="button"
+                            onClick={handleFeedbackClick}
                             className="feedback-button-success"
                         >
                             <FaCommentAlt /> {t.feedbackBtn}
                         </button>
-                        
-                        <button 
-                            type="button" 
-                            onClick={closeSuccessModal} 
+
+                        <button
+                            type="button"
+                            onClick={closeSuccessModal}
                             className="return-button-success"
                         >
                             {t.closeBtn}
@@ -608,35 +609,56 @@ export default function ProductGrid() {
         );
     };
 
-    // 🆕 6. NOUVEAU Composant du Modal de Commentaire (Feedback Modal) (محدث باللغات)
-    const FeedbackModal = () => {
+    // 🆕 6. NOUVEAU Composant du Modal de Commentaire (Feedback Modal) (معدل)
+const FeedbackModal = () => {
         const [reviewText, setReviewText] = useState('');
-        const [isSubmitted, setIsSubmitted] = useState(false);
-        const [submitStatus, setSubmitStatus] = useState({ loading: false, error: null, success: false });
+        const [rating, setRating] = useState(5);
+        const [isSubmitting, setIsSubmitting] = useState(false);
+        const [submitStatus, setSubmitStatus] = useState(null); // 'loading', 'success', 'error'
+        // 🚨 حالة جديدة لخطأ التحقق في النموذج
+        const [validationError, setValidationError] = useState(null);
         const direction = appLanguage === 'ar' ? 'rtl' : 'ltr';
 
-        const handleReviewSubmit = async (e) => {
+        const customerName = finalCustomerData.firstName || 'Guest';
+        const productRefId = selectedProduct?.id;
+
+        const handleRatingClick = (newRating) => {
+            setRating(newRating);
+             // 💡 مسح خطأ التحقق عند اختيار نجمة
+            setValidationError(null);
+        };
+
+        const handleTextChange = (e) => {
+            setReviewText(e.target.value);
+            // 💡 مسح خطأ التحقق عند بدء الكتابة
+            setValidationError(null);
+        };
+
+        const handleSubmitComment = async (e) => {
             e.preventDefault();
-            
-            // 🚨 1. تعيين حالة التحميل
-            setSubmitStatus({ loading: true, error: null, success: false });
-            
-            const clientName = finalCustomerData.firstName; 
-            const commentContent = reviewText.trim();
-            
-            if (!clientName || clientName.trim() === '') {
-                setSubmitStatus({ loading: false, error: t.feedbackErrorName, success: false });
-                return;
-            }
-            if (commentContent.length < 5) {
-                setSubmitStatus({ loading: false, error: t.feedbackErrorLength, success: false });
+            setValidationError(null); // مسح الأخطاء السابقة
+            setSubmitStatus(null); // مسح حالة الإرسال السابقة
+
+            if (!productRefId) {
+                setValidationError(t.feedbackErrorName);
                 return;
             }
 
-            // 🚨 2. كائن البيانات المرسل
+            // 🛑 شرط التحقق الجديد: يجب أن يكون هناك إما تقييم (rating > 0) أو تعليق لا يقل عن 5 أحرف
+            if (reviewText.trim().length < 5 && rating === 0) {
+                setValidationError(t.feedbackErrorLength); // عرض رسالة الخطأ المترجمة
+                // 🛑 تم إزالة setSubmitStatus('error');
+                return; // إيقاف العملية هنا
+            }
+
+            setIsSubmitting(true);
+            setSubmitStatus('loading');
+
             const commentData = {
-                nom: clientName, 
-                commentaire: commentContent,
+                nom: customerName,
+                commentaire: reviewText.trim(),
+                rating: rating,
+                productId: productRefId,
             };
 
             try {
@@ -647,105 +669,106 @@ export default function ProductGrid() {
                     },
                     body: JSON.stringify(commentData),
                 });
-                
-                // 🚨 محاولة قراءة النتيجة كـ JSON حتى لو كان هناك خطأ
-                let result;
-                try {
-                    result = await response.json();
-                } catch (jsonError) {
-                    if (!response.ok) {
-                        throw new Error(`Server responded with status ${response.status} but no valid JSON body.`);
-                    }
-                    result = {}; // استجابة فارغة لكن ناجحة
-                }
 
                 if (response.ok) {
-                    setSubmitStatus({ loading: false, error: null, success: true });
-                    setIsSubmitted(true);
-                    setReviewText('');
-
-                    setTimeout(() => {
-                        closeFeedbackModal();
-                    }, 3000);
+                    setSubmitStatus('success');
+                    setTimeout(closeFeedbackModal, 2000);
                 } else {
-                    // 🚨 تحسين معالجة أخطاء الاستجابة غير الناجحة (4xx, 5xx)
-                    const errorMessage = Array.isArray(result.error) 
-                        ? result.error.join(', ') 
-                        : result.message || result.error || t.networkError;
-                    
-                    setSubmitStatus({ loading: false, error: t.feedbackErrorSubmit(errorMessage), success: false });
+                    const result = await response.json();
+                    setSubmitStatus(null); // لا تعرض رسالة النجاح/الخطأ العامة في حالة فشل الخادم
+                    console.error("Échec de l'enregistrement du commentaire:", result);
+                    setValidationError(t.feedbackErrorSubmit(result.message || 'Server error')); // عرض الخطأ أسفل النموذج
                 }
+
             } catch (error) {
-                console.error("Erreur de réseau ou du serveur lors de la soumission du commentaire:", error);
-                setSubmitStatus({ loading: false, error: t.networkError, success: false });
+                console.error("Erreur de réseau lors de l'envoi du commentaire:", error);
+                setSubmitStatus(null); // لا تعرض رسالة النجاح/الخطأ العامة في حالة فشل الشبكة
+                setValidationError(t.networkError); // عرض الخطأ أسفل النموذج
+            } finally {
+                setIsSubmitting(false);
             }
         };
 
+        if (!showFeedbackModal) return null;
+
         return (
-            <div className="custom-modal-backdrop-success">
-                <div className="modern-modal-content-success" dir={direction}>
-                    {/* 🚨 تعطيل زر الإغلاق أثناء الإرسال */}
-                    <button className="close-btn-success" onClick={closeFeedbackModal} disabled={submitStatus.loading}><FaTimes /></button>
+            <div className="modal-overlay">
+                <div className="comment-modal-content" dir={direction}>
+                    <button
+                        className="modal-close-btn"
+                        onClick={closeFeedbackModal}
+                        disabled={isSubmitting}
+                    >
+                        <FaTimes />
+                    </button>
 
-                    {isSubmitted ? (
-                        <>
-                            <div className="success-icon-section">
-                                <FaCheckCircle className="check-icon-large" style={{ color: '#ffc107' }} />
-                            </div>
-                            <h2 className="success-modal-title" style={{ color: '#007bff' }}>
-                                {t.feedbackSuccessTitle}
-                            </h2>
-                            <p className="success-message-text" dangerouslySetInnerHTML={{ __html: t.feedbackSuccessMsg.replace('هي', 'is').replace('satisfaction', `**${t.backToShop.includes('satisfaction') ? 'satisfaction' : 'satisfaction'}**`) }}></p>
-                            <button type="button" onClick={closeFeedbackModal} className="return-button-success" disabled={submitStatus.loading}>
-                                {t.backToShop}
-                            </button>
-                        </>
+                    <h2 className="feedback-modal-title">{t.feedbackModalTitle}</h2>
+<br />
+
+                    {/* تم حذف شرط submitStatus === 'error' هنا لعدم عرض رسالة الخطأ العامة */}
+                    {submitStatus === 'success' ? (
+                        <div className="comment-status-message success">
+                             <FaCheckCircle className="check-icon-small" /> {t.feedbackSuccessMsg}
+                        </div>
                     ) : (
-                        <form onSubmit={handleReviewSubmit}>
-                            <div className="success-icon-section">
-                                <FaCommentAlt className="check-icon-large" style={{ color: '#d7b33f' }} />
-                            </div>
-                            <h2 className="success-modal-title">
-                                {t.feedbackModalTitle}
-                            </h2>
-                            <p className="success-message-text">
-                                {t.feedbackModalSubtitle}
-                                <br/>
-                                <small dir={appLanguage === 'ar' ? 'rtl' : 'ltr'}>{t.feedbackModalSmallText(finalCustomerData.firstName)}</small>
-                            </p>
-                            
-                            <textarea
-                                className="feedback-textarea"
-                                placeholder={t.feedbackPlaceholder}
-                                value={reviewText}
-                                onChange={(e) => setReviewText(e.target.value)}
-                                rows="5"
-                                required
-                                disabled={submitStatus.loading}
-                                dir={appLanguage === 'ar' ? 'rtl' : 'ltr'}
-                            />
-                            
-                            {/* Affichage des messages d'état/erreur */}
-                            {submitStatus.error && (
-                                <p className="status-message" style={{ color: 'red' }}>
-                                    ❌ {submitStatus.error}
-                                </p>
-                            )}
+                        <form onSubmit={handleSubmitComment}>
+                             <div className="rating-control-group">
+                                 <p>{t.ratingLabel}</p>
+                                 <br /><br />
+                                 <div className="rating-stars">
+                                     {[1, 2, 3, 4, 5].map((star) => (
+                                         <span
+                                             key={star}
+                                             className="star"
+                                             onClick={() => handleRatingClick(star)}
+                                             style={{ color: star <= rating ? '#ffc107' : '#e4e5e9', cursor: 'pointer', fontSize: '24px' }}
+                                         >
+                                             {star <= rating ? <FaStar /> : <FaRegStar />}
+                                         </span>
+                                     ))}
+                                 </div>
+                             </div>
 
-                            <div className="modal-action-buttons-success">
-                                <button 
-                                    type="submit" 
-                                    className="feedback-button-success" 
-                                    disabled={reviewText.trim().length < 5 || submitStatus.loading}
-                                >
-                                    {submitStatus.loading ? (
-                                        <> <FaSpinner className="spinner" style={{ animation: 'spin 1s linear infinite' }} /> {t.submitting}</>
-                                    ) : (
-                                        t.feedbackSubmit
-                                    )}
-                                </button>
-                                
-                            </div>
+                             <div className="comment-input-group">
+                                 <textarea
+                                     name="comment"
+                                     placeholder={t.feedbackPlaceholder}
+                                     value={reviewText}
+                                     onChange={handleTextChange}
+                                     disabled={isSubmitting}
+                                     rows="4"
+                                     dir={direction}
+                                 />
+                                 {/* 🚨 عرض رسالة خطأ التحقق أسفل حقل التعليق (تظهر لأخطاء التحقق الأولية وأخطاء الخادم/الشبكة) */}
+                                 {validationError && (
+                                     <p className="validation-error-text"
+                                         style={{ color: '#d9534f', marginTop: '5px', fontSize: '14px', fontWeight: 'bold' }}
+                                         dangerouslySetInnerHTML={{ __html: validationError }}
+                                     ></p>
+                                 )}
+                             </div>
+
+                             <div className="modal-actions-comment">
+                                 <button
+                                     type="submit"
+                                     className="send-comment-btn"
+                                     disabled={isSubmitting}
+                                 >
+                                     {isSubmitting ? (
+                                         <> <FaSpinner className="spinner" style={{ animation: 'spin 1s linear infinite' }} /> {t.submitting}</>
+                                     ) : (
+                                         t.sendCommentBtn
+                                     )}
+                                 </button>
+                                 <button
+                                     type="button"
+                                     onClick={closeFeedbackModal}
+                                     className="skip-comment-btn"
+                                     disabled={isSubmitting}
+                                 >
+                                     {t.skipCommentBtn}
+                                 </button>
+                             </div>
                         </form>
                     )}
                 </div>
@@ -753,14 +776,13 @@ export default function ProductGrid() {
         );
     };
 
-
-    // 7. Rendu Principal - Ajout du nouveau modal de feedback (محدث باللغات)
+    // 7. Rendu Principal 
     const direction = appLanguage === 'ar' ? 'rtl' : 'ltr';
 
     if (loading) {
         return (
             <>
-                <Navbar/>
+                <Navbar />
                 <div className="loading-state" style={{ textAlign: 'center', padding: '100px', fontSize: '24px' }} dir={direction}>
                     <FaSpinner className="spinner" style={{ animation: 'spin 1s linear infinite', marginRight: '10px' }} />
                     {t.loading}
@@ -786,11 +808,11 @@ export default function ProductGrid() {
 
                 <div className="grid-header">
                     <h2 className="grid-main-title">
-                        <span style={{ color: "#333333", marginRight: "-00px" }}> 
-                            {appLanguage === 'en' ? t.collectionTitle : t.collectionTitle} 
-                        </span> 
+                        <span style={{ color: "#333333", marginRight: "-00px" }}>
+                            {t.collectionTitle}
+                        </span>
                         <span className="vip-accent-text" style={{ color: "#D4AF37" }}>
-                            {appLanguage === 'en' ? t.collectionAccent : t.collectionAccent}
+                            {t.collectionAccent}
                         </span>
                     </h2>
                     <p className="grid-sub-text">
@@ -800,7 +822,7 @@ export default function ProductGrid() {
 
                 <div className="shop-content-wrapper">
 
-                    {/* 1. Bouton bascule Filtres (محدث باللغات) */}
+                    {/* 1. Bouton bascule Filtres */}
                     <button
                         className={`toggle-filters-button ${appLanguage === 'ar' ? 'rtl-align-text' : ''}`}
                         onClick={() => setIsFilterOpen(!isFilterOpen)}
@@ -813,7 +835,7 @@ export default function ProductGrid() {
                     </button>
 
 
-                    {/* 2. Barre latérale des filtres (محدث باللغات) */}
+                    {/* 2. Barre latérale des filtres */}
                     <aside className={`filter-sidebar ${isFilterOpen ? 'is-open' : ''} ${appLanguage === 'ar' ? 'rtl-sidebar' : ''}`}>
                         <h3 className="sidebar-title">{t.sidebarTitle}</h3>
 
@@ -833,10 +855,9 @@ export default function ProductGrid() {
                             <h4 className="filter-group-title">{t.filterCategory(t.navTitle)} <FaChevronDown className="dropdown-icon" /></h4>
                             <ul className="category-list">
                                 {currentCategories.map((cat, index) => {
-                                    // نستخدم المفتاح الفرنسي لعملية الفلترة
-                                    const categoryKey = categoriesFr[index]; 
+                                    const categoryKey = categoriesFr[index];
                                     const count = productsToFilter.filter(p => categoryKey === 'Tous' || p.category === categoryKey).length;
-                                    
+
                                     return (
                                         <li
                                             key={index}
@@ -862,7 +883,7 @@ export default function ProductGrid() {
 
                     </aside>
 
-                    {/* 3. Grille des produits (محدث باللغات) */}
+                    {/* 3. Grille des منتجات */}
                     <main className="product-grid-main">
                         <div className="grid-info-bar">
                             <p className="info-text">{t.infoBar(filteredProducts.length, productsToFilter.length)}</p>
@@ -878,8 +899,7 @@ export default function ProductGrid() {
                                                 src={product.url}
                                                 alt={product.alt}
                                             />
-                                            {/* هنا نستخدم الترجمة للعرض، لكن الفلترة مازالت تستخدم القيمة الثابتة */}
-                                            <div className="category-badge">{t.categoryMapping[product.category] || product.category}</div> 
+                                            <div className="category-badge">{t.categoryMapping[product.category] || product.category}</div>
                                         </div>
 
                                         <div className="product-details-grid">
@@ -913,21 +933,21 @@ export default function ProductGrid() {
 
             </section>
 
-            {/* 4. Rendu du modal de commande المُحدَّث */}
+            {/* 4. Rendu du modal de commande */}
             {showOrderModal && selectedProduct && (
-                <OrderModalComponent 
+                <OrderModalComponent
                     selectedProduct={selectedProduct}
                     quantity={quantity}
                     handleQuantityChange={handleQuantityChange}
                     closeOrderModal={closeOrderModal}
                     isLoggedIn={isLoggedIn}
                     currentUserEmail={currentUserEmail}
-                    onOrderSuccess={handleOrderSuccessCallback} 
+                    onOrderSuccess={handleOrderSuccessCallback}
                     onCustomerDataUpdate={handleCustomerDataUpdate}
                     appLanguage={appLanguage}
                 />
             )}
-            
+
             {/* 5. Rendu du modal de succès */}
             {showSuccessModal && <OrderSuccessModal />}
 

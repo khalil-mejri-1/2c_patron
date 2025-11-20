@@ -152,7 +152,7 @@ export default function Abonnementvip() {
             }
 
             // 1. Récupérer le nom de l'utilisateur
-            const userRes = await fetch(`https://2c-patron.vercel.app/api/users?email=${email}`);
+            const userRes = await fetch(`http://localhost:3000/api/users?email=${email}`);
             if (!userRes.ok) {
                 setErrorMsg("Impossible de récupérer les informations de l'utilisateur.");
                 setIsLoading(false);

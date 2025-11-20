@@ -20,7 +20,7 @@ export default function Gestion_de_Client() {
         setLoading(true);
         setError(null);
         try {
-            const response = await fetch('https://2c-patron.vercel.app/api/users/clients');
+            const response = await fetch('http://localhost:3000/api/users/clients');
             const data = await response.json();
 
             if (!response.ok) {
@@ -59,7 +59,7 @@ export default function Gestion_de_Client() {
         }
 
         try {
-            const response = await fetch(`https://2c-patron.vercel.app/api/users/${userId}/statut`, {
+            const response = await fetch(`http://localhost:3000/api/users/${userId}/statut`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ statut: newStatut }),
@@ -114,7 +114,7 @@ export default function Gestion_de_Client() {
         }
 
         try {
-            const response = await fetch(`https://2c-patron.vercel.app/api/users/${userId}/abonne`, {
+            const response = await fetch(`http://localhost:3000/api/users/${userId}/abonne`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ abonne: newAbonne }),
@@ -166,7 +166,7 @@ export default function Gestion_de_Client() {
 
         try {
             // 🚨 Endpoint de suppression (assurez-vous que votre backend le prend en charge)
-            const response = await fetch(`https://2c-patron.vercel.app/api/users/${userId}`, {
+            const response = await fetch(`http://localhost:3000/api/users/${userId}`, {
                 method: 'DELETE', // Utilisation de la méthode DELETE
             });
 

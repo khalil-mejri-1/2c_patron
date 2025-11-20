@@ -717,6 +717,7 @@ body {
   bottom: 0;
   left: 0;
   width: 90%;
+
   padding: 20px;
   color: #FFFFFF;
   z-index: 3;
@@ -8164,4 +8165,19 @@ margin-left: 20px;
  margin-left: 0px;
  margin-right: 20px;
 
+}
+
+
+.feedback-modal-subtitle{
+  text-align: center;
+
+}
+.feedback-modal-small-text{
+  text-align: center;
+    margin-top: 20px;
+  margin-bottom: 20px;
+}
+.feedback-modal-title{
+  font-size: 1.1rem;
+  margin-top: -20px;
 }

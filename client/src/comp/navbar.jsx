@@ -132,7 +132,7 @@ export default function Navbar({ initialCartCount = 0 }) {
     // --- 🔹 التحقق من اشتراك المستخدم في قاعدة البيانات ---
     const checkVipStatusFromDB = useCallback(async (email) => {
         try {
-            const response = await fetch(`https://2c-patron.vercel.app/api/users/${email}`);
+            const response = await fetch(`http://localhost:3000/api/users/${email}`);
             const data = await response.json();
 
             if (data && data.abonne === "oui") {

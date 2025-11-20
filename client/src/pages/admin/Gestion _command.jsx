@@ -4,7 +4,7 @@ import NavbarAdmin from '../../comp/Navbar_admin';
 import '../admin_css/GestionDeCommand.css'; 
 import { FaImage,FaSpinner } from 'react-icons/fa'; // Import pour l'icône de placeholder
 
-const API_BASE_URL = 'https://2c-patron.vercel.app/api/commands';
+const API_BASE_URL = 'http://localhost:3000/api/commands';
 
 // قائمة بحالات الطلب المتاحة
 const statusOptions = [

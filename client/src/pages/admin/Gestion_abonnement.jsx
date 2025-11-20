@@ -18,7 +18,7 @@ import withReactContent from 'sweetalert2-react-content';
 const MySwal = withReactContent(Swal);
 
 // 🛠️ ثابت API Base URL لتجنب التكرار
-const API_BASE_URL = 'https://2c-patron.vercel.app/api/abonnement';
+const API_BASE_URL = 'http://localhost:3000/api/abonnement';
 
 export default function Gestion_abonnement() {
     const [abonnements, setAbonnements] = useState([]);
@@ -90,7 +90,7 @@ export default function Gestion_abonnement() {
             // ✅ إذا تمت الموافقة، إرسال البريد لتحديث جدول المستخدم
             if (newStatut === 'approuvé') {
                 try {
-                    const userResponse = await fetch('https://2c-patron.vercel.app/api/user/abonne', {
+                    const userResponse = await fetch('http://localhost:3000/api/user/abonne', {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ email }),
@@ -244,9 +244,9 @@ export default function Gestion_abonnement() {
                                     <FaFileImage className="proof-icon" />
                                     <p>Preuve de Paiement</p>
                                     <a
-                                        href={`https://2c-patron.vercel.app${abo.preuve_paiement_url}`}
+                                        href={`http://localhost:3000${abo.preuve_paiement_url}`}
                                         // 💡 التغيير هنا: استدعاء الدالة الجديدة لمنع الافتراضي وعرض الصورة في SweetAlert2
-                                        onClick={(e) => handleViewProof(e, `https://2c-patron.vercel.app${abo.preuve_paiement_url}`)}
+                                        onClick={(e) => handleViewProof(e, `http://localhost:3000${abo.preuve_paiement_url}`)}
                                         rel="noopener noreferrer"
                                         className="view-proof-button"
                                     >

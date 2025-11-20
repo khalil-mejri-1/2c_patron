@@ -25,7 +25,7 @@ const CommentaireSchema = new mongoose.Schema({
         min: [1, 'Le rating minimum est 1'],
         max: [5, 'Le rating maximum est 5'],
         required: false,
-        default: 0
+        default: 5
     },
 
     date_creation: {

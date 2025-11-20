@@ -88,7 +88,7 @@ export default function Gestion_de_Produit() {
         setLoading(true);
         setError(null);
         try {
-            const response = await fetch('https://2c-patron.vercel.app/api/products');
+            const response = await fetch('http://localhost:3000/api/products');
 
             if (!response.ok) {
                 throw new Error(`Erreur HTTP: ${response.status}. Vérifiez le serveur.`);
@@ -123,7 +123,7 @@ export default function Gestion_de_Produit() {
         };
 
         try {
-            const response = await fetch('https://2c-patron.vercel.app/api/products', {
+            const response = await fetch('http://localhost:3000/api/products', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(productData),
@@ -159,7 +159,7 @@ export default function Gestion_de_Produit() {
         setLoading(true);
         setError(null);
 
-        const deleteUrl = `https://2c-patron.vercel.app/api/products/${productId}`;
+        const deleteUrl = `http://localhost:3000/api/products/${productId}`;
 
         try {
             const response = await fetch(deleteUrl, { method: 'DELETE' });
@@ -198,7 +198,7 @@ export default function Gestion_de_Produit() {
             prix: parseFloat(currentProduct.prix),
         };
 
-        const updateUrl = `https://2c-patron.vercel.app/api/products/${currentProduct._id}`;
+        const updateUrl = `http://localhost:3000/api/products/${currentProduct._id}`;
 
         try {
             const response = await fetch(updateUrl, {

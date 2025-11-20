@@ -131,7 +131,7 @@ const translations = {
     },
 };
 
-const API_COMMAND_URL = 'https://2c-patron.vercel.app/api/commands';
+const API_COMMAND_URL = 'http://localhost:3000/api/commands';
 const API_COMMENTAIRE_URL = 'http://localhost:3000/api/commentaires';
 
 
@@ -143,6 +143,18 @@ const API_COMMENTAIRE_URL = 'http://localhost:3000/api/commentaires';
 // ********* 1. مكون نافذة التعليق *****************
 // **********************************************
 
+// **********************************************
+// ********* 1. مكون نافذة التعليق *****************
+// **********************************************
+
+// **********************************************
+// ********* 1. مكون نافذة التعليق (مُحدَّث) *********
+// **********************************************
+
+// **********************************************
+// ********* 1. مكون نافذة التعليق (مُصحَّح لخطأ API) *********
+// **********************************************
+
 const CommentModalComponent = ({
     selectedProduct,
     closeCommentModal,
@@ -150,29 +162,44 @@ const CommentModalComponent = ({
     customerData
 }) => {
     const t = translations[appLanguage] || translations.fr;
-    const [rating, setRating] = useState(0);
+    const [rating, setRating] = useState(5); 
     const [commentText, setCommentText] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitStatus, setSubmitStatus] = useState(null);
+    const [validationMessage, setValidationMessage] = useState(''); 
 
     const direction = appLanguage === 'ar' ? 'rtl' : 'ltr';
 
     const handleRatingClick = (newRating) => {
         setRating(newRating);
+        if (validationMessage) setValidationMessage(''); 
+    };
+
+    const handleCommentChange = (e) => {
+        setCommentText(e.target.value);
+        if (validationMessage) setValidationMessage(''); 
     };
 
     const handleSubmitComment = async (e) => {
         e.preventDefault();
+        
+        setValidationMessage('');
 
+        // التحقق: يجب أن يكون هناك تقييم (أكبر من 0) أو نص تعليق 
         if (rating === 0 && commentText.trim() === '') {
-            alert(appLanguage === 'ar' ? "الرجاء إدخال تقييم أو تعليق قبل الإرسال." : "Please enter a rating or a comment before submitting.");
+            setValidationMessage(t.commentRequiredError || (appLanguage === 'ar' ? "الرجاء إدخال تقييم أو تعليق قبل الإرسال." : "Please enter a rating or a comment before submitting."));
             return;
         }
 
         setIsSubmitting(true);
 
+        // 💡 ضمان وجود اسم العميل (nom) 💡
+        const clientNameForComment = customerData.firstName && customerData.firstName.trim() !== ''
+            ? customerData.firstName
+            : `Guest/Product: ${selectedProduct.name}`; // اسم احتياطي واضح
+
         const commentData = {
-            nom: customerData.firstName || selectedProduct.name,
+            nom: clientNameForComment,
             commentaire: commentText.trim(), 
             rating: rating,
             productId: selectedProduct.id,
@@ -189,34 +216,36 @@ const CommentModalComponent = ({
 
             if (response.ok) {
                 setSubmitStatus('success');
-                // ✅ الإغلاق التلقائي بعد 2 ثانية فقط عند النجاح
                 setTimeout(closeCommentModal, 2000); 
             } else {
+                // قد يكون الرد غير OK بسبب خطأ في البيانات المرسلة
+                const errorResult = await response.json();
+                console.error("Échec de l'enregistrement du commentaire:", errorResult);
                 setSubmitStatus('error');
             }
 
         } catch (error) {
-            console.error("Erreur de réseau lors de lإرسال التعليق:", error);
+            console.error("Erreur de réseau lors de l'envoi du commentaire:", error);
             setSubmitStatus('error');
         } finally {
             setIsSubmitting(false);
-            // ❌ تم إزالة شرط setTimeout من هنا، لأنه تسبب في مشكلة عدم الإغلاق اليدوي
-            // سيتم الإغلاق الآن إما تلقائيًا بعد النجاح (في try block) أو يدويًا.
         }
     };
+    
+    const handleCloseModal = () => {
+        setValidationMessage('');
+        setSubmitStatus(null);
+        closeCommentModal();
+    };
+
 
     return (
         <div className="modal-overlay">
             <div className="comment-modal-content" dir={direction}>
-                {/* ✅ التعديل هنا: زر الإغلاق يجب أن يكون غير معطل فقط عندما 
-                  لا تكون عملية الإرسال نشطة، أو إذا كانت قد نجحت (لأن الإغلاق التلقائي سيعمل).
-                  نستخدم هنا: !isSubmitting.
-                  إذا كانت الحالة 'success'، سيتم إغلاقها تلقائيا.
-                */}
                 <button 
                     className="modal-close-btn" 
-                    onClick={closeCommentModal} 
-                    disabled={isSubmitting} // منع الإغلاق أثناء الإرسال فقط
+                    onClick={handleCloseModal}
+                    disabled={isSubmitting}
                 >
                     <FaTimes />
                 </button>
@@ -233,9 +262,9 @@ const CommentModalComponent = ({
                     </div>
                 ) : (
                     <form onSubmit={handleSubmitComment}>
-                        {/* ... باقي حقول النموذج ... */}
                         <div className="rating-control-group">
                             <p>{t.ratingLabel}</p>
+                            <br /><br />
                             <div className="rating-stars">
                                 {[1, 2, 3, 4, 5].map((star) => (
                                     <span
@@ -255,12 +284,27 @@ const CommentModalComponent = ({
                                 name="comment"
                                 placeholder={t.commentPlaceholder}
                                 value={commentText}
-                                onChange={(e) => setCommentText(e.target.value)}
+                                onChange={handleCommentChange}
                                 disabled={isSubmitting}
                                 rows="4"
                                 dir={direction}
                             />
                         </div>
+                        
+                        {/* رسالة الخطأ المرئية */}
+                        {validationMessage && (
+                            <p className="validation-error-text" style={{ 
+                                color: '#dc3545', 
+                                margin: '10px 0', 
+                                padding: '5px', 
+                                border: '1px solid #dc3545', 
+                                borderRadius: '4px',
+                                textAlign: 'center',
+                                fontSize: '0.9em'
+                            }}>
+                                {validationMessage}
+                            </p>
+                        )}
 
                         <div className="modal-actions-comment">
                             <button
@@ -276,7 +320,7 @@ const CommentModalComponent = ({
                             </button>
                             <button
                                 type="button"
-                                onClick={closeCommentModal}
+                                onClick={handleCloseModal}
                                 className="skip-comment-btn"
                                 disabled={isSubmitting}
                             >
@@ -289,7 +333,6 @@ const CommentModalComponent = ({
         </div>
     );
 };
-
 
 // **********************************************
 // ********* 2. المكون الجديد لتأكيد النجاح *******

@@ -88,7 +88,7 @@ const translations = {
     }
 };
 
-const API_ENDPOINT = 'https://2c-patron.vercel.app/api/messages';
+const API_ENDPOINT = 'http://localhost:3000/api/messages';
 
 export default function Contact() {
     const [appLanguage, setAppLanguage] = useState('fr');
