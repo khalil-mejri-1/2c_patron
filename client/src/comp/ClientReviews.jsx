@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FaQuoteRight, FaChevronLeft, FaChevronRight, FaStar } from 'react-icons/fa';
 
 // ⚠️ URL de l'API des commentaires
-const API_COMMENTAIRES_URL = '/api/commentaires/filtre';
+const API_COMMENTAIRES_URL = 'http://localhost:3000/api/commentaires/filtre';
 
 // 🌐 كائن الترجمة
 const translations = {

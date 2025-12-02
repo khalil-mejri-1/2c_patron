@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaShoppingCart, FaSearch, FaChevronDown, FaTimes, FaUser, FaMapMarkerAlt, FaPhoneAlt, FaMinusCircle, FaPlusCircle, FaSpinner, FaCheckCircle, FaCommentAlt, FaStar, FaRegStar } from 'react-icons/fa';
+import { FaShoppingCart, FaSearch, FaChevronDown, FaTimes, FaUser, FaMapMarkerAlt, FaPhoneAlt, FaMinusCircle, FaPlusCircle, FaSpinner, FaCheckCircle, FaCommentAlt, FaStar, FaRegStar, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import Navbar from '../comp/navbar';
 import Footer from '../comp/Footer';
 
@@ -103,7 +103,6 @@ const translations = {
         toggleFiltersClose: "Fermer les filtres",
         toggleFiltersShow: (cat) => `Afficher les filtres (${cat})`,
         sidebarTitle: "Filtrer",
-        navTitle: "catégorie  ",
         searchPlaceholder: "Rechercher un produit...",
         filterCategory: (cat) => `${cat} `,
         resetFilters: "Réinitialiser",
@@ -200,7 +199,94 @@ const translations = {
     }
 };
 
-// ... (OrderModalComponent is omitted for brevity as it is unchanged) ...
+// ====================================================================
+// مُكوِّن شريحة الصور (Image Carousel Component)
+// ====================================================================
+
+const ImageCarousel = ({ images, direction }) => {
+    // يجب التحقق من أن images هي مصفوفة وتحتوي على عناصر
+    if (!images || images.length === 0) return null;
+
+    const [currentIndex, setCurrentIndex] = useState(0);
+
+    const goToPrevious = () => {
+        const isFirstSlide = currentIndex === 0;
+        const newIndex = isFirstSlide ? images.length - 1 : currentIndex - 1;
+        setCurrentIndex(newIndex);
+    };
+
+    const goToNext = () => {
+        const isLastSlide = currentIndex === images.length - 1;
+        const newIndex = isLastSlide ? 0 : currentIndex + 1;
+        setCurrentIndex(newIndex);
+    };
+
+    // تأثير للانتقال التلقائي كل 5 ثوانٍ
+    useEffect(() => {
+        const interval = setInterval(() => {
+            goToNext();
+        }, 5000); // 5 ثوانٍ
+        return () => clearInterval(interval);
+    }, [currentIndex]);
+
+    return (
+        <div className="image-carousel-container" style={{ position: 'relative', width: '100%', overflow: 'hidden', margin: '15px 0', borderRadius: '8px' }}>
+            <div
+                className="carousel-inner"
+                style={{
+                    display: 'flex',
+                    transition: 'transform 0.5s ease-in-out',
+                    transform: `translateX(-${currentIndex * 100}%)`,
+                }}
+            >
+                {images.map((url, index) => (
+                    <div key={index} className="carousel-item" style={{ minWidth: '100%', flexShrink: 0 }}>
+                        <img
+                            src={url}
+                            alt={`Slide ${index + 1}`}
+                            style={{ width: '100%', height: '150px', objectFit: 'cover' }}
+                        />
+                    </div>
+                ))}
+            </div>
+
+            {/* أزرار التحكم في الكاروسيل */}
+            {images.length > 1 && (
+                <>
+                    <button onClick={goToPrevious} className="carousel-control prev" style={{ position: 'absolute', top: '50%', transform: 'translateY(-50%)', left: direction === 'rtl' ? '5px' : '5px', right: direction === 'rtl' ? 'auto' : 'auto', background: 'rgba(0,0,0,0.5)', border: 'none', color: 'white', padding: '10px', cursor: 'pointer', zIndex: 10, borderRadius: '50%' }}>
+                        {direction === 'rtl' ? <FaChevronRight /> : <FaChevronLeft />}
+                    </button>
+                    <button onClick={goToNext} className="carousel-control next" style={{ position: 'absolute', top: '50%', transform: 'translateY(-50%)', right: direction === 'rtl' ? '5px' : '5px', left: direction === 'rtl' ? 'auto' : 'auto', background: 'rgba(0,0,0,0.5)', border: 'none', color: 'white', padding: '10px', cursor: 'pointer', zIndex: 10, borderRadius: '50%' }}>
+                        {direction === 'rtl' ? <FaChevronLeft /> : <FaChevronRight />}
+                    </button>
+                </>
+            )}
+
+            <div className="carousel-indicators" style={{ position: 'absolute', bottom: '10px', width: '100%', textAlign: 'center' }}>
+                {images.map((_, index) => (
+                    <span
+                        key={index}
+                        style={{
+                            display: 'inline-block',
+                            width: '8px',
+                            height: '8px',
+                            margin: '0 4px',
+                            borderRadius: '50%',
+                            backgroundColor: index === currentIndex ? '#fff' : 'rgba(255,255,255,0.5)',
+                            cursor: 'pointer',
+                        }}
+                        onClick={() => setCurrentIndex(index)}
+                    ></span>
+                ))}
+            </div>
+        </div>
+    );
+};
+
+
+// ====================================================================
+// OrderModalComponent (المعدل)
+// ====================================================================
 
 const OrderModalComponent = ({ selectedProduct, quantity, handleQuantityChange, closeOrderModal, isLoggedIn, currentUserEmail, onOrderSuccess, onCustomerDataUpdate, appLanguage }) => {
     const t = translations[appLanguage] || translations.fr;
@@ -243,6 +329,7 @@ const OrderModalComponent = ({ selectedProduct, quantity, handleQuantityChange, 
             items: [{
                 productId: selectedProduct.id,
                 productName: selectedProduct.name,
+                // 💡 يستخدم selectedProduct.url الذي يحمل mainImage أو image القديم
                 productImage: selectedProduct.url,
                 quantity: quantity,
                 price: selectedProduct.price,
@@ -299,6 +386,13 @@ const OrderModalComponent = ({ selectedProduct, quantity, handleQuantityChange, 
                         <p className="summary-price">{selectedProduct.price.toFixed(2)} {selectedProduct.currency} {t.unitPrice}</p>
                     </div>
                 </div>
+
+                {/* 🆕 المكان الجديد للكاروسيل المتحرك */}
+                {/* 💡 تم التعديل هنا: استخدام selectedProduct.secondaryImages */}
+                {selectedProduct.secondaryImages && selectedProduct.secondaryImages.length > 0 && (
+                    <ImageCarousel images={selectedProduct.secondaryImages} direction={direction} />
+                )}
+                {/* 🔚 نهاية الكاروسيل */}
 
                 <div className="quantity-control-group">
                     <label>{t.qtyLabel}</label>
@@ -369,7 +463,7 @@ const OrderModalComponent = ({ selectedProduct, quantity, handleQuantityChange, 
                         <button
                             type="submit"
                             className="confirm-order-btn"
-                            disabled={isSubmittingOrder}
+                            disabled={!customerData.firstName || !customerData.adresse || !customerData.phone || isSubmittingOrder}
                         >
                             {isSubmittingOrder ? (
                                 <> <FaSpinner className="spinner" style={{ animation: 'spin 1s linear infinite' }} /> {t.submitting}</>
@@ -389,7 +483,7 @@ const OrderModalComponent = ({ selectedProduct, quantity, handleQuantityChange, 
 
 
 // ====================================================================
-// المكون الرئيسي: ProductGrid (مع دالة FeedbackModal المعدلة)
+// المكون الرئيسي: ProductGrid (المصحح)
 // ====================================================================
 
 export default function ProductGrid() {
@@ -436,35 +530,41 @@ export default function ProductGrid() {
         setCurrentUserEmail(userEmail);
 
         // 🌟 LOGIQUE DE RÉCUPÉRATION DES PRODUجTS DEPUIS L'API
-        const fetchProducts = async () => {
-            setLoading(true);
-            setError(null);
-            try {
-                const response = await fetch(API_URL);
-                if (!response.ok) {
-                    throw new Error(`Erreur HTTP: ${response.status}`);
-                }
-                const data = await response.json();
+    // ProductGrid.js
 
-                const mappedProducts = data.map(p => ({
-                    id: p._id,
-                    name: p.nom,
-                    price: p.prix,
-                    currency: 'DT',
-                    url: p.image,
-                    alt: p.nom,
-                    category: p.categorie
-                }));
+const fetchProducts = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+        const response = await fetch(API_URL);
+        if (!response.ok) {
+            throw new Error(`Erreur HTTP: ${response.status}`);
+        }
+        const data = await response.json();
 
-                setFetchedProducts(mappedProducts);
+        const mappedProducts = data.map(p => ({
+            id: p._id,
+            name: p.nom,
+            price: p.prix,
+            currency: 'DT',
+            // ✅ التصحيح الأساسي: يختار mainImage (الجديد) أو image (القديم) كصورة رئيسية.
+            url: p.mainImage || p.image, 
+            secondaryImages: p.secondaryImages || [],
+            alt: p.nom,
+            category: p.categorie
+        }));
 
-            } catch (err) {
-                console.error("Échec de la récupération des produits :", err);
-                setError("Impossible de charger les produits. Veuillez vérifier l'API.");
-            } finally {
-                setLoading(false);
-            }
-        };
+        setFetchedProducts(mappedProducts);
+
+    } catch (err) {
+        console.error("Échec de la récupération des produits :", err);
+        setError("Impossible de charger les produits. Veuillez vérifier الـ API.");
+    } finally {
+        setLoading(false);
+    }
+};
+
+// ... (بقية الكود)
 
         fetchProducts();
 
@@ -610,7 +710,7 @@ export default function ProductGrid() {
     };
 
     // 🆕 6. NOUVEAU Composant du Modal de Commentaire (Feedback Modal) (معدل)
-const FeedbackModal = () => {
+    const FeedbackModal = () => {
         const [reviewText, setReviewText] = useState('');
         const [rating, setRating] = useState(5);
         const [isSubmitting, setIsSubmitting] = useState(false);
@@ -624,7 +724,7 @@ const FeedbackModal = () => {
 
         const handleRatingClick = (newRating) => {
             setRating(newRating);
-             // 💡 مسح خطأ التحقق عند اختيار نجمة
+            // 💡 مسح خطأ التحقق عند اختيار نجمة
             setValidationError(null);
         };
 
@@ -703,72 +803,72 @@ const FeedbackModal = () => {
                     </button>
 
                     <h2 className="feedback-modal-title">{t.feedbackModalTitle}</h2>
-<br />
+                    <br />
 
                     {/* تم حذف شرط submitStatus === 'error' هنا لعدم عرض رسالة الخطأ العامة */}
                     {submitStatus === 'success' ? (
                         <div className="comment-status-message success">
-                             <FaCheckCircle className="check-icon-small" /> {t.feedbackSuccessMsg}
+                            <FaCheckCircle className="check-icon-small" /> {t.feedbackSuccessMsg}
                         </div>
                     ) : (
                         <form onSubmit={handleSubmitComment}>
-                             <div className="rating-control-group">
-                                 <p>{t.ratingLabel}</p>
-                                 <br /><br />
-                                 <div className="rating-stars">
-                                     {[1, 2, 3, 4, 5].map((star) => (
-                                         <span
-                                             key={star}
-                                             className="star"
-                                             onClick={() => handleRatingClick(star)}
-                                             style={{ color: star <= rating ? '#ffc107' : '#e4e5e9', cursor: 'pointer', fontSize: '24px' }}
-                                         >
-                                             {star <= rating ? <FaStar /> : <FaRegStar />}
-                                         </span>
-                                     ))}
-                                 </div>
-                             </div>
+                            <div className="rating-control-group">
+                                <p>{t.ratingLabel}</p>
+                                <br /><br />
+                                <div className="rating-stars">
+                                    {[1, 2, 3, 4, 5].map((star) => (
+                                        <span
+                                            key={star}
+                                            className="star"
+                                            onClick={() => handleRatingClick(star)}
+                                            style={{ color: star <= rating ? '#ffc107' : '#e4e5e9', cursor: 'pointer', fontSize: '24px' }}
+                                        >
+                                            {star <= rating ? <FaStar /> : <FaRegStar />}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
 
-                             <div className="comment-input-group">
-                                 <textarea
-                                     name="comment"
-                                     placeholder={t.feedbackPlaceholder}
-                                     value={reviewText}
-                                     onChange={handleTextChange}
-                                     disabled={isSubmitting}
-                                     rows="4"
-                                     dir={direction}
-                                 />
-                                 {/* 🚨 عرض رسالة خطأ التحقق أسفل حقل التعليق (تظهر لأخطاء التحقق الأولية وأخطاء الخادم/الشبكة) */}
-                                 {validationError && (
-                                     <p className="validation-error-text"
-                                         style={{ color: '#d9534f', marginTop: '5px', fontSize: '14px', fontWeight: 'bold' }}
-                                         dangerouslySetInnerHTML={{ __html: validationError }}
-                                     ></p>
-                                 )}
-                             </div>
+                            <div className="comment-input-group">
+                                <textarea
+                                    name="comment"
+                                    placeholder={t.feedbackPlaceholder}
+                                    value={reviewText}
+                                    onChange={handleTextChange}
+                                    disabled={isSubmitting}
+                                    rows="4"
+                                    dir={direction}
+                                />
+                                {/* 🚨 عرض رسالة خطأ التحقق أسفل حقل التعليق (تظهر لأخطاء التحقق الأولية وأخطاء الخادم/الشبكة) */}
+                                {validationError && (
+                                    <p className="validation-error-text"
+                                        style={{ color: '#d9534f', marginTop: '5px', fontSize: '14px', fontWeight: 'bold' }}
+                                        dangerouslySetInnerHTML={{ __html: validationError }}
+                                    ></p>
+                                )}
+                            </div>
 
-                             <div className="modal-actions-comment">
-                                 <button
-                                     type="submit"
-                                     className="send-comment-btn"
-                                     disabled={isSubmitting}
-                                 >
-                                     {isSubmitting ? (
-                                         <> <FaSpinner className="spinner" style={{ animation: 'spin 1s linear infinite' }} /> {t.submitting}</>
-                                     ) : (
-                                         t.sendCommentBtn
-                                     )}
-                                 </button>
-                                 <button
-                                     type="button"
-                                     onClick={closeFeedbackModal}
-                                     className="skip-comment-btn"
-                                     disabled={isSubmitting}
-                                 >
-                                     {t.skipCommentBtn}
-                                 </button>
-                             </div>
+                            <div className="modal-actions-comment">
+                                <button
+                                    type="submit"
+                                    className="send-comment-btn"
+                                    disabled={isSubmitting}
+                                >
+                                    {isSubmitting ? (
+                                        <> <FaSpinner className="spinner" style={{ animation: 'spin 1s linear infinite' }} /> {t.submitting}</>
+                                    ) : (
+                                        t.sendCommentBtn
+                                    )}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={closeFeedbackModal}
+                                    className="skip-comment-btn"
+                                    disabled={isSubmitting}
+                                >
+                                    {t.skipCommentBtn}
+                                </button>
+                            </div>
                         </form>
                     )}
                 </div>

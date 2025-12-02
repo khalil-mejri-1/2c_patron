@@ -1670,60 +1670,105 @@ app.put('/api/users/:id/abonne', async (req, res) => {
 // **********************************************
 
 // ... (جميع مسارات المنتجات هنا دون تغيير) ...
+// Product Model (يجب أن يكون مستوردًا هنا)
+// const Product = require('./models/Product'); 
+
+// 1. إضافة منتج (POST /api/products)
 app.post('/api/products', async (req, res) => {
-  try {
-    const newProduct = new Product(req.body);
-    const savedProduct = await newProduct.save();
-    res.status(201).json(savedProduct);
-  } catch (error) {
-    if (error.name === 'ValidationError') {
-      const messages = Object.values(error.errors).map(val => val.message);
-      return res.status(400).json({ error: 'Validation failed', details: messages.join('; ') });
-    }
-    console.error('Error in POST /api/products:', error.message);
-    res.status(500).json({ error: 'Erreur du serveur lors de l\'ajout du produit.' });
-  }
+    try {
+        // 💡 لا حاجة للتحويل المعقد هنا. المخطط الجديد يتوقع:
+        // - mainImage (String)
+        // - secondaryImages (Array of String, optional)
+
+        // تنظيف البيانات الواردة للتأكد من استخدام الحقول الجديدة
+        const productData = {
+            nom: req.body.nom,
+            mainImage: req.body.mainImage,
+            secondaryImages: req.body.secondaryImages || [], // افتراضيًا مصفوفة فارغة
+            prix: req.body.prix,
+            categorie: req.body.categorie,
+            // تجاهل الحقول القديمة (image, images)
+        };
+
+        const newProduct = new Product(productData);
+        const savedProduct = await newProduct.save();
+        res.status(201).json(savedProduct);
+
+    } catch (error) {
+        if (error.name === 'ValidationError') {
+            const messages = Object.values(error.errors).map(val => val.message);
+            return res.status(400).json({ error: 'Validation failed', details: messages.join('; ') });
+        }
+        console.error('Error in POST /api/products:', error.message);
+        res.status(500).json({ error: 'Erreur du serveur lors de l\'ajout du produit.' });
+    }
 });
 
+// 2. جلب جميع المنتجات (GET /api/products)
 app.get('/api/products', async (req, res) => {
-  try {
-    const products = await Product.find();
-    res.status(200).json(products);
-  } catch (error) {
-    console.error('Error in GET /api/products:', error.message);
-    res.status(500).json({ error: 'Erreur du serveur lors de la récupération des produits.' });
-  }
+    try {
+        // سيتم جلب الحقول mainImage و secondaryImages كما هي معرفة في المخطط
+        const products = await Product.find();
+        res.status(200).json(products);
+    } catch (error) {
+        console.error('Error in GET /api/products:', error.message);
+        res.status(500).json({ error: 'Erreur du serveur lors de la récupération des produits.' });
+    }
 });
 
-app.delete('/api/products/:id', async (req, res) => {
-  try {
-    const productId = req.params.id;
-    const deletedProduct = await Product.findByIdAndDelete(productId);
-    if (!deletedProduct) return res.status(404).json({ message: 'Produit non trouvé.' });
-    res.status(200).json({ message: 'Produit supprimé avec succès.', _id: productId });
-  } catch (error) {
-    console.error('Error in DELETE /api/products/:id:', error.message);
-    res.status(500).json({ error: 'Erreur du serveur lors de la suppression du produit.' });
-  }
-});
-
+// 3. تحديث منتج (PUT /api/products/:id)
 app.put('/api/products/:id', async (req, res) => {
-  try {
-    const productId = req.params.id;
-    const updatedData = req.body;
-    if (updatedData.prix) {
-      updatedData.prix = parseFloat(updatedData.prix);
-      if (isNaN(updatedData.prix)) return res.status(400).json({ message: "Le prix doit être un nombre valide." });
-    }
-    const product = await Product.findByIdAndUpdate(productId, updatedData, { new: true, runValidators: true });
-    if (!product) return res.status(404).json({ message: 'Produit non trouvé pour la mise à jour.' });
-    res.status(200).json(product);
-  } catch (error) {
-    console.error('Error in PUT /api/products/:id:', error.message);
-    res.status(500).json({ error: 'Erreur du serveur lors de la mise à jour du produit.', details: error.message });
-  }
+    try {
+        const productId = req.params.id;
+        const updatedData = req.body;
+        
+        // التحقق من السعر
+        if (updatedData.prix) {
+            updatedData.prix = parseFloat(updatedData.prix);
+            if (isNaN(updatedData.prix)) return res.status(400).json({ message: "Le prix doit être un nombre صالح." });
+        }
+
+        // 💡 تنظيف بيانات التحديث: لا تسمح بحقول images أو image القديمة
+        delete updatedData.image;
+        delete updatedData.images;
+        
+        // إذا تم إرسال secondaryImages، يجب أن تكون مصفوفة
+        if (updatedData.secondaryImages && !Array.isArray(updatedData.secondaryImages)) {
+             updatedData.secondaryImages = [updatedData.secondaryImages].filter(Boolean);
+        }
+
+        // تحديث المنتج، مع تشغيل المدقق (Validators) لضمان صحة mainImage
+        const product = await Product.findByIdAndUpdate(
+            productId, 
+            updatedData, 
+            { new: true, runValidators: true }
+        );
+        
+        if (!product) return res.status(404).json({ message: 'Produit غير موجود للتحديث.' });
+        res.status(200).json(product);
+
+    } catch (error) {
+        if (error.name === 'ValidationError') {
+             const messages = Object.values(error.errors).map(val => val.message);
+             return res.status(400).json({ error: 'Validation failed', details: messages.join('; ') });
+        }
+        console.error('Error in PUT /api/products/:id:', error.message);
+        res.status(500).json({ error: 'Erreur du serveur lors de la mise à jour du produit.', details: error.message });
+    }
 });
 
+// 4. حذف منتج (DELETE /api/products/:id)
+app.delete('/api/products/:id', async (req, res) => {
+    try {
+        const productId = req.params.id;
+        const deletedProduct = await Product.findByIdAndDelete(productId);
+        if (!deletedProduct) return res.status(404).json({ message: 'Produit non trouvé.' });
+        res.status(200).json({ message: 'Produit supprimé avec succès.', _id: productId });
+    } catch (error) {
+        console.error('Error in DELETE /api/products/:id:', error.message);
+        res.status(500).json({ error: 'Erreur du serveur lors de la suppression du produit.' });
+    }
+});
 
 // **********************************************
 // مسارات الفيديوهات (Video Routes) - تم التعديل لإزالة الرفع المحلي

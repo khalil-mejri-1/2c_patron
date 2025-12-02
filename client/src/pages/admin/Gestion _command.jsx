@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import NavbarAdmin from '../../comp/Navbar_admin';
 // نفترض أن لديك ملف أنماط CSS:
-import '../admin_css/GestionDeCommand.css'; 
-import { FaImage,FaSpinner } from 'react-icons/fa'; // Import pour l'icône de placeholder
+import '../admin_css/GestionDeCommand.css';
+import { FaImage, FaSpinner } from 'react-icons/fa'; // Import pour l'icône de placeholder
 
 const API_BASE_URL = 'http://localhost:3000/api/commands';
 
 // قائمة بحالات الطلب المتاحة
 const statusOptions = [
-    'En attente', 
-    'En cours de traitement', 
-    'Expédiée', 
-    'Livrée', 
+    'En attente',
+    'En cours de traitement',
+    'Expédiée',
+    'Livrée',
     'Annulée'
 ];
 
@@ -19,10 +19,10 @@ const statusOptions = [
 const ProductImageCell = ({ imageUrl, productName }) => {
     if (imageUrl) {
         return (
-            <img 
-                src={imageUrl} 
-                alt={productName || "Produit"} 
-                className="product-thumbnail" 
+            <img
+                src={imageUrl}
+                alt={productName || "Produit"}
+                className="product-thumbnail"
             />
         );
     }
@@ -36,12 +36,12 @@ const ProductImageCell = ({ imageUrl, productName }) => {
 
 
 export default function Gestion_de_Command() {
-    
+
     // -------------------- 1. Détat du Composant --------------------
     const [commands, setCommands] = useState([]);
     const [loading, setLoading] = useState(false);
     const [notification, setNotification] = useState({ message: '', type: '' });
-    
+
     // Détat لإدارة مودال التحديث
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [currentCommand, setCurrentCommand] = useState(null);
@@ -66,7 +66,7 @@ export default function Gestion_de_Command() {
         try {
             const response = await fetch(API_BASE_URL);
             if (!response.ok) throw new Error("Échec du chargement des commandes.");
-            
+
             const data = await response.json();
             setCommands(data);
         } catch (err) {
@@ -93,7 +93,7 @@ export default function Gestion_de_Command() {
             const response = await fetch(`${API_BASE_URL}/${commandToDeleteId}`, {
                 method: 'DELETE',
             });
-            
+
             if (!response.ok) {
                 const errorData = await response.json();
                 throw new Error(errorData.message || `Échec de la suppression de la commande ${commandToDeleteId}.`);
@@ -111,7 +111,7 @@ export default function Gestion_de_Command() {
             setCommandToDeleteId(null);
         }
     };
-    
+
     // 💡 UPDATE STATUT (PUT) - تحديث حالة الطلب
     const handleUpdateStatus = async (e) => {
         e.preventDefault();
@@ -131,9 +131,9 @@ export default function Gestion_de_Command() {
             if (!response.ok) {
                 throw new Error(updatedCommand.message || `Échec de la mise à jour du statut pour la commande ${currentCommand._id}.`);
             }
-            
+
             // تحديث الطلب في قائمة الطلبات المحلية
-            setCommands(prev => prev.map(cmd => 
+            setCommands(prev => prev.map(cmd =>
                 cmd._id === updatedCommand._id ? updatedCommand : cmd
             ));
 
@@ -173,13 +173,13 @@ export default function Gestion_de_Command() {
     };
 
 
-        const formatDate = (dateString) => {
+    const formatDate = (dateString) => {
         const date = new Date(dateString);
         const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
         return date.toLocaleDateString('fr-FR', options);
     };
 
-     if (loading) return (
+    if (loading) return (
         <>
             <NavbarAdmin />
             <div className="abonnement-container loading-state">
@@ -194,7 +194,7 @@ export default function Gestion_de_Command() {
     return (
         <>
             <NavbarAdmin />
-            
+
             {/* Notification/Toast */}
             {notification.message && (
                 <div className={`notification ${notification.type}`}>
@@ -207,17 +207,19 @@ export default function Gestion_de_Command() {
                 <h2 className="client-title">🛒 Gestion des Commandes</h2>
                 <hr />
 
-                {  commands.length === 0 ? (
+                {commands.length === 0 ? (
                     <p className="no-data-message">Aucune commande trouvée.</p>
                 ) : (
                     <table className="commands-table">
                         <thead>
                             <tr>
                                 {/* <th>ID Commande</th>  */}
-                                <th>Image</th> 
+                                <th>Image</th>
                                 <th>Client</th>
                                 <th>Nom du Produit</th> {/* 💡 تم تغيير الاسم ليتناسب مع الفرنسية */}
                                 <th>Date</th>
+                                <th>Phone</th>
+                                <th>Address</th>
                                 <th>Total</th>
                                 <th>Statut</th>
                                 <th>Actions</th>
@@ -229,29 +231,32 @@ export default function Gestion_de_Command() {
                                     {/* <td>{command._id.substring(0, 8)}...</td>  */}
                                     {/* 🖼️ خلية عرض الصورة (لأول منتج) */}
                                     <td>
-                                        <ProductImageCell 
+                                        <ProductImageCell
                                             imageUrl={command.items[0]?.productImage}
                                             productName={command.items[0]?.productName}
                                         />
                                     </td>
                                     {/* معلومات العميل */}
                                     <td>{command.clientName || 'N/A'}</td>
-                                    
+
                                     {/* 🎯 التصحيح: اسم المنتج موجود في items[0] */}
-                                    <td>{command.items[0]?.productName || 'N/A'}</td> 
-                                    
+                                    <td>{command.items[0]?.productName || 'N/A'}</td>
+
                                     <td>{formatDate(command.orderDate)}</td>
+                                    <td>{command.clientPhone || 'N/A'}</td>
+                                    <td>{command.shippingAddress || 'N/A'}</td>
+
                                     <td>{command.totalAmount.toFixed(2)} DT</td>
                                     <td className={`status-${command.status.replace(/\s/g, '').toLowerCase()}`}>{command.status}</td>
                                     <td>
-                                        <button 
-                                            className="action-btn edit-btn" 
+                                        <button
+                                            className="action-btn edit-btn"
                                             onClick={() => openEditModal(command)}
                                         >
                                             Modifier Statut
                                         </button>
-                                        <button 
-                                            className="action-btn delete-btn" 
+                                        <button
+                                            className="action-btn delete-btn"
                                             onClick={() => openConfirmModal(command._id)}
                                         >
                                             Supprimer
@@ -270,15 +275,15 @@ export default function Gestion_de_Command() {
                 <div className="modal-overlay">
                     <div className="modal-content">
                         <h3>⚙️ Modifier le Statut de la Commande {currentCommand._id.substring(0, 8)}...</h3>
-                        
+
                         <form onSubmit={handleUpdateStatus}>
                             <div className="form-group">
                                 <label htmlFor="newStatus">Nouveau Statut</label>
-                                <select 
-                                    id="newStatus" 
-                                    name="newStatus" 
-                                    value={newStatus} 
-                                    onChange={(e) => setNewStatus(e.target.value)} 
+                                <select
+                                    id="newStatus"
+                                    name="newStatus"
+                                    value={newStatus}
+                                    onChange={(e) => setNewStatus(e.target.value)}
                                     required
                                 >
                                     {statusOptions.map(status => (
@@ -286,7 +291,7 @@ export default function Gestion_de_Command() {
                                     ))}
                                 </select>
                             </div>
-                            
+
                             <div className="modal-actions">
                                 <button type="submit" className="submit-button" disabled={loading}>
                                     {loading ? 'Mise à jour...' : 'Enregistrer'}
@@ -309,17 +314,17 @@ export default function Gestion_de_Command() {
                             Êtes-vous sûr de vouloir supprimer la commande **{commandToDeleteId.substring(0, 8)}...** ?
                         </p>
                         <div className="modal-actions">
-                            <button 
-                                type="button" 
+                            <button
+                                type="button"
                                 className="action-btn delete-btn"
-                                onClick={handleDeleteCommand} 
+                                onClick={handleDeleteCommand}
                                 disabled={loading}
                             >
                                 {loading ? 'Suppression...' : 'Oui, Supprimer'}
                             </button>
-                            <button 
-                                type="button" 
-                                className="cancel-button" 
+                            <button
+                                type="button"
+                                className="cancel-button"
                                 onClick={closeConfirmModal}
                                 disabled={loading}
                             >
