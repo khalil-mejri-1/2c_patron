@@ -9,7 +9,7 @@ import fr from "../img/fr.png";
 import eg from "../img/eg.png";
 import BASE_URL from '../apiConfig';
 
-const GOOGLE_CLIENT_ID = "509196356589-2sqg41uk19epl6m7bpbaeee2i8pmppqm.apps.googleusercontent.com";
+const GOOGLE_CLIENT_ID = "435113772089-sa576v0m6hq96rg9369icj3g66pnkh9r.apps.googleusercontent.com";
 
 export default function Navbar({ initialCartCount = 0 }) {
     const [isOpen, setIsOpen] = useState(false);

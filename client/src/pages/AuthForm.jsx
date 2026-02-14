@@ -153,7 +153,7 @@ export default function AuthForm({ type = 'login' }) {
     useEffect(() => {
         if (window.google) {
             window.google.accounts.id.initialize({
-                client_id: "509196356589-2sqg41uk19epl6m7bpbaeee2i8pmkpqm.apps.googleusercontent.com",
+                client_id: "435113772089-sa576v0m6hq96rg9369icj3g66pnkh9r.apps.googleusercontent.com",
                 callback: handleGoogleCredentialResponse,
                 context: isLogin ? "signin" : "signup",
                 ux_mode: "popup",
