@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import Navbar from '../comp/navbar';
 import Footer from '../comp/Footer';
+import BASE_URL from '../apiConfig';
 // Importation d'icônes, supposons que vous utilisez quelque chose comme Font Awesome ou des icônes de réaction
 // J'utilise des émojis pour la démo, mais dans un environnement réel, vous devriez utiliser des composants d'icônes (ex: FaUpload, FaTimes)
 
@@ -46,8 +47,11 @@ const FileUploadField = ({ file, onChange, hasError }) => {
 
     const dropzoneClass = `dropzone ${isDragging ? 'is-dragging' : ''} ${hasError ? 'has-error' : ''}`;
 
+
+
+
     return (
-        <div 
+        <div
             className={dropzoneClass}
             onDragEnter={handleDragEnter}
             onDragOver={handleDragEnter}
@@ -114,7 +118,7 @@ export default function Abonnementvip() {
     const handleChange = (e) => {
         const { name, value, files } = e.target;
         setErrorMsg('');
-        
+
         // Validation simple de fichier
         if (files && files.length > 0) {
             const file = files[0];
@@ -131,6 +135,8 @@ export default function Abonnementvip() {
             [name]: files ? files[0] : value,
         }));
     };
+    const IMGBB_API_KEY = 'd9eb76a38b59f5fb253a8be1456c90c0';
+
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -151,26 +157,55 @@ export default function Abonnementvip() {
                 return;
             }
 
-            // 1. Récupérer le nom de l'utilisateur
-            const userRes = await fetch(`http://localhost:3000/api/users?email=${email}`);
+            // --- NOUVELLE LOGIQUE D'UPLOAD IMGBB ---
+
+            // 1. Uploader l'image sur ImgBB
+            const imgBbFormData = new FormData();
+            imgBbFormData.append('image', formData.file); // Le fichier
+
+            const imgBbRes = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
+                method: 'POST',
+                body: imgBbFormData,
+            });
+
+            if (!imgBbRes.ok) {
+                const errorData = await imgBbRes.json();
+                console.error("Erreur ImgBB:", errorData);
+                setErrorMsg(`Erreur lors du téléversement de l'image (ImgBB): ${errorData.error.message || 'Erreur inconnue'}`);
+                setIsLoading(false);
+                return;
+            }
+
+            const imgBbData = await imgBbRes.json();
+            const preuve_paiement_url = imgBbData.data.url; // L'URL de l'image stockée
+
+            // 2. Récupérer le nom de l'utilisateur
+            const userRes = await fetch(`${BASE_URL}/api/users?email=${email}`);
             if (!userRes.ok) {
                 setErrorMsg("Impossible de récupérer les informations de l'utilisateur.");
                 setIsLoading(false);
                 return;
             }
             const userData = await userRes.json();
-            const username = userData.nom; 
+            const username = userData.nom;
 
-            // 2. Préparer et envoyer FormData
-            const data = new FormData();
-            data.append('nom', username);
-            data.append('mail', email);
-            data.append('preuve_paiement', formData.file);
+            // 3. Envoyer les données (Nom, Email, URL ImgBB) à votre API Backend
+            const dataToSend = {
+                nom: username,
+                mail: email,
+                preuve_paiement_url: preuve_paiement_url // 🎉 On envoie l'URL
+            };
 
-            const res = await fetch('http://localhost:3000/api/abonnement', {
+            const res = await fetch(`${BASE_URL}/api/abonnement`, {
                 method: 'POST',
-                body: data,
+                headers: {
+                    'Content-Type': 'application/json', // ⚠️ Important : On envoie du JSON, pas du FormData
+                },
+                body: JSON.stringify(dataToSend),
             });
+
+            // --- FIN NOUVELLE LOGIQUE ---
+
 
             if (res.ok) {
                 setShowModal(false);
@@ -179,12 +214,12 @@ export default function Abonnementvip() {
                 setTimeout(() => setShowSuccess(false), 4000);
             } else {
                 const errorData = await res.json();
-                setErrorMsg(errorData.message || "Erreur lors de l’envoi de la preuve. Réessayez.");
+                setErrorMsg(errorData.message || "Erreur lors de l’envoi de la demande d'abonnement. Réessayez.");
             }
 
         } catch (error) {
-            console.error("Erreur:", error);
-            setErrorMsg("Erreur de connexion au serveur. Vérifiez votre connexion.");
+            console.error("Erreur générale:", error);
+            setErrorMsg("Erreur de connexion ou traitement. Vérifiez votre connexion.");
         } finally {
             setIsLoading(false); // Arrêter le chargement
         }
@@ -270,7 +305,7 @@ export default function Abonnementvip() {
                         <button className="close-button" onClick={() => setShowModal(false)} disabled={isLoading}>
                             &times;
                         </button>
-                        
+
                         <div className="modal-header">
                             <span className="header-icon">💳</span>
                             <h2>Vérification de Paiement VIP</h2>
@@ -282,13 +317,13 @@ export default function Abonnementvip() {
                         <form onSubmit={handleSubmit} className="upload-form">
 
                             {errorMsg && <div className="error-message shake-animation">⚠️ {errorMsg}</div>}
-                            
-                            <FileUploadField 
+
+                            <FileUploadField
                                 file={formData.file}
                                 onChange={handleChange}
                                 hasError={!!errorMsg}
                             />
-                            
+
                             <div className="modal-actions">
                                 <button type="button" onClick={() => setShowModal(false)} disabled={isLoading} className="cancel-button">
                                     Annuler

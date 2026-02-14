@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { FaBars, FaTimes, FaSearch, FaShoppingBag, FaUser, FaSignOutAlt, FaSignInAlt, FaUserPlus, FaCrown } from 'react-icons/fa';
+import { FaBars, FaTimes, FaSearch, FaShoppingBag, FaUser, FaSignOutAlt, FaSignInAlt, FaUserPlus, FaCrown, FaTachometerAlt, FaPlus, FaSave } from 'react-icons/fa';
 import logo from "../img/logo.png";
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
+import { useLanguage } from '../context/LanguageContext';
 import ar from "../img/ar.png";
 import fr from "../img/fr.png";
 import eg from "../img/eg.png";
+import BASE_URL from '../apiConfig';
 
 const GOOGLE_CLIENT_ID = "509196356589-2sqg41uk19epl6m7bpbaeee2i8pmppqm.apps.googleusercontent.com";
 
@@ -19,12 +21,12 @@ export default function Navbar({ initialCartCount = 0 }) {
     });
     const [cartItemCount, setCartItemCount] = useState(initialCartCount);
     const [isVip, setIsVip] = useState(false);
+    const [isAdmin, setIsAdmin] = useState(false);
     const [showVipModal, setShowVipModal] = useState(false);
-    
-    // 🌟 NOUVEL ÉTAT pour la gestion de la langue
-    const [currentLanguage, setCurrentLanguage] = useState(
-        localStorage.getItem('appLanguage') || 'fr'
-    );
+
+    const { appLanguage, changeLanguage, languages, addLanguage } = useLanguage();
+    const [isAddLanguageModalOpen, setIsAddLanguageModalOpen] = useState(false);
+    const [newLangData, setNewLangData] = useState({ label: '', code: '', emoji: '', icon: '' });
 
     const dropdownRef = useRef(null);
     const location = useLocation();
@@ -32,13 +34,7 @@ export default function Navbar({ initialCartCount = 0 }) {
 
     // --- Gestionnaire de changement de langue ---
     const handleLanguageChange = (lang) => {
-        setCurrentLanguage(lang);
-        localStorage.setItem('appLanguage', lang);
-        // Ici, vous devriez idéalement déclencher le changement de langue
-        // de votre bibliothèque i18n (ex: i18next.changeLanguage(lang)).
-        // Pour cet exemple, nous simulons juste l'état.
-        console.log(`Langue changée en : ${lang}`);
-        window.location.reload()
+        changeLanguage(lang);
     };
 
     // --- Fonction de Retour ---
@@ -74,7 +70,9 @@ export default function Navbar({ initialCartCount = 0 }) {
             localStorage.removeItem('login');
             localStorage.removeItem('loggedInUserEmail');
             localStorage.removeItem('currentUserEmail');
+            localStorage.removeItem('currentUserEmail');
             setIsVip(false);
+            setIsAdmin(false);
         }
     };
 
@@ -132,13 +130,20 @@ export default function Navbar({ initialCartCount = 0 }) {
     // --- 🔹 التحقق من اشتراك المستخدم في قاعدة البيانات ---
     const checkVipStatusFromDB = useCallback(async (email) => {
         try {
-            const response = await fetch(`http://localhost:3000/api/users/${email}`);
+            const response = await fetch(`${BASE_URL}/api/users/${email}`);
             const data = await response.json();
 
             if (data && data.abonne === "oui") {
                 setIsVip(true);
             } else {
                 setIsVip(false);
+            }
+
+            // 🛡️ Vérification du statut Admin
+            if (data && data.statut === 'admin') {
+                setIsAdmin(true);
+            } else {
+                setIsAdmin(false);
             }
         } catch (error) {
             console.error("Erreur lors de la vérification du statut VIP:", error);
@@ -230,12 +235,7 @@ export default function Navbar({ initialCartCount = 0 }) {
     // Vérifie si l'utilisateur est sur la page d'accueil
     const isHomePage = location.pathname === '/';
 
-    // Liste des drapeaux (🇸🇦 Arabie Saoudite = Arabe; 🇬🇧 Royaume-Uni = Anglais; 🇫🇷 France = Français)
-    const flags = [
-        { lang: 'ar', emoji: '🇸🇦', country: 'ar',icon:ar },
-        { lang: 'fr', emoji: '🇫🇷', country: 'Fr',icon:fr },
-        { lang: 'en', emoji: '🇬🇧', country: 'En',icon:eg },
-    ];
+
 
     return (
         <>
@@ -270,21 +270,30 @@ export default function Navbar({ initialCartCount = 0 }) {
                             </NavLink>
                         </li>
                     ))}
-                    
+
                     {/* --- Affichage des drapeaux sur mobile (dans le menu burger) --- */}
                     <li className="mobile-language-menu">
                         <span className="nav-link-item">Langue :</span>
                         <div className="language-selector-mobile">
-                            {flags.map(({ lang, emoji, country }) => (
+                            {languages.map(({ code, emoji, label }) => (
                                 <button
-                                    key={lang}
-                                    className={`flag-btn ${currentLanguage === lang ? 'active-flag' : ''}`}
-                                    onClick={() => handleLanguageChange(lang)}
-                                    aria-label={`Changer la langue en ${country}`}
+                                    key={code}
+                                    className={`flag-btn ${appLanguage === code ? 'active-flag' : ''}`}
+                                    onClick={() => handleLanguageChange(code)}
+                                    aria-label={`Changer la langue en ${label}`}
                                 >
                                     {emoji}
                                 </button>
                             ))}
+                            {(isAdmin || userEmail?.includes('admin') || userEmail === '2cparton0011@gmail.com') && (
+                                <button
+                                    className="flag-btn add-language-btn-mobile"
+                                    onClick={() => setIsAddLanguageModalOpen(true)}
+                                    style={{ background: 'none', border: '1px solid #D4AF37', borderRadius: '50%', padding: '5px', color: '#D4AF37', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                >
+                                    <FaPlus size={16} />
+                                </button>
+                            )}
                         </div>
                     </li>
                     {/* ------------------------------------------------------------- */}
@@ -315,36 +324,39 @@ export default function Navbar({ initialCartCount = 0 }) {
                 </ul>
 
                 <div className="navbar-icons">
-                    
                     {/* --- Sélecteur de langue sur Desktop/Tablette --- */}
-               <div className="language-selector-desktop">
-            {flags.map(({ lang, country, icon }) => (
-                <div 
-                    // ✅ يجب أن يكون المفتاح (key) على العنصر الخارجي للحلقة
-                    key={lang} 
-                    className={`bloc_language-selector-desktop ${currentLanguage === lang ? 'active-bloc' : ''}`}
-                >
-                    {/* ✅ استخدام خاصية 'icon' الخاصة بالعلم الحالي */}
-                 
-                     
-                    <button
-                        className={`flag-btn ${currentLanguage === lang ? 'active-flag' : ''}`}
-                        onClick={() => handleLanguageChange(lang)}
-                        aria-label={`Changer la langue en ${country}`}
-                    >
-                        {/* يمكنك اختيار عرض الرمز التعبيري أو تركه كما هو إذا كانت الصورة كافية */}
-                      
-                           <img 
-                        src={icon} 
-                        alt={`علم ${country}`} 
-                        className="flag-icon"
-                        
-                    />
-                      {/* {country}  */}
-                    </button>
-                </div>
-            ))}
-        </div>
+                    <div className="language-selector-desktop">
+                        {languages.map(({ code, label, icon }) => (
+                            <div
+                                key={code}
+                                className={`bloc_language-selector-desktop ${appLanguage === code ? 'active-bloc' : ''}`}
+                            >
+                                <button
+                                    className={`flag-btn ${appLanguage === code ? 'active-flag' : ''}`}
+                                    onClick={() => handleLanguageChange(code)}
+                                    aria-label={`Changer la langue en ${label}`}
+                                >
+                                    <img
+                                        src={icon}
+                                        alt={`علم ${label}`}
+                                        className="flag-icon"
+                                    />
+                                </button>
+                            </div>
+                        ))}
+
+                        {(isAdmin || userEmail?.includes('admin') || userEmail === '2cparton0011@gmail.com') && (
+                            <div className="bloc_language-selector-desktop">
+                                <button
+                                    className="flag-btn add-language-btn"
+                                    onClick={() => setIsAddLanguageModalOpen(true)}
+                                    title="Ajouter une nouvelle langue"
+                                >
+                                    <FaPlus size={14} />
+                                </button>
+                            </div>
+                        )}
+                    </div>
                     {/* ------------------------------------------------ */}
 
                     {/* Icône Panier (Désactivée dans le code fourni, mais maintenue ici pour référence) */}
@@ -365,10 +377,18 @@ export default function Navbar({ initialCartCount = 0 }) {
                                         <div className="dropdown-header">
                                             {/* Affichage de l'email pour référence */}
                                             <p className="user-email-display">{userEmail}</p>
-                                            <span className={`status-badge ${isVip ? 'vip-badge' : 'standard-badge'}`}>
-                                                {isVip ? 'Membre VIP' : 'Membre Standard'}
-                                            </span>
+                                            {/* <span className={`status-badge ${isVip ? 'vip-badge' : 'standard-badge'}`}>
+                                                {(isAdmin || userEmail === 'admin@admin.com') ? 'Administrateur' : (isVip ? 'Membre VIP' : 'Membre Standard')}
+                                            </span> */}
                                         </div>
+
+                                        {/* 🛡️ Lien Tableau de Bord */}
+                                        {(isAdmin || userEmail === 'admin@admin.com') && (
+                                            <Link to="/admin" className="dropdown-item admin-dashboard-link" onClick={() => setIsDropdownOpen(false)}>
+                                                <FaTachometerAlt /> Tableau de bord
+                                            </Link>
+                                        )}
+
                                         <Link to="/profile" className="dropdown-item" onClick={() => setIsDropdownOpen(false)}>
                                             <FaUser /> Mon Compte
                                         </Link>
@@ -420,6 +440,87 @@ export default function Navbar({ initialCartCount = 0 }) {
                                 S'abonner
                             </Link>
                             <button onClick={() => setShowVipModal(false)} className="modal-btn cancel-btn">Fermer</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* 🛑 Modal Ajouter une Langue */}
+            {isAddLanguageModalOpen && (
+                <div className="modal-overlay" style={{ zIndex: 3000 }}>
+                    <div className="modal-content" style={{
+                        background: '#fff', padding: '30px', borderRadius: '15px', width: '90%', maxWidth: '400px',
+                        boxShadow: '0 10px 40px rgba(0,0,0,0.2)'
+                    }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                            <h3 style={{ margin: 0, color: '#333' }}>Nouvelle Langue</h3>
+                            <button onClick={() => setIsAddLanguageModalOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#888' }}><FaTimes size={20} /></button>
+                        </div>
+
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                            <div>
+                                <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: 'bold' }}>Nom (ex: Italiano)</label>
+                                <input
+                                    type="text"
+                                    value={newLangData.label}
+                                    onChange={e => setNewLangData({ ...newLangData, label: e.target.value })}
+                                    style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #ddd' }}
+                                    placeholder="Nom de la langue..."
+                                />
+                            </div>
+                            <div>
+                                <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: 'bold' }}>Code (ex: it)</label>
+                                <input
+                                    type="text"
+                                    value={newLangData.code}
+                                    onChange={e => setNewLangData({ ...newLangData, code: e.target.value })}
+                                    style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #ddd' }}
+                                    placeholder="it, es, de..."
+                                />
+                            </div>
+                            <div>
+                                <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: 'bold' }}>Emoji (ex: 🇮🇹)</label>
+                                <input
+                                    type="text"
+                                    value={newLangData.emoji}
+                                    onChange={e => setNewLangData({ ...newLangData, emoji: e.target.value })}
+                                    style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #ddd' }}
+                                    placeholder="🇮🇹"
+                                />
+                            </div>
+                            <div>
+                                <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: 'bold' }}>URL de l'icône (Image)</label>
+                                <input
+                                    type="text"
+                                    value={newLangData.icon}
+                                    onChange={e => setNewLangData({ ...newLangData, icon: e.target.value })}
+                                    style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #ddd' }}
+                                    placeholder="https://.../flag.png"
+                                />
+                            </div>
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '10px', marginTop: '25px', justifyContent: 'flex-end' }}>
+                            <button onClick={() => setIsAddLanguageModalOpen(false)} style={{
+                                padding: '10px 20px', background: '#f8f9fa', color: '#333',
+                                border: '1px solid #ddd', borderRadius: '8px', cursor: 'pointer'
+                            }}>
+                                Annuler
+                            </button>
+                            <button
+                                onClick={() => {
+                                    if (newLangData.label && newLangData.code) {
+                                        addLanguage(newLangData);
+                                        setIsAddLanguageModalOpen(false);
+                                        setNewLangData({ label: '', code: '', emoji: '', icon: '' });
+                                    }
+                                }}
+                                style={{
+                                    padding: '10px 20px', background: '#D4AF37', color: '#fff',
+                                    border: 'none', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px'
+                                }}
+                            >
+                                <FaSave /> Ajouter
+                            </button>
                         </div>
                     </div>
                 </div>

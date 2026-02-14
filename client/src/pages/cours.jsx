@@ -4,6 +4,7 @@ import Navbar from '../comp/navbar';
 import Footer from '../comp/Footer';
 import { Link, useParams } from 'react-router-dom';
 import axios from 'axios';
+import BASE_URL from '../apiConfig';
 
 // 🌐 كائن الترجمة
 const translations = {
@@ -75,7 +76,7 @@ const VideoIntroduction = ({ videoUrl, title, appLanguage }) => {
                     <span className="feature-item"><FaCheckCircle /> {t.videoFeature3}</span>
                 </div>
             </div>
-            
+
             <div className="video-player-wrapper">
                 <div className="video-responsive">
                     <iframe
@@ -117,7 +118,7 @@ export default function Cours() {
 
     const fetchCourses = async () => {
         try {
-            const res = await axios.get('http://localhost:3000/api/specialized-courses', {
+            const res = await axios.get(`${BASE_URL}/api/specialized-courses`, {
                 params: { category: actualTitle } // تمرير اسم الفئة
             });
             setGroups(res.data);
@@ -134,10 +135,10 @@ export default function Cours() {
             <>
                 <Navbar />
                 <div className="lessons-section" style={{ textAlign: 'center', marginTop: '100px' }} dir={direction}>
-                    <FaSpinner className="spinner" style={{ animation: 'spin 1s linear infinite', textAlign:"center",margin:"auto" }} />
+                    <FaSpinner className="spinner" style={{ animation: 'spin 1s linear infinite', textAlign: "center", margin: "auto" }} />
                     <p>{t.loading}</p>
                 </div>
-            
+
             </>
         );
     }
@@ -152,17 +153,17 @@ export default function Cours() {
             <Navbar />
             <br /><br /><br />
             <section className="vip-section" dir={direction}>
-                
+
                 {/* 1. Entête de la page */}
                 <div className="vip-header">
                     <h1 className="vip-main-title">
-                        <span style={{color:"#d4af37"}}>{actualTitle}</span>
+                        <span style={{ color: "#d4af37" }}>{actualTitle}</span>
                     </h1>
                     <p className="vip-sub-text">
                         {t.headerSubtitle}
                     </p>
                 </div>
-                
+
                 {/* ⚡️ Bloc Vidéo Introduction */}
                 {videoUrl && <VideoIntroduction videoUrl={videoUrl} title={actualTitle} appLanguage={appLanguage} />}
 
@@ -178,29 +179,29 @@ export default function Cours() {
                 <div className="courses-grid-container">
                     {allCourses.length > 0 ? (
                         allCourses.map((course, index) => {
-                            const lessonPath = actualTitle === "Les corsages" 
-                                ? `/Leçons_coursage/${encodeURIComponent(course.title)}` 
+                            const lessonPath = actualTitle === "Les corsages"
+                                ? `/Leçons_coursage/${encodeURIComponent(course.title)}`
                                 : `/Leçons/${encodeURIComponent(course.title)}`;
 
                             return (
                                 <div key={index} className="course-card">
                                     <div className="course-image-wrapper">
-                                        <img 
-                                            src={course.image} 
-                                            alt={course.title} 
-                                            className="course-image" 
+                                        <img
+                                            src={course.image}
+                                            alt={course.title}
+                                            className="course-image"
                                         />
                                     </div>
-                                    
+
                                     <div className="course-content">
                                         <h3 className="course-title">{course.title}</h3>
-                                        
+
                                         <div className="course-meta">
                                             <span className="course-duration">
                                                 <FaPlayCircle /> {course.duration || t.duration}
                                             </span>
                                         </div>
-                                        
+
                                         <Link to={lessonPath}>
                                             <button className="access-button">
                                                 {t.button}

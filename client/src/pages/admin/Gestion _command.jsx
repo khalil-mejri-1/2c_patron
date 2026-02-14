@@ -3,8 +3,9 @@ import NavbarAdmin from '../../comp/Navbar_admin';
 // نفترض أن لديك ملف أنماط CSS:
 import '../admin_css/GestionDeCommand.css';
 import { FaImage, FaSpinner } from 'react-icons/fa'; // Import pour l'icône de placeholder
+import BASE_URL from '../../apiConfig';
 
-const API_BASE_URL = 'http://localhost:3000/api/commands';
+const API_BASE_URL = `${BASE_URL}/api/commands`;
 
 // قائمة بحالات الطلب المتاحة
 const statusOptions = [

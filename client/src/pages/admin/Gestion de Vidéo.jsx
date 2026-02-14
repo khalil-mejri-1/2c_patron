@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import NavbarAdmin from '../../comp/Navbar_admin';
 import '../admin_css/GestionDeVedio.css';
+import BASE_URL from '../../apiConfig';
 
-// 🚨 NOTE : Le serveur Node.js doit fonctionner sur http://localhost:3000 et être configuré pour recevoir des fichiers avec Multer.
+// 🚨 NOTE : Le serveur Node.js doit fonctionner sur ${BASE_URL} et être configuré pour recevoir des fichiers avec Multer.
 // Assurez-vous également d'ajouter la ligne app.use('/uploads/videos', express.static(...)) pour servir les fichiers statiques.
 
 export default function Gestion_de_Vidéo() {
@@ -95,7 +96,7 @@ export default function Gestion_de_Vidéo() {
     const fetchVideos = async () => {
         setLoading(true);
         try {
-            const response = await fetch('http://localhost:3000/api/videos');
+            const response = await fetch(`${BASE_URL}/api/videos`);
             if (!response.ok) throw new Error(`Erreur HTTP: ${response.status}. Vérifiez le serveur Node.js.`);
 
             const data = await response.json();
@@ -130,7 +131,7 @@ export default function Gestion_de_Vidéo() {
         formData.append('videoFile', newVideoFile);
 
         try {
-            const response = await fetch('http://localhost:3000/api/videos', {
+            const response = await fetch(`${BASE_URL}/api/videos`, {
                 method: 'POST',
                 body: formData,
             });
@@ -163,7 +164,7 @@ export default function Gestion_de_Vidéo() {
         handleCloseConfirm();
         setLoading(true);
 
-        const deleteUrl = `http://localhost:3000/api/videos/${videoId}`;
+        const deleteUrl = `${BASE_URL}/api/videos/${videoId}`;
 
         try {
             const response = await fetch(deleteUrl, { method: 'DELETE' });
@@ -189,7 +190,7 @@ export default function Gestion_de_Vidéo() {
 
         if (!currentVideo || !currentVideo._id) return;
 
-        const updateUrl = `http://localhost:3000/api/videos/${currentVideo._id}`;
+        const updateUrl = `${BASE_URL}/api/videos/${currentVideo._id}`;
 
         const isFileUpdate = !!currentEditFile;
 
@@ -323,7 +324,7 @@ export default function Gestion_de_Vidéo() {
                                         <video
                                             controls
                                             // L'API /stream/:id est utilisée pour le streaming via l'ID de la base de données
-                                            src={`http://localhost:3000/api/videos/stream/${video._id}`} 
+                                            src={`${BASE_URL}/api/videos/stream/${video._id}`}
                                             className="uploaded-video-player"
                                             onContextMenu={(e) => e.preventDefault()}
                                             // ✅ Ajout de la propriété pour empêcher le bouton de téléchargement d'apparaître dans le menu de contrôle (trois points)

@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useLanguage } from '../context/LanguageContext';
 import { FaQuoteRight, FaChevronLeft, FaChevronRight, FaStar } from 'react-icons/fa';
+import BASE_URL from '../apiConfig';
 
 // ⚠️ URL de l'API des commentaires
-const API_COMMENTAIRES_URL = 'http://localhost:3000/api/commentaires/filtre';
+const API_COMMENTAIRES_URL = `${BASE_URL}/api/commentaires/filtre`;
 
 // 🌐 كائن الترجمة
 const translations = {
@@ -61,7 +63,7 @@ const RatingStars = ({ rating }) => {
     const stars = [];
     // التأكد من أن التقييم صالح وبين 1 و 5 (إذا لم يكن هناك تقييم، استخدم 5 كافتراضي)
     const validRating = Math.max(0, Math.min(5, Math.round(rating || 5)));
-    
+
     for (let i = 0; i < 5; i++) {
         stars.push(
             <FaStar
@@ -90,7 +92,7 @@ const NameAvatar = ({ name }) => {
     const color = stringToHslColor(name, 70, 60);
 
     return (
-        <div 
+        <div
             className="reviewer-avatar-initial"
             style={{ backgroundColor: color }}
         >
@@ -100,18 +102,14 @@ const NameAvatar = ({ name }) => {
 };
 
 export default function ClientReviews() {
-    const [appLanguage, setAppLanguage] = useState('fr'); // حالة اللغة الافتراضية
+    const { appLanguage } = useLanguage();
     const [commentaires, setCommentaires] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [currentIndex, setCurrentIndex] = useState(0);
     const reviewDuration = 5000;
-    
-    // 1. ⚙️ جلب اللغة من LocalStorage
-    useEffect(() => {
-        const lang = localStorage.getItem('appLanguage') || 'fr';
-        setAppLanguage(lang);
-    }, []);
+
+
 
     const t = translations[appLanguage] || translations.fr; // استخدام الترجمة بناءً على اللغة
     const totalReviews = commentaires.length;
@@ -127,20 +125,20 @@ export default function ClientReviews() {
                     throw new Error(`Erreur HTTP: ${response.status}`);
                 }
                 const data = await response.json();
-                
+
                 const mappedReviews = data.map((c, index) => ({
                     id: c._id || index,
-                    name: c.nom || t.anonymous, 
-                    title: t.reviewerTitle, 
+                    name: c.nom || t.anonymous,
+                    title: t.reviewerTitle,
                     // ✅ التعديل هنا: استخدام قيمة النجوم القادمة من الـ API
                     rating: c.rating || 5, // استخدام rating من API أو 5 كقيمة افتراضية
-                    text: c.commentaire || t.noComment, 
+                    text: c.commentaire || t.noComment,
                 }));
 
                 setCommentaires(mappedReviews);
             } catch (err) {
                 console.error("Échec de la récupération des commentaires :", err);
-                setError(t.errorMsg); 
+                setError(t.errorMsg);
             } finally {
                 setLoading(false);
             }
@@ -190,7 +188,7 @@ export default function ClientReviews() {
             </section>
         );
     }
-    
+
     if (commentaires.length === 0) {
         return (
             <section className="reviews-section-white" style={{ textAlign: 'center', padding: '50px 0' }}>
@@ -207,20 +205,20 @@ export default function ClientReviews() {
             <p className="reviews-subtitle">{t.subtitle}</p>
 
             <div className="carousel-container-wrapper">
-                
+
                 {/* ⬅️ Bouton de contrôle Précédent */}
-                <button 
+                <button
                     className={`carousel-control prev ${appLanguage === 'ar' ? 'ar-prev' : ''}`}
-                    onClick={prevReview} 
+                    onClick={prevReview}
                     aria-label={t.prev}
                 >
                     <FaChevronLeft />
                 </button>
 
                 {/* ➡️ Bouton de contrôle Suivant */}
-                <button 
+                <button
                     className={`carousel-control next ${appLanguage === 'ar' ? 'ar-next' : ''}`}
-                    onClick={nextReview} 
+                    onClick={nextReview}
                     aria-label={t.next}
                 >
                     <FaChevronRight />
@@ -231,14 +229,14 @@ export default function ClientReviews() {
                     {commentaires.map((review) => (
                         <div key={review.id} className="review-card">
                             <div className="review-header">
-                                <NameAvatar name={review.name} /> 
+                                <NameAvatar name={review.name} />
                                 <div className="reviewer-info">
                                     <h3 className="reviewer-name">{review.name}</h3>
                                     {/* ✅ التعديل هنا: تمرير التقييم الفعلي من الـ API */}
-                                    <RatingStars rating={review.rating} /> 
+                                    <RatingStars rating={review.rating} />
                                 </div>
                             </div>
-                            
+
                             <p className="review-text">
                                 <FaQuoteRight className="quote-icon" />
                                 {review.text}

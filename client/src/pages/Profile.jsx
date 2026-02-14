@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FaUserCircle, FaEnvelope, FaTag, FaSignOutAlt, FaMapMarkerAlt, FaKey, FaShoppingBag } from 'react-icons/fa';
 import Navbar from '../comp/navbar';
 import Footer from '../comp/Footer';
+import BASE_URL from '../apiConfig';
 
 export default function Profile() {
     const [userData, setUserData] = useState({ name: 'Visiteur', email: '' });
@@ -24,7 +25,7 @@ export default function Profile() {
             }
 
             // 🔹 جلب الطلبات من قاعدة البيانات
-            fetch(`http://localhost:3000/api/commands_user?email=${userEmail}`)
+            fetch(`${BASE_URL}/api/commands_user?email=${userEmail}`)
                 .then(res => res.json())
                 .then(data => {
                     setOrders(data); // data يجب أن يكون مصفوفة الطلبات
@@ -81,7 +82,7 @@ export default function Profile() {
                             <div className="info-grid">
                                 <div className="info-detail"><FaUserCircle className="detail-icon" /> <h4>Nom:</h4> <p>{userData.name || 'Non défini'}</p></div>
                                 <div className="info-detail"><FaEnvelope className="detail-icon" /> <h4>Email:</h4> <p>{userData.email}</p></div>
-                                {/* <div className="info-detail"><FaMapMarkerAlt className="detail-icon" /> <h4>Adresse:</h4> <p>Ajouter une adresse</p></div> */}
+                                <div className="info-detail"><FaMapMarkerAlt className="detail-icon" /> <h4>Adresse:</h4> <p>Non spécifié</p></div>
                             </div>
                             {/* <button className="edit-btn">Modifier</button> */}
                         </div>

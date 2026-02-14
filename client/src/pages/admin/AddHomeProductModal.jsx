@@ -49,10 +49,12 @@ function ConfirmationModal({ message, details, onConfirm, onCancel }) {
 
 // ----------------------------------------------------------------------------------
 
+import BASE_URL from '../../apiConfig';
+
 // --- Composant N°1: AddHomeProductModal (Composant Principal) ---
 export default function AddHomeProductModal({ onClose, onProductAdded }) {
 
-    const API_URL = "http://localhost:3000/api/home-products";
+    const API_URL = `${BASE_URL}/api/home-products`;
 
     const [homeProduct, setHomeProduct] = useState({
         nom: "",
@@ -164,12 +166,12 @@ export default function AddHomeProductModal({ onClose, onProductAdded }) {
         setSubmissionError(null);
     };
 
-const requestDeleteConfirmation = (product) => {
-    setProductToDelete({
-        _id: product._id,
-        nom: product.nom
-    });
-};
+    const requestDeleteConfirmation = (product) => {
+        setProductToDelete({
+            _id: product._id,
+            nom: product.nom
+        });
+    };
 
 
     const _handleDelete = async (productId) => {
@@ -374,27 +376,27 @@ const requestDeleteConfirmation = (product) => {
             </div>
 
             {/* --- Rendu du Modal de Confirmation avec variable locale pour éviter null --- */}
-{productToDelete && (
-    <ConfirmationModal
-        message={`Êtes-vous sûr de vouloir supprimer le produit :`}
-        details={productToDelete.nom} // ⚡ فقط للعرض، هذا لا يتغير
-        onConfirm={async () => {
-            const localProductId = productToDelete._id; // ⚡ نسخ المعرف محليًا
-            const localProductName = productToDelete.nom; // ⚡ نسخ الاسم محليًا
-            setListLoading(true);
+            {productToDelete && (
+                <ConfirmationModal
+                    message={`Êtes-vous sûr de vouloir supprimer le produit :`}
+                    details={productToDelete.nom} // ⚡ فقط للعرض، هذا لا يتغير
+                    onConfirm={async () => {
+                        const localProductId = productToDelete._id; // ⚡ نسخ المعرف محليًا
+                        const localProductName = productToDelete.nom; // ⚡ نسخ الاسم محليًا
+                        setListLoading(true);
 
-            try {
-                await _handleDelete(localProductId);
-                console.log(`Produit supprimé: ${localProductName}`);
-            } catch (error) {
-            } finally {
-                setProductToDelete(null); // تحديث state بعد استخدام النسخ المحلية
-                setListLoading(false);
-            }
-        }}
-        onCancel={() => setProductToDelete(null)}
-    />
-)}
+                        try {
+                            await _handleDelete(localProductId);
+                            console.log(`Produit supprimé: ${localProductName}`);
+                        } catch (error) {
+                        } finally {
+                            setProductToDelete(null); // تحديث state بعد استخدام النسخ المحلية
+                            setListLoading(false);
+                        }
+                    }}
+                    onCancel={() => setProductToDelete(null)}
+                />
+            )}
 
 
         </div>

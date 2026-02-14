@@ -7,9 +7,10 @@ import { FaPlusCircle, FaTrash, FaEdit, FaSave, FaBookOpen, FaVideo, FaLayerGrou
 import '../admin_css/Gestion de espace vip.css';
 import GestionCoursSpecialises from './Gestion_cours_specialises.jsx';
 import GestionVedioSpecialises from './Gestion_vedio_specialises.jsx';
+import BASE_URL from '../../apiConfig';
 
 // ⚙️ Configuration de l'API (à ajustré selon votre backend)
-const API_URL = 'http://localhost:3000/api/vip-categories'; 
+const API_URL = `${BASE_URL}/api/vip-categories`;
 
 // --- STYLES EN LIGNE MODERNES ET RESPONSIVES ---
 const styles = {
@@ -23,7 +24,7 @@ const styles = {
     // Header (Boutons et Titre)
     headerGroup: {
         display: 'flex',
-        flexDirection: 'column', 
+        flexDirection: 'column',
         alignItems: 'flex-start',
         gap: '15px',
         marginBottom: '30px',
@@ -39,7 +40,7 @@ const styles = {
     },
     buttonRow: {
         display: 'flex',
-        flexWrap: 'wrap', 
+        flexWrap: 'wrap',
         gap: '10px',
     },
     // Boutons d'action
@@ -57,10 +58,10 @@ const styles = {
         fontSize: '1rem',
     },
     manageCoursButton: {
-        backgroundColor: '#10b981', 
+        backgroundColor: '#10b981',
     },
     manageVedioButton: {
-        backgroundColor: '#3b82f6', 
+        backgroundColor: '#3b82f6',
     },
     // Formulaire d'Ajout
     addFormContainer: {
@@ -79,7 +80,7 @@ const styles = {
     },
     formGrid: {
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', 
+        gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
         gap: '15px',
     },
     inputField: {
@@ -91,7 +92,7 @@ const styles = {
         boxSizing: 'border-box',
     },
     inputFull: {
-        gridColumn: '1 / -1', 
+        gridColumn: '1 / -1',
     },
     addButton: {
         backgroundColor: '#28a745',
@@ -224,7 +225,7 @@ export default function Gestion_de_espace_vip() {
     const [editingId, setEditingId] = useState(null);
     const [editData, setEditData] = useState({});
     const [isCoursModalOpen, setIsCoursModalOpen] = useState(false);
-    const [selectedCategoryId, setSelectedCategoryId] = useState(null); 
+    const [selectedCategoryId, setSelectedCategoryId] = useState(null);
     const [isVedioModalOpen, setIsVedioModalOpen] = useState(false);
 
     // 🆕 État pour la fenêtre de confirmation
@@ -264,7 +265,7 @@ export default function Gestion_de_espace_vip() {
             console.error(err);
         }
     };
-    
+
     // 🆕 Remplace window.confirm par l'ouverture de la modale personnalisée
     const confirmDelete = (id, title) => {
         setConfirmDialog({ id, title });
@@ -283,28 +284,28 @@ export default function Gestion_de_espace_vip() {
             console.error(err);
         }
     };
-    
+
     const handleEditStart = (category) => {
         setEditingId(category._id);
-        setEditData({ 
-            title: category.title, 
-            description: category.description, 
-            duration: category.duration, 
-            image: category.image 
+        setEditData({
+            title: category.title,
+            description: category.description,
+            duration: category.duration,
+            image: category.image
         });
     };
-    
+
     const handleEditChange = (e) => {
         setEditData({ ...editData, [e.target.name]: e.target.value });
     };
-    
+
     const handleEditSave = async (id) => {
         try {
             const response = await axios.put(`${API_URL}/${id}`, editData);
-            setCategories(categories.map(cat => 
+            setCategories(categories.map(cat =>
                 cat._id === id ? response.data : cat
             ));
-            setEditingId(null); 
+            setEditingId(null);
             setError(null);
         } catch (err) {
             setError("Erreur lors de la mise à jour.");
@@ -341,15 +342,15 @@ export default function Gestion_de_espace_vip() {
                     Êtes-vous sûr de vouloir supprimer la catégorie **"{itemTitle}"** ? Cette action est irréversible.
                 </p>
                 <div style={styles.confirmButtons}>
-                    <button 
-                        onClick={onCancel} 
-                        style={{...styles.confirmButtonBase, ...styles.confirmNo}}
+                    <button
+                        onClick={onCancel}
+                        style={{ ...styles.confirmButtonBase, ...styles.confirmNo }}
                     >
                         Annuler
                     </button>
-                    <button 
-                        onClick={onConfirm} 
-                        style={{...styles.confirmButtonBase, ...styles.confirmYes}}
+                    <button
+                        onClick={onConfirm}
+                        style={{ ...styles.confirmButtonBase, ...styles.confirmYes }}
                     >
                         Oui, Supprimer
                     </button>
@@ -373,7 +374,7 @@ export default function Gestion_de_espace_vip() {
 
     return (
         <>
-            <NavbarAdmin/>
+            <NavbarAdmin />
             <div style={styles.container}>
 
                 {/* 🆕 AFFICHER LA FENÊTRE DE CONFIRMATION */}
@@ -384,46 +385,46 @@ export default function Gestion_de_espace_vip() {
                         onCancel={() => setConfirmDialog(null)}
                     />
                 )}
-                
+
                 {/* --- HEADER AVEC BOUTONS DE GESTION --- */}
                 <div style={styles.headerGroup}>
                     <h1 style={styles.headerTitle}>
                         <FaLayerGroup style={{ marginRight: '10px', color: '#3b82f6' }} /> Gestion de l'Espace VIP
                     </h1>
-                    
+
                     <div style={styles.buttonRow}>
                         {/* Bouton Gérer les Cours Spécialisés */}
-                        <button 
-                            onClick={() => handleOpenCoursModal(null)} 
-                            style={{...styles.actionButton, ...styles.manageCoursButton}}
+                        <button
+                            onClick={() => handleOpenCoursModal(null)}
+                            style={{ ...styles.actionButton, ...styles.manageCoursButton }}
                             title="Gérer les Cours Spécialisés (Tous)"
                         >
                             <FaBookOpen /> Gérer les Cours Spécialisés
                         </button>
                         {/* 🆕 Bouton Gérer les Vidéos Spécialisées */}
-                        <button 
-                            onClick={handleOpenVedioModal} 
-                            style={{...styles.actionButton, ...styles.manageVedioButton}}
+                        <button
+                            onClick={handleOpenVedioModal}
+                            style={{ ...styles.actionButton, ...styles.manageVedioButton }}
                             title="Gérer les Vidéos Spécialisées"
                         >
                             <FaVideo /> Gérer les vidéos Spécialisées
                         </button>
 
-                        
+
                     </div>
                 </div>
-                
+
                 {/* Affichage des Erreurs */}
                 {error && (
                     <div style={{ padding: '15px', background: '#fef2f2', color: '#b91c1c', border: '1px solid #fecaca', borderRadius: '8px', marginBottom: '20px' }}>
                         {error}
                     </div>
                 )}
-                
+
                 {/* --- 1. Formulaire d'Ajout --- */}
                 <div style={styles.addFormContainer}>
                     <h2 style={styles.addFormTitle}>
-                        <FaPlusCircle style={{ marginRight: '0.5rem', color: '#28a745' }}/> Ajouter une Nouvelle Catégorie
+                        <FaPlusCircle style={{ marginRight: '0.5rem', color: '#28a745' }} /> Ajouter une Nouvelle Catégorie
                     </h2>
                     <form onSubmit={handleAddSubmit} style={styles.formGrid}>
                         <input
@@ -450,7 +451,7 @@ export default function Gestion_de_espace_vip() {
                             onChange={handleAddChange}
                             placeholder="URL de l'image"
                             required
-                            style={{...styles.inputField, ...styles.inputFull}}
+                            style={{ ...styles.inputField, ...styles.inputFull }}
                         />
                         <textarea
                             name="description"
@@ -459,7 +460,7 @@ export default function Gestion_de_espace_vip() {
                             placeholder="Description détaillée"
                             required
                             rows="2"
-                            style={{...styles.inputField, ...styles.inputFull}}
+                            style={{ ...styles.inputField, ...styles.inputFull }}
                         ></textarea>
                         <button type="submit" style={styles.addButton}>
                             Ajouter la Catégorie
@@ -485,33 +486,33 @@ export default function Gestion_de_espace_vip() {
                         <tbody style={styles.tableTbody}>
                             {categories.map((category) => (
                                 <tr key={category._id} style={styles.tableRow}>
-                                    <td style={{...styles.tableTd, width: '100px'}}>
-                                        <img src={category.image} alt={category.title} style={{ width: '80px', height: 'auto', borderRadius: '4px', objectFit: 'cover' }}/>
+                                    <td style={{ ...styles.tableTd, width: '100px' }}>
+                                        <img src={category.image} alt={category.title} style={{ width: '80px', height: 'auto', borderRadius: '4px', objectFit: 'cover' }} />
                                     </td>
                                     <td style={styles.tableTd}>
                                         {editingId === category._id ? (
-                                            <input type="text" name="title" value={editData.title} onChange={handleEditChange} style={{...styles.inputField, padding: '8px'}}/>
+                                            <input type="text" name="title" value={editData.title} onChange={handleEditChange} style={{ ...styles.inputField, padding: '8px' }} />
                                         ) : (
                                             <span style={{ fontWeight: '600' }}>{category.title}</span>
                                         )}
                                     </td>
                                     <td style={styles.tableTd}>
                                         {editingId === category._id ? (
-                                            <textarea name="description" value={editData.description} onChange={handleEditChange} rows="2" style={{...styles.inputField, padding: '8px'}}/>
+                                            <textarea name="description" value={editData.description} onChange={handleEditChange} rows="2" style={{ ...styles.inputField, padding: '8px' }} />
                                         ) : (
                                             <span style={{ display: 'block', maxWidth: '300px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{category.description}</span>
                                         )}
                                     </td>
                                     <td style={styles.tableTd}>
                                         {editingId === category._id ? (
-                                            <input type="text" name="duration" value={editData.duration} onChange={handleEditChange} style={{...styles.inputField, padding: '8px', width: '80px'}}/>
+                                            <input type="text" name="duration" value={editData.duration} onChange={handleEditChange} style={{ ...styles.inputField, padding: '8px', width: '80px' }} />
                                         ) : (
                                             category.duration
                                         )}
                                     </td>
-                                    <td style={{...styles.tableTd, ...styles.actionsCell}}>
+                                    <td style={{ ...styles.tableTd, ...styles.actionsCell }}>
                                         {/* Bouton Gérer les Cours pour cette catégorie spécifique */}
-                                         {/* <button 
+                                        {/* <button 
                                             onClick={() => handleOpenCoursModal(category._id)} 
                                             style={{...styles.actionBtnIcon, backgroundColor: styles.manageCoursButton.backgroundColor}}
                                             title="Gérer les cours liés"
@@ -520,26 +521,26 @@ export default function Gestion_de_espace_vip() {
                                         </button> */}
 
                                         {editingId === category._id ? (
-                                            <button 
-                                                onClick={() => handleEditSave(category._id)} 
-                                                style={{...styles.actionBtnIcon, ...styles.saveBtn}}
+                                            <button
+                                                onClick={() => handleEditSave(category._id)}
+                                                style={{ ...styles.actionBtnIcon, ...styles.saveBtn }}
                                                 title="Sauvegarder"
                                             >
                                                 <FaSave size={18} />
                                             </button>
                                         ) : (
-                                            <button 
-                                                onClick={() => handleEditStart(category)} 
-                                                style={{...styles.actionBtnIcon, ...styles.editBtn}}
+                                            <button
+                                                onClick={() => handleEditStart(category)}
+                                                style={{ ...styles.actionBtnIcon, ...styles.editBtn }}
                                                 title="Éditer"
                                             >
                                                 <FaEdit size={18} />
                                             </button>
                                         )}
                                         {/* 🆕 APPEL À LA FENÊTRE DE CONFIRMATION PERSONNALISÉE */}
-                                        <button 
-                                            onClick={() => confirmDelete(category._id, category.title)} 
-                                            style={{...styles.actionBtnIcon, ...styles.deleteBtn}}
+                                        <button
+                                            onClick={() => confirmDelete(category._id, category.title)}
+                                            style={{ ...styles.actionBtnIcon, ...styles.deleteBtn }}
                                             title="Supprimer"
                                         >
                                             <FaTrash size={18} />
@@ -555,8 +556,8 @@ export default function Gestion_de_espace_vip() {
                 {isCoursModalOpen && (
                     <div className="modal-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
                         <div className="modal-content" style={{ background: 'white', borderRadius: '8px' }}>
-                            <GestionCoursSpecialises 
-                                categoryId={selectedCategoryId} 
+                            <GestionCoursSpecialises
+                                categoryId={selectedCategoryId}
                                 onClose={handleCloseCoursModal}
                             />
                         </div>
@@ -565,7 +566,7 @@ export default function Gestion_de_espace_vip() {
                 {isVedioModalOpen && (
                     <div className="modal-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
                         <div className="modal-content" style={{ background: 'white', borderRadius: '8px' }}>
-                            <GestionVedioSpecialises 
+                            <GestionVedioSpecialises
                                 onClose={handleCloseVedioModal}
                             />
                         </div>

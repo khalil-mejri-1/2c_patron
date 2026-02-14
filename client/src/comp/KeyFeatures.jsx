@@ -1,4 +1,5 @@
 import React from 'react';
+import { useLanguage } from '../context/LanguageContext';
 import { FaGraduationCap, FaHandsHelping, FaUnlockAlt } from 'react-icons/fa';
 
 // 🌟 Translation Data Object 🌟
@@ -63,13 +64,12 @@ const translations = {
 };
 
 export default function KeyFeatures() {
-    // 🌐 جلب وتحديد اللغة والاتجاه 🌐
-    const langCode = localStorage.getItem('appLanguage');
-    
+    const { appLanguage } = useLanguage();
+
     let effectiveLanguage = 'fr'; // اللغة الافتراضية
-    if (langCode === 'ar') {
+    if (appLanguage === 'ar') {
         effectiveLanguage = 'ar';
-    } else if (langCode === 'en' || langCode === 'eg') {
+    } else if (appLanguage === 'en') {
         effectiveLanguage = 'en';
     }
 
@@ -78,7 +78,7 @@ export default function KeyFeatures() {
 
     return (
         // ⬅️ تطبيق الاتجاه على العنصر الرئيسي ➡️
-        <section className="key-features-section" dir={sectionDirection}> 
+        <section className="key-features-section" dir={sectionDirection}>
             <div className="features-grid">
                 {texts.features.map((feature, index) => (
                     <div key={index} className="feature-card">

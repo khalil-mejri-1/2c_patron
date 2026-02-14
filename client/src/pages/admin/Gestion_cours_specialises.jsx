@@ -2,9 +2,10 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { FaTimes, FaPlusCircle, FaTrash, FaSave, FaVideo, FaEdit, FaLayerGroup, FaExclamationTriangle, FaCog, FaListUl, FaChevronRight } from 'react-icons/fa';
+import BASE_URL from '../../apiConfig';
 
-const COURS_API_URL = 'http://localhost:3000/api/specialized-courses';
-const CATEGORIES_API_URL = 'http://localhost:3000/api/vip-categories';
+const COURS_API_URL = `${BASE_URL}/api/specialized-courses`;
+const CATEGORIES_API_URL = `${BASE_URL}/api/vip-categories`;
 
 // --- 1. ثوابت الأنماط (Styles Constants) ---
 const primaryBlue = '#3b82f6';
@@ -470,7 +471,7 @@ export default function GestionCoursSpecialises({ onClose }) {
                     </div>
 
                     <p style={{ color: grayText, marginBottom: '15px' }}>
-                Cliquez pour sélectionner la sous-catégorie « Catégorie VIP » pour la session en cours.
+                        Cliquez pour sélectionner la sous-catégorie « Catégorie VIP » pour la session en cours.
                     </p>
 
                     {subCategories.length > 0 ? (

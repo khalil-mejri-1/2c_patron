@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import NavbarAdmin from '../../comp/Navbar_admin';
 // 💡 استيراد ملف CSS
 import '../admin_css/GestionDeClient.css';
+import BASE_URL from '../../apiConfig';
 import { FaShoppingCart, FaSearch, FaChevronDown, FaTimes, FaUser, FaEnvelope, FaMapMarkerAlt, FaPhoneAlt, FaMinusCircle, FaPlusCircle, FaSpinner, FaTrash } from 'react-icons/fa'; // 🗑️ Ajout de FaTrash
 
 // 🚀 استيراد SweetAlert2
@@ -20,7 +21,7 @@ export default function Gestion_de_Client() {
         setLoading(true);
         setError(null);
         try {
-            const response = await fetch('http://localhost:3000/api/users/clients');
+            const response = await fetch(`${BASE_URL}/api/users/clients`);
             const data = await response.json();
 
             if (!response.ok) {
@@ -59,7 +60,7 @@ export default function Gestion_de_Client() {
         }
 
         try {
-            const response = await fetch(`http://localhost:3000/api/users/${userId}/statut`, {
+            const response = await fetch(`${BASE_URL}/api/users/${userId}/statut`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ statut: newStatut }),
@@ -114,7 +115,7 @@ export default function Gestion_de_Client() {
         }
 
         try {
-            const response = await fetch(`http://localhost:3000/api/users/${userId}/abonne`, {
+            const response = await fetch(`${BASE_URL}/api/users/${userId}/abonne`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ abonne: newAbonne }),
@@ -166,7 +167,7 @@ export default function Gestion_de_Client() {
 
         try {
             // 🚨 Endpoint de suppression (assurez-vous que votre backend le prend en charge)
-            const response = await fetch(`http://localhost:3000/api/users/${userId}`, {
+            const response = await fetch(`${BASE_URL}/api/users/${userId}`, {
                 method: 'DELETE', // Utilisation de la méthode DELETE
             });
 
@@ -198,17 +199,17 @@ export default function Gestion_de_Client() {
     // ... (Logique de chargement et d'erreur inchangée)
     if (loading) return (
         <>
-        <NavbarAdmin/>
-                        <div className="loading-state">
-                                 <FaSpinner className="spinner" />
-                                 <p>Chargement des Clients...</p>
-                               </div>
+            <NavbarAdmin />
+            <div className="loading-state">
+                <FaSpinner className="spinner" />
+                <p>Chargement des Clients...</p>
+            </div>
         </>
     );
 
     if (error) return (
         <>
-            <NavbarAdmin/>
+            <NavbarAdmin />
             <div className="client-container">
                 {
                     MySwal.fire({

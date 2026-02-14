@@ -14,18 +14,19 @@ import {
 } from 'react-icons/fa';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
+import BASE_URL from '../../apiConfig';
 
 const MySwal = withReactContent(Swal);
 
-// 🛠️ ثابت API Base URL لتجنب التكرار
-const API_BASE_URL = 'http://localhost:3000/api/abonnement';
+// 🛠️ constant API Base URL
+const API_BASE_URL = `${BASE_URL}/api/abonnement`;
 
 export default function Gestion_abonnement() {
     const [abonnements, setAbonnements] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // 🌐 دالة جلب بيانات الاشتراكات من الخادم (تمت إزالة التصفية لعرض جميع الحالات)
+    // 🌐 Fonction pour récupérer les données d'abonnement du serveur
     const fetchAbonnements = async () => {
         setLoading(true);
         setError(null);
@@ -36,8 +37,6 @@ export default function Gestion_abonnement() {
             if (!response.ok) {
                 throw new Error(data.message || 'Échec du chargement des abonnements.');
             }
-
-            // 💡 التعديل هنا: تخزين جميع الاشتراكات التي تم جلبها
             setAbonnements(data);
         } catch (err) {
             console.error("Erreur de récupération des données:", err);
@@ -47,7 +46,7 @@ export default function Gestion_abonnement() {
         }
     };
 
-    // 🚀 دالة تحديث حالة الاشتراك (Approuver/Refuser)
+    // 🚀 Fonction de mise à jour du statut (Approuver/Refuser)
     const handleUpdateStatut = async (abonnementId, newStatut, email) => {
         const actionText = newStatut === 'approuvé' ? 'Approuver' : 'Refuser';
         const confirmTitle = `Confirmer l'action : ${actionText}`;
@@ -66,7 +65,7 @@ export default function Gestion_abonnement() {
         if (!result.isConfirmed) return;
 
         try {
-            // تحديث حالة الاشتراك في جدول Abonnement
+            // Mise à jour du statut dans la table Abonnement
             const response = await fetch(`${API_BASE_URL}/${abonnementId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
@@ -78,7 +77,7 @@ export default function Gestion_abonnement() {
                 throw new Error(errorData.error || `Échec de la mise à jour du statut.`);
             }
 
-            // تحديث القائمة محليًا
+            // Mise à jour de la liste localement
             setAbonnements(prev =>
                 prev.map(abo =>
                     abo._id === abonnementId
@@ -87,10 +86,10 @@ export default function Gestion_abonnement() {
                 )
             );
 
-            // ✅ إذا تمت الموافقة، إرسال البريد لتحديث جدول المستخدم
+            // ✅ Si Approuvé, mettre à jour le statut utilisateur
             if (newStatut === 'approuvé') {
                 try {
-                    const userResponse = await fetch('http://localhost:3000/api/user/abonne', {
+                    const userResponse = await fetch(`${BASE_URL}/api/user/abonne`, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ email }),
@@ -121,17 +120,17 @@ export default function Gestion_abonnement() {
         }
     };
 
-    // 🗑️ دالة حذف الاشتراك نهائيًا
+    // 🗑️ Fonction de suppression définitive
     const handleDeleteAbonnement = async (abonnementId) => {
         const result = await MySwal.fire({
             title: 'Confirmer la Suppression',
-            text: `Êtes-vous متأكد من حذف الاشتراك ID ${abonnementId} نهائيًا؟ هذه العملية لا يمكن التراجع عنها.`,
+            text: `Êtes-vous sûr de vouloir supprimer l'abonnement ID ${abonnementId} définitivement ? Cette opération ne peut pas être annulée.`,
             icon: 'error',
             showCancelButton: true,
             confirmButtonColor: '#dc3545',
             cancelButtonColor: '#6c757d',
-            confirmButtonText: 'نعم، قم بالحذف!',
-            cancelButtonText: 'إلغاء',
+            confirmButtonText: 'Oui, Supprimer!',
+            cancelButtonText: 'Annuler',
         });
 
         if (!result.isConfirmed) return;
@@ -146,50 +145,55 @@ export default function Gestion_abonnement() {
                 throw new Error(errorData.error || `Échec de la suppression de l'abonnement.`);
             }
 
-            // ✅ تحديث القائمة: حذف الاشتراك من القائمة محليًا
+            // ✅ Mise à jour locale
             setAbonnements(prev => prev.filter(abo => abo._id !== abonnementId));
 
             MySwal.fire(
-                'تم الحذف!',
-                `Abonnement ID **${abonnementId}** تم حذفه بنجاح.`,
+                'Supprimé!',
+                `Abonnement ID **${abonnementId}** a été supprimé avec succès.`,
                 'success'
             );
 
         } catch (err) {
             console.error("Erreur de suppression:", err);
             MySwal.fire(
-                'خطأ!',
+                'Erreur!',
                 `Erreur de suppression: ${err.message}`,
                 'error'
             );
         }
     };
 
-    // 🖼️ دالة عرض صورة الإثبات في نافذة منبثقة (SweetAlert2)
+    // 🖼️ Fonction d'affichage de l'image de preuve (SweetAlert2)
     const handleViewProof = (event, imageUrl) => {
-        // منع السلوك الافتراضي للرابط (فتح في نافذة جديدة)
+        // Empêcher l'ouverture du lien par défaut
         event.preventDefault();
 
+        // 💡 CORRECTION : Utilisation directe de l'URL ImgBB (imageUrl)
         MySwal.fire({
             title: 'Preuve de Paiement',
-            imageUrl: imageUrl, // استخدام حقل imageUrl لعرض الصورة
+            imageUrl: imageUrl,
             imageAlt: 'Image de preuve de paiement',
             showCloseButton: true,
-            showConfirmButton: false, // لا حاجة لزر التأكيد
+            showConfirmButton: false,
             customClass: {
-                image: 'swal2-proof-image', // لتمكين التخصيص عبر CSS إذا لزم الأمر
+                image: 'swal2-proof-image',
             },
-            width: '80vw', // عرض أكبر للمشاهدة
+            width: '80vw',
             padding: '1em',
+            // Rendre le lien vers l'image cliquable en bas de la pop-up
+            footer: `<a href="${imageUrl}" target="_blank" rel="noopener noreferrer" style="color: #007bff; text-decoration: none; font-size: 0.9em;">
+                         Ouvrir l'image dans un nouvel onglet <FaExternalLinkAlt style="margin-left: 5px; font-size: 0.8em;"/>
+                     </a>`
         });
     };
 
-    // 🔗 جلب البيانات عند تحميل المكون
+    // 🔗 Récupération des données au montage du composant
     useEffect(() => {
         fetchAbonnements();
     }, []);
 
-    // 🛑 حالات التحميل والخطأ
+    // 🛑 États de chargement et d'erreur
     if (loading) return (
         <>
             <NavbarAdmin />
@@ -229,7 +233,7 @@ export default function Gestion_abonnement() {
                             <div className="abonnement-card" key={abo._id}>
                                 <div className="card-header">
                                     <h3 className="card-title">{abo.nom}</h3>
-                                    {/* عرض الحالة */}
+                                    {/* Affichage du statut */}
                                     <span className={`status-badge ${abo.statut_abonnement}`}>
                                         {abo.statut_abonnement.replace('_', ' ').toUpperCase()}
                                     </span>
@@ -244,9 +248,10 @@ export default function Gestion_abonnement() {
                                     <FaFileImage className="proof-icon" />
                                     <p>Preuve de Paiement</p>
                                     <a
-                                        href={`http://localhost:3000${abo.preuve_paiement_url}`}
-                                        // 💡 التغيير هنا: استدعاء الدالة الجديدة لمنع الافتراضي وعرض الصورة في SweetAlert2
-                                        onClick={(e) => handleViewProof(e, `http://localhost:3000${abo.preuve_paiement_url}`)}
+                                        // 💡 CORRECTION : Utilisation directe de l'URL ImgBB stockée
+                                        href={abo.preuve_paiement_url}
+                                        onClick={(e) => handleViewProof(e, abo.preuve_paiement_url)}
+                                        target="_blank" // Ajouté pour s'assurer que ça ouvre dans un nouvel onglet si on clique
                                         rel="noopener noreferrer"
                                         className="view-proof-button"
                                     >
@@ -254,9 +259,9 @@ export default function Gestion_abonnement() {
                                     </a>
                                 </div>
 
-                                {/* قسم الإجراءات */}
+                                {/* Section Actions */}
                                 <div className="card-actions_abonemment">
-                                    {/* زرا الموافقة والرفض متاحان فقط إذا كانت الحالة 'en_attente' */}
+                                    {/* Boutons d'action */}
                                     <button
                                         onClick={() => handleUpdateStatut(abo._id, 'approuvé', abo.mail)}
                                         className="action-button_abonemment approve-button"
@@ -270,7 +275,7 @@ export default function Gestion_abonnement() {
                                     >
                                         <FaUserTimes /> Refuser
                                     </button>
-                                    {/* زر الحذف الجديد متاح دائمًا */}
+                                    {/* Bouton de Suppression */}
                                     <button
                                         onClick={() => handleDeleteAbonnement(abo._id)}
                                         className="action-button_abonemment delete-button"

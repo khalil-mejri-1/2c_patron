@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import NavbarAdmin from '../../comp/Navbar_admin';
 import { FaTrash, FaSpinner, FaEnvelopeOpenText, FaTimes, FaToggleOn, FaToggleOff, FaExclamationTriangle } from 'react-icons/fa';
-import '../admin_css/Gestion_Message.css'; 
-const API_MESSAGES_ENDPOINT = 'http://localhost:3000/api/messages'; 
+import '../admin_css/Gestion_Message.css';
+import BASE_URL from '../../apiConfig';
+const API_MESSAGES_ENDPOINT = `${BASE_URL}/api/messages`;
 
 export default function Gestion_Message() {
     // États principaux
@@ -19,7 +20,7 @@ export default function Gestion_Message() {
     const [messageToDelete, setMessageToDelete] = useState(null); // Contient l'objet du message à supprimer
 
     // -------------------- ⚙️ Récupération et Gestion des Données --------------------
-    
+
     // Récupération des messages depuis le serveur
     const fetchMessages = async () => {
         setLoading(true);
@@ -40,7 +41,7 @@ export default function Gestion_Message() {
     useEffect(() => {
         fetchMessages();
     }, []);
-    
+
     // 💡 FONCTION POUR OUVRIR LA MODALE DE CONFIRMATION
     const handleOpenConfirmModal = (message) => {
         setMessageToDelete(message);
@@ -61,14 +62,14 @@ export default function Gestion_Message() {
     const handleDelete = async () => {
         const id = messageToDelete._id;
         const nom = messageToDelete.nom;
-        
+
         handleCloseConfirmModal(); // Fermer la modale après avoir lancé la suppression
         setLoading(true); // Optionnel, mais recommandé pour l'UX
 
         try {
             const response = await fetch(`${API_MESSAGES_ENDPOINT}/${id}`, { method: 'DELETE' });
             if (!response.ok) throw new Error('Échec de la suppression du message.');
-            
+
             // Si la suppression réussit
             setMessages(prev => prev.filter(msg => msg._id !== id));
             // Ne pas utiliser 'alert' mais un système de notification (Toast) pour une meilleure UX
@@ -85,7 +86,7 @@ export default function Gestion_Message() {
     const toggleTreatedStatus = async (id) => {
         try {
             const response = await fetch(`${API_MESSAGES_ENDPOINT}/${id}/status`, {
-                method: 'PUT', 
+                method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
                 },
@@ -115,7 +116,7 @@ export default function Gestion_Message() {
         setIsMessageModalOpen(true);
         // Basculer automatiquement sur "Traité" si le message était "Non traité"
         if (!message.estTraite) {
-            toggleTreatedStatus(message._id); 
+            toggleTreatedStatus(message._id);
         }
     };
 
@@ -133,7 +134,7 @@ export default function Gestion_Message() {
     };
 
     // -------------------- 🎨 Rendu --------------------
- if (loading) return (
+    if (loading) return (
         <>
             <NavbarAdmin />
             <div className="abonnement-container loading-state">
@@ -145,11 +146,11 @@ export default function Gestion_Message() {
 
     return (
         <>
-            <NavbarAdmin/>
+            <NavbarAdmin />
             <div className="admin-page-container">
                 <h2 className="client-title">📧 Gestion des messages clients</h2>
 
-               
+
                 {error && (
                     <div className="alert-danger text-center">{error}</div>
                 )}
@@ -171,8 +172,8 @@ export default function Gestion_Message() {
                                 </thead>
                                 <tbody>
                                     {messages.map((message) => (
-                                        <tr 
-                                            key={message._id} 
+                                        <tr
+                                            key={message._id}
                                             className={message.estTraite ? 'message-treated' : 'message-untreated'}
                                             onClick={() => handleOpenMessageModal(message)} // 💡 Ouvre la modale de lecture
                                         >
@@ -181,7 +182,7 @@ export default function Gestion_Message() {
                                             <td data-label="Email">{message.email}</td>
                                             <td data-label="Sujet">{message.sujet}</td>
                                             <td data-label="Statut" className="text-center">
-                                                <span 
+                                                <span
                                                     className={`status-badge ${message.estTraite ? 'badge-success' : 'badge-warning'}`}
                                                     onClick={(e) => { e.stopPropagation(); toggleTreatedStatus(message._id); }} // 💡 Empêche l'ouverture de la modale
                                                 >
@@ -189,8 +190,8 @@ export default function Gestion_Message() {
                                                 </span>
                                             </td>
                                             <td data-label="Actions" className="text-center">
-                                                <button 
-                                                    className="action-btn btn-delete" 
+                                                <button
+                                                    className="action-btn btn-delete"
                                                     title="Supprimer le message"
                                                     onClick={(e) => { e.stopPropagation(); handleOpenConfirmModal(message); }} // 💡 Ouvre la modale de confirmation
                                                 >
@@ -219,7 +220,7 @@ export default function Gestion_Message() {
                         <button className="modal-close-btn" onClick={handleCloseMessageModal}>
                             <FaTimes />
                         </button>
-                        
+
                         <h3 className="modal-title">
                             <FaEnvelopeOpenText /> Message de **{selectedMessage.nom}**
                         </h3>
@@ -229,7 +230,7 @@ export default function Gestion_Message() {
                             <p><strong>Email:</strong> {selectedMessage.email}</p>
                             <p><strong>Sujet:</strong> {selectedMessage.sujet}</p>
                         </div>
-                        
+
                         <div className="modal-body-content">
                             <h4>Contenu du Message :</h4>
                             <p className="message-text-content">{selectedMessage.message}</p>
@@ -243,8 +244,8 @@ export default function Gestion_Message() {
                                 {selectedMessage.estTraite ? <FaToggleOn /> : <FaToggleOff />}
                                 {selectedMessage.estTraite ? ' Marquer comme Non traité' : ' Marquer comme Traité'}
                             </button>
-                             <button 
-                                className="action-btn btn-delete-modal" 
+                            <button
+                                className="action-btn btn-delete-modal"
                                 // Utiliser handleOpenConfirmModal depuis la modale de lecture
                                 onClick={() => handleOpenConfirmModal(selectedMessage)}
                             >
@@ -272,15 +273,15 @@ export default function Gestion_Message() {
                         </div>
 
                         <div className="modal-footer-actions">
-                            <button 
-                                className="action-btn btn-cancel" 
+                            <button
+                                className="action-btn btn-cancel"
                                 onClick={handleCloseConfirmModal}
                                 disabled={loading}
                             >
                                 Annuler
                             </button>
-                            <button 
-                                className="action-btn btn-confirm-delete" 
+                            <button
+                                className="action-btn btn-confirm-delete"
                                 onClick={handleDelete}
                                 disabled={loading}
                             >

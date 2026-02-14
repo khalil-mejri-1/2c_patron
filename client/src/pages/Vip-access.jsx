@@ -4,6 +4,7 @@ import Navbar from '../comp/navbar';
 import Footer from '../comp/Footer';
 import { NavLink } from 'react-router-dom';
 import axios from 'axios';
+import BASE_URL from '../apiConfig';
 
 // Clé de localStorage pour mémoriser l'état
 const CERTIF_MODAL_KEY = 'hasSeenVipCertifModal';
@@ -52,11 +53,11 @@ const translations = {
 };
 
 export default function Vipaccess() {
-    const [appLanguage, setAppLanguage] = useState('fr'); 
+    const [appLanguage, setAppLanguage] = useState('fr');
     const [vipCategories, setVipCategories] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    
+
     // 1. ⚙️ جلب اللغة من LocalStorage
     useEffect(() => {
         const lang = localStorage.getItem('appLanguage') || 'fr';
@@ -69,14 +70,14 @@ export default function Vipaccess() {
     // 🌟 Initialiser l'état basé sur localStorage
     const [showCertifModal, setShowCertifModal] = useState(() => {
         return !localStorage.getItem(CERTIF_MODAL_KEY);
-    }); 
+    });
 
     // --- Fonction pour fermer le modal et enregistrer l'état ---
     const handleCloseCertifModal = () => {
         setShowCertifModal(false);
         localStorage.setItem(CERTIF_MODAL_KEY, 'true');
     };
-    
+
     // 2. useEffect pour gérer l'interdiction de défilement (scroll) (Inchanggée)
     useEffect(() => {
         if (showCertifModal) {
@@ -84,9 +85,9 @@ export default function Vipaccess() {
         } else {
             document.body.classList.remove('no-scroll');
         }
-        
+
         return () => {
-             document.body.classList.remove('no-scroll');
+            document.body.classList.remove('no-scroll');
         };
     }, [showCertifModal]);
 
@@ -95,7 +96,7 @@ export default function Vipaccess() {
         const fetchCategories = async () => {
             try {
                 // Note: using hardcoded port 3000, ensure it's correct for your dev environment
-                const response = await axios.get('http://localhost:3000/api/vip-categories'); 
+                const response = await axios.get(`${BASE_URL}/api/vip-categories`);
                 setVipCategories(response.data);
                 setLoading(false);
             } catch (err) {
@@ -111,11 +112,11 @@ export default function Vipaccess() {
     // 4. Affichage de l'état de chargement ou d'erreur (محدث باللغات)
     if (loading) return (
         <>
-            <Navbar/>
+            <Navbar />
             <br /><br /><br />
             <div className="vip-header" dir={direction}>
                 <h1 className="vip-main-title">
-                    {appLanguage === 'en' ? t.accent : t.title} 
+                    {appLanguage === 'en' ? t.accent : t.title}
                     <span className="vip-accent-text">{appLanguage === 'en' ? t.title : t.accent}</span>
                 </h1>
             </div>
@@ -130,7 +131,7 @@ export default function Vipaccess() {
         return (
             <>
                 <Navbar />
-                
+
                 <div className="vip-header" dir={direction}>
                     <h1 className="vip-main-title">
                         {appLanguage === 'en' ? t.accent : t.title}
@@ -144,7 +145,7 @@ export default function Vipaccess() {
             </>
         );
     }
-    
+
     // 5. Rendu principal avec le modal (محدث باللغات)
     return (
         <>
@@ -166,7 +167,7 @@ export default function Vipaccess() {
                 {/* 2. Grille de Cours (محدث باللغات) */}
                 <div className="courses-grid-container">
                     {vipCategories.map(course => (
-                        <div key={course.id || course._id} className="course-card"> 
+                        <div key={course.id || course._id} className="course-card">
                             <div className="course-image-wrapper">
                                 <img
                                     src={course.image}
@@ -186,7 +187,7 @@ export default function Vipaccess() {
                                         </div>
                                     )}
                                 </div>
-                                
+
                                 <NavLink to={`/cours_Manches/${encodeURIComponent(course.title)}`}>
                                     <button className="access-button">
                                         {t.button}
@@ -199,7 +200,7 @@ export default function Vipaccess() {
                 </div>
 
             </section>
-            
+
             <Footer />
 
             {/* 🌟 MODAL DE CERTIFICATION 🌟 (محدث باللغات) */}
@@ -208,14 +209,14 @@ export default function Vipaccess() {
                     <div className="certification-modal" dir={direction}>
                         <FaCertificate size={45} color="#D4AF37" style={{ marginBottom: '15px' }} />
                         <h3 className="modal-title">{t.modalTitle}</h3>
-                        
+
                         <p className="modal-text">
                             {t.modalText(true)}
                         </p>
                         <p className="modal-text small-text">
                             {t.modalSmallText} <span dir="ltr">**{t.whatsappNum}**</span>
                         </p>
-                        
+
                         <div className="modal-actions">
                             <button onClick={handleCloseCertifModal} className="modal-btn confirm-btn">
                                 {t.modalBtn}

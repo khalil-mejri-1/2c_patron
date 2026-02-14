@@ -10,15 +10,15 @@ import ClientReviews from '../comp/ClientReviews.jsx';
 export default function Home() {
   return (
     <div>
-        <Navbar/>
+      <Navbar />
 
-        <HeroCarousel/>
-                        {/* <ProductCarousel/>   */}
+      <HeroCarousel />
+      {/* <ProductCarousel/>   */}
 
-        <KeyFeatures/>
-        <FeaturedProduct/>
-        <ClientReviews/>
-                <Footer/>
+      {/* <KeyFeatures /> */}
+      <FeaturedProduct />
+      <ClientReviews />
+      <Footer />
 
     </div>
   )

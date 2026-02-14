@@ -1,6 +1,8 @@
-import React from 'react';
-import { FaPlay, FaLongArrowAltRight } from 'react-icons/fa';
+import React, { useState, useEffect } from 'react';
+import { useLanguage } from '../context/LanguageContext';
+import { FaPlay, FaLongArrowAltRight, FaEdit, FaSave } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
+import BASE_URL from '../apiConfig';
 
 // 1. كائن الترجمات (Localization Object)
 const translations = {
@@ -36,15 +38,58 @@ const getLocalizedText = (key) => {
     const lang = localStorage.getItem('appLanguage') || 'fr';
 
     // إرجاع النص بلغة المستخدم، أو العودة إلى 'fr' إذا لم تتوفر الترجمة
-    return translations[lang][key] || translations['fr'][key];
+    return (translations[lang] && translations[lang][key]) || translations['fr'][key];
 };
 
 export default function FeaturedProduct() {
-    // 3. تحديد اتجاه النص (لأغراض RTL/LTR)
-    const currentLang = localStorage.getItem('appLanguage') || 'fr';
+    const { appLanguage, languages } = useLanguage();
+    const currentLang = appLanguage;
     const isRTL = currentLang === 'ar';
-    // دالة اختصار
-    const t = getLocalizedText;
+
+    const [isAdmin, setIsAdmin] = useState(false);
+    const [featuredData, setFeaturedData] = useState({});
+    const [isEditing, setIsEditing] = useState(false);
+    const [editData, setEditData] = useState({
+        fr: { tag: '', title: '', subtitle: '', description: '', cta: '' },
+        ar: { tag: '', title: '', subtitle: '', description: '', cta: '' },
+        en: { tag: '', title: '', subtitle: '', description: '', cta: '' }
+    });
+
+    useEffect(() => {
+        // Check Admin
+        const users = JSON.parse(localStorage.getItem('users') || '[]');
+        const email = localStorage.getItem('currentUserEmail') || localStorage.getItem('loggedInUserEmail');
+        const currentUser = users.find(u => u.email === email);
+        if (currentUser?.statut === 'admin') setIsAdmin(true);
+
+        // Fetch Data
+        const localBackup = localStorage.getItem('featured_product_backup');
+        if (localBackup) setFeaturedData(JSON.parse(localBackup));
+
+        fetch(`${BASE_URL}/api/settings/featured-product`)
+            .then(res => res.ok ? res.json() : null)
+            .then(data => data && setFeaturedData(data))
+            .catch(() => { });
+    }, []);
+
+    const handleSave = async () => {
+        localStorage.setItem('featured_product_backup', JSON.stringify(editData));
+        setFeaturedData(editData);
+        setIsEditing(false);
+        try {
+            await fetch(`${BASE_URL}/api/settings/featured-product`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ value: editData })
+            });
+        } catch (err) { }
+    };
+
+    const t = (key) => {
+        return (featuredData[currentLang] && featuredData[currentLang][key]) ||
+            (translations[currentLang] && translations[currentLang][key]) ||
+            translations['fr'][key];
+    };
 
     return (
         <section
@@ -90,6 +135,17 @@ export default function FeaturedProduct() {
             {/* 2. Bloc de Contenu : العناوين و CTA (محدث باللغات) */}
             <div className="product-content-block">
 
+                {isAdmin && (
+                    <button
+                        onClick={() => { setEditData({ ...editData, ...featuredData }); setIsEditing(true); }}
+                        className="hero-edit-title-btn small-edit-btn"
+                        style={{ position: 'absolute', top: '10px', right: '10px' }}
+                        title="Modifier le contenu du produit vedette"
+                    >
+                        <FaEdit />
+                    </button>
+                )}
+
                 <span className="product-tag">
                     {t('tag')}
                 </span>
@@ -103,12 +159,74 @@ export default function FeaturedProduct() {
                     {t('description')}
                 </p>
 
-                <Link to="/Vip-access" className="product-cta-button">
-                    {t('cta')}
-                    {/* عكس اتجاه الأيقونة لـ RTL */}
-                    {isRTL ? <FaLongArrowAltRight style={{ transform: 'scaleX(-1)' }} /> : <FaLongArrowAltRight />}
-                </Link>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <Link to="/Vip-access" className="product-cta-button">
+                        {t('cta')}
+                        {/* عكس اتجاه الأيقونة لـ RTL */}
+                        {isRTL ? <FaLongArrowAltRight style={{ transform: 'scaleX(-1)' }} /> : <FaLongArrowAltRight />}
+                    </Link>
+                    {isAdmin && (
+                        <button
+                            onClick={() => { setEditData({ ...editData, ...featuredData }); setIsEditing(true); }}
+                            className="hero-edit-title-btn small-edit-btn"
+                            title="Modifier le texte du bouton CTA"
+                        >
+                            <FaEdit />
+                        </button>
+                    )}
+                </div>
             </div>
+
+            {/* 🛑 Edit Modal */}
+            {isEditing && (
+                <div className="modal-overlay" style={{ zIndex: 2000 }}>
+                    <div className="modal-content" style={{
+                        background: '#fff', padding: '30px', borderRadius: '15px', width: '90%', maxWidth: '600px',
+                        maxHeight: '80vh', overflowY: 'auto'
+                    }}>
+                        <h3 style={{ marginBottom: '20px', textAlign: 'center' }}>Modifier le Produit Vedette</h3>
+
+                        {languages.map(lang => (
+                            <div key={lang.code} style={{ marginBottom: '25px', padding: '15px', border: '1px solid #eee', borderRadius: '10px' }}>
+                                <h4 style={{ marginBottom: '10px', textTransform: 'uppercase', color: '#D4AF37' }}>
+                                    {lang.label}
+                                </h4>
+
+                                {['tag', 'title', 'subtitle', 'cta'].map(field => (
+                                    <div key={field} style={{ marginBottom: '10px' }}>
+                                        <label style={{ display: 'block', fontSize: '12px', color: '#888' }}>{field}</label>
+                                        <input
+                                            type="text"
+                                            value={editData[lang.code]?.[field] || ''}
+                                            onChange={e => setEditData({ ...editData, [lang.code]: { ...editData[lang.code], [field]: e.target.value } })}
+                                            style={{ width: '100%', padding: '8px', borderRadius: '5px', border: '1px solid #ddd' }}
+                                        />
+                                    </div>
+                                ))}
+
+                                <div style={{ marginBottom: '10px' }}>
+                                    <label style={{ display: 'block', fontSize: '12px', color: '#888' }}>description</label>
+                                    <textarea
+                                        value={editData[lang.code]?.description || ''}
+                                        onChange={e => setEditData({ ...editData, [lang.code]: { ...editData[lang.code], description: e.target.value } })}
+                                        rows="3"
+                                        style={{ width: '100%', padding: '8px', borderRadius: '5px', border: '1px solid #ddd' }}
+                                    />
+                                </div>
+                            </div>
+                        ))}
+
+                        <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '20px' }}>
+                            <button onClick={() => setIsEditing(false)} style={{ padding: '10px 20px', borderRadius: '5px', border: '1px solid #ddd', background: '#fff' }}>
+                                Annuler
+                            </button>
+                            <button onClick={handleSave} style={{ padding: '10px 20px', borderRadius: '5px', border: 'none', background: '#28a745', color: '#fff' }}>
+                                <FaSave /> Enregistrer
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
         </section>
     );

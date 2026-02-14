@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { FaShoppingCart, FaSearch, FaChevronDown, FaTimes, FaUser, FaMapMarkerAlt, FaPhoneAlt, FaMinusCircle, FaPlusCircle, FaSpinner, FaCheckCircle, FaCommentAlt, FaStar, FaRegStar, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
+import { useLanguage } from '../context/LanguageContext';
+import { FaShoppingCart, FaSearch, FaChevronDown, FaTimes, FaUser, FaMapMarkerAlt, FaPhoneAlt, FaMinusCircle, FaPlusCircle, FaSpinner, FaCheckCircle, FaCommentAlt, FaStar, FaRegStar, FaChevronLeft, FaChevronRight, FaEdit, FaSave, FaTrash, FaPlus } from 'react-icons/fa';
 import Navbar from '../comp/navbar';
 import Footer from '../comp/Footer';
 
@@ -7,11 +8,12 @@ import Footer from '../comp/Footer';
 const categoriesFr = ['Tous', 'Homme', 'Famme', 'Enfant'];
 const categoriesAr = ['الكل', 'رجال', 'نساء', 'أطفال'];
 const categoriesEn = ['All', 'Men', 'Women', 'Children'];
+import BASE_URL from '../apiConfig';
 
 // ⚠️ Assurez-وا أن هذه URL صحيحة
-const API_URL = 'http://localhost:3000/api/products';
-const API_COMMAND_URL = 'http://localhost:3000/api/commands';
-const API_COMMENTAIRE_URL = 'http://localhost:3000/api/commentaires';
+const API_URL = `${BASE_URL}/api/products`;
+const API_COMMAND_URL = `${BASE_URL}/api/commands`;
+const API_COMMENTAIRE_URL = `${BASE_URL}/api/commentaires`;
 
 // 🌐 كائن الترجمة - تم تحديث مفاتيح الأخطاء
 const translations = {
@@ -230,7 +232,7 @@ const ImageCarousel = ({ images, direction }) => {
     }, [currentIndex]);
 
     return (
-        <div className="image-carousel-container" style={{ position: 'relative', width: '100%', overflow: 'hidden', margin: '15px 0', borderRadius: '8px' }}>
+        <div className="image-carousel-container">
             <div
                 className="carousel-inner"
                 style={{
@@ -240,11 +242,11 @@ const ImageCarousel = ({ images, direction }) => {
                 }}
             >
                 {images.map((url, index) => (
-                    <div key={index} className="carousel-item" style={{ minWidth: '100%', flexShrink: 0 }}>
+                    <div key={index} className="carousel-item" style={{}}>
                         <img
                             src={url}
                             alt={`Slide ${index + 1}`}
-                            style={{ width: '100%', height: '150px', objectFit: 'cover' }}
+                            className='image_carrouse_chop'
                         />
                     </div>
                 ))}
@@ -487,12 +489,9 @@ const OrderModalComponent = ({ selectedProduct, quantity, handleQuantityChange, 
 // ====================================================================
 
 export default function ProductGrid() {
-    const [appLanguage, setAppLanguage] = useState('fr');
+    const { appLanguage, languages } = useLanguage();
 
-    useEffect(() => {
-        const lang = localStorage.getItem('appLanguage') || 'fr';
-        setAppLanguage(lang);
-    }, []);
+
 
     const t = translations[appLanguage] || translations.fr;
     const currentCategories = t.categories;
@@ -520,6 +519,141 @@ export default function ProductGrid() {
 
     const [finalCustomerData, setFinalCustomerData] = useState({ firstName: '', adresse: '', phone: '' });
 
+    const [isAdmin, setIsAdmin] = useState(false);
+    const [isEditingField, setIsEditingField] = useState(null); // 'title', 'subtitle', 'sidebar', 'reset', 'info', 'navTitle', 'cartBtn'
+    const [shopContent, setShopContent] = useState({
+        fr: { colTitle: '', colAccent: '', colSub: '', sidebar: '', reset: '', info: '', navTitle: '', cartBtn: '' },
+        ar: { colTitle: '', colAccent: '', colSub: '', sidebar: '', reset: '', info: '', navTitle: '', cartBtn: '' },
+        en: { colTitle: '', colAccent: '', colSub: '', sidebar: '', reset: '', info: '', navTitle: '', cartBtn: '' }
+    });
+    const [editShopContent, setEditShopContent] = useState({
+        fr: { colTitle: '', colAccent: '', colSub: '', sidebar: '', reset: '', info: '', navTitle: '', cartBtn: '' },
+        ar: { colTitle: '', colAccent: '', colSub: '', sidebar: '', reset: '', info: '', navTitle: '', cartBtn: '' },
+        en: { colTitle: '', colAccent: '', colSub: '', sidebar: '', reset: '', info: '', navTitle: '', cartBtn: '' }
+    });
+
+    useEffect(() => {
+        // Check Admin
+        const users = JSON.parse(localStorage.getItem('users') || '[]');
+        const email = localStorage.getItem('currentUserEmail') || localStorage.getItem('loggedInUserEmail');
+        const currentUser = users.find(u => u.email === email);
+        if (currentUser?.statut === 'admin') setIsAdmin(true);
+
+        // Load content
+        const backup = localStorage.getItem('shop_content_backup');
+        if (backup) setShopContent(JSON.parse(backup));
+
+        fetch(`${BASE_URL}/api/settings/shop-content`)
+            .then(res => res.ok ? res.json() : null)
+            .then(data => data && setShopContent(data))
+            .catch(() => { });
+    }, []);
+
+    const handleSaveShopContent = async () => {
+        localStorage.setItem('shop_content_backup', JSON.stringify(editShopContent));
+        setShopContent(editShopContent);
+        setIsEditingField(null);
+        try {
+            await fetch(`${BASE_URL}/api/settings/shop-content`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ value: editShopContent })
+            });
+        } catch (err) { }
+    };
+
+    // 🔧 دالة مساعدة لتهيئة جميع اللغات المتاحة
+    const initializeAllLanguages = (currentValues) => {
+        const initialized = {};
+        languages.forEach(lang => {
+            initialized[lang.code] = currentValues[lang.code] || {
+                colTitle: '', colAccent: '', colSub: '', sidebar: '', reset: '', info: '', navTitle: '', cartBtn: ''
+            };
+        });
+        return initialized;
+    };
+
+    const getT = (key, defaultVal) => {
+        return (shopContent[appLanguage] && shopContent[appLanguage][key]) || defaultVal;
+    };
+
+    const EditBtn = ({ field }) => (
+        isAdmin && (
+            <button
+                onClick={() => { setEditShopContent(initializeAllLanguages(shopContent)); setIsEditingField(field); }}
+                className="edit-btn-minimal"
+                title="Modifier"
+                style={{
+                    background: 'rgba(212, 175, 55, 0.1)',
+                    border: '1px solid rgba(212, 175, 55, 0.2)',
+                    color: '#D4AF37',
+                    borderRadius: '50%',
+                    width: '30px',
+                    height: '30px',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginLeft: '8px',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s',
+                    verticalAlign: 'middle'
+                }}
+            >
+                <FaEdit size={14} />
+            </button>
+        )
+    );
+
+    // 📦 Product Management State
+    const [isManagingProduct, setIsManagingProduct] = useState(false); // false or 'add' or 'edit'
+    const [productForm, setProductForm] = useState({ id: '', nom: '', prix: '', categorie: '', mainImage: '', secondaryImages: [] });
+
+    const handleDeleteProduct = async (id) => {
+        if (!window.confirm(appLanguage === 'ar' ? 'هل أنت متأكد من حذف هذا المنتج؟' : 'Supprimer ce produit ?')) return;
+        try {
+            const res = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+            if (res.ok) {
+                setFetchedProducts(prev => prev.filter(p => p.id !== id));
+            }
+        } catch (err) { }
+    };
+
+    const handleOpenAddProduct = () => {
+        const cat = selectedCategoryKey === 'Tous' ? 'Homme' : selectedCategoryKey;
+        setProductForm({ id: '', nom: '', prix: '', categorie: cat, mainImage: '', secondaryImages: [] });
+        setIsManagingProduct('add');
+    };
+
+    const handleOpenEditProduct = (p) => {
+        setProductForm({
+            id: p.id,
+            nom: p.name,
+            prix: p.price,
+            categorie: p.category,
+            mainImage: p.url,
+            secondaryImages: p.secondaryImages || []
+        });
+        setIsManagingProduct('edit');
+    };
+
+    const handleSaveProduct = async () => {
+        const method = isManagingProduct === 'edit' ? 'PUT' : 'POST';
+        const url = isManagingProduct === 'edit' ? `${API_URL}/${productForm.id}` : API_URL;
+
+        try {
+            const res = await fetch(url, {
+                method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(productForm)
+            });
+            if (res.ok) {
+                const updated = await res.json();
+                // Refresh list or optimistic update
+                window.location.reload();
+            }
+        } catch (err) { }
+    };
+
 
     useEffect(() => {
         // Logique d'authentification والبيانات الأساسية
@@ -530,41 +664,41 @@ export default function ProductGrid() {
         setCurrentUserEmail(userEmail);
 
         // 🌟 LOGIQUE DE RÉCUPÉRATION DES PRODUجTS DEPUIS L'API
-    // ProductGrid.js
+        // ProductGrid.js
 
-const fetchProducts = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-        const response = await fetch(API_URL);
-        if (!response.ok) {
-            throw new Error(`Erreur HTTP: ${response.status}`);
-        }
-        const data = await response.json();
+        const fetchProducts = async () => {
+            setLoading(true);
+            setError(null);
+            try {
+                const response = await fetch(API_URL);
+                if (!response.ok) {
+                    throw new Error(`Erreur HTTP: ${response.status}`);
+                }
+                const data = await response.json();
 
-        const mappedProducts = data.map(p => ({
-            id: p._id,
-            name: p.nom,
-            price: p.prix,
-            currency: 'DT',
-            // ✅ التصحيح الأساسي: يختار mainImage (الجديد) أو image (القديم) كصورة رئيسية.
-            url: p.mainImage || p.image, 
-            secondaryImages: p.secondaryImages || [],
-            alt: p.nom,
-            category: p.categorie
-        }));
+                const mappedProducts = data.map(p => ({
+                    id: p._id,
+                    name: p.nom,
+                    price: p.prix,
+                    currency: 'DT',
+                    // ✅ التصحيح الأساسي: يختار mainImage (الجديد) أو image (القديم) كصورة رئيسية.
+                    url: p.mainImage || p.image,
+                    secondaryImages: p.secondaryImages || [],
+                    alt: p.nom,
+                    category: p.categorie
+                }));
 
-        setFetchedProducts(mappedProducts);
+                setFetchedProducts(mappedProducts);
 
-    } catch (err) {
-        console.error("Échec de la récupération des produits :", err);
-        setError("Impossible de charger les produits. Veuillez vérifier الـ API.");
-    } finally {
-        setLoading(false);
-    }
-};
+            } catch (err) {
+                console.error("Échec de la récupération des produits :", err);
+                setError("Impossible de charger les produits. Veuillez vérifier الـ API.");
+            } finally {
+                setLoading(false);
+            }
+        };
 
-// ... (بقية الكود)
+        // ... (بقية الكود)
 
         fetchProducts();
 
@@ -794,6 +928,7 @@ const fetchProducts = async () => {
         return (
             <div className="modal-overlay">
                 <div className="comment-modal-content" dir={direction}>
+
                     <button
                         className="modal-close-btn"
                         onClick={closeFeedbackModal}
@@ -904,20 +1039,31 @@ const fetchProducts = async () => {
         <>
             <Navbar />
             <br /><br /><br /><br /><br /><br />
+
             <section className="product-grid-section" dir={direction}>
 
-                <div className="grid-header">
-                    <h2 className="grid-main-title">
-                        <span style={{ color: "#333333", marginRight: "-00px" }}>
-                            {t.collectionTitle}
-                        </span>
-                        <span className="vip-accent-text" style={{ color: "#D4AF37" }}>
-                            {t.collectionAccent}
-                        </span>
+                <div className="grid-header" style={{ textAlign: 'center', marginBottom: '60px' }}>
+                    <h2 className="grid-main-title" style={{ justifyContent: 'center', display: 'flex', alignItems: 'center' }}>
+                        <span style={{ color: "#333333" }}>{getT('colTitle', t.collectionTitle)}</span>
+                        <span className="vip-accent-text" style={{ color: "#D4AF37", marginLeft: '10px' }}>{getT('colAccent', t.collectionAccent)}</span>
+                        <EditBtn field="title" />
                     </h2>
-                    <p className="grid-sub-text">
-                        {t.collectionSubtitle}
-                    </p>
+                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginTop: '15px' }}>
+                        <p className="grid-sub-text" style={{ margin: 0 }}>
+                            {getT('colSub', t.collectionSubtitle)}
+                            <EditBtn field="subtitle" />
+                        </p>
+                    </div>
+                    {isAdmin && (
+                        <div style={{ marginTop: '25px' }}>
+                            <button
+                                onClick={handleOpenAddProduct}
+                                className="hero-edit-title-btn hero-edit-title-btn-add"
+                            >
+                                <FaPlusCircle size={20} /> {appLanguage === 'ar' ? 'إضافة منتج' : 'Nouveau Produit'}
+                            </button>
+                        </div>
+                    )}
                 </div>
 
                 <div className="shop-content-wrapper">
@@ -937,7 +1083,10 @@ const fetchProducts = async () => {
 
                     {/* 2. Barre latérale des filtres */}
                     <aside className={`filter-sidebar ${isFilterOpen ? 'is-open' : ''} ${appLanguage === 'ar' ? 'rtl-sidebar' : ''}`}>
-                        <h3 className="sidebar-title">{t.sidebarTitle}</h3>
+                        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '15px' }}>
+                            <h3 className="sidebar-title" style={{ margin: 0 }}>{getT('sidebar', t.sidebarTitle)}</h3>
+                            <EditBtn field="sidebar" />
+                        </div>
 
                         <div className="filter-group search-filter">
                             <input
@@ -952,7 +1101,11 @@ const fetchProducts = async () => {
                         </div>
 
                         <div className="filter-group">
-                            <h4 className="filter-group-title">{t.filterCategory(t.navTitle)} <FaChevronDown className="dropdown-icon" /></h4>
+                            <h4 className="filter-group-title" style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                {getT('navTitle', t.filterCategory(t.navTitle))}
+                                <FaChevronDown className="dropdown-icon" />
+                                <EditBtn field="navTitle" />
+                            </h4>
                             <ul className="category-list">
                                 {currentCategories.map((cat, index) => {
                                     const categoryKey = categoriesFr[index];
@@ -974,19 +1127,28 @@ const fetchProducts = async () => {
                             </ul>
                         </div>
 
-                        <button
-                            className="reset-filters-button"
-                            onClick={resetFilters}
-                        >
-                            {t.resetFilters}
-                        </button>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '20px' }}>
+                            <button className="reset-filters-button" onClick={resetFilters}>{getT('reset', t.resetFilters)}</button>
+                            <EditBtn field="reset" />
+                        </div>
 
                     </aside>
 
                     {/* 3. Grille des منتجات */}
                     <main className="product-grid-main">
-                        <div className="grid-info-bar">
-                            <p className="info-text">{t.infoBar(filteredProducts.length, productsToFilter.length)}</p>
+                        <div className="grid-info-bar" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <p className="info-text" style={{ margin: 0 }}>
+                                {(() => {
+                                    const custom = getT('info', '');
+                                    if (custom) {
+                                        return custom
+                                            .replace('{f}', filteredProducts.length)
+                                            .replace('{t}', productsToFilter.length);
+                                    }
+                                    return t.infoBar(filteredProducts.length, productsToFilter.length);
+                                })()}
+                            </p>
+                            <EditBtn field="info" />
                         </div>
 
                         <div className="product-grid-container">
@@ -999,6 +1161,50 @@ const fetchProducts = async () => {
                                                 src={product.url}
                                                 alt={product.alt}
                                             />
+                                            {isAdmin && (
+                                                <div className="admin-product-actions" style={{
+                                                    position: 'absolute',
+                                                    top: '10px',
+                                                    right: '10px',
+                                                    display: 'flex',
+                                                    flexDirection: 'column',
+                                                    gap: '8px',
+                                                    zIndex: 10
+                                                }}>
+                                                    <button
+                                                        onClick={() => handleOpenEditProduct(product)}
+                                                        className="hero-edit-title-btn"
+                                                        style={{
+                                                            width: '35px',
+                                                            height: '35px',
+                                                            borderRadius: '50%',
+                                                            background: 'rgba(255,255,255,0.9)',
+                                                            backdropFilter: 'blur(5px)',
+                                                            color: '#007bff',
+                                                            boxShadow: '0 4px 10px rgba(0,0,0,0.1)'
+                                                        }}
+                                                        title="Modifier"
+                                                    >
+                                                        <FaEdit size={14} />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDeleteProduct(product.id)}
+                                                        className="hero-edit-title-btn"
+                                                        style={{
+                                                            width: '35px',
+                                                            height: '35px',
+                                                            borderRadius: '50%',
+                                                            background: 'rgba(255,255,255,0.9)',
+                                                            backdropFilter: 'blur(5px)',
+                                                            color: '#dc3545',
+                                                            boxShadow: '0 4px 10px rgba(0,0,0,0.1)'
+                                                        }}
+                                                        title="Supprimer"
+                                                    >
+                                                        <FaTrash size={14} />
+                                                    </button>
+                                                </div>
+                                            )}
                                             <div className="category-badge">{t.categoryMapping[product.category] || product.category}</div>
                                         </div>
 
@@ -1011,8 +1217,34 @@ const fetchProducts = async () => {
                                                 <button
                                                     className="add-to-cart-button-grid"
                                                     onClick={() => handleOrderClick(product)}
+                                                    style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
                                                 >
-                                                    <FaShoppingCart /> {t.addToCart}
+                                                    <FaShoppingCart />
+                                                    {getT('cartBtn', t.addToCart)}
+
+                                                    {isAdmin && (
+                                                        <span
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setEditShopContent(shopContent);
+                                                                setIsEditingField('cartBtn');
+                                                            }}
+                                                            style={{
+                                                                marginLeft: '10px',
+                                                                padding: '6px',
+                                                                background: 'rgba(255,255,255,0.25)',
+                                                                borderRadius: '50%',
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                transition: 'background 0.2s'
+                                                            }}
+                                                            onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.4)'}
+                                                            onMouseOut={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.25)'}
+                                                            title="Modifier le texte du bouton"
+                                                        >
+                                                            <FaEdit size={12} />
+                                                        </span>
+                                                    )}
                                                 </button>
                                             </div>
                                         </div>
@@ -1034,25 +1266,349 @@ const fetchProducts = async () => {
             </section>
 
             {/* 4. Rendu du modal de commande */}
-            {showOrderModal && selectedProduct && (
-                <OrderModalComponent
-                    selectedProduct={selectedProduct}
-                    quantity={quantity}
-                    handleQuantityChange={handleQuantityChange}
-                    closeOrderModal={closeOrderModal}
-                    isLoggedIn={isLoggedIn}
-                    currentUserEmail={currentUserEmail}
-                    onOrderSuccess={handleOrderSuccessCallback}
-                    onCustomerDataUpdate={handleCustomerDataUpdate}
-                    appLanguage={appLanguage}
-                />
-            )}
+            {
+                showOrderModal && selectedProduct && (
+                    <OrderModalComponent
+                        selectedProduct={selectedProduct}
+                        quantity={quantity}
+                        handleQuantityChange={handleQuantityChange}
+                        closeOrderModal={closeOrderModal}
+                        isLoggedIn={isLoggedIn}
+                        currentUserEmail={currentUserEmail}
+                        onOrderSuccess={handleOrderSuccessCallback}
+                        onCustomerDataUpdate={handleCustomerDataUpdate}
+                        appLanguage={appLanguage}
+                    />
+                )
+            }
 
             {/* 5. Rendu du modal de succès */}
             {showSuccessModal && <OrderSuccessModal />}
 
             {/* 6. Rendu du modal de commentaire */}
             {showFeedbackModal && <FeedbackModal />}
+
+            {/* 🛑 Admin Editing Modal */}
+            {
+                isEditingField && (
+                    <div className="modal-overlay" style={{ zIndex: 2000 }}>
+                        <div className="modal-content" style={{
+                            background: '#fff', padding: '30px', borderRadius: '15px', width: '90%', maxWidth: '600px',
+                            maxHeight: '80vh', overflowY: 'auto'
+                        }}>
+                            <h3 style={{ marginBottom: '20px', textAlign: 'center' }}>Modifier {isEditingField}</h3>
+
+                            {languages.map(lang => (
+                                <div key={lang.code} style={{ marginBottom: '25px', padding: '15px', border: '1px solid #eee', borderRadius: '10px' }}>
+                                    <h4 style={{ marginBottom: '10px', textTransform: 'uppercase', color: '#D4AF37' }}>
+                                        {lang.label}
+                                    </h4>
+
+                                    {isEditingField === 'title' && (
+                                        <>
+                                            <div style={{ marginBottom: '10px' }}>
+                                                <label style={{ display: 'block', fontSize: '12px', color: '#888' }}>Titre Principal</label>
+                                                <input
+                                                    type="text"
+                                                    value={editShopContent[lang.code]?.colTitle || ''}
+                                                    onChange={e => setEditShopContent({ ...editShopContent, [lang.code]: { ...editShopContent[lang.code], colTitle: e.target.value } })}
+                                                    style={{ width: '100%', padding: '8px', borderRadius: '5px', border: '1px solid #ddd' }}
+                                                />
+                                            </div>
+                                            <div style={{ marginBottom: '10px' }}>
+                                                <label style={{ display: 'block', fontSize: '12px', color: '#888' }}>Accent (Or)</label>
+                                                <input
+                                                    type="text"
+                                                    value={editShopContent[lang.code]?.colAccent || ''}
+                                                    onChange={e => setEditShopContent({ ...editShopContent, [lang.code]: { ...editShopContent[lang.code], colAccent: e.target.value } })}
+                                                    style={{ width: '100%', padding: '8px', borderRadius: '5px', border: '1px solid #ddd' }}
+                                                />
+                                            </div>
+                                        </>
+                                    )}
+
+                                    {isEditingField === 'subtitle' && (
+                                        <div style={{ marginBottom: '10px' }}>
+                                            <label style={{ display: 'block', fontSize: '12px', color: '#888' }}>Sous-titre</label>
+                                            <textarea
+                                                value={editShopContent[lang.code]?.colSub || ''}
+                                                onChange={e => setEditShopContent({ ...editShopContent, [lang.code]: { ...editShopContent[lang.code], colSub: e.target.value } })}
+                                                rows="3"
+                                                style={{ width: '100%', padding: '8px', borderRadius: '5px', border: '1px solid #ddd' }}
+                                            />
+                                        </div>
+                                    )}
+
+                                    {isEditingField === 'sidebar' && (
+                                        <div style={{ marginBottom: '10px' }}>
+                                            <label style={{ display: 'block', fontSize: '12px', color: '#888' }}>Titre Sidebar</label>
+                                            <input
+                                                type="text"
+                                                value={editShopContent[lang.code]?.sidebar || ''}
+                                                onChange={e => setEditShopContent({ ...editShopContent, [lang.code]: { ...editShopContent[lang.code], sidebar: e.target.value } })}
+                                                style={{ width: '100%', padding: '8px', borderRadius: '5px', border: '1px solid #ddd' }}
+                                            />
+                                        </div>
+                                    )}
+
+                                    {isEditingField === 'reset' && (
+                                        <div style={{ marginBottom: '10px' }}>
+                                            <label style={{ display: 'block', fontSize: '12px', color: '#888' }}>Bouton Reset</label>
+                                            <input
+                                                type="text"
+                                                value={editShopContent[lang.code]?.reset || ''}
+                                                onChange={e => setEditShopContent({ ...editShopContent, [lang.code]: { ...editShopContent[lang.code], reset: e.target.value } })}
+                                                style={{ width: '100%', padding: '8px', borderRadius: '5px', border: '1px solid #ddd' }}
+                                            />
+                                        </div>
+                                    )}
+
+                                    {isEditingField === 'info' && (
+                                        <div style={{ marginBottom: '10px' }}>
+                                            <label style={{ display: 'block', fontSize: '12px', color: '#888' }}>
+                                                Barre Info (Utilisez {'{f}'} pour le nombre filtré et {'{t}'} pour le total)
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={editShopContent[lang.code]?.info || ''}
+                                                onChange={e => setEditShopContent({ ...editShopContent, [lang.code]: { ...editShopContent[lang.code], info: e.target.value } })}
+                                                style={{ width: '100%', padding: '8px', borderRadius: '5px', border: '1px solid #ddd' }}
+                                                placeholder="Ex: Affichage de {f} sur {t} produits"
+                                            />
+                                        </div>
+                                    )}
+
+                                    {isEditingField === 'navTitle' && (
+                                        <div style={{ marginBottom: '10px' }}>
+                                            <label style={{ display: 'block', fontSize: '12px', color: '#888' }}>Titre Catégories</label>
+                                            <input
+                                                type="text"
+                                                value={editShopContent[lang.code]?.navTitle || ''}
+                                                onChange={e => setEditShopContent({ ...editShopContent, [lang.code]: { ...editShopContent[lang.code], navTitle: e.target.value } })}
+                                                style={{ width: '100%', padding: '8px', borderRadius: '5px', border: '1px solid #ddd' }}
+                                            />
+                                        </div>
+                                    )}
+
+                                    {isEditingField === 'cartBtn' && (
+                                        <div style={{ marginBottom: '10px' }}>
+                                            <label style={{ display: 'block', fontSize: '12px', color: '#888' }}>Bouton d'achat</label>
+                                            <input
+                                                type="text"
+                                                value={editShopContent[lang.code]?.cartBtn || ''}
+                                                onChange={e => setEditShopContent({ ...editShopContent, [lang.code]: { ...editShopContent[lang.code], cartBtn: e.target.value } })}
+                                                style={{ width: '100%', padding: '8px', borderRadius: '5px', border: '1px solid #ddd' }}
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+
+                            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '20px' }}>
+                                <button onClick={() => setIsEditingField(null)} style={{ padding: '10px 20px', borderRadius: '5px', border: '1px solid #ddd', background: '#fff' }}>
+                                    Annuler
+                                </button>
+                                <button onClick={handleSaveShopContent} style={{ padding: '10px 20px', borderRadius: '5px', border: 'none', background: '#28a745', color: '#fff' }}>
+                                    <FaSave /> Enregistrer
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
+
+            {/* 🛑 Product Management Modal (Add/Edit) */}
+            {isManagingProduct && (
+                <div className="modal-overlay" style={{
+                    zIndex: 3000,
+                    backdropFilter: 'blur(12px)',
+                    background: 'rgba(15, 23, 42, 0.4)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '20px'
+                }}>
+                    <div className="modal-content" style={{
+                        background: '#ffffff',
+                        padding: '40px',
+                        borderRadius: '28px',
+                        width: '100%',
+                        maxWidth: '600px',
+                        maxHeight: '90vh',
+                        overflowY: 'auto',
+                        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(212, 175, 55, 0.1)',
+                        position: 'relative',
+                        animation: 'modalSlideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1)'
+                    }}>
+                        <button
+                            onClick={() => setIsManagingProduct(false)}
+                            style={{
+                                position: 'absolute',
+                                top: '24px',
+                                right: '24px',
+                                background: 'rgba(0,0,0,0.05)',
+                                border: 'none',
+                                width: '36px',
+                                height: '36px',
+                                borderRadius: '50%',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                cursor: 'pointer',
+                                color: '#64748b',
+                                transition: 'all 0.2s'
+                            }}
+                        >
+                            <FaTimes size={18} />
+                        </button>
+
+                        <div style={{ textAlign: 'center', marginBottom: '35px' }}>
+                            <h3 style={{ fontSize: '2rem', color: '#0f172a', marginBottom: '12px', fontWeight: '800', letterSpacing: '-0.02em' }}>
+                                {isManagingProduct === 'add'
+                                    ? (appLanguage === 'ar' ? 'إضافة منتج استثنائي' : 'Nouveau Chef-d\'œuvre')
+                                    : (appLanguage === 'ar' ? 'تحديث التفاصيل' : 'Édition du Produit')}
+                            </h3>
+                            <div style={{ height: '4px', width: '40px', background: '#D4AF37', margin: '0 auto', borderRadius: '10px' }}></div>
+                        </div>
+
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                            <div className="input-field-group">
+                                <label style={{ display: 'block', marginBottom: '10px', fontSize: '0.75rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                                    {appLanguage === 'ar' ? 'اسم المنتج' : 'Nom du Produit'}
+                                </label>
+                                <input
+                                    type="text"
+                                    placeholder="Ex: Kaftan Silk Or"
+                                    value={productForm.nom}
+                                    onChange={e => setProductForm({ ...productForm, nom: e.target.value })}
+                                    style={{
+                                        width: '100%',
+                                        padding: '16px 20px',
+                                        borderRadius: '16px',
+                                        border: '2px solid #f1f5f9',
+                                        fontSize: '1rem',
+                                        transition: 'all 0.3s',
+                                        outline: 'none',
+                                        background: '#f8fafc'
+                                    }}
+                                />
+                            </div>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                                <div className="input-field-group">
+                                    <label style={{ display: 'block', marginBottom: '10px', fontSize: '0.75rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                                        {appLanguage === 'ar' ? 'السعر (DT)' : 'Prix (DT)'}
+                                    </label>
+                                    <input
+                                        type="number"
+                                        placeholder="0.00"
+                                        value={productForm.prix}
+                                        onChange={e => setProductForm({ ...productForm, prix: e.target.value })}
+                                        style={{
+                                            width: '100%',
+                                            padding: '16px 20px',
+                                            borderRadius: '16px',
+                                            border: '2px solid #f1f5f9',
+                                            fontSize: '1rem',
+                                            outline: 'none',
+                                            background: '#f8fafc'
+                                        }}
+                                    />
+                                </div>
+                                <div className="input-field-group">
+                                    <label style={{ display: 'block', marginBottom: '10px', fontSize: '0.75rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                                        {appLanguage === 'ar' ? 'الفئة' : 'Catégorie'}
+                                    </label>
+                                    <select
+                                        value={productForm.categorie}
+                                        onChange={e => setProductForm({ ...productForm, categorie: e.target.value })}
+                                        style={{
+                                            width: '100%',
+                                            padding: '16px 20px',
+                                            borderRadius: '16px',
+                                            border: '2px solid #f1f5f9',
+                                            fontSize: '1rem',
+                                            background: '#f8fafc',
+                                            cursor: 'pointer',
+                                            outline: 'none'
+                                        }}
+                                    >
+                                        {categoriesFr.filter(c => c !== 'Tous').map(c => (
+                                            <option key={c} value={c}>{c}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div className="input-field-group">
+                                <label style={{ display: 'block', marginBottom: '10px', fontSize: '0.75rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                                    {appLanguage === 'ar' ? 'رابط الصورة الرئيسية' : 'Image Principale (URL)'}
+                                </label>
+                                <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+                                    <input
+                                        type="text"
+                                        placeholder="https://images.unsplash.com/..."
+                                        value={productForm.mainImage}
+                                        onChange={e => setProductForm({ ...productForm, mainImage: e.target.value })}
+                                        style={{
+                                            flex: 1,
+                                            padding: '16px 20px',
+                                            borderRadius: '16px',
+                                            border: '2px solid #f1f5f9',
+                                            fontSize: '1rem',
+                                            outline: 'none',
+                                            background: '#f8fafc'
+                                        }}
+                                    />
+                                    {productForm.mainImage && (
+                                        <div style={{ width: '60px', height: '60px', borderRadius: '14px', overflow: 'hidden', border: '2px solid #f1f5f9', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}>
+                                            <img src={productForm.mainImage} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: '15px', marginTop: '10px' }}>
+                                <button
+                                    onClick={() => setIsManagingProduct(false)}
+                                    style={{
+                                        padding: '18px',
+                                        background: '#fff',
+                                        color: '#64748b',
+                                        border: '2px solid #f1f5f9',
+                                        borderRadius: '18px',
+                                        fontWeight: '700',
+                                        cursor: 'pointer',
+                                        fontSize: '1rem'
+                                    }}
+                                >
+                                    {appLanguage === 'ar' ? 'إلغاء' : 'Annuler'}
+                                </button>
+                                <button
+                                    onClick={handleSaveProduct}
+                                    style={{
+                                        padding: '18px',
+                                        background: 'linear-gradient(135deg, #D4AF37 0%, #B8860B 100%)',
+                                        color: '#fff',
+                                        border: 'none',
+                                        borderRadius: '18px',
+                                        fontWeight: '700',
+                                        cursor: 'pointer',
+                                        boxShadow: '0 10px 15px -3px rgba(184, 134, 11, 0.3)',
+                                        fontSize: '1rem',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: '10px'
+                                    }}
+                                >
+                                    <FaSave /> {appLanguage === 'ar' ? 'حفظ البيانات' : 'Confirmer les Modifications'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <Footer />
         </>
