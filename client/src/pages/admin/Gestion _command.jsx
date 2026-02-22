@@ -129,6 +129,16 @@ export default function Gestion_de_Command() {
                                                     <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}><FaPhoneAlt size={10} /> {cmd.clientPhone}</span>
                                                     <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}><FaMapMarkerAlt size={10} /> {cmd.shippingAddress}</span>
                                                 </div>
+                                                <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                                    <span style={{ fontSize: '0.75rem', color: '#94a3b8', background: '#f1f5f9', padding: '2px 8px', borderRadius: '4px', width: 'fit-content', fontFamily: 'monospace' }}>
+                                                        IP: {cmd.ipAddress || 'Ancien order'}
+                                                    </span>
+                                                    {cmd.deviceInfo && (
+                                                        <span style={{ fontSize: '0.7rem', color: '#94a3b8', fontStyle: 'italic' }}>
+                                                            Appareil: {cmd.deviceInfo}
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </div>
                                             <div>
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#64748b', fontSize: '0.85rem', marginBottom: '8px' }}>

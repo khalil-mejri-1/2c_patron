@@ -103,6 +103,7 @@ export default function Gestion_de_Client() {
                                         <th style={{ padding: '20px', color: '#1e293b', fontWeight: 'bold' }}>Client</th>
                                         <th style={{ padding: '20px', color: '#1e293b', fontWeight: 'bold' }}>Rôle</th>
                                         <th style={{ padding: '20px', color: '#1e293b', fontWeight: 'bold' }}>Abonnement</th>
+                                        <th style={{ padding: '20px', color: '#1e293b', fontWeight: 'bold' }}>Adresse IP</th>
                                         <th style={{ padding: '20px', color: '#1e293b', fontWeight: 'bold', textAlign: 'right' }}>Actions</th>
                                     </tr>
                                 </thead>
@@ -149,6 +150,38 @@ export default function Gestion_de_Client() {
                                                 }}>
                                                     Newsletter: {user.abonne?.toUpperCase() || 'NON'}
                                                 </span>
+                                            </td>
+                                            <td style={{ padding: '20px' }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                    <span style={{
+                                                        fontSize: '0.85rem',
+                                                        color: '#1e293b',
+                                                        fontFamily: 'monospace',
+                                                        background: '#f1f5f9',
+                                                        padding: '4px 8px',
+                                                        borderRadius: '6px',
+                                                        fontWeight: 'bold',
+                                                        border: '1px solid #e2e8f0'
+                                                    }}>
+                                                        {user.registrationIp || user.lockedIp || 'N/A'}
+                                                    </span>
+                                                </div>
+                                                {user.deviceInfo && (
+                                                    <span
+                                                        style={{
+                                                            fontSize: '0.75rem',
+                                                            color: '#475569',
+                                                            fontWeight: '500',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            gap: '4px',
+                                                            cursor: 'help'
+                                                        }}
+                                                        title={user.userAgent || 'Données brutes non disponibles'}
+                                                    >
+                                                        {user.deviceInfo}
+                                                    </span>
+                                                )}
                                             </td>
                                             <td style={{ padding: '20px', textAlign: 'right' }}>
                                                 <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>

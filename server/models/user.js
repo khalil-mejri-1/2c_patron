@@ -42,6 +42,21 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: false,
         default: null
+    },
+    registrationIp: {
+        type: String,
+        required: false,
+        default: null
+    },
+    deviceInfo: {
+        type: String,
+        required: false,
+        default: null
+    },
+    userAgent: {
+        type: String,
+        required: false,
+        default: null
     }
 });
 

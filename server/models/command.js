@@ -13,7 +13,7 @@ const commandSchema = new mongoose.Schema({
         required: true, // Requis dans tous les cas par le frontend
         trim: true,
     },
-    clientEmail: { 
+    clientEmail: {
         type: String,
         required: false, // 💡 Changé à false pour permettre les commandes des invités
         trim: true,
@@ -33,27 +33,27 @@ const commandSchema = new mongoose.Schema({
     },
     items: [ // Liste des produits commandés
         {
-            productId: { 
-                type: mongoose.Schema.Types.ObjectId, 
-                ref: 'Product', 
-                required: true 
-            }, 
-            productName: { 
-                type: String, 
-                required: true 
+            productId: {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: 'Product',
+                required: true
+            },
+            productName: {
+                type: String,
+                required: true
             },
             // 🖼️ NOUVEAU: Champ pour l'URL de l'image du produit
             productImage: {
                 type: String,
                 required: false, // Rendre ce champ facultatif, au cas où une image ne serait pas disponible.
             },
-            quantity: { 
-                type: Number, 
-                required: true, 
-                min: 1 
+            quantity: {
+                type: Number,
+                required: true,
+                min: 1
             },
-            price: { 
-                type: Number, 
+            price: {
+                type: Number,
                 required: true,
                 min: 0,
             }
@@ -71,6 +71,14 @@ const commandSchema = new mongoose.Schema({
         type: Date,
         default: Date.now,
     },
+    ipAddress: {
+        type: String,
+        required: false,
+    },
+    deviceInfo: {
+        type: String,
+        required: false,
+    }
 }, {
     timestamps: true // Ajoute createdAt et updatedAt
 });
@@ -80,9 +88,9 @@ const commandSchema = new mongoose.Schema({
 // Sinon, vous pouvez utiliser l'_id généré par MongoDB ou générer une référence côté serveur.
 
 // Exemple d'ajout d'une référence lisible basée sur _id
-commandSchema.virtual('commandId').get(function() {
+commandSchema.virtual('commandId').get(function () {
     // Utiliser une partie de l'ObjectID ou un système de numérotation externe
-    return this._id.toString().slice(-8).toUpperCase(); 
+    return this._id.toString().slice(-8).toUpperCase();
 });
 
 

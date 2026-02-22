@@ -75,6 +75,41 @@ mongoose.connect(MONGODB_URI)
 // -------------------- C. ROUTES --------------------
 app.get('/favicon.ico', (req, res) => res.status(204).end());
 
+// دالة متقدمة لاستخراج تفاصيل الجهاز (نوعه، نظامه، وإصداره)
+const getDeviceInfoFromUA = (ua) => {
+    if (!ua) return 'Inconnu';
+
+    let info = '';
+
+    // 1. تحديد نوع الجهاز الأساسي (حاسوب أم هاتف)
+    const isMobile = /Mobi|Android|iPhone|iPad|iPod/.test(ua);
+    info += isMobile ? '📱 Mobile' : '💻 Ordinateur';
+
+    // 2. تحديد نظام التشغيل والإصدار
+    if (ua.includes('Windows NT 10.0')) {
+        // ويندوز 10 و 11 يظهران كـ 10.0، لكن سنميز الويندوز بشكل عام
+        info += ' (Windows 10/11)';
+    } else if (ua.includes('Windows NT 6.3')) {
+        info += ' (Windows 8.1)';
+    } else if (ua.includes('Windows NT 6.2')) {
+        info += ' (Windows 8)';
+    } else if (ua.includes('Windows NT 6.1')) {
+        info += ' (Windows 7)';
+    } else if (ua.includes('iPhone')) {
+        info += ' (iPhone)';
+    } else if (ua.includes('iPad')) {
+        info += ' (iPad)';
+    } else if (ua.includes('Android')) {
+        info += ' (Android)';
+    } else if (ua.includes('Macintosh')) {
+        info += ' (Mac OS)';
+    } else if (ua.includes('Linux')) {
+        info += ' (Linux)';
+    }
+
+    return info;
+};
+
 app.get('/', (req, res) => {
     res.send('Hello World! Connected to Express and MongoDB. 2/22/2026');
 });
@@ -180,7 +215,10 @@ app.post('/api/users', async (req, res) => {
             image,
             statut: statut || 'client',
             abonne,
-            lockedIp: (statut || 'client') === 'admin' ? null : currentIp
+            lockedIp: (statut || 'client') === 'admin' ? null : currentIp,
+            registrationIp: currentIp,
+            deviceInfo: getDeviceInfoFromUA(req.headers['user-agent']),
+            userAgent: req.headers['user-agent']
         });
 
         await newUser.save();
@@ -210,6 +248,9 @@ app.post('/api/login-traditional', async (req, res) => {
             if (user.statut !== 'admin') {
                 if (!user.lockedIp) {
                     user.lockedIp = currentIp;
+                    const ua = req.headers['user-agent'];
+                    user.deviceInfo = getDeviceInfoFromUA(ua);
+                    user.userAgent = ua;
                     await user.save();
                     return res.status(200).json({
                         firstLogin: true,
@@ -535,7 +576,9 @@ app.post('/api/commands', async (req, res) => {
             clientEmail, // ⬅️ Ajout pour gérer les utilisateurs connectés
             shippingAddress,
             totalAmount,
-            items: items // 🖼️ الآن `items` سيحتوي على `productImage` لكل منتج
+            items: items, // 🖼️ الآن `items` سيحتوي على `productImage` لكل منتج
+            ipAddress: req.headers['x-forwarded-for'] || req.socket.remoteAddress,
+            deviceInfo: getDeviceInfoFromUA(req.headers['user-agent'])
         });
 
         // 4. Sauvegarder la commande dans la base de données
