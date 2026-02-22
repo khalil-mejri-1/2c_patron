@@ -5,6 +5,52 @@ import Navbar from '../comp/navbar';
 import Footer from '../comp/Footer';
 import { Link } from 'react-router-dom';
 import BASE_URL from '../apiConfig';
+import './auth_premium.css';
+import { useAlert } from '../context/AlertContext';
+import { useLanguage } from '../context/LanguageContext';
+
+// ----------------------------------------------------
+// دالة لجلب معلومات الجهاز والمتصفح
+// ----------------------------------------------------
+const getDeviceInfo = () => {
+    const ua = navigator.userAgent;
+    let browser = "Inconnu";
+    let os = "Inconnu";
+    let device = "PC / Desktop";
+
+    // Browser
+    if (ua.indexOf("Firefox") > -1) browser = "Mozilla Firefox";
+    else if (ua.indexOf("SamsungBrowser") > -1) browser = "Samsung Browser";
+    else if (ua.indexOf("Opera") > -1 || ua.indexOf("OPR") > -1) browser = "Opera";
+    else if (ua.indexOf("Trident") > -1) browser = "Internet Explorer";
+    else if (ua.indexOf("Edge") > -1) browser = "Microsoft Edge";
+    else if (ua.indexOf("Chrome") > -1) browser = "Google Chrome";
+    else if (ua.indexOf("Safari") > -1) browser = "Apple Safari";
+
+    // OS & Windows Version Detail
+    if (ua.indexOf("Windows NT 10.0") > -1) os = "Windows 10/11";
+    else if (ua.indexOf("Windows NT 6.3") > -1) os = "Windows 8.1";
+    else if (ua.indexOf("Windows NT 6.2") > -1) os = "Windows 8";
+    else if (ua.indexOf("Windows NT 6.1") > -1) os = "Windows 7";
+    else if (ua.indexOf("Windows NT 6.0") > -1) os = "Windows Vista";
+    else if (ua.indexOf("Windows NT 5.1") > -1) os = "Windows XP";
+    else if (ua.indexOf("Windows") > -1) os = "Windows";
+    else if (ua.indexOf("Mac") > -1) os = "MacOS";
+    else if (ua.indexOf("X11") > -1) os = "Linux";
+    else if (ua.indexOf("Android") > -1) os = "Android";
+    else if (ua.indexOf("iPhone") > -1) os = "iOS (iPhone)";
+
+    // Device
+    if (/Mobi|Android|iPhone/i.test(ua)) {
+        device = "Smartphone / Mobile";
+        const match = ua.match(/\(([^;]+);/);
+        if (match && match[1]) {
+            device = `Mobile (${match[1].trim()})`;
+        }
+    }
+
+    return { browser, os, device };
+};
 
 // ----------------------------------------------------
 // الدوال المساعدة (Users Management)
@@ -24,32 +70,72 @@ const saveUsers = (users) => {
 // ----------------------------------------------------
 export default function AuthForm({ type = 'login' }) {
     const isLogin = type === 'login';
+    const { showAlert } = useAlert();
+    const { appLanguage } = useLanguage();
 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [name, setName] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
+    const [whatsApp, setWhatsApp] = useState('');
 
-    const mainTitle = isLogin ? "S'identifier à l'Atelier" : "Créer Votre Compte VIP";
+    useEffect(() => {
+        fetch(`${BASE_URL}/api/settings/general`)
+            .then(res => res.json())
+            .then(data => {
+                if (data && data.value && data.value.whatsapp) {
+                    setWhatsApp(data.value.whatsapp);
+                }
+            })
+            .catch(() => { });
+    }, []);
+
+    const mainTitle = isLogin ? "S'identifier à l'Atelier" : "Créer Votre Compte";
     const accentText = isLogin ? "Bienvenue de retour" : "Rejoignez l'élite";
-
 
     // ----------------------------------------------------
     // دالة لتنفيذ تسجيل الدخول النهائي (تم التعديل)
     // ----------------------------------------------------
-    const performLogin = (user) => {
-        // 1. حفظ بيانات الدخول العامة
-        localStorage.setItem('login', 'true');
-        localStorage.setItem('currentUserEmail', user.email);
+    const performLogin = async (user) => {
+        const completeRedirection = () => {
+            // 1. حفظ بيانات الدخول العامة
+            localStorage.setItem('login', 'true');
+            localStorage.setItem('currentUserEmail', user.email);
 
-        // 2. التحقق من حالة المستخدم (statut) وإعادة التوجيه بناءً عليها
-        if (user.statut === 'admin') {
-            // إذا كان المستخدم مسؤولًا، أعد التوجيه إلى صفحة الإدارة
-            window.location.href = '/admin_clients';
+            // 2. التحقق من حالة المستخدم (statut) وإعادة التوجيه بناءً عليها
+            if (user.email === 'admin@admin.com' || user.mail === 'admin@admin.com') {
+                window.location.href = '/Vip-access';
+            } else if (user.statut === 'admin') {
+                window.location.href = '/admin_clients';
+            } else {
+                window.location.href = '/';
+            }
+        };
+
+        // IF first login, show ONLY the security alert
+        if (user.firstLogin) {
+            const securityLabels = {
+                ar: {
+                    title: "تنبيه أمني هام",
+                    msg: "⚠️ ملاحظة هامة: لقد تم ربط حسابك بهذا الجهاز بنجاح.\n\nلضمان أقصى درجات الحماية لحسابك، يجب عليك تسجيل الدخول من هذا الجهاز حصراً في المرات القادمة.\n\nفي حال مواجهة أي مشكلة في الدخول، يرجى التواصل مع الإدارة."
+                },
+                fr: {
+                    title: "Alerte de Sécurité",
+                    msg: "⚠️ Note importante : Votre compte a été lié à cet appareil avec succès.\n\nPour garantir la sécurité de votre compte, vous devrez utiliser cet appareil exclusivement pour vos prochaines connexions.\n\nEn cas de problème, veuillez contacter l'administration."
+                },
+                en: {
+                    title: "Security Alert",
+                    msg: "⚠️ Important Note: Your account has been successfully linked to this device.\n\nTo ensure your account security, you must use this specific device exclusively for all future logins.\n\nIf you encounter any issues, please contact administration."
+                }
+            };
+            const sl = securityLabels[appLanguage] || securityLabels.fr;
+
+            // Show as a Modal Window (type 'confirm' with hidden cancel)
+            showAlert('confirm', sl.title, sl.msg, completeRedirection, null, (appLanguage === 'ar' ? 'فهمت' : 'J\'ai compris'), 'null');
         } else {
-            // أي حالة أخرى (مثل 'client' أو null) تعود للصفحة الرئيسية
-            window.location.href = '/';
+            // Regular login - directly redirect
+            completeRedirection();
         }
     };
 
@@ -85,13 +171,25 @@ export default function AuthForm({ type = 'login' }) {
                     const users = getUsers().filter(u => u.email !== user.email);
                     saveUsers([...users, user]);
 
+                    if (dbUser.firstLogin) {
+                        user.firstLogin = true;
+                    }
+
                     performLogin(user);
                     return;
 
                 } else {
                     // فشل: المستخدم غير موجود في DB (401 أو 404)
-                    await loginResponse.json().catch(() => ({})); // قراءة الاستجابة لتجنب تحذيرات
-                    setErrorMessage("Cet email n'est pas enregistré dans la base de données. Veuillez créer un compte d'abord.");
+                    const errorData = await loginResponse.json().catch(() => ({}));
+
+                    if (errorData.errorType === 'IP_LOCKED') {
+                        const contactMsg = appLanguage === 'ar'
+                            ? `يجب عليك تسجيل الدخول من نفس الجهاز الذي تم تسجيل الدخول به أول مرة. إذا واجهت مشكلة، تواصل مع الإدارة عبر الواتساب: ${whatsApp}`
+                            : `Accès restreint : Vous devez vous connecter depuis l'appareil initial. Contactez l'admin via WhatsApp : ${whatsApp}`;
+                        setErrorMessage(contactMsg);
+                    } else {
+                        setErrorMessage("Cet email n'est pas enregistré dans la base de données. Veuillez créer un compte d'abord.");
+                    }
                     return;
                 }
 
@@ -124,7 +222,13 @@ export default function AuthForm({ type = 'login' }) {
 
             console.log('User registered successfully in DB:', data.user);
 
-            const newUser = { id: Date.now(), name: authData.nom, email: authData.mail, password: authData.mot_de_pass };
+            const newUser = {
+                id: data.user._id,
+                name: authData.nom,
+                email: authData.mail,
+                statut: data.user.statut,
+                firstLogin: data.firstLogin
+            };
             saveUsers([...getUsers(), newUser]);
 
             performLogin(newUser);
@@ -142,7 +246,7 @@ export default function AuthForm({ type = 'login' }) {
             const userObject = jwtDecode(response.credential);
             handleGoogleAuth(userObject);
         } catch (error) {
-            console.error("Erreur de décodage JWT Google:", error);
+            console.error("Erreur de décودage JWT Google:", error);
             setErrorMessage("Erreur d'authentification Google. Veuillez réessayer.");
         }
     }, [isLogin]);
@@ -276,12 +380,23 @@ export default function AuthForm({ type = 'login' }) {
                     const users = getUsers().filter(u => u.email !== user.email);
                     saveUsers([...users, user]);
 
+                    if (dbUser.firstLogin) {
+                        user.firstLogin = true;
+                    }
+
                     performLogin(user);
                 } else {
                     // فشل تسجيل الدخول
                     const errorData = await response.json().catch(() => ({}));
-                    // هذه الرسالة تأتي من الخادم إذا لم تتطابق كلمة المرور/البريد
-                    setErrorMessage(errorData.error || "E-mail ou mot de passe incorrect. Veuillez réessayer.");
+
+                    if (errorData.errorType === 'IP_LOCKED') {
+                        const contactMsg = appLanguage === 'ar'
+                            ? `يجب عليك تسجيل الدخول من الجهاز الذي تم استخدامه أول مرة. للدعم تواصل معنا: ${whatsApp}`
+                            : `Appareil non reconnu. Veuillez utiliser votre appareil initial ou contacter l'admin : ${whatsApp}`;
+                        setErrorMessage(contactMsg);
+                    } else {
+                        setErrorMessage(errorData.error || "E-mail ou mot de passe incorrect. Veuillez réessayer.");
+                    }
                 }
 
             } catch (error) {
@@ -295,138 +410,146 @@ export default function AuthForm({ type = 'login' }) {
     // JSX للعرض
     // ----------------------------------------------------
     return (
-        <>
+        <div className="auth-premium-wrapper">
             <Navbar />
 
-            <section className="auth-section">
+            <section className="auth-section-premium">
+                <div className="auth-main-container">
 
-                <div className="auth-card-wrapper">
+                    {/* Left Side: Creative Brand Experience */}
+                    <div className="auth-visual-side">
+                        <div className="visual-overlay"></div>
+                        <div className="visual-content">
+                            <div className="premium-tag">ATELIER 2C PATRON</div>
+                            <h2 className="luxury-title">
+                                {isLogin ? (
+                                    <>L'Élégance de<br /><span className="accent-text">La Couture</span></>
+                                ) : (
+                                    <>Rejoignez<br /><span className="accent-text">L'Excellence</span></>
+                                )}
+                            </h2>
+                            <p className="luxury-desc">
+                                {isLogin
+                                    ? "Accédez à votre espace privilégié et retrouvez tous vos ateliers et patrons exclusifs."
+                                    : "Devenez membre VIP et accédez aux secrets les mieux gardés du patronage professionnel."}
+                            </p>
 
-                    {/* 🎨 Brand Side (Left/Top) */}
-                    <div className="auth-brand-side">
-                        <div className="brand-overlay"></div>
-                        <div className="brand-content">
-                            <h2 className="brand-title">L'Art de la<br />Haute Couture</h2>
-                            <p className="brand-text">Rejoignez notre communauté exclusive et accédez à des patrons uniques.</p>
                         </div>
                     </div>
 
-                    {/* 📝 Form Side (Right/Bottom) */}
-                    <div className="auth-form-side">
-                        <div className="auth-header">
-                            <h1 className="auth-main-title">{mainTitle}</h1>
-                            <p className="auth-subtitle">{accentText}</p>
-                        </div>
+                    {/* Right Side: Organized Form */}
+                    <div className="auth-form-side-premium">
+                        <div className="form-inner-box">
+                            <header className="form-header-premium">
+                                <h1 className="glam-auth-title">{mainTitle}</h1>
+                            </header>
 
-                        {/* رسالة الخطأ */}
-                        {errorMessage && (
-                            <div className="error-message">
-                                {errorMessage}
-                            </div>
-                        )}
-
-                        {/* 🚀 قسم زر Google Sign-In 🚀 */}
-                        <div className="google-auth-container">
-                            <div id="google-sign-in-button"></div>
-
-                            <div className="separator">
-                                <span>ou continuer avec email</span>
-                            </div>
-                        </div>
-
-                        {/* نموذج المصادقة التقليدي */}
-                        <form className="auth-form" onSubmit={handleSubmit}>
-
-                            {/* حقل الاسم */}
-                            {!isLogin && (
-                                <div className="input-group">
-                                    <FaUser className="input-icon" />
-                                    <input
-                                        type="text"
-                                        placeholder="Nom complet"
-                                        value={name}
-                                        onChange={(e) => setName(e.target.value)}
-                                        required
-                                    />
+                            {/* Error Alert */}
+                            {errorMessage && (
+                                <div className="auth-error-alert">
+                                    <span className="error-icon">!</span> {errorMessage}
                                 </div>
                             )}
 
-                            {/* حقل البريد الإلكتروني */}
-                            <div className="input-group">
-                                <FaEnvelope className="input-icon" />
-                                <input
-                                    type="email"
-                                    placeholder="Adresse e-mail"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    required
-                                />
+                            {/* Social Auth Section */}
+                            <div className="auth-social-area">
+                                <div id="google-sign-in-button" className="google-btn-premium"></div>
+                                <div className="auth-divider">
+                                    <span>ou avec vos identifiants</span>
+                                </div>
                             </div>
 
-                            {/* حقل كلمة المرور */}
-                            <div className="input-group">
-                                <FaLock className="input-icon" />
-                                <input
-                                    type="password"
-                                    placeholder="Mot de passe"
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    required
-                                />
-                            </div>
-
-                            {/* حقل تأكيد كلمة المرور */}
-                            {!isLogin && (
-                                <div className="input-group">
-                                    <FaKey className="input-icon" />
-                                    <input
-                                        type="password"
-                                        placeholder="Confirmer le mot de passe"
-                                        value={confirmPassword}
-                                        onChange={(e) => setConfirmPassword(e.target.value)}
-                                        required
-                                    />
-                                </div>
-                            )}
-
-
-                            {/* خيارات إضافية */}
-                            {isLogin && (
-                                <div className="auth-options">
-                                    <label className="remember-me">
-                                        <input type="checkbox" style={{ marginRight: '5px' }} /> Se souvenir
-                                    </label>
-                                    <a href="/forgot-password" className="forgot-password-link">
-                                        Mot de passe oublié?
-                                    </a>
-                                </div>
-                            )}
-
-
-                            {/* زر الإرسال */}
-                            <button type="submit" className="submit-btn" disabled={!email || !password}>
-                                {isLogin ? "Se Connecter" : "S'inscrire"} <FaChevronRight style={{ marginLeft: '10px' }} />
-                            </button>
-
-                            {/* رابط التبديل بين الصفحتين */}
-                            <p className="switch-auth-link">
-                                {isLogin ? (
-                                    <>
-                                        Vous n'avez pas de compte ? <Link to="/register">Inscrivez-vous</Link>
-                                    </>
-                                ) : (
-                                    <>
-                                        Vous avez déjà un compte ? <Link to="/login">Connectez-vous</Link>
-                                    </>
+                            {/* Traditional Form */}
+                            <form className="glam-form-fields" onSubmit={handleSubmit}>
+                                {!isLogin && (
+                                    <div className="premium-input-group">
+                                        <div className="input-field-wrapper">
+                                            <FaUser className="field-icon" />
+                                            <input
+                                                type="text"
+                                                placeholder="Votre Nom Complet"
+                                                value={name}
+                                                onChange={(e) => setName(e.target.value)}
+                                                required
+                                            />
+                                        </div>
+                                    </div>
                                 )}
-                            </p>
-                        </form>
+
+                                <div className="premium-input-group">
+                                    <div className="input-field-wrapper">
+                                        <FaEnvelope className="field-icon" />
+                                        <input
+                                            type="email"
+                                            placeholder="Adresse E-mail"
+                                            value={email}
+                                            onChange={(e) => setEmail(e.target.value)}
+                                            required
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="premium-input-group">
+                                    <div className="input-field-wrapper">
+                                        <FaLock className="field-icon" />
+                                        <input
+                                            type="password"
+                                            placeholder="Mot de passe"
+                                            value={password}
+                                            onChange={(e) => setPassword(e.target.value)}
+                                            required
+                                        />
+                                    </div>
+                                </div>
+
+                                {!isLogin && (
+                                    <div className="premium-input-group">
+                                        <div className="input-field-wrapper">
+                                            <FaKey className="field-icon" />
+                                            <input
+                                                type="password"
+                                                placeholder="Confirmer le mot de passe"
+                                                value={confirmPassword}
+                                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                                required
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+
+                                {isLogin && (
+                                    <div className="auth-footer-options">
+                                        <label className="checkbox-container">
+                                            <input type="checkbox" />
+                                            <span className="checkmark"></span>
+                                            Se souvenir de moi
+                                        </label>
+                                        <Link to="/forgot-password" title="Coming soon" className="forgot-link">
+                                            Mot de passe oublié ?
+                                        </Link>
+                                    </div>
+                                )}
+
+                                <button type="submit" className="glam-submit-btn" disabled={!email || !password}>
+                                    <span>{isLogin ? "Se Connecter" : "Créer mon Compte"}</span>
+                                    <FaChevronRight className="arrow-icon" />
+                                </button>
+
+                                <div className="auth-switch-box">
+                                    {isLogin ? (
+                                        <>Nouveau ici ? <Link to="/register">Rejoignez-nous</Link></>
+                                    ) : (
+                                        <>Déjà membre ? <Link to="/login">Connectez-vous</Link></>
+                                    )}
+                                </div>
+                            </form>
+                        </div>
                     </div>
 
                 </div>
             </section>
 
             <Footer />
-        </>
+        </div>
     );
 }

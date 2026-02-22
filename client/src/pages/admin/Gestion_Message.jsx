@@ -1,38 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import NavbarAdmin from '../../comp/Navbar_admin';
-import { FaTrash, FaSpinner, FaEnvelopeOpenText, FaTimes, FaToggleOn, FaToggleOff, FaExclamationTriangle } from 'react-icons/fa';
-import '../admin_css/Gestion_Message.css';
+import { FaTrash, FaSpinner, FaEnvelopeOpenText, FaTimes, FaToggleOn, FaToggleOff, FaCalendarAlt, FaUser, FaEnvelope, FaExclamationCircle } from 'react-icons/fa';
 import BASE_URL from '../../apiConfig';
+import { useAlert } from '../../context/AlertContext';
+
 const API_MESSAGES_ENDPOINT = `${BASE_URL}/api/messages`;
 
 export default function Gestion_Message() {
-    // États principaux
     const [messages, setMessages] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    const { showAlert } = useAlert();
 
-    // États de la modale de lecture
     const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
     const [selectedMessage, setSelectedMessage] = useState(null);
 
-    // NOUVEAUX ÉTATS POUR LA MODALE DE CONFIRMATION DE SUPPRESSION
-    const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
-    const [messageToDelete, setMessageToDelete] = useState(null); // Contient l'objet du message à supprimer
-
-    // -------------------- ⚙️ Récupération et Gestion des Données --------------------
-
-    // Récupération des messages depuis le serveur
     const fetchMessages = async () => {
         setLoading(true);
         try {
             const response = await fetch(API_MESSAGES_ENDPOINT);
-            if (!response.ok) throw new Error('Échec du chargement des messages depuis le serveur. Vérifiez l\'API.');
+            if (!response.ok) throw new Error('Échec du chargement.');
             const data = await response.json();
             setMessages(data);
             setError(null);
         } catch (err) {
-            console.error('Erreur lors de la récupération des messages:', err);
-            setError('Impossible de charger les messages. Le serveur est-il en cours d\'exécution ?');
+            setError('Impossible de charger les messages.');
         } finally {
             setLoading(false);
         }
@@ -42,256 +34,174 @@ export default function Gestion_Message() {
         fetchMessages();
     }, []);
 
-    // 💡 FONCTION POUR OUVRIR LA MODALE DE CONFIRMATION
-    const handleOpenConfirmModal = (message) => {
-        setMessageToDelete(message);
-        setIsConfirmModalOpen(true);
-        // Fermer la modale de lecture si elle est ouverte
-        if (isMessageModalOpen) {
-            handleCloseMessageModal();
-        }
+    const handleDelete = (message) => {
+        showAlert('confirm', 'Supprimer Message', `Voulez-vous supprimer le message de ${message.nom} ?`, async () => {
+            try {
+                const response = await fetch(`${API_MESSAGES_ENDPOINT}/${message._id}`, { method: 'DELETE' });
+                if (!response.ok) throw new Error('Erreur de suppression.');
+                setMessages(prev => prev.filter(msg => msg._id !== message._id));
+                showAlert('success', 'Succès', 'Message supprimé.');
+                if (isMessageModalOpen) setIsMessageModalOpen(false);
+            } catch (err) {
+                showAlert('error', 'Erreur', 'Féchec de suppression.');
+            }
+        });
     };
 
-    // 💡 FONCTION POUR FERMER LA MODALE DE CONFIRMATION
-    const handleCloseConfirmModal = () => {
-        setIsConfirmModalOpen(false);
-        setMessageToDelete(null);
-    };
-
-    // 🗑️ Supprimer un message (Exécuté APRÈS la confirmation)
-    const handleDelete = async () => {
-        const id = messageToDelete._id;
-        const nom = messageToDelete.nom;
-
-        handleCloseConfirmModal(); // Fermer la modale après avoir lancé la suppression
-        setLoading(true); // Optionnel, mais recommandé pour l'UX
-
-        try {
-            const response = await fetch(`${API_MESSAGES_ENDPOINT}/${id}`, { method: 'DELETE' });
-            if (!response.ok) throw new Error('Échec de la suppression du message.');
-
-            // Si la suppression réussit
-            setMessages(prev => prev.filter(msg => msg._id !== id));
-            // Ne pas utiliser 'alert' mais un système de notification (Toast) pour une meilleure UX
-            // alert(`Message de ${nom} supprimé avec succès.`); 
-        } catch (err) {
-            console.error(err);
-            // alert("Une erreur est survenue lors de la suppression du message."); 
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    // 🔄 Changer le statut d'un message (Traité / Non traité)
     const toggleTreatedStatus = async (id) => {
         try {
-            const response = await fetch(`${API_MESSAGES_ENDPOINT}/${id}/status`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            });
-
-            if (!response.ok) throw new Error("Échec de la mise à jour du statut du message.");
-
-            const updatedMessage = await response.json();
-
-            setMessages(prev =>
-                prev.map(msg => msg._id === id ? { ...msg, estTraite: updatedMessage.estTraite } : msg)
-            );
-            // Mettre à jour la modale de lecture si elle est ouverte
-            if (selectedMessage && selectedMessage._id === id) {
-                setSelectedMessage(updatedMessage);
-            }
+            const response = await fetch(`${API_MESSAGES_ENDPOINT}/${id}/status`, { method: 'PUT' });
+            if (!response.ok) throw new Error("Erreur de statut.");
+            const updated = await response.json();
+            setMessages(prev => prev.map(msg => msg._id === id ? updated : msg));
+            if (selectedMessage && selectedMessage._id === id) setSelectedMessage(updated);
         } catch (err) {
-            console.error(err);
-            alert("Une erreur est survenue lors de la mise à jour du statut.");
+            showAlert('error', 'Erreur', 'Échec de mise à jour.');
         }
     };
-
-    // -------------------- 💡 Fonctions Modale de Lecture --------------------
 
     const handleOpenMessageModal = (message) => {
         setSelectedMessage(message);
         setIsMessageModalOpen(true);
-        // Basculer automatiquement sur "Traité" si le message était "Non traité"
-        if (!message.estTraite) {
-            toggleTreatedStatus(message._id);
-        }
+        if (!message.estTraite) toggleTreatedStatus(message._id);
     };
 
-    const handleCloseMessageModal = () => {
-        setIsMessageModalOpen(false);
-        setSelectedMessage(null);
-    };
-
-
-    // 📝 Formater la date
     const formatDate = (dateString) => {
-        const date = new Date(dateString);
-        const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
-        return date.toLocaleDateString('fr-FR', options);
+        return new Date(dateString).toLocaleDateString('fr-FR', {
+            day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+        });
     };
-
-    // -------------------- 🎨 Rendu --------------------
-    if (loading) return (
-        <>
-            <NavbarAdmin />
-            <div className="abonnement-container loading-state">
-                <FaSpinner className="spinner" />
-                <p>Chargement des  messages...</p>
-            </div>
-        </>
-    );
 
     return (
-        <>
+        <div style={{ background: '#f8fafc', minHeight: '100vh' }}>
             <NavbarAdmin />
-            <div className="admin-page-container">
-                <h2 className="client-title">📧 Gestion des messages clients</h2>
 
+            <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '40px 20px' }}>
+                <div style={{ marginBottom: '40px' }}>
+                    <h1 style={{ fontSize: '2.2rem', color: '#1e293b', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '15px' }}>
+                        <FaEnvelopeOpenText style={{ color: '#D4AF37' }} /> Messages Clients
+                    </h1>
+                    <p style={{ color: '#64748b', marginTop: '10px' }}>Gérez les demandes et contacts de vos utilisateurs.</p>
+                </div>
 
-                {error && (
-                    <div className="alert-danger text-center">{error}</div>
-                )}
-
-                {/* --- Tableau des Messages --- */}
-                {!loading && !error && messages.length > 0 && (
-                    <div className="card message-list-card">
-                        <div className="table-responsive">
-                            <table className="table table-hover">
-                                <thead className="table-head">
-                                    <tr>
-                                        <th>Date</th>
-                                        <th>Nom</th>
-                                        <th>Email</th>
-                                        <th>Sujet</th>
-                                        <th className="text-center">Statut</th>
-                                        <th className="text-center">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {messages.map((message) => (
-                                        <tr
-                                            key={message._id}
-                                            className={message.estTraite ? 'message-treated' : 'message-untreated'}
-                                            onClick={() => handleOpenMessageModal(message)} // 💡 Ouvre la modale de lecture
-                                        >
-                                            <td data-label="Date">{formatDate(message.dateCreation)}</td>
-                                            <td data-label="Nom">{message.nom}</td>
-                                            <td data-label="Email">{message.email}</td>
-                                            <td data-label="Sujet">{message.sujet}</td>
-                                            <td data-label="Statut" className="text-center">
-                                                <span
-                                                    className={`status-badge ${message.estTraite ? 'badge-success' : 'badge-warning'}`}
-                                                    onClick={(e) => { e.stopPropagation(); toggleTreatedStatus(message._id); }} // 💡 Empêche l'ouverture de la modale
-                                                >
-                                                    {message.estTraite ? 'Traité' : 'Nouveau'}
-                                                </span>
-                                            </td>
-                                            <td data-label="Actions" className="text-center">
-                                                <button
-                                                    className="action-btn btn-delete"
-                                                    title="Supprimer le message"
-                                                    onClick={(e) => { e.stopPropagation(); handleOpenConfirmModal(message); }} // 💡 Ouvre la modale de confirmation
-                                                >
-                                                    <FaTrash />
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
+                {loading ? (
+                    <div style={{ textAlign: 'center', padding: '100px' }}>
+                        <FaSpinner className="spinner" style={{ fontSize: '3rem', color: '#D4AF37' }} />
                     </div>
-                )}
+                ) : (
+                    <div className="premium-list-container">
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                            {messages.map((msg) => (
+                                <div
+                                    key={msg._id}
+                                    className="premium-list-item"
+                                    onClick={() => handleOpenMessageModal(msg)}
+                                    style={{
+                                        cursor: 'pointer',
+                                        background: '#fff',
+                                        borderLeft: msg.estTraite ? '5px solid #e2e8f0' : '5px solid #D4AF37',
+                                        padding: '20px',
+                                        display: 'grid',
+                                        gridTemplateColumns: 'auto 1fr auto auto',
+                                        alignItems: 'center',
+                                        gap: '25px',
+                                        opacity: msg.estTraite ? 0.8 : 1
+                                    }}
+                                >
+                                    <div style={{ width: '45px', height: '45px', borderRadius: '50%', background: msg.estTraite ? '#f1f5f9' : '#fef3c7', display: 'flex', alignItems: 'center', justifyContent: 'center', color: msg.estTraite ? '#94a3b8' : '#D4AF37' }}>
+                                        <FaUser />
+                                    </div>
 
-                {!loading && !error && messages.length === 0 && (
-                    <div className="alert-info text-center">
-                        Aucun message client pour le moment.
+                                    <div>
+                                        <div style={{ fontWeight: 'bold', color: '#1e293b', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                            {msg.nom}
+                                            {!msg.estTraite && <span style={{ background: '#D4AF37', color: '#fff', fontSize: '0.65rem', padding: '2px 8px', borderRadius: '10px', textTransform: 'uppercase' }}>Nouveau</span>}
+                                        </div>
+                                        <div style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '4px' }}>{msg.sujet}</div>
+                                    </div>
+
+                                    <div style={{ fontSize: '0.85rem', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <FaCalendarAlt size={12} /> {formatDate(msg.dateCreation)}
+                                    </div>
+
+                                    <div style={{ display: 'flex', gap: '10px' }}>
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); handleDelete(msg); }}
+                                            className="premium-btn-cta secondary"
+                                            style={{ padding: '8px 12px', minWidth: 'auto', color: '#ef4444', borderColor: '#fecaca', background: '#fee2e2' }}
+                                        >
+                                            <FaTrash size={14} />
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        {messages.length === 0 && (
+                            <div style={{ textAlign: 'center', padding: '60px', background: '#fff', borderRadius: '20px', color: '#64748b', border: '2px dashed #e2e8f0' }}>
+                                <FaEnvelope size={40} style={{ opacity: 0.2, marginBottom: '15px' }} />
+                                <p>Aucun message reçu.</p>
+                            </div>
+                        )}
                     </div>
                 )}
             </div>
 
-            {/* -------------------- Modale d'Affichage de Message Complet -------------------- */}
             {isMessageModalOpen && selectedMessage && (
-                <div className="modal-overlay" onClick={handleCloseMessageModal}>
-                    <div className="modal-content-custom" onClick={(e) => e.stopPropagation()}>
-                        <button className="modal-close-btn" onClick={handleCloseMessageModal}>
-                            <FaTimes />
-                        </button>
-
-                        <h3 className="modal-title">
-                            <FaEnvelopeOpenText /> Message de **{selectedMessage.nom}**
-                        </h3>
-
-                        <div className="modal-header-info">
-                            <p><strong>Date:</strong> {formatDate(selectedMessage.dateCreation)}</p>
-                            <p><strong>Email:</strong> {selectedMessage.email}</p>
-                            <p><strong>Sujet:</strong> {selectedMessage.sujet}</p>
+                <div className="premium-modal-backdrop" onClick={() => setIsMessageModalOpen(false)}>
+                    <div className="premium-modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '700px' }}>
+                        <div className="premium-modal-header">
+                            <h3 className="premium-modal-title">Détail du Message</h3>
+                            <button onClick={() => setIsMessageModalOpen(false)} className="premium-modal-close-icon"><FaTimes /></button>
                         </div>
 
-                        <div className="modal-body-content">
-                            <h4>Contenu du Message :</h4>
-                            <p className="message-text-content">{selectedMessage.message}</p>
-                        </div>
+                        <div style={{ marginTop: '30px' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '30px', background: '#f8fafc', padding: '20px', borderRadius: '12px' }}>
+                                <div>
+                                    <label style={{ fontSize: '0.75rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 'bold' }}>Expéditeur</label>
+                                    <div style={{ color: '#1e293b', fontWeight: 'bold' }}>{selectedMessage.nom}</div>
+                                </div>
+                                <div>
+                                    <label style={{ fontSize: '0.75rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 'bold' }}>Email</label>
+                                    <div style={{ color: '#1e293b' }}>{selectedMessage.email}</div>
+                                </div>
+                                <div>
+                                    <label style={{ fontSize: '0.75rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 'bold' }}>Sujet</label>
+                                    <div style={{ color: '#1e293b' }}>{selectedMessage.sujet}</div>
+                                </div>
+                                <div>
+                                    <label style={{ fontSize: '0.75rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 'bold' }}>Date</label>
+                                    <div style={{ color: '#1e293b' }}>{formatDate(selectedMessage.dateCreation)}</div>
+                                </div>
+                            </div>
 
-                        <div className="modal-footer-actions">
-                            <button
-                                className={`action-btn btn-status-${selectedMessage.estTraite ? 'treated' : 'untreated'}`}
-                                onClick={() => toggleTreatedStatus(selectedMessage._id)}
-                            >
-                                {selectedMessage.estTraite ? <FaToggleOn /> : <FaToggleOff />}
-                                {selectedMessage.estTraite ? ' Marquer comme Non traité' : ' Marquer comme Traité'}
-                            </button>
-                            <button
-                                className="action-btn btn-delete-modal"
-                                // Utiliser handleOpenConfirmModal depuis la modale de lecture
-                                onClick={() => handleOpenConfirmModal(selectedMessage)}
-                            >
-                                <FaTrash /> Supprimer
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+                            <div style={{ marginBottom: '30px' }}>
+                                <label style={{ fontSize: '0.75rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 'bold', display: 'block', marginBottom: '10px' }}>Message</label>
+                                <div style={{ background: '#fff', border: '1px solid #e2e8f0', padding: '20px', borderRadius: '12px', color: '#334155', lineHeight: '1.6', minHeight: '150px' }}>
+                                    {selectedMessage.message}
+                                </div>
+                            </div>
 
-            {/* -------------------- 💡 NOUVELLE MODALE DE CONFIRMATION DE SUPPRESSION -------------------- */}
-            {isConfirmModalOpen && messageToDelete && (
-                <div className="modal-overlay" onClick={handleCloseConfirmModal}>
-                    <div className="modal-content-custom confirmation-modal" onClick={(e) => e.stopPropagation()}>
-                        <h3 className="modal-title-confirm">
-                            <FaExclamationTriangle className="icon-warning" /> Confirmation de Suppression
-                        </h3>
-
-                        <div className="modal-body-content confirmation-body">
-                            <p>Êtes-vous certain de vouloir supprimer définitivement le message de :</p>
-                            <p className="confirm-name">**{messageToDelete.nom}**</p>
-                            <p className="warning-text">
-                                **Cette action est irréversible.** Le message sera perdu définitivement.
-                            </p>
-                        </div>
-
-                        <div className="modal-footer-actions">
-                            <button
-                                className="action-btn btn-cancel"
-                                onClick={handleCloseConfirmModal}
-                                disabled={loading}
-                            >
-                                Annuler
-                            </button>
-                            <button
-                                className="action-btn btn-confirm-delete"
-                                onClick={handleDelete}
-                                disabled={loading}
-                            >
-                                {loading ? <FaSpinner className="fa-spin-light" /> : <FaTrash />}
-                                {loading ? ' Suppression...' : ' Oui, Supprimer'}
-                            </button>
+                            <div className="premium-btn-group">
+                                <button
+                                    onClick={() => toggleTreatedStatus(selectedMessage._id)}
+                                    className="premium-btn-cta secondary"
+                                    style={{ flex: 1 }}
+                                >
+                                    {selectedMessage.estTraite ? <FaToggleOn /> : <FaToggleOff />}
+                                    {selectedMessage.estTraite ? ' Marquer Non-Traité' : ' Marquer Traité'}
+                                </button>
+                                <button
+                                    onClick={() => handleDelete(selectedMessage)}
+                                    className="premium-btn-cta secondary"
+                                    style={{ flex: 1, background: '#fee2e2', color: '#ef4444', borderColor: '#fecaca' }}
+                                >
+                                    <FaTrash /> Supprimer
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
             )}
-        </>
+        </div>
     );
 }

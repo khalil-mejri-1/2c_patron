@@ -2,21 +2,22 @@ import React, { useRef, useState } from 'react';
 import Navbar from '../comp/navbar';
 import Footer from '../comp/Footer';
 import BASE_URL from '../apiConfig';
-// Importation d'icônes, supposons que vous utilisez quelque chose comme Font Awesome ou des icônes de réaction
-// J'utilise des émojis pour la démo, mais dans un environnement réel, vous devriez utiliser des composants d'icônes (ex: FaUpload, FaTimes)
+import {
+    FaCheck, FaCrown, FaMobileAlt, FaUniversity, FaEnvelopeOpenText,
+    FaTimes, FaCloudUploadAlt, FaRocket, FaRegGem, FaAward
+} from 'react-icons/fa';
 
 const PaymentMethodCard = ({ icon, name, details, onVerifyClick }) => (
-    <div className="payment-card">
-        <div className="method-icon">{icon}</div>
-        <h3 className="method-name">{name}</h3>
-        <div className="method-details">{details}</div>
-        <button className="verify-button" onClick={onVerifyClick}>
-            Envoyer la preuve
+    <div className="payment-method-premium-card">
+        <div className="method-icon-wrapper">{icon}</div>
+        <h3 className="method-name-title">{name}</h3>
+        <div className="method-details-text">{details}</div>
+        <button className="verify-proof-button" onClick={onVerifyClick}>
+            <FaCloudUploadAlt style={{ marginRight: '8px' }} /> Envoyer la preuve
         </button>
     </div>
 );
 
-// ✅ NOUVEAU COMPOSANT POUR LE CHAMP D'UPLOAD ÉLÉGANT
 const FileUploadField = ({ file, onChange, hasError }) => {
     const fileInputRef = useRef(null);
     const [isDragging, setIsDragging] = useState(false);
@@ -36,7 +37,6 @@ const FileUploadField = ({ file, onChange, hasError }) => {
         setIsDragging(false);
         const files = e.dataTransfer.files;
         if (files.length) {
-            // Créer un événement de changement synthétique pour le composant parent
             onChange({ target: { name: 'file', files: files } });
         }
     };
@@ -45,14 +45,9 @@ const FileUploadField = ({ file, onChange, hasError }) => {
         fileInputRef.current.click();
     };
 
-    const dropzoneClass = `dropzone ${isDragging ? 'is-dragging' : ''} ${hasError ? 'has-error' : ''}`;
-
-
-
-
     return (
         <div
-            className={dropzoneClass}
+            className={`premium-dropzone ${isDragging ? 'is-dragging' : ''} ${hasError ? 'has-error' : ''}`}
             onDragEnter={handleDragEnter}
             onDragOver={handleDragEnter}
             onDragLeave={handleDragLeave}
@@ -65,43 +60,43 @@ const FileUploadField = ({ file, onChange, hasError }) => {
                 accept="image/*"
                 onChange={onChange}
                 ref={fileInputRef}
-                style={{ display: 'none' }} // Masquer l'input par défaut
+                style={{ display: 'none' }}
             />
             {file ? (
-                <p className="file-name-display">
-                    🖼️ **Fichier sélectionné :** {file.name}
-                </p>
+                <div className="file-selected-status">
+                    <span className="file-icon-check">✅</span>
+                    <p className="file-name-text"><strong>Fichier :</strong> {file.name}</p>
+                </div>
             ) : (
-                <div className="dropzone-prompt">
-                    <span className="upload-icon">⬆️</span>
-                    <p>
-                        **Cliquez pour sélectionner** ou **Glissez & déposez** votre preuve de paiement (image).
-                    </p>
-                    <p className="small-text">Formats acceptés : JPG, PNG | Taille max : 5MB</p>
+                <div className="dropzone-empty-prompt">
+                    <FaCloudUploadAlt className="upload-icon-pulse" />
+                    <p className="main-prompt"><strong>Cliquez ici</strong> ou glissez votre preuve</p>
+                    <p className="sub-prompt">Image JPG/PNG (Max 5MB)</p>
                 </div>
             )}
         </div>
     );
 };
 
-
 export default function Abonnementvip() {
     const paymentSectionRef = useRef(null);
     const [showModal, setShowModal] = useState(false);
     const [showSuccess, setShowSuccess] = useState(false);
     const [errorMsg, setErrorMsg] = useState('');
-    // Nous avons besoin de l'état de chargement pour un aspect plus professionnel
     const [isLoading, setIsLoading] = useState(false);
     const [formData, setFormData] = useState({ file: null });
 
     const vipPlan = {
         name: 'Abonnement VIP Gold',
-        price: '99 DT / mois',
+        price: '99',
+        currency: 'DT',
+        period: '/ mois',
         features: [
-            'Accès illimité à tout le contenu',
+            'Accès illimité à tout le contenu exclusif',
             'Support technique prioritaire 24/7',
-            'Téléchargement du contenu pour visionnage hors ligne',
+            'Téléchargement illimité du contenu',
             'Qualité de visionnage Ultra HD (4K)',
+            'Certification de complétion Master Atelier',
         ],
     };
 
@@ -111,19 +106,18 @@ export default function Abonnementvip() {
 
     const handleVerification = () => {
         setErrorMsg('');
-        setFormData({ file: null }); // Réinitialiser le fichier à l'ouverture
+        setFormData({ file: null });
         setShowModal(true);
     };
 
     const handleChange = (e) => {
-        const { name, value, files } = e.target;
+        const { name, files } = e.target;
         setErrorMsg('');
 
-        // Validation simple de fichier
         if (files && files.length > 0) {
             const file = files[0];
             const fileSizeMB = file.size / (1024 * 1024);
-            if (fileSizeMB > 5) { // Limite de 5MB
+            if (fileSizeMB > 5) {
                 setErrorMsg("Le fichier est trop volumineux (max 5 Mo).");
                 setFormData((prev) => ({ ...prev, file: null }));
                 return;
@@ -132,11 +126,11 @@ export default function Abonnementvip() {
 
         setFormData((prev) => ({
             ...prev,
-            [name]: files ? files[0] : value,
+            [name]: files ? files[0] : e.target.value,
         }));
     };
-    const IMGBB_API_KEY = 'd9eb76a38b59f5fb253a8be1456c90c0';
 
+    const IMGBB_API_KEY = 'd9eb76a38b59f5fb253a8be1456c90c0';
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -147,7 +141,7 @@ export default function Abonnementvip() {
             return;
         }
 
-        setIsLoading(true); // Démarrer le chargement
+        setIsLoading(true);
 
         try {
             const email = localStorage.getItem('currentUserEmail');
@@ -157,11 +151,8 @@ export default function Abonnementvip() {
                 return;
             }
 
-            // --- NOUVELLE LOGIQUE D'UPLOAD IMGBB ---
-
-            // 1. Uploader l'image sur ImgBB
             const imgBbFormData = new FormData();
-            imgBbFormData.append('image', formData.file); // Le fichier
+            imgBbFormData.append('image', formData.file);
 
             const imgBbRes = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
                 method: 'POST',
@@ -170,127 +161,142 @@ export default function Abonnementvip() {
 
             if (!imgBbRes.ok) {
                 const errorData = await imgBbRes.json();
-                console.error("Erreur ImgBB:", errorData);
-                setErrorMsg(`Erreur lors du téléversement de l'image (ImgBB): ${errorData.error.message || 'Erreur inconnue'}`);
+                setErrorMsg(`Erreur upload image: ${errorData.error.message || 'Inconnue'}`);
                 setIsLoading(false);
                 return;
             }
 
             const imgBbData = await imgBbRes.json();
-            const preuve_paiement_url = imgBbData.data.url; // L'URL de l'image stockée
+            const preuve_paiement_url = imgBbData.data.url;
 
-            // 2. Récupérer le nom de l'utilisateur
             const userRes = await fetch(`${BASE_URL}/api/users?email=${email}`);
-            if (!userRes.ok) {
-                setErrorMsg("Impossible de récupérer les informations de l'utilisateur.");
-                setIsLoading(false);
-                return;
-            }
             const userData = await userRes.json();
             const username = userData.nom;
 
-            // 3. Envoyer les données (Nom, Email, URL ImgBB) à votre API Backend
             const dataToSend = {
                 nom: username,
                 mail: email,
-                preuve_paiement_url: preuve_paiement_url // 🎉 On envoie l'URL
+                preuve_paiement_url: preuve_paiement_url
             };
 
             const res = await fetch(`${BASE_URL}/api/abonnement`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json', // ⚠️ Important : On envoie du JSON, pas du FormData
+                    'Content-Type': 'application/json',
                 },
                 body: JSON.stringify(dataToSend),
             });
-
-            // --- FIN NOUVELLE LOGIQUE ---
-
 
             if (res.ok) {
                 setShowModal(false);
                 setShowSuccess(true);
                 setFormData({ file: null });
-                setTimeout(() => setShowSuccess(false), 4000);
+                setTimeout(() => setShowSuccess(false), 5000);
             } else {
                 const errorData = await res.json();
-                setErrorMsg(errorData.message || "Erreur lors de l’envoi de la demande d'abonnement. Réessayez.");
+                setErrorMsg(errorData.message || "Erreur d'envoi. Réessayez.");
             }
 
         } catch (error) {
-            console.error("Erreur générale:", error);
-            setErrorMsg("Erreur de connexion ou traitement. Vérifiez votre connexion.");
+            setErrorMsg("Erreur de connexion. Vérifiez votre réseau.");
         } finally {
-            setIsLoading(false); // Arrêter le chargement
+            setIsLoading(false);
         }
     };
 
-
-
     return (
-        <>
+        <div className="vip-page-wrapper">
             <Navbar />
 
-            <div className="page-container">
-                <h1 className="title">
-                    ABONNEMENT VIP <span style={{ color: '#D4AF37' }}>GOLD</span>
-                </h1>
+            {/* --- HERO SECTION --- */}
+            <div className="vip-hero-header">
+                <div className="vip-hero-bg-overlay"></div>
+                <div className="vip-hero-content-reveal">
+                    <div className="vip-badge-float">
+                        <FaCrown />
+                    </div>
+                    <h1 className="vip-main-glow-title">
+                        DEVENIR <span className="gold-accent-text">VIP GOLD</span>
+                    </h1>
+                    <p className="vip-hero-subtitle">
+                        Rejoignez l'élite de la couture et accédez à tout l'univers Master Atelier.
+                    </p>
+                </div>
+            </div>
 
-                <div className="pricing-card">
-                    <h2 className="card-title_vip">{vipPlan.name}</h2>
-                    <div className="price">{vipPlan.price}</div>
+            <div className="vip-main-content-container">
 
-                    <ul className="features-list">
+                {/* --- PRICING CARD --- */}
+                <div className="vip-premium-pricing-card">
+                    <div className="vip-card-header-accent">
+                        <FaRegGem /> <span>PREMIUM ACCESS</span>
+                    </div>
+                    <h2 className="vip-plan-name-label">{vipPlan.name}</h2>
+
+                    <div className="vip-price-tag-wrapper">
+                        <span className="currency">{vipPlan.currency}</span>
+                        <span className="amount">{vipPlan.price}</span>
+                        <span className="period">{vipPlan.period}</span>
+                    </div>
+
+                    <div className="vip-features-grid-list">
                         {vipPlan.features.map((f, i) => (
-                            <li key={i} className="feature-item">
-                                <span className="check-icon">✔</span>
-                                {f}
-                            </li>
+                            <div key={i} className="vip-feature-row-item">
+                                <div className="feature-check-circle"><FaCheck /></div>
+                                <span className="feature-text-label">{f}</span>
+                            </div>
                         ))}
-                    </ul>
+                    </div>
 
-                    <button className="cta-button" onClick={scrollToPayment}>
-                        S'abonner maintenant
+                    <button className="vip-cta-gold-button" onClick={scrollToPayment}>
+                        <FaRocket style={{ marginRight: '10px' }} /> Souscrire maintenant
                     </button>
+
+                    <p className="secure-payment-hint">🛡️ Paiement sécurisé & Vérification garantie</p>
                 </div>
 
-                <div className="payment-section" ref={paymentSectionRef}>
-                    <h2 className="payment-title">Choisissez votre mode de paiement</h2>
+                {/* --- PAYMENT METHODS --- */}
+                <div className="vip-payment-methods-section" ref={paymentSectionRef}>
+                    <div className="section-divider-header">
+                        <div className="line"></div>
+                        <h2 className="methods-title-label">Modes de Paiement</h2>
+                        <div className="line"></div>
+                    </div>
 
-                    <div className="payment-card-grid">
+                    <div className="payment-grid-layout">
                         <PaymentMethodCard
-                            icon="📱"
-                            name="Applications de Paiement Rapide (D17 & Flouci)"
+                            icon={<FaMobileAlt />}
+                            name="Applications Mobiles (D17 & Flouci)"
                             onVerifyClick={handleVerification}
                             details={
                                 <>
-                                    Veuillez envoyer le montant requis ({vipPlan.price.split(' ')[0]}) au numéro suivant via
-                                    <b> D17 </b> ou <b> Flouci </b> :
-                                    <p className="highlight-box">+216 ** *** ***</p>
+                                    Transférez <strong>{vipPlan.price} {vipPlan.currency}</strong> au numéro suivant via
+                                    <strong> D17 </strong> ou <strong> Flouci </strong>:
+                                    <div className="payment-id-highlight">+216 ** *** ***</div>
                                 </>
                             }
                         />
 
                         <PaymentMethodCard
-                            icon="🏦"
+                            icon={<FaUniversity />}
                             name="Virement Bancaire (RIB)"
                             onVerifyClick={handleVerification}
                             details={
                                 <>
-                                    RIB: **** (Insérez ici le RIB complet)
-                                    <p>Nom du bénéficiaire : Le Nom Ici</p>
+                                    RIB: <strong>08 000 000 0000 0000 00 00</strong>
+                                    <p className="beneficiary-label">Titulaire : L'Atelier Sfax</p>
                                 </>
                             }
                         />
 
                         <PaymentMethodCard
-                            icon="📬"
-                            name="Mandat Postal"
+                            icon={<FaEnvelopeOpenText />}
+                            name="Mandat Postal Classique"
                             onVerifyClick={handleVerification}
                             details={
                                 <>
-                                    À l'ordre de : <b>Nom complet</b>
-                                    <p>Adresse Postale : L'adresse complète</p>
+                                    À l'ordre de : <strong>Nom Prénom Complet</strong>
+                                    <p className="postal-address-label">Adresse : Rue Farhat Hached, Sfax</p>
                                 </>
                             }
                         />
@@ -298,38 +304,42 @@ export default function Abonnementvip() {
                 </div>
             </div>
 
-            {/* ✅ MODALE AMÉLIORÉE (Pro, Chic, Friendly) */}
+            {/* --- UPLOAD MODAL --- */}
             {showModal && (
-                <div className="modal-overlay">
-                    <div className="modal-content pro-modal">
-                        <button className="close-button" onClick={() => setShowModal(false)} disabled={isLoading}>
-                            &times;
+                <div className="premium-modal-backdrop" onClick={() => setShowModal(false)}>
+                    <div className="premium-modal-content" onClick={(e) => e.stopPropagation()}>
+                        <button className="premium-modal-close-icon" onClick={() => setShowModal(false)} disabled={isLoading}>
+                            <FaTimes />
                         </button>
 
-                        <div className="modal-header">
-                            <span className="header-icon">💳</span>
-                            <h2>Vérification de Paiement VIP</h2>
-                            <p className="modal-subtitle">
-                                Veuillez télécharger une photo ou capture d'écran de votre transaction pour validation.
-                            </p>
+                        <div className="premium-modal-header">
+                            <div className="vip-cert-icon-wrapper" style={{ margin: '0 auto 15px', background: 'rgba(212, 175, 55, 0.1)', color: '#d4af37' }}>
+                                <FaAward />
+                            </div>
+                            <h2 className="premium-modal-title">Preuve de Paiement</h2>
                         </div>
 
-                        <form onSubmit={handleSubmit} className="upload-form">
+                        <form onSubmit={handleSubmit} className="premium-form-grid" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                            <div style={{ textAlign: 'center', color: '#64748b', fontSize: '1rem', lineHeight: '1.6' }}>
+                                Veuillez nous envoyer une photo ou capture d'écran claire de votre transaction.
+                            </div>
 
-                            {errorMsg && <div className="error-message shake-animation">⚠️ {errorMsg}</div>}
+                            {errorMsg && <div className="premium-error-alert" style={{ background: '#fef2f2', color: '#b91c1c', padding: '12px', borderRadius: '12px', textAlign: 'center', fontSize: '0.9rem', border: '1px solid #fee2e2' }}>⚠️ {errorMsg}</div>}
 
-                            <FileUploadField
-                                file={formData.file}
-                                onChange={handleChange}
-                                hasError={!!errorMsg}
-                            />
+                            <div className="premium-form-group">
+                                <FileUploadField
+                                    file={formData.file}
+                                    onChange={handleChange}
+                                    hasError={!!errorMsg}
+                                />
+                            </div>
 
-                            <div className="modal-actions">
-                                <button type="button" onClick={() => setShowModal(false)} disabled={isLoading} className="cancel-button">
+                            <div className="premium-btn-group">
+                                <button type="button" onClick={() => setShowModal(false)} className="premium-btn-cta secondary" disabled={isLoading}>
                                     Annuler
                                 </button>
-                                <button type="submit" className="send-button" disabled={isLoading || !formData.file}>
-                                    {isLoading ? '⏳ Envoi en cours...' : '🚀 Confirmer & Envoyer la Preuve'}
+                                <button type="submit" className="premium-btn-cta gold" disabled={isLoading || !formData.file}>
+                                    {isLoading ? 'Envoi en cours...' : 'Confirmer l\'Abonnement'}
                                 </button>
                             </div>
                         </form>
@@ -337,23 +347,20 @@ export default function Abonnementvip() {
                 </div>
             )}
 
-
-            {/* ✅ Fenêtre de confirmation après l'envoi */}
+            {/* --- SUCCESS MODAL --- */}
             {showSuccess && (
-                <div className="success-modal">
-                    <div className="success-box">
-                        <span className="success-icon">🎉</span>
-                        <p>
-                            **Félicitations !** Votre demande d’abonnement a bien été reçue.
-                        </p>
-                        <p className="small-text">
-                            Veuillez patienter 1 à 2 heures ouvrables pour la vérification de votre preuve de paiement et l'activation de votre compte VIP.
-                        </p>
+                <div className="vip-success-toast-overlay">
+                    <div className="vip-success-toast-box">
+                        <div className="toast-icon-check"><FaCheck /></div>
+                        <div className="toast-content-text">
+                            <h3>Demande Envoyée !</h3>
+                            <p>Votre preuve est en cours de vérification. Activation prévue sous 1 à 2 heures.</p>
+                        </div>
                     </div>
                 </div>
             )}
 
             <Footer />
-        </>
+        </div>
     );
 }

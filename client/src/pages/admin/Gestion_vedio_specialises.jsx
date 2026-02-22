@@ -1,131 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { FaTimes, FaPlus, FaTrash, FaEdit, FaVideo, FaSave, FaExclamationTriangle, FaSpinner, FaLink } from 'react-icons/fa';
-
-// --- الثوابت المشتركة (Shared Constants) ---
-const dangerRed = '#dc3545';
-const primaryBlue = '#007bff';
 import BASE_URL from '../../apiConfig';
-const VIDEOS_API_URL = `${BASE_URL}/api/specialized-videos`;
 
-// --- الأنماط المشتركة (Shared Styles) ---
-const modalStyles = {
-    overlay: {
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        background: 'rgba(0, 0, 0, 0.6)',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        zIndex: 3000,
-        padding: '20px',
-    },
-    modalContent: {
-        background: '#ffffff',
-        padding: '30px',
-        borderRadius: '12px',
-        boxShadow: '0 15px 40px rgba(0, 0, 0, 0.25)',
-        maxWidth: '650px',
-        width: '100%',
-        maxHeight: '90vh',
-        overflowY: 'auto',
-        position: 'relative',
-        animation: 'fadeIn 0.3s ease-out',
-    },
-    header: {
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: '25px',
-        borderBottom: '2px solid #e9ecef',
-        paddingBottom: '15px',
-    },
-    title: {
-        color: '#343a40',
-        fontSize: '1.5rem',
-        margin: 0,
-        display: 'flex',
-        alignItems: 'center',
-    },
-    formGrid: {
-        display: 'grid',
-        gridTemplateColumns: '1fr',
-        gap: '15px',
-    },
-    input: {
-        padding: '12px',
-        border: '1px solid #ced4da',
-        borderRadius: '6px',
-        fontSize: '1rem',
-        width: '100%',
-        boxSizing: 'border-box',
-    },
-    select: {
-        padding: '12px',
-        border: '1px solid #ced4da',
-        borderRadius: '6px',
-        fontSize: '1rem',
-        backgroundColor: '#fff',
-        width: '100%',
-        boxSizing: 'border-box',
-    },
-    buttonGroup: {
-        display: 'flex',
-        gap: '10px',
-        marginTop: '20px',
-    },
-    actionButton: {
-        background: 'none',
-        border: 'none',
-        fontSize: '1.5rem',
-        cursor: 'pointer',
-        transition: 'color 0.2s',
-    },
-    submitButton: {
-        padding: '12px 20px',
-        border: 'none',
-        borderRadius: '6px',
-        fontWeight: 'bold',
-        cursor: 'pointer',
-        color: 'white',
-        backgroundColor: primaryBlue, // Base Blue
-        transition: 'background-color 0.2s',
-        flexGrow: 1,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    cancelButton: {
-        padding: '12px 20px',
-        border: 'none',
-        borderRadius: '6px',
-        fontWeight: 'bold',
-        cursor: 'pointer',
-        color: 'white',
-        backgroundColor: '#6c757d',
-        transition: 'background-color 0.2s',
-    },
-    disabled: {
-        cursor: 'not-allowed',
-        opacity: 0.7,
-        filter: 'grayscale(30%)',
-    },
-    // CSS for responsiveness on smaller screens
-    '@media (min-width: 500px)': {
-        formGrid: {
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-        },
-        fullWidth: {
-            gridColumn: '1 / -1',
-        },
-    }
-};
+const VIDEOS_API_URL = `${BASE_URL}/api/specialized-videos`;
+const COURSES_API_URL = `${BASE_URL}/api/specialized-courses`;
 
 // ----------------------------------------------------------------
-// --- 2. مكون VideoFormModal ---
+// --- 1. مكون VideoFormModal ---
 // ----------------------------------------------------------------
 export function VideoFormModal({ isVisible, onClose, onSaveSuccess, initialVideo, categories }) {
     if (!isVisible) return null;
@@ -138,7 +20,6 @@ export function VideoFormModal({ isVisible, onClose, onSaveSuccess, initialVideo
     const [error, setError] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // تحديث الحالة عند تغيير الفيديو الأولي (عند فتح نموذج فيديو مختلف)
     useEffect(() => {
         if (initialVideo) {
             setTitle(initialVideo.title || '');
@@ -146,7 +27,6 @@ export function VideoFormModal({ isVisible, onClose, onSaveSuccess, initialVideo
             setCategory(initialVideo.category || '');
             setCurrentVideoUrl(initialVideo.url || '');
         } else {
-            // حالة الإضافة الجديدة
             setTitle('');
             setDescription('');
             setCategory('');
@@ -166,145 +46,78 @@ export function VideoFormModal({ isVisible, onClose, onSaveSuccess, initialVideo
         }
 
         setIsSubmitting(true);
-
-        const videoData = {
-            title,
-            description,
-            category,
-            videoUrl: currentVideoUrl,
-        };
+        const videoData = { title, description, category, videoUrl: currentVideoUrl };
 
         try {
             if (isEditing) {
-                await axios.put(`${VIDEOS_API_URL}/${initialVideo._id}`, videoData, {
-                    headers: { 'Content-Type': 'application/json' },
-                });
+                await axios.put(`${VIDEOS_API_URL}/${initialVideo._id}`, videoData);
             } else {
-                await axios.post(VIDEOS_API_URL, videoData, {
-                    headers: { 'Content-Type': 'application/json' },
-                });
+                await axios.post(VIDEOS_API_URL, videoData);
             }
-
-            onSaveSuccess(); // لإعادة تحميل البيانات في المكون الأب
-            onClose(); // إغلاق النافذة المنبثقة
-
+            onSaveSuccess();
+            onClose();
         } catch (err) {
-            const message = err.response?.data?.message || "Erreur serveur lors de l'opération. Assurez-vous que l'URL est valide.";
-            setError(message);
-            console.error(err);
+            setError(err.response?.data?.message || "Erreur lors de l'opération.");
         } finally {
             setIsSubmitting(false);
         }
     };
 
-    const submitButtonContent = isSubmitting ? (
-        <>
-            <FaSpinner className="spinner" style={{ marginRight: '0.5rem', animation: 'spin 1s linear infinite' }} />
-            {"Sauvegarde..."}
-        </>
-    ) : (
-        <>
-            {isEditing ? <FaSave style={{ marginRight: '0.5rem' }} /> : <FaPlus style={{ marginRight: '0.5rem' }} />}
-            {isEditing ? "Sauvegarder les Modifications" : "Ajouter la Vidéo par URL"}
-        </>
-    );
-
     return (
-        <div style={modalStyles.overlay}>
-            <div style={modalStyles.modalContent}>
-                <div style={modalStyles.header}>
-                    <h2 style={modalStyles.title}>
-                        <FaVideo style={{ marginRight: '0.5rem', color: primaryBlue }} />
-                        {isEditing ? `Modifier : ${initialVideo.title}` : "Ajouter une Nouvelle Vidéo"}
+        <div className="premium-modal-backdrop" onClick={onClose}>
+            <div className="premium-modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '600px' }}>
+                <div className="premium-modal-header">
+                    <h2 className="premium-modal-title">
+                        <FaVideo style={{ marginRight: '10px', color: '#D4AF37' }} />
+                        {isEditing ? `Modifier : ${initialVideo.title}` : "Nouvelle Vidéo"}
                     </h2>
-                    <button onClick={onClose} style={{ ...modalStyles.actionButton, color: dangerRed }} title="Fermer">
-                        <FaTimes />
-                    </button>
+                    <button onClick={onClose} className="premium-modal-close-icon"><FaTimes /></button>
                 </div>
 
-                {error && <div style={{ color: '#721c24', background: '#f8d7da', border: '1px solid #f5c6cb', padding: '10px', borderRadius: '6px', marginBottom: '15px' }}>{error}</div>}
+                {error && <div className="premium-error-alert" style={{ marginBottom: '20px' }}>{error}</div>}
 
-                <form onSubmit={handleSubmit}>
-                    <div style={{ ...modalStyles.formGrid, ...(window.innerWidth < 500 ? {} : modalStyles['@media (min-width: 500px)'].formGrid) }}>
-
-                        {/* Champ URL de la Vidéo (Full Width) */}
-                        <div style={modalStyles['@media (min-width: 500px)'].fullWidth}>
-                            <label style={{ fontWeight: '600', display: 'block', marginBottom: '5px', color: '#495057' }}>
-                                URL de la Vidéo (Obligatoire) :
-                            </label>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '5px', background: '#f8f9fa', borderRadius: '6px', border: '1px solid #ced4da' }}>
-                                <FaLink style={{ marginLeft: '12px', color: primaryBlue }} />
-                                <input
-                                    type="text"
-                                    placeholder="Ex: https://example.com/ma-video.mp4"
-                                    value={currentVideoUrl}
-                                    onChange={(e) => setCurrentVideoUrl(e.target.value)}
-                                    required
-                                    style={{ ...modalStyles.input, flexGrow: 1, border: 'none', background: 'transparent' }}
-                                    disabled={isSubmitting}
-                                />
-                            </div>
-                            {isEditing && <p style={{ fontSize: '0.9em', color: '#6c757d', marginTop: '5px' }}>Modifier l'URL uniquement si le fichier a changé d'emplacement.</p>}
+                <form onSubmit={handleSubmit} className="premium-form-grid">
+                    <div className="premium-form-group" style={{ gridColumn: '1 / -1' }}>
+                        <label>URL de la Vidéo *</label>
+                        <div style={{ position: 'relative' }}>
+                            <FaLink style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#D4AF37' }} />
+                            <input
+                                type="text"
+                                placeholder="https://example.com/video.mp4"
+                                value={currentVideoUrl}
+                                onChange={(e) => setCurrentVideoUrl(e.target.value)}
+                                style={{ paddingLeft: '40px' }}
+                                required
+                            />
                         </div>
+                    </div>
 
-                        {/* Titre */}
-                        <input
-                            type="text"
-                            placeholder="Titre de la vidéo (Ex: Leçon 1 - La Base)"
-                            value={title}
-                            onChange={(e) => setTitle(e.target.value)}
-                            required
-                            style={modalStyles.input}
-                            disabled={isSubmitting}
-                        />
+                    <div className="premium-form-group">
+                        <label>Titre *</label>
+                        <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} required placeholder="Titre de la vidéo" />
+                    </div>
 
-                        {/* الفئة */}
-                        <select
-                            value={category}
-                            onChange={(e) => setCategory(e.target.value)}
-                            required
-                            style={modalStyles.select}
-                            disabled={isSubmitting}
-                        >
-                            <option value="">-- Choisir une catégorie --</option>
+                    <div className="premium-form-group">
+                        <label>Catégorie *</label>
+                        <select value={category} onChange={(e) => setCategory(e.target.value)} required>
+                            <option value="">-- Choisir --</option>
                             {categories.map((cat, idx) => (
                                 <option key={idx} value={cat}>{cat}</option>
                             ))}
                         </select>
+                    </div>
 
-                        {/* الوصف (Full Width) */}
-                        <div style={modalStyles['@media (min-width: 500px)'].fullWidth}>
-                            <textarea
-                                placeholder="Description courte (facultatif)"
-                                value={description}
-                                onChange={(e) => setDescription(e.target.value)}
-                                style={{ ...modalStyles.input, resize: 'vertical', minHeight: '80px' }}
-                                disabled={isSubmitting}
-                            />
-                        </div>
+                    <div className="premium-form-group" style={{ gridColumn: '1 / -1' }}>
+                        <label>Description</label>
+                        <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Description facultative" style={{ minHeight: '100px' }} />
+                    </div>
 
-                        {/* أزرار الإرسال والإلغاء (Full Width) */}
-                        <div style={{ ...modalStyles.buttonGroup, ...modalStyles['@media (min-width: 500px)'].fullWidth }}>
-                            <button
-                                type="submit"
-                                style={{
-                                    ...modalStyles.submitButton,
-                                    backgroundColor: isEditing ? '#ffc107' : '#28a745', // Jaune pour Modifier, Vert pour Ajouter
-                                    ...(isSubmitting ? modalStyles.disabled : {})
-                                }}
-                                disabled={isSubmitting}
-                            >
-                                {submitButtonContent}
-                            </button>
-                            <button
-                                type="button"
-                                onClick={onClose}
-                                style={modalStyles.cancelButton}
-                                disabled={isSubmitting}
-                            >
-                                Annuler
-                            </button>
-                        </div>
+                    <div className="premium-btn-group" style={{ gridColumn: '1 / -1' }}>
+                        <button type="button" onClick={onClose} className="premium-btn-cta secondary">Annuler</button>
+                        <button type="submit" disabled={isSubmitting} className="premium-btn-cta gold">
+                            {isSubmitting ? <FaSpinner className="spinner" /> : (isEditing ? <FaSave /> : <FaPlus />)}
+                            {isEditing ? "Enregistrer" : "Ajouter"}
+                        </button>
                     </div>
                 </form>
             </div>
@@ -313,26 +126,15 @@ export function VideoFormModal({ isVisible, onClose, onSaveSuccess, initialVideo
 }
 
 // ----------------------------------------------------------------
-// --- 3. المكون الأب: GestionVedioSpecialises (مع تحديثات الحالة) ---
+// --- 2. المكون الأب: GestionVedioSpecialises ---
 // ----------------------------------------------------------------
-
-// قم بتغيير اسم المكون الأب إذا أردت تضمين المكون الجديد في نفس الملف
-// أو تأكد من استيراد المكون الجديد: import { VideoFormModal } from './VideoFormModal'; 
-
 export default function GestionVedioSpecialises({ onClose }) {
     const [videos, setVideos] = useState([]);
     const [categories, setCategories] = useState([]);
     const [error, setError] = useState(null);
     const [confirmDialog, setConfirmDialog] = useState(null);
-
-    // 🆕 حالة لإدارة ظهور النموذج المنبثق
     const [isModalOpen, setIsModalOpen] = useState(false);
-    // 🆕 حالة لتخزين بيانات الفيديو الذي يتم تعديله (null للإضافة)
     const [videoToEdit, setVideoToEdit] = useState(null);
-
-    const COURSES_API_URL = `${BASE_URL}/api/specialized-courses`;
-    const VIDEOS_API_URL = `${BASE_URL}/api/specialized-videos`;
-
 
     useEffect(() => {
         fetchVideos();
@@ -345,7 +147,6 @@ export default function GestionVedioSpecialises({ onClose }) {
             setVideos(res.data);
             setError(null);
         } catch (err) {
-            console.error(err);
             setError("Erreur lors du chargement des vidéos.");
         }
     };
@@ -360,289 +161,111 @@ export default function GestionVedioSpecialises({ onClose }) {
         }
     };
 
-    // 🆕 دالة لفتح النموذج للإضافة
     const handleAdd = () => {
-        setVideoToEdit(null); // تأكد من أنه فارغ للإضافة
+        setVideoToEdit(null);
         setIsModalOpen(true);
     };
 
-    // 🆕 دالة لفتح النموذج للتعديل (تستبدل handleEdit القديمة)
     const handleEdit = (video) => {
-        setVideoToEdit(video); // تعيين الفيديو المراد تعديله
+        setVideoToEdit(video);
         setIsModalOpen(true);
     };
 
-    // دالة لغلق النموذج المنبثق
-    const handleCloseModal = () => {
-        setIsModalOpen(false);
-        setVideoToEdit(null); // مسح البيانات عند الإغلاق
-    };
-
-    // دالة لفتح نافذة التأكيد
-    const confirmDelete = (id, title) => {
-        setConfirmDialog({ id, title });
-    };
-
-    // دالة الحذف الفعلية
     const handleDelete = async (id) => {
         setConfirmDialog(null);
         try {
             await axios.delete(`${VIDEOS_API_URL}/${id}`);
             fetchVideos();
         } catch (err) {
-            setError(err.response?.data?.message || "Erreur lors de la suppression.");
-            console.error(err);
+            setError("Erreur lors de la suppression.");
         }
     };
 
-    // مكون نافذة التأكيد (ConfirmationDialog) كما كان سابقاً
-    const ConfirmationDialog = ({ onConfirm, onCancel, itemTitle }) => (
-        <div style={styles.confirmOverlay}>
-            <div style={styles.confirmBox}>
-                <h3 style={styles.confirmTitle}>
-                    <FaExclamationTriangle size={24} /> Confirmation de Suppression
-                </h3>
-                <p style={styles.confirmText}>
-                    Êtes-vous sûr de vouloir supprimer la vidéo **"{itemTitle}"** ? Cela supprimera également le fichier sur le serveur.
-                </p>
-                <div style={styles.confirmButtons}>
-                    <button
-                        onClick={onCancel}
-                        style={{ ...styles.confirmButtonBase, ...styles.confirmNo }}
-                    >
-                        Annuler
-                    </button>
-                    <button
-                        onClick={onConfirm}
-                        style={{ ...styles.confirmButtonBase, ...styles.confirmYes }}
-                    >
-                        Oui, Supprimer
-                    </button>
-                </div>
-            </div>
-        </div>
-    );
-
-
-    // ... (هنا يجب وضع الأنماط styles من الكود الأصلي) ...
-
-    // --- 1. ثوابت الأنماط (Styles Constants) من الكود الأصلي ---
-    const dangerRed = '#dc3545';
-    const primaryBlue = '#007bff';
-
-    const styles = {
-        modalContainer: {
-            background: '#f8f9fa',
-            padding: '30px',
-            borderRadius: '12px',
-            boxShadow: '0 10px 30px rgba(0, 0, 0, 0.1)',
-            maxWidth: '900px',
-            width: '100%',
-            margin: '20px auto',
-        },
-        modalHeader: {
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: '25px',
-            borderBottom: '2px solid #e9ecef',
-            paddingBottom: '15px',
-        },
-        title: {
-            color: '#343a40',
-            fontSize: '1.8rem',
-            margin: 0,
-            display: 'flex',
-            alignItems: 'center',
-        },
-        actionButton: {
-            background: 'none',
-            border: 'none',
-            fontSize: '1.1rem',
-            cursor: 'pointer',
-            marginLeft: '10px',
-            transition: 'color 0.2s',
-        },
-        listTitle: {
-            fontSize: '1.5rem',
-            color: '#495057',
-            borderLeft: `4px solid ${primaryBlue}`,
-            paddingLeft: '10px',
-            marginBottom: '15px',
-        },
-        videoItem: {
-            display: 'flex',
-            alignItems: 'flex-start',
-            justifyContent: 'space-between',
-            marginBottom: '10px',
-            padding: '15px',
-            borderRadius: '8px',
-            background: '#ffffff',
-            borderLeft: '5px solid #28a745',
-            boxShadow: '0 2px 5px rgba(0, 0, 0, 0.05)',
-        },
-        videoPlayer: {
-            width: '180px',
-            height: '100px',
-            borderRadius: '4px',
-            backgroundColor: '#000',
-            objectFit: 'cover',
-            marginRight: '15px',
-        },
-        videoDetails: {
-            flexGrow: 1,
-            marginRight: '20px',
-        },
-        // Styles pour la fenêtre de confirmation personnalisée
-        confirmOverlay: {
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'rgba(0, 0, 0, 0.7)',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            zIndex: 2000,
-        },
-        confirmBox: {
-            background: 'white',
-            padding: '30px',
-            borderRadius: '12px',
-            maxWidth: '400px',
-            textAlign: 'center',
-            boxShadow: '0 10px 30px rgba(0, 0, 0, 0.5)',
-        },
-        confirmTitle: {
-            color: dangerRed,
-            fontSize: '1.5rem',
-            marginBottom: '15px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '10px',
-        },
-        confirmText: {
-            color: '#495057',
-            marginBottom: '25px',
-        },
-        confirmButtons: {
-            display: 'flex',
-            justifyContent: 'space-around',
-            gap: '10px',
-        },
-        confirmButtonBase: {
-            padding: '10px 20px',
-            borderRadius: '6px',
-            fontWeight: '600',
-            cursor: 'pointer',
-            border: 'none',
-            flexGrow: 1,
-        },
-        confirmYes: {
-            backgroundColor: dangerRed,
-            color: 'white',
-        },
-        confirmNo: {
-            backgroundColor: '#f8f9fa',
-            color: '#495057',
-            border: '1px solid #ced4da',
-        },
-    };
-
-
-    // ... (نهاية الأنماط) ...
-
-
     return (
-        <div style={styles.modalContainer}>
-
-            {/* 🆕 نموذج الإضافة/التعديل المنبثق */}
+        <div style={{ padding: '30px' }}>
             <VideoFormModal
                 isVisible={isModalOpen}
-                onClose={handleCloseModal}
-                onSaveSuccess={fetchVideos} // لإعادة تحميل القائمة
-                initialVideo={videoToEdit} // بيانات الفيديو (null للإضافة)
+                onClose={() => setIsModalOpen(false)}
+                onSaveSuccess={fetchVideos}
+                initialVideo={videoToEdit}
                 categories={categories}
             />
 
-            {/* AFFICHER LA FENÊTRE DE CONFIRMATION */}
             {confirmDialog && (
-                <ConfirmationDialog
-                    itemTitle={confirmDialog.title}
-                    onConfirm={() => handleDelete(confirmDialog.id)}
-                    onCancel={() => setConfirmDialog(null)}
-                />
+                <div className="premium-modal-backdrop" onClick={() => setConfirmDialog(null)}>
+                    <div className="premium-modal-content" style={{ maxWidth: '400px' }} onClick={e => e.stopPropagation()}>
+                        <div style={{ textAlign: 'center' }}>
+                            <FaExclamationTriangle style={{ fontSize: '3rem', color: '#ef4444', marginBottom: '15px' }} />
+                            <h3 className="premium-modal-title">Confirmation</h3>
+                            <p style={{ color: '#64748b' }}>Supprimer la vidéo <strong>"{confirmDialog.title}"</strong> ? Cette action est irréversible.</p>
+                        </div>
+                        <div className="premium-btn-group" style={{ marginTop: '25px' }}>
+                            <button onClick={() => setConfirmDialog(null)} className="premium-btn-cta secondary">Annuler</button>
+                            <button onClick={() => handleDelete(confirmDialog.id)} className="premium-btn-cta gold" style={{ background: '#ef4444', borderColor: '#dc2626' }}>Oui, Supprimer</button>
+                        </div>
+                    </div>
+                </div>
             )}
 
-            <div style={styles.modalHeader}>
-                <h2 style={styles.title}><FaVideo style={{ marginRight: '0.5rem', color: primaryBlue }} /> Gestion des Vidéos Spécialisées</h2>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    {/* 🆕 زر إضافة فيديو جديد يفتح النموذج المنبثق */}
-                    <button
-                        onClick={handleAdd}
-                        style={{
-                            ...styles.actionButton,
-                            padding: '8px 15px',
-                            backgroundColor: '#28a745',
-                            color: 'white',
-                            borderRadius: '6px',
-                            fontWeight: 'bold',
-                        }}
-                        title="Ajouter une nouvelle vidéo par URL"
-                    >
-                        <FaPlus style={{ marginRight: '5px' }} /> Ajouter
+            <div className="premium-modal-header" style={{ marginBottom: '30px' }}>
+                <h2 className="premium-modal-title">
+                    <FaVideo style={{ marginRight: '10px', color: '#D4AF37' }} /> Gestion des Vidéos Spécialisées
+                </h2>
+                <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+                    <button onClick={handleAdd} className="premium-btn-cta gold" style={{ padding: '8px 20px', fontSize: '0.9rem' }}>
+                        <FaPlus /> Ajouter
                     </button>
-                    <button onClick={onClose} style={{ ...styles.actionButton, fontSize: '1.8rem' }} className="close-button" title="Fermer"><FaTimes color="#dc3545" /></button>
+                    <button onClick={onClose} className="premium-modal-close-icon"><FaTimes /></button>
                 </div>
             </div>
 
-            {error && <div style={{ color: '#721c24', background: '#f8d7da', border: '1px solid #f5c6cb', padding: '10px', borderRadius: '6px', marginBottom: '15px' }}>{error}</div>}
+            {error && <div className="premium-error-alert" style={{ marginBottom: '20px' }}>{error}</div>}
 
-            {/* --- ملاحظة: تم حذف النموذج المدمج (Inline Form) من هنا --- */}
+            <div className="premium-list-container">
+                <h3 style={{ fontSize: '1.3rem', color: '#1e293b', marginBottom: '20px', borderLeft: '4px solid #D4AF37', paddingLeft: '12px' }}>
+                    Vidéos en ligne ({videos.length})
+                </h3>
 
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                    {videos.length > 0 ? videos.map(video => {
+                        const videoSrc = video.url && (video.url.startsWith('http') || video.url.startsWith('https'))
+                            ? video.url
+                            : `${BASE_URL}${video.url}`;
 
-            {/* --- Liste des Vidéos Existantes --- */}
-            <h3 style={styles.listTitle}>Vidéos en ligne ({videos.length})</h3>
+                        return (
+                            <div key={video._id} className="premium-list-item" style={{ background: '#fff', padding: '15px', borderRadius: '12px', border: '1px solid #e2e8f0', display: 'flex', gap: '20px', alignItems: 'flex-start' }}>
+                                <div style={{ width: '200px', flexShrink: 0 }}>
+                                    <video
+                                        controls
+                                        src={videoSrc}
+                                        style={{ width: '100%', borderRadius: '8px', background: '#000', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}
+                                        controlsList="nodownload"
+                                        muted
+                                    />
+                                </div>
 
-            <div className="videos-list">
-                {videos.length > 0 ? videos.map(video => {
-                    const videoSrc = video.url && (video.url.startsWith('http') || video.url.startsWith('https'))
-                        ? video.url
-                        : `${BASE_URL}${video.url}`;
+                                <div style={{ flex: 1 }}>
+                                    <h4 style={{ margin: '0 0 5px 0', color: '#1e293b' }}>{video.title}</h4>
+                                    <span style={{ fontSize: '0.8rem', background: '#f1f5f9', color: '#475569', padding: '2px 8px', borderRadius: '12px', fontWeight: 'bold' }}>{video.category}</span>
+                                    <p style={{ margin: '10px 0 0 0', fontSize: '0.9rem', color: '#64748b', lineHeight: '1.4' }}>{video.description}</p>
+                                </div>
 
-                    return (
-                        <div key={video._id} style={styles.videoItem}>
-
-                            <video
-                                controls
-                                src={videoSrc}
-                                style={styles.videoPlayer}
-                                onContextMenu={(e) => e.preventDefault()}
-                                controlsList="nodownload"
-                                muted
-                            >
-                                متصفحك لا يدعم الفيديو.
-                            </video>
-
-                            <div style={styles.videoDetails}>
-                                <div style={{ fontWeight: 'bold', color: primaryBlue, marginBottom: '5px' }}>{video.title}</div>
-                                <div style={{ fontSize: '0.9em', color: '#6c757d', marginBottom: '5px' }}>Catégorie: {video.category}</div>
-                                <p style={{ margin: '0', fontSize: '0.95em' }}>{video.description}</p>
+                                <div style={{ display: 'flex', gap: '10px' }}>
+                                    <button onClick={() => handleEdit(video)} className="premium-btn-cta secondary" style={{ padding: '8px', minWidth: 'auto', background: '#fef3c7', color: '#d97706', borderColor: '#fde68a' }}>
+                                        <FaEdit />
+                                    </button>
+                                    <button onClick={() => setConfirmDialog({ id: video._id, title: video.title })} className="premium-btn-cta secondary" style={{ padding: '8px', minWidth: 'auto', background: '#fee2e2', color: '#ef4444', borderColor: '#fecaca' }}>
+                                        <FaTrash />
+                                    </button>
+                                </div>
                             </div>
-                            <div style={{ display: 'flex', gap: '5px' }}>
-                                {/* 🆕 استدعاء دالة handleEdit الجديدة لفتح النموذج المنبثق */}
-                                <button onClick={() => handleEdit(video)} title="Modifier la vidéo" style={{ ...styles.actionButton, color: '#ffc107' }}><FaEdit /></button>
-                                <button onClick={() => confirmDelete(video._id, video.title)} title="Supprimer la vidéo et le fichier" style={{ ...styles.actionButton, color: dangerRed }}><FaTrash /></button>
-                            </div>
+                        );
+                    }) : (
+                        <div style={{ textAlign: 'center', padding: '40px', background: '#f8fafc', borderRadius: '12px', border: '2px dashed #e2e8f0', color: '#64748b' }}>
+                            Aucune vidéo trouvée.
                         </div>
-                    )
-                }) : (
-                    <p style={{ textAlign: 'center', padding: '20px', color: '#6c757d' }}>
-                        Aucune vidéo spécialisée n'est encore enregistrée.
-                    </p>
-                )}
+                    )}
+                </div>
             </div>
         </div>
     );

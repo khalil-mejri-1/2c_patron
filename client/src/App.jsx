@@ -24,6 +24,7 @@ import Gestion_Message from "./pages/admin/Gestion_Message.jsx";
 import Gestion_commentaire from "./pages/admin/Gestion_commentaire.jsx";
 import Gestion_abonnement from "./pages/admin/Gestion_abonnement.jsx";
 import Gestion_de_espace_vip from "./pages/admin/Gestion de espace vip.jsx";
+import Gestion_Settings from "./pages/admin/Gestion_Settings.jsx";
 import Leçons_Manches_coursage from "./pages/cours_Manches_coursage.jsx";
 
 function AppContent() {
@@ -54,7 +55,7 @@ function AppContent() {
                 try {
                     const response = await fetch(`${BASE_URL}/api/users/${userEmail}`);
                     const data = await response.json();
-                    if (data && data.abonne === "oui") {
+                    if (data && (data.abonne === "oui" || data.statut === "admin")) {
                         vipStatus = true;
                     }
                 } catch (error) {
@@ -73,7 +74,9 @@ function AppContent() {
             }
 
             // 🔹 منع الوصول للصفحات VIP إذا لم يكن المستخدم abonné
-            if (vipRequiredPaths.includes(currentPath)) {
+            const isVipPath = vipRequiredPaths.some(path => currentPath.startsWith(path));
+
+            if (isVipPath) {
                 if (!vipStatus) {
                     console.warn(`Non-VIP user tried to access ${currentPath}. Redirecting to Abonnement VIP.`);
                     navigate('/Abonnement-VIP');
@@ -113,6 +116,7 @@ function AppContent() {
             <Route path="/admin_commentaire" element={<Gestion_commentaire />} />
             <Route path="/admin_abonnement" element={<Gestion_abonnement />} />
             <Route path="/admin_espace_vip" element={<Gestion_de_espace_vip />} />
+            <Route path="/admin_settings" element={<Gestion_Settings />} />
 
             <Route path="/*" element={<Home />} />
         </Routes>

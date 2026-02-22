@@ -7,7 +7,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'https://2c-patron-ddml.vercel.app/',
+        target: 'https://2c-patron.vercel.app/',
         changeOrigin: true,
         secure: false,
       },

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useLanguage } from '../context/LanguageContext';
+import { useAlert } from '../context/AlertContext';
 import {
     FaArrowRight, FaShoppingCart, FaTimes, FaPlusCircle, FaMinusCircle,
     FaUser, FaMapMarkerAlt, FaPhoneAlt, FaSpinner, FaCheckCircle,
@@ -224,38 +225,39 @@ const CommentModalComponent = ({
 
 
     return (
-        <div className="modal-overlay">
-            <div className="comment-modal-content" dir={direction}>
+        <div className="premium-modal-backdrop" onClick={handleCloseModal}>
+            <div className="premium-modal-content" onClick={(e) => e.stopPropagation()} dir={direction}>
                 <button
-                    className="modal-close-btn"
+                    className="premium-modal-close-icon"
                     onClick={handleCloseModal}
                     disabled={isSubmitting}
                 >
                     <FaTimes />
                 </button>
 
-                <h4 className="form-subtitle">{t.commentFormTitle}</h4>
+                <h2 className="premium-modal-title">{t.commentFormTitle}</h2>
 
                 {submitStatus === 'success' ? (
-                    <div className="comment-status-message success">
+                    <div className="comment-status-message success" style={{ background: '#f0fdf4', color: '#166534', padding: '20px', borderRadius: '16px', marginTop: '20px' }}>
                         {t.commentSuccessMsg}
                     </div>
                 ) : submitStatus === 'error' ? (
-                    <div className="comment-status-message error">
+                    <div className="comment-status-message error" style={{ background: '#fef2f2', color: '#991b1b', padding: '20px', borderRadius: '16px', marginTop: '20px' }}>
                         {t.commentErrorMsg}
                     </div>
                 ) : (
                     <form onSubmit={handleSubmitComment}>
-                        <div className="rating-control-group">
-                            <p>{t.ratingLabel}</p>
-                            <br /><br />
-                            <div className="rating-stars">
+                        <div className="rating-control-group" style={{ marginBottom: '25px' }}>
+                            <p style={{ fontWeight: '700', color: '#64748b', marginBottom: '15px' }}>{t.ratingLabel}</p>
+                            <div className="rating-stars" style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
                                 {[1, 2, 3, 4, 5].map((star) => (
                                     <span
                                         key={star}
                                         className="star"
                                         onClick={() => handleRatingClick(star)}
-                                        style={{ color: star <= rating ? '#ffc107' : '#e4e5e9', cursor: 'pointer', fontSize: '24px' }}
+                                        style={{ color: star <= rating ? '#ffc107' : '#e4e5e9', cursor: 'pointer', fontSize: '32px', transition: 'transform 0.2s' }}
+                                        onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.2)'}
+                                        onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
                                     >
                                         {star <= rating ? <FaStar /> : <FaRegStar />}
                                     </span>
@@ -263,7 +265,8 @@ const CommentModalComponent = ({
                             </div>
                         </div>
 
-                        <div className="comment-input-group">
+                        <div className="premium-form-group">
+                            <label>{t.commentPlaceholder}</label>
                             <textarea
                                 name="comment"
                                 placeholder={t.commentPlaceholder}
@@ -278,10 +281,11 @@ const CommentModalComponent = ({
                         {validationMessage && (
                             <p className="validation-error-text" style={{
                                 color: '#dc3545',
-                                margin: '10px 0',
-                                padding: '5px',
-                                border: '1px solid #dc3545',
-                                borderRadius: '4px',
+                                margin: '15px 0',
+                                padding: '10px',
+                                background: '#fff5f5',
+                                border: '1px solid #feb2b2',
+                                borderRadius: '12px',
                                 textAlign: 'center',
                                 fontSize: '0.9em'
                             }}>
@@ -289,10 +293,18 @@ const CommentModalComponent = ({
                             </p>
                         )}
 
-                        <div className="modal-actions-comment">
+                        <div className="premium-btn-group">
+                            <button
+                                type="button"
+                                onClick={handleCloseModal}
+                                className="premium-btn-cta secondary"
+                                disabled={isSubmitting}
+                            >
+                                {t.skipCommentBtn}
+                            </button>
                             <button
                                 type="submit"
-                                className="send-comment-btn"
+                                className="premium-btn-cta gold"
                                 disabled={isSubmitting}
                             >
                                 {isSubmitting ? (
@@ -300,14 +312,6 @@ const CommentModalComponent = ({
                                 ) : (
                                     t.sendCommentBtn
                                 )}
-                            </button>
-                            <button
-                                type="button"
-                                onClick={handleCloseModal}
-                                className="skip-comment-btn"
-                                disabled={isSubmitting}
-                            >
-                                {t.skipCommentBtn}
                             </button>
                         </div>
                     </form>
@@ -325,25 +329,25 @@ const SuccessModalComponent = ({ lastCommandRef, closeSuccessModal, handleFeedba
     const direction = appLanguage === 'ar' ? 'rtl' : 'ltr';
 
     return (
-        <div className="custom-modal-backdrop-success">
-            <div className="modern-modal-content-success" dir={direction}>
-                <button className="close-btn-success" onClick={closeSuccessModal}><FaTimes /></button>
+        <div className="premium-modal-backdrop" onClick={closeSuccessModal}>
+            <div className="premium-modal-content" onClick={(e) => e.stopPropagation()} dir={direction}>
+                <button className="premium-modal-close-icon" onClick={closeSuccessModal}><FaTimes /></button>
 
-                <div className="success-icon-section">
-                    <FaCheckCircle className="check-icon-large" />
+                <div className="vip-cert-icon-wrapper" style={{ margin: '0 auto 20px', background: '#f0fdf4', color: '#22c55e' }}>
+                    <FaCheckCircle />
                 </div>
 
-                <h2 className="success-modal-title">
+                <h2 className="premium-modal-title">
                     {t.successTitle}
                 </h2>
 
-                <p className="success-message-text" dangerouslySetInnerHTML={{ __html: t.successMessage(lastCommandRef) }}></p>
+                <p style={{ color: '#4b5563', lineHeight: '1.6', marginBottom: '30px', fontSize: '1.1rem' }} dangerouslySetInnerHTML={{ __html: t.successMessage(lastCommandRef) }}></p>
 
-                <div className="modal-action-buttons-success">
+                <div className="premium-btn-group">
                     <button
                         type="button"
                         onClick={handleFeedbackClick} // ينتقل لـ CommentModal
-                        className="feedback-button-success"
+                        className="premium-btn-cta gold"
                     >
                         <FaCommentAlt /> {t.feedbackBtn}
                     </button>
@@ -351,7 +355,7 @@ const SuccessModalComponent = ({ lastCommandRef, closeSuccessModal, handleFeedba
                     <button
                         type="button"
                         onClick={closeSuccessModal}
-                        className="return-button-success"
+                        className="premium-btn-cta secondary"
                     >
                         {t.closeBtn}
                     </button>
@@ -447,102 +451,119 @@ const OrderModalComponent = ({ selectedProduct, quantity, handleQuantityChange, 
     const direction = appLanguage === 'ar' ? 'rtl' : 'ltr';
 
     return (
-        <div className="modal-overlay">
-            <div className="order-modal-content" dir={direction}>
-                <button className="modal-close-btn" onClick={closeOrderModal} disabled={isSubmittingOrder}>
+        <div className="premium-modal-backdrop" onClick={closeOrderModal}>
+            <div className="premium-modal-content large" onClick={(e) => e.stopPropagation()} dir={direction}>
+                <button className="premium-modal-close-icon" onClick={closeOrderModal} disabled={isSubmittingOrder}>
                     <FaTimes />
                 </button>
 
-                <h2 className="modal-title">
-                    {isLoggedIn ? t.modalTitleUser : t.modalTitleGuest}
-                </h2>
+                <div className="premium-modal-header" style={{ marginBottom: '25px' }}>
+                    <div className="vip-cert-icon-wrapper" style={{ margin: '0 auto 15px', background: 'rgba(212, 175, 55, 0.1)', color: '#d4af37' }}>
+                        <FaShoppingCart />
+                    </div>
+                    <h2 className="premium-modal-title">
+                        {isLoggedIn ? t.modalTitleUser : t.modalTitleGuest}
+                    </h2>
+                </div>
 
-                <div className="product-summary">
-                    <img src={selectedProduct.url} alt={selectedProduct.alt} className="summary-image" />
+                <div className="product-summary" style={{ display: 'flex', gap: '20px', alignItems: 'center', background: '#f8fafc', padding: '20px', borderRadius: '24px', marginBottom: '25px', textAlign: 'left' }}>
+                    <img src={selectedProduct.url} alt={selectedProduct.alt} style={{ width: '90px', height: '90px', objectFit: 'cover', borderRadius: '16px' }} />
                     <div className="summary-details">
-                        <p className="summary-name">{selectedProduct.name}</p>
-                        <p className="summary-price">{selectedProduct.price.toFixed(2)} {currency} {t.unitPrice}</p>
+                        <p className="summary-name" style={{ fontWeight: '800', fontSize: '1.2rem', margin: 0 }}>{selectedProduct.name}</p>
+                        <p className="summary-price" style={{ color: '#d4af37', fontWeight: '700', margin: '5px 0 0' }}>{selectedProduct.price.toFixed(2)} {currency} {t.unitPrice}</p>
                     </div>
                 </div>
 
-                <div className="quantity-control-group">
-                    <label>{t.qtyLabel}</label>
-                    <div className="quantity-controls">
-                        <button type="button" onClick={() => handleQuantityChange(-1)} disabled={quantity <= 1 || isSubmittingOrder}>
+                <div className="quantity-control-group" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '30px', marginBottom: '35px', padding: '15px', background: '#fff', border: '1px solid #f1f5f9', borderRadius: '24px' }}>
+                    <label style={{ fontWeight: '800', color: '#64748b', textTransform: 'uppercase', fontSize: '0.8rem' }}>{t.qtyLabel}</label>
+                    <div className="quantity-controls" style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                        <button type="button" onClick={() => handleQuantityChange(-1)} disabled={quantity <= 1 || isSubmittingOrder} style={{ background: 'none', border: 'none', fontSize: '1.5rem', color: '#d4af37', cursor: 'pointer', opacity: quantity <= 1 ? 0.3 : 1 }}>
                             <FaMinusCircle />
                         </button>
-                        <span className="current-qty">{quantity}</span>
-                        <button type="button" onClick={() => handleQuantityChange(1)} disabled={isSubmittingOrder}>
+                        <span className="current-qty" style={{ fontSize: '1.4rem', fontWeight: '800', minWidth: '35px' }}>{quantity}</span>
+                        <button type="button" onClick={() => handleQuantityChange(1)} disabled={isSubmittingOrder} style={{ background: 'none', border: 'none', fontSize: '1.5rem', color: '#d4af37', cursor: 'pointer' }}>
                             <FaPlusCircle />
                         </button>
                     </div>
-                    <p className="total-price-display">
-                        {t.total} <strong>{totalPrice} {currency}</strong>
+                    <p className="total-price-display" style={{ margin: 0, fontSize: '1.1rem', fontWeight: '600' }}>
+                        {t.total} <strong style={{ color: '#d4af37', fontSize: '1.3rem' }}>{totalPrice} {currency}</strong>
                     </p>
                 </div>
 
                 <form onSubmit={handleConfirmOrder}>
-                    <div className="customer-form-group">
-                        <h4 className="form-subtitle">{t.contactInfo}</h4>
-                        <div className="input-row">
-                            <div className="input-group">
-                                <FaUser className="input-icon" />
-                                <input
-                                    type="text"
-                                    name="firstName"
-                                    placeholder={t.namePlaceholder}
-                                    value={customerData.firstName}
-                                    onChange={handleCustomerDataChange}
-                                    required
-                                    disabled={isSubmittingOrder}
-                                    dir={appLanguage === 'ar' ? 'rtl' : 'ltr'}
-                                />
+                    <div style={{ marginBottom: '30px' }}>
+                        <h4 style={{ textAlign: 'left', fontWeight: '800', color: '#1a1a1a', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <span style={{ width: '4px', height: '20px', background: '#d4af37', borderRadius: '10px' }}></span>
+                            {t.contactInfo}
+                        </h4>
+                        <div className="premium-form-grid">
+                            <div className="premium-form-group">
+                                <label>{t.namePlaceholder}</label>
+                                <div style={{ position: 'relative' }}>
+                                    <FaUser style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+                                    <input
+                                        type="text"
+                                        name="firstName"
+                                        placeholder={t.namePlaceholder}
+                                        value={customerData.firstName}
+                                        onChange={handleCustomerDataChange}
+                                        required
+                                        disabled={isSubmittingOrder}
+                                        style={{ paddingLeft: '45px' }}
+                                    />
+                                </div>
                             </div>
 
-                            <div className="input-group">
-                                <FaMapMarkerAlt className="input-icon" />
-                                <input
-                                    type="text"
-                                    name="adresse"
-                                    placeholder={t.addressPlaceholder}
-                                    value={customerData.adresse}
-                                    onChange={handleCustomerDataChange}
-                                    required
-                                    disabled={isSubmittingOrder}
-                                    dir={appLanguage === 'ar' ? 'rtl' : 'ltr'}
-                                />
+                            <div className="premium-form-group">
+                                <label>{t.addressPlaceholder}</label>
+                                <div style={{ position: 'relative' }}>
+                                    <FaMapMarkerAlt style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+                                    <input
+                                        type="text"
+                                        name="adresse"
+                                        placeholder={t.addressPlaceholder}
+                                        value={customerData.adresse}
+                                        onChange={handleCustomerDataChange}
+                                        required
+                                        disabled={isSubmittingOrder}
+                                        style={{ paddingLeft: '45px' }}
+                                    />
+                                </div>
                             </div>
 
-                            <div className="input-group">
-                                <FaPhoneAlt className="input-icon" />
-                                <input
-                                    type="tel"
-                                    name="phone"
-                                    placeholder={t.phonePlaceholder}
-                                    value={customerData.phone}
-                                    onChange={handleCustomerDataChange}
-                                    required
-                                    disabled={isSubmittingOrder}
-                                    dir={appLanguage === 'ar' ? 'rtl' : 'ltr'}
-                                />
+                            <div className="premium-form-group">
+                                <label>{t.phonePlaceholder}</label>
+                                <div style={{ position: 'relative' }}>
+                                    <FaPhoneAlt style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+                                    <input
+                                        type="tel"
+                                        name="phone"
+                                        placeholder={t.phonePlaceholder}
+                                        value={customerData.phone}
+                                        onChange={handleCustomerDataChange}
+                                        required
+                                        disabled={isSubmittingOrder}
+                                        style={{ paddingLeft: '45px' }}
+                                    />
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <div className="modal-actions-order">
+                    <div className="premium-btn-group">
+                        <button type="button" onClick={closeOrderModal} className="premium-btn-cta secondary" disabled={isSubmittingOrder}>
+                            {t.cancelBtn}
+                        </button>
                         <button
                             type="submit"
-                            className="confirm-order-btn"
-                            disabled={isSubmittingOrder}
+                            className="premium-btn-cta gold"
+                            disabled={isSubmittingOrder || !customerData.firstName || !customerData.adresse || !customerData.phone}
                         >
                             {isSubmittingOrder ? (
                                 <> <FaSpinner className="spinner" style={{ animation: 'spin 1s linear infinite' }} /> {t.submitting}</>
                             ) : (
                                 isLoggedIn ? t.submitBtn : t.submitBtnGuest
                             )}
-                        </button>
-                        <button type="button" onClick={closeOrderModal} className="cancel-order-btn" disabled={isSubmittingOrder}>
-                            {t.cancelBtn}
                         </button>
                     </div>
                 </form>
@@ -557,6 +578,7 @@ const OrderModalComponent = ({ selectedProduct, quantity, handleQuantityChange, 
 // **********************************************
 export default function HeroSection({ isLoggedIn = false, currentUserEmail = '' }) {
     const { appLanguage, languages } = useLanguage();
+    const { showAlert } = useAlert();
 
     const currentLanguage = appLanguage;
     const texts = translations[currentLanguage] || translations.fr;
@@ -579,17 +601,13 @@ export default function HeroSection({ isLoggedIn = false, currentUserEmail = '' 
     const [heroIntros, setHeroIntros] = useState({});
     const [heroCtaTexts, setHeroCtaTexts] = useState({});
 
-    const [isEditingTitle, setIsEditingTitle] = useState(false);
-    const [editTitles, setEditTitles] = useState({ fr: '', ar: '', en: '' });
-
-    const [isEditingSubline, setIsEditingSubline] = useState(false);
-    const [editSublines, setEditSublines] = useState({ fr: '', ar: '', en: '' });
-
-    const [isEditingIntro, setIsEditingIntro] = useState(false);
-    const [editIntros, setEditIntros] = useState({ fr: '', ar: '', en: '' });
-
-    const [isEditingCta, setIsEditingCta] = useState(false);
-    const [editCtaTexts, setEditCtaTexts] = useState({ fr: '', ar: '', en: '' });
+    const [isEditingHero, setIsEditingHero] = useState(false);
+    const [editHeroData, setEditHeroData] = useState({
+        titles: { fr: '', ar: '', en: '' },
+        sublines: { fr: '', ar: '', en: '' },
+        intros: { fr: '', ar: '', en: '' },
+        ctaTexts: { fr: '', ar: '', en: '' }
+    });
 
     const [isAddingProduct, setIsAddingProduct] = useState(false);
     const [newProduct, setNewProduct] = useState({ nom: '', prix: '', image: '' });
@@ -645,56 +663,45 @@ export default function HeroSection({ isLoggedIn = false, currentUserEmail = '' 
         return initialized;
     };
 
-    const handleSaveTitles = async () => {
-        localStorage.setItem('hero_titles_backup', JSON.stringify(editTitles));
-        setHeroTitles(editTitles);
-        setIsEditingTitle(false);
-        try {
-            await fetch(`${BASE_URL}/api/settings/hero-titles`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ value: editTitles })
-            });
-        } catch (err) { }
-    };
+    const handleSaveHero = async () => {
+        // Save everything
+        setHeroTitles(editHeroData.titles);
+        setHeroSublines(editHeroData.sublines);
+        setHeroIntros(editHeroData.intros);
+        setHeroCtaTexts(editHeroData.ctaTexts);
+        setIsEditingHero(false);
 
-    const handleSaveCta = async () => {
-        localStorage.setItem('hero_cta_backup', JSON.stringify(editCtaTexts));
-        setHeroCtaTexts(editCtaTexts);
-        setIsEditingCta(false);
         try {
-            await fetch(`${BASE_URL}/api/settings/hero-cta`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ value: editCtaTexts })
-            });
-        } catch (err) { }
-    };
-
-    const handleSaveSublines = async () => {
-        localStorage.setItem('hero_sublines_backup', JSON.stringify(editSublines));
-        setHeroSublines(editSublines);
-        setIsEditingSubline(false);
-        try {
-            await fetch(`${BASE_URL}/api/settings/hero-sublines`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ value: editSublines })
-            });
-        } catch (err) { }
-    };
-
-    const handleSaveIntros = async () => {
-        localStorage.setItem('hero_intros_backup', JSON.stringify(editIntros));
-        setHeroIntros(editIntros);
-        setIsEditingIntro(false);
-        try {
-            await fetch(`${BASE_URL}/api/settings/hero-intros`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ value: editIntros })
-            });
-        } catch (err) { }
+            // Parallel saves to maintain separate settings if needed, 
+            // or we could have a single "hero-all" endpoint if the backend supports it.
+            // For now, staying compatible with existing endpoints.
+            await Promise.all([
+                fetch(`${BASE_URL}/api/settings/hero-titles`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ value: editHeroData.titles })
+                }),
+                fetch(`${BASE_URL}/api/settings/hero-sublines`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ value: editHeroData.sublines })
+                }),
+                fetch(`${BASE_URL}/api/settings/hero-intros`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ value: editHeroData.intros })
+                }),
+                fetch(`${BASE_URL}/api/settings/hero-cta`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ value: editHeroData.ctaTexts })
+                })
+            ]);
+            showAlert('success', appLanguage === 'ar' ? 'تم الحفظ' : 'Enregistré', appLanguage === 'ar' ? 'تم تحديث إعدادات الواجهة بنجاح' : 'Paramètres mis à jour');
+        } catch (err) {
+            console.error("Error saving hero settings:", err);
+            showAlert('error', 'Error', 'Failed to save');
+        }
     };
 
     const handleAddProduct = async () => {
@@ -723,13 +730,13 @@ export default function HeroSection({ isLoggedIn = false, currentUserEmail = '' 
                 setProducts(prev => [...prev, mappedProduct]);
                 setIsAddingProduct(false);
                 setNewProduct({ nom: '', prix: '', image: '' });
-                alert(currentLanguage === 'ar' ? "تمت إضافة المنتج بنجاح" : "Product added successfully");
+                showAlert('success', appLanguage === 'ar' ? 'تمت العملية' : 'Succès', appLanguage === 'ar' ? 'تم إضافة المنتج بنجاح' : 'Produit ajouté');
             } else {
-                alert("Failed to add product");
+                showAlert('error', 'Error', 'Failed to add product');
             }
         } catch (err) {
             console.error("Error adding product:", err);
-            alert("Error connecting to server");
+            showAlert('error', 'Error', 'Connection error');
         }
     };
 
@@ -872,68 +879,54 @@ export default function HeroSection({ isLoggedIn = false, currentUserEmail = '' 
             <section className="modern-hero-section" dir={sectionDirection}>
 
                 <div className="hero-content-block">
-
+                    {isAdmin && (
+                        <button
+                            onClick={() => {
+                                setEditHeroData({
+                                    titles: initializeAllLanguages(heroTitles),
+                                    sublines: initializeAllLanguages(heroSublines),
+                                    intros: initializeAllLanguages(heroIntros),
+                                    ctaTexts: initializeAllLanguages(heroCtaTexts)
+                                });
+                                setIsEditingHero(true);
+                            }}
+                            className="admin-edit-master-btn"
+                            style={{
+                                position: 'absolute',
+                                top: '25px',
+                                right: '35px',
+                                zIndex: 100
+                            }}
+                        >
+                            <FaEdit /> {currentLanguage === 'ar' ? 'تعديل الواجهة' : 'Modifier Hero'}
+                        </button>
+                    )}
 
                     <h1 className="hero-main-title">
                         {heroTitles[currentLanguage] ? (
                             <span dangerouslySetInnerHTML={{ __html: heroTitles[currentLanguage] }} />
                         ) : (
                             <>
-                                <span style={{ color: "#222" }}>{texts.mainTitle1}</span>
+                                <span>{texts.mainTitle1}</span>
                                 <br />
                                 <span className="accent-text">{texts.mainTitle2}</span>
                             </>
                         )}
-
-                        {isAdmin && (
-                            <button
-                                onClick={() => { setEditTitles(initializeAllLanguages(heroTitles)); setIsEditingTitle(true); }}
-                                className="hero-edit-title-btn"
-                                title="Modifier le titre"
-                            >
-                                <FaEdit />
-                            </button>
-                        )}
-                        <span className="hero-subline">
-                            {heroSublines[currentLanguage] || texts.subline}
-                            {isAdmin && (
-                                <button
-                                    onClick={() => { setEditSublines(initializeAllLanguages(heroSublines)); setIsEditingSubline(true); }}
-                                    className="hero-edit-title-btn small-edit-btn"
-                                    title="Modifier le sous-titre"
-                                >
-                                    <FaEdit />
-                                </button>
-                            )}
-                        </span>
                     </h1>
+
+                    <span className="hero-subline">
+                        {heroSublines[currentLanguage] || texts.subline}
+                    </span>
+
                     <p className="hero-intro-text">
                         {heroIntros[currentLanguage] || texts.introText}
-                        {isAdmin && (
-                            <button
-                                onClick={() => { setEditIntros(initializeAllLanguages(heroIntros)); setIsEditingIntro(true); }}
-                                className="hero-edit-title-btn small-edit-btn"
-                                title="Modifier le texte d'introduction"
-                            >
-                                <FaEdit />
-                            </button>
-                        )}
                     </p>
+
                     <Link to="/magasin" className="hero-cta-button">
                         {heroCtaTexts[currentLanguage] || texts.ctaButton}
                         {currentLanguage !== 'ar' && <FaArrowRight style={{ marginLeft: '10px' }} />}
                         {currentLanguage === 'ar' && <FaArrowRight style={{ transform: 'rotate(180deg)', marginRight: '10px' }} />}
                     </Link>
-                    {isAdmin && (
-                        <button
-                            onClick={() => { setEditCtaTexts(initializeAllLanguages(heroCtaTexts)); setIsEditingCta(true); }}
-                            className="hero-edit-title-btn small-edit-btn"
-                            style={{ verticalAlign: 'middle', marginTop: '-5px' }}
-                            title="Modifier le texte du bouton CTA"
-                        >
-                            <FaEdit />
-                        </button>
-                    )}
                 </div>
 
                 <div className="hero-3d-container">
@@ -941,19 +934,16 @@ export default function HeroSection({ isLoggedIn = false, currentUserEmail = '' 
                     {isAdmin && (
                         <button
                             onClick={() => setIsAddingProduct(true)}
-                            className="hero-edit-title-btn"
+                            className="admin-edit-master-btn"
                             style={{
                                 position: 'absolute',
-                                top: '10px',
-                                right: '10px',
-                                zIndex: 100,
-                                background: '#28a745',
-                                borderColor: '#28a745',
-                                color: '#fff'
+                                top: '25px',
+                                right: '35px',
+                                zIndex: 110
                             }}
                             title="Ajouter un produit"
                         >
-                            <FaPlusCircle />
+                            <FaPlusCircle /> {currentLanguage === 'ar' ? 'إضافة منتج' : 'Ajouter Produit'}
                         </button>
                     )}
 
@@ -1070,243 +1060,111 @@ export default function HeroSection({ isLoggedIn = false, currentUserEmail = '' 
                     customerData={customerData}
                 />
             )}
-            {/* 🛑 Title Edit Modal */}
-            {isEditingTitle && (
-                <div className="modal-overlay" style={{ zIndex: 2000 }}>
-                    <div className="modal-content" style={{
-                        background: '#fff', padding: '30px', borderRadius: '15px', width: '90%', maxWidth: '500px',
-                        boxShadow: '0 10px 40px rgba(0,0,0,0.2)'
-                    }}>
-                        <h3 style={{ marginBottom: '20px', textAlign: 'center', color: '#333' }}>Modifier le Titre Principal</h3>
+            {/* 🛑 Unified Hero Edit Modal */}
+            {isEditingHero && (
+                <div className="premium-modal-backdrop" onClick={() => setIsEditingHero(false)}>
+                    <div className="premium-modal-content large" onClick={(e) => e.stopPropagation()}>
+                        <button className="premium-modal-close-icon" onClick={() => setIsEditingHero(false)}><FaTimes /></button>
+                        <h2 className="premium-modal-title">
+                            {currentLanguage === 'ar' ? 'تعديل قسم الواجهة' : 'Modifier la Section Hero'}
+                        </h2>
 
-                        {languages.map(lang => (
-                            <div key={lang.code} style={{ marginBottom: '15px' }}>
-                                <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', color: '#555' }}>
-                                    {lang.label}
-                                </label>
-                                <input
-                                    type="text"
-                                    value={editTitles[lang.code] || ''}
-                                    onChange={e => setEditTitles({ ...editTitles, [lang.code]: e.target.value })}
-                                    dir={lang.code === 'ar' ? 'rtl' : 'ltr'}
-                                    style={{
-                                        width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #ddd',
-                                        fontSize: '16px'
-                                    }}
-                                    placeholder={`Titre en ${lang.label}...`}
-                                />
-                            </div>
-                        ))}
+                        <div className="premium-form-grid">
+                            {languages.map(lang => (
+                                <div key={lang.code} className="premium-lang-section">
+                                    <h4 className="lang-indicator">{lang.label}</h4>
+                                    <div className="premium-form-group">
+                                        <label>Titre Principal</label>
+                                        <input
+                                            type="text"
+                                            value={editHeroData.titles[lang.code] || ''}
+                                            onChange={e => setEditHeroData({ ...editHeroData, titles: { ...editHeroData.titles, [lang.code]: e.target.value } })}
+                                            dir={lang.code === 'ar' ? 'rtl' : 'ltr'}
+                                        />
+                                    </div>
+                                    <div className="premium-form-group">
+                                        <label>Sous-Titre</label>
+                                        <input
+                                            type="text"
+                                            value={editHeroData.sublines[lang.code] || ''}
+                                            onChange={e => setEditHeroData({ ...editHeroData, sublines: { ...editHeroData.sublines, [lang.code]: e.target.value } })}
+                                            dir={lang.code === 'ar' ? 'rtl' : 'ltr'}
+                                        />
+                                    </div>
+                                    <div className="premium-form-group">
+                                        <label>Texte du Bouton</label>
+                                        <input
+                                            type="text"
+                                            value={editHeroData.ctaTexts[lang.code] || ''}
+                                            onChange={e => setEditHeroData({ ...editHeroData, ctaTexts: { ...editHeroData.ctaTexts, [lang.code]: e.target.value } })}
+                                            dir={lang.code === 'ar' ? 'rtl' : 'ltr'}
+                                        />
+                                    </div>
+                                    <div className="premium-form-group">
+                                        <label>Texte d'Introduction</label>
+                                        <textarea
+                                            value={editHeroData.intros[lang.code] || ''}
+                                            onChange={e => setEditHeroData({ ...editHeroData, intros: { ...editHeroData.intros, [lang.code]: e.target.value } })}
+                                            dir={lang.code === 'ar' ? 'rtl' : 'ltr'}
+                                        />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
 
-                        <div style={{ display: 'flex', gap: '10px', marginTop: '25px', justifyContent: 'flex-end' }}>
-                            <button onClick={() => setIsEditingTitle(false)} style={{
-                                padding: '10px 20px', background: '#f8f9fa', color: '#333',
-                                border: '1px solid #ddd', borderRadius: '8px', cursor: 'pointer'
-                            }}>
-                                Annuler
+                        <div className="premium-btn-group">
+                            <button className="premium-btn-cta secondary" onClick={() => setIsEditingHero(false)}>
+                                {currentLanguage === 'ar' ? 'إلغاء' : 'Annuler'}
                             </button>
-                            <button onClick={handleSaveTitles} style={{
-                                padding: '10px 20px', background: '#28a745', color: '#fff',
-                                border: 'none', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px'
-                            }}>
-                                <FaSave /> Enregistrer
+                            <button className="premium-btn-cta gold" onClick={handleSaveHero}>
+                                <FaSave /> {currentLanguage === 'ar' ? 'حفظ التغييرات' : 'Enregistrer tout'}
                             </button>
                         </div>
                     </div>
                 </div>
             )}
-            {/* 🛑 Subline Edit Modal */}
-            {isEditingSubline && (
-                <div className="modal-overlay" style={{ zIndex: 2000 }}>
-                    <div className="modal-content" style={{
-                        background: '#fff', padding: '30px', borderRadius: '15px', width: '90%', maxWidth: '500px',
-                        boxShadow: '0 10px 40px rgba(0,0,0,0.2)'
-                    }}>
-                        <h3 style={{ marginBottom: '20px', textAlign: 'center', color: '#333' }}>Modifier le Sous-Titre</h3>
-
-                        {languages.map(lang => (
-                            <div key={lang.code} style={{ marginBottom: '15px' }}>
-                                <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', color: '#555' }}>
-                                    {lang.label}
-                                </label>
-                                <input
-                                    type="text"
-                                    value={editSublines[lang.code] || ''}
-                                    onChange={e => setEditSublines({ ...editSublines, [lang.code]: e.target.value })}
-                                    dir={lang.code === 'ar' ? 'rtl' : 'ltr'}
-                                    style={{
-                                        width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #ddd',
-                                        fontSize: '16px'
-                                    }}
-                                    placeholder={`Subline en ${lang.label}...`}
-                                />
-                            </div>
-                        ))}
-
-                        <div style={{ display: 'flex', gap: '10px', marginTop: '25px', justifyContent: 'flex-end' }}>
-                            <button onClick={() => setIsEditingSubline(false)} style={{
-                                padding: '10px 20px', background: '#f8f9fa', color: '#333',
-                                border: '1px solid #ddd', borderRadius: '8px', cursor: 'pointer'
-                            }}>
-                                Annuler
-                            </button>
-                            <button onClick={handleSaveSublines} style={{
-                                padding: '10px 20px', background: '#28a745', color: '#fff',
-                                border: 'none', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px'
-                            }}>
-                                <FaSave /> Enregistrer
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* 🛑 Intro Edit Modal */}
-            {isEditingIntro && (
-                <div className="modal-overlay" style={{ zIndex: 2000 }}>
-                    <div className="modal-content" style={{
-                        background: '#fff', padding: '30px', borderRadius: '15px', width: '90%', maxWidth: '500px',
-                        boxShadow: '0 10px 40px rgba(0,0,0,0.2)'
-                    }}>
-                        <h3 style={{ marginBottom: '20px', textAlign: 'center', color: '#333' }}>Modifier le Texte d'Introduction</h3>
-
-                        {languages.map(lang => (
-                            <div key={lang.code} style={{ marginBottom: '15px' }}>
-                                <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', color: '#555' }}>
-                                    {lang.label}
-                                </label>
-                                <textarea
-                                    value={editIntros[lang.code] || ''}
-                                    onChange={e => setEditIntros({ ...editIntros, [lang.code]: e.target.value })}
-                                    dir={lang.code === 'ar' ? 'rtl' : 'ltr'}
-                                    rows="4"
-                                    style={{
-                                        width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #ddd',
-                                        fontSize: '16px', resize: 'vertical'
-                                    }}
-                                    placeholder={`Texte d'introduction en ${lang.label}...`}
-                                />
-                            </div>
-                        ))}
-
-                        <div style={{ display: 'flex', gap: '10px', marginTop: '25px', justifyContent: 'flex-end' }}>
-                            <button onClick={() => setIsEditingIntro(false)} style={{
-                                padding: '10px 20px', background: '#f8f9fa', color: '#333',
-                                border: '1px solid #ddd', borderRadius: '8px', cursor: 'pointer'
-                            }}>
-                                Annuler
-                            </button>
-                            <button onClick={handleSaveIntros} style={{
-                                padding: '10px 20px', background: '#28a745', color: '#fff',
-                                border: 'none', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px'
-                            }}>
-                                <FaSave /> Enregistrer
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-            {/* 🛑 CTA Edit Modal */}
-            {isEditingCta && (
-                <div className="modal-overlay" style={{ zIndex: 2000 }}>
-                    <div className="modal-content" style={{
-                        background: '#fff', padding: '30px', borderRadius: '15px', width: '90%', maxWidth: '500px',
-                        boxShadow: '0 10px 40px rgba(0,0,0,0.2)'
-                    }}>
-                        <h3 style={{ marginBottom: '20px', textAlign: 'center', color: '#333' }}>Modifier le Texte du Bouton CTA</h3>
-
-                        {languages.map(lang => (
-                            <div key={lang.code} style={{ marginBottom: '15px' }}>
-                                <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', color: '#555' }}>
-                                    {lang.label}
-                                </label>
-                                <input
-                                    type="text"
-                                    value={editCtaTexts[lang.code] || ''}
-                                    onChange={e => setEditCtaTexts({ ...editCtaTexts, [lang.code]: e.target.value })}
-                                    dir={lang.code === 'ar' ? 'rtl' : 'ltr'}
-                                    style={{
-                                        width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #ddd',
-                                        fontSize: '16px'
-                                    }}
-                                    placeholder={`Bouton en ${lang.label}...`}
-                                />
-                            </div>
-                        ))}
-
-                        <div style={{ display: 'flex', gap: '10px', marginTop: '25px', justifyContent: 'flex-end' }}>
-                            <button onClick={() => setIsEditingCta(false)} style={{
-                                padding: '10px 20px', background: '#f8f9fa', color: '#333',
-                                border: '1px solid #ddd', borderRadius: '8px', cursor: 'pointer'
-                            }}>
-                                Annuler
-                            </button>
-                            <button onClick={handleSaveCta} style={{
-                                padding: '10px 20px', background: '#28a745', color: '#fff',
-                                border: 'none', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px'
-                            }}>
-                                <FaSave /> Enregistrer
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-            {/* 🛑 Add Product Modal */}
+            {/* 🛑 Stylish Add Product Modal */}
             {isAddingProduct && (
-                <div className="modal-overlay" style={{ zIndex: 2000 }}>
-                    <div className="modal-content" style={{
-                        background: '#fff', padding: '30px', borderRadius: '15px', width: '90%', maxWidth: '450px',
-                        boxShadow: '0 10px 40px rgba(0,0,0,0.2)'
-                    }}>
-                        <h3 style={{ marginBottom: '20px', textAlign: 'center' }}>
-                            {currentLanguage === 'ar' ? 'إضافة منتج جديد' : 'Ajouter un Nouveau Produit'}
-                        </h3>
+                <div className="premium-modal-backdrop" onClick={() => setIsAddingProduct(false)}>
+                    <div className="premium-modal-content" onClick={(e) => e.stopPropagation()}>
+                        <button className="premium-modal-close-icon" onClick={() => setIsAddingProduct(false)}><FaTimes /></button>
+                        <h2 className="premium-modal-title">
+                            {currentLanguage === 'ar' ? 'إضافة منتج جديد' : 'Nouveau Produit'}
+                        </h2>
 
-                        <div style={{ marginBottom: '15px' }}>
-                            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Nom du produit</label>
+                        <div className="premium-form-group">
+                            <label>Nom du Produit</label>
                             <input
                                 type="text"
                                 value={newProduct.nom}
                                 onChange={e => setNewProduct({ ...newProduct, nom: e.target.value })}
-                                style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #ddd' }}
-                                placeholder="Ex: Patron Robe..."
                             />
                         </div>
 
-                        <div style={{ marginBottom: '15px' }}>
-                            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Prix (DT)</label>
+                        <div className="premium-form-group">
+                            <label>Prix de Vente (DT)</label>
                             <input
                                 type="number"
                                 value={newProduct.prix}
                                 onChange={e => setNewProduct({ ...newProduct, prix: e.target.value })}
-                                style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #ddd' }}
-                                placeholder="29.90"
                             />
                         </div>
 
-                        <div style={{ marginBottom: '20px' }}>
-                            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>URL de l'image</label>
+                        <div className="premium-form-group">
+                            <label>Lien de l'Image</label>
                             <input
                                 type="text"
                                 value={newProduct.image}
                                 onChange={e => setNewProduct({ ...newProduct, image: e.target.value })}
-                                style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #ddd' }}
-                                placeholder="https://example.com/image.jpg"
                             />
                         </div>
 
-                        <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-                            <button
-                                onClick={() => setIsAddingProduct(false)}
-                                style={{ padding: '10px 20px', borderRadius: '8px', border: '1px solid #ddd', cursor: 'pointer' }}
-                            >
-                                Annuler
+                        <div className="premium-btn-group">
+                            <button className="premium-btn-cta secondary" onClick={() => setIsAddingProduct(false)}>
+                                {currentLanguage === 'ar' ? 'إلغاء' : 'Annuler'}
                             </button>
-                            <button
-                                onClick={handleAddProduct}
-                                style={{ padding: '10px 20px', borderRadius: '8px', border: 'none', background: '#28a745', color: '#fff', cursor: 'pointer' }}
-                            >
-                                <FaPlusCircle /> Ajouter
+                            <button className="premium-btn-cta gold" onClick={handleAddProduct}>
+                                <FaPlusCircle /> {currentLanguage === 'ar' ? 'إضافة المنتج' : 'Ajouter'}
                             </button>
                         </div>
                     </div>

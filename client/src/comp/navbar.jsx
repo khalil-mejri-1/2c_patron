@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { FaBars, FaTimes, FaSearch, FaShoppingBag, FaUser, FaSignOutAlt, FaSignInAlt, FaUserPlus, FaCrown, FaTachometerAlt, FaPlus, FaSave } from 'react-icons/fa';
+import { FaBars, FaTimes, FaSearch, FaShoppingBag, FaUser, FaSignOutAlt, FaSignInAlt, FaUserPlus, FaCrown, FaTachometerAlt, FaPlus, FaSave, FaArrowLeft } from 'react-icons/fa';
 import logo from "../img/logo.png";
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
@@ -237,16 +237,34 @@ export default function Navbar({ initialCartCount = 0 }) {
 
 
 
+    const [isScrolled, setIsScrolled] = useState(false);
+
+    useEffect(() => {
+        const handleScroll = () => {
+            if (window.scrollY > 50) {
+                setIsScrolled(true);
+            } else {
+                setIsScrolled(false);
+            }
+        };
+
+        window.addEventListener('scroll', handleScroll);
+        return () => {
+            window.removeEventListener('scroll', handleScroll);
+        };
+    }, []);
+
     return (
         <>
             {/* Bouton de Retour Conditionnel */}
             {!isHomePage && (
-                <button className='button_retour' onClick={handleGoBack}>
-                    &larr; Retour
+                <button className='button_retour' onClick={handleGoBack} aria-label="Retour">
+                    <FaArrowLeft />
+                    <span className="back-btn-label">Retour</span>
                 </button>
             )}
 
-            <nav className="navbar-couture">
+            <nav className={`navbar-couture ${isScrolled ? 'scrolled-nav' : ''}`}>
                 <div className="navbar-logo">
                     <Link to="/">
                         <img src={logo} className='logo' alt="Logo Atelier Couture" />
@@ -415,95 +433,104 @@ export default function Navbar({ initialCartCount = 0 }) {
                 </div>
             </nav>
 
-            {/* Modals (unchanged) */}
+            {/* Modals */}
             {showConfirmModal && (
-                <div className="modal-overlay">
-                    <div className="confirmation-modal">
-                        <p>Êtes-vous sûr(e) de vouloir vous déconnecter ?</p>
-                        <div className="modal-actions">
-                            <button onClick={confirmLogout} className="modal-btn confirm-btn">Oui, Déconnexion</button>
-                            <button onClick={cancelLogout} className="modal-btn cancel-btn">Annuler</button>
+                <div className="premium-modal-backdrop" onClick={cancelLogout}>
+                    <div className="premium-modal-content" onClick={e => e.stopPropagation()}>
+                        <button className="premium-modal-close-icon" onClick={cancelLogout}><FaTimes /></button>
+                        <h2 className="premium-modal-title">Déconnexion</h2>
+                        <p style={{ textAlign: 'center', color: '#4b5563', marginBottom: '30px', fontSize: '1.1rem' }}>
+                            Êtes-vous sûr(e) de vouloir vous déconnecter ?
+                        </p>
+                        <div className="premium-btn-group">
+                            <button onClick={cancelLogout} className="premium-btn-cta secondary">Annuler</button>
+                            <button onClick={confirmLogout} className="premium-btn-cta gold">Oui, Déconnexion</button>
                         </div>
                     </div>
                 </div>
             )}
 
             {showVipModal && (
-                <div className="modal-overlay">
-                    <div className="confirmation-modal vip-modal">
-                        <FaCrown size={30} color="#FFD700" style={{ marginBottom: '15px' }} />
-                        <h3>Accès Limité</h3>
-                        <p>L'accès <strong>Master Atelier (VIP)</strong> est réservé à nos membres premium.</p>
-                        <p>Veuillez vous abonner pour débloquer le contenu exclusif !</p>
-                        <div className="modal-actions">
-                            <Link to="/Abonnement-VIP" onClick={() => setShowVipModal(false)} className="modal-btn confirm-btn">
-                                S'abonner
+                <div className="premium-modal-backdrop" onClick={() => setShowVipModal(false)}>
+                    <div className="premium-modal-content" onClick={(e) => e.stopPropagation()}>
+                        <button className="premium-modal-close-icon" onClick={() => setShowVipModal(false)}><FaTimes /></button>
+
+                        <div className="premium-modal-header">
+                            <div className="vip-cert-icon-wrapper" style={{ margin: '0 auto 15px', background: 'rgba(212, 175, 55, 0.1)', color: '#d4af37' }}>
+                                <FaCrown />
+                            </div>
+                            <h2 className="premium-modal-title">Accès Limité</h2>
+                        </div>
+
+                        <div style={{ padding: '0 20px 30px', textAlign: 'center' }}>
+                            <p style={{ color: '#64748b', fontSize: '1.05rem', lineHeight: '1.6', margin: '0 0 20px' }}>
+                                L'accès <strong>Master Atelier (VIP)</strong> est une expérience exclusive réservée à nos membres premium.
+                            </p>
+                            <div style={{ background: '#fef3c7', color: '#92400e', padding: '12px 20px', borderRadius: '12px', fontSize: '0.9rem', fontWeight: '700', display: 'inline-block' }}>
+                                ✦ Débloquez des patrons secrets & tutoriels d'experts
+                            </div>
+                        </div>
+
+                        <div className="premium-btn-group">
+                            <button onClick={() => setShowVipModal(false)} className="premium-btn-cta secondary">
+                                Plus tard
+                            </button>
+                            <Link to="/Abonnement-VIP" onClick={() => setShowVipModal(false)} className="premium-btn-cta gold" style={{ textDecoration: 'none', display: 'flex', justifyContent: 'center' }}>
+                                Devenir Membre VIP
                             </Link>
-                            <button onClick={() => setShowVipModal(false)} className="modal-btn cancel-btn">Fermer</button>
                         </div>
                     </div>
                 </div>
             )}
+
             {/* 🛑 Modal Ajouter une Langue */}
             {isAddLanguageModalOpen && (
-                <div className="modal-overlay" style={{ zIndex: 3000 }}>
-                    <div className="modal-content" style={{
-                        background: '#fff', padding: '30px', borderRadius: '15px', width: '90%', maxWidth: '400px',
-                        boxShadow: '0 10px 40px rgba(0,0,0,0.2)'
-                    }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                            <h3 style={{ margin: 0, color: '#333' }}>Nouvelle Langue</h3>
-                            <button onClick={() => setIsAddLanguageModalOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#888' }}><FaTimes size={20} /></button>
-                        </div>
+                <div className="premium-modal-backdrop" onClick={() => setIsAddLanguageModalOpen(false)}>
+                    <div className="premium-modal-content" onClick={(e) => e.stopPropagation()}>
+                        <button className="premium-modal-close-icon" onClick={() => setIsAddLanguageModalOpen(false)}><FaTimes /></button>
+                        <h2 className="premium-modal-title">Nouvelle Langue</h2>
 
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                            <div>
-                                <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: 'bold' }}>Nom (ex: Italiano)</label>
+                        <div className="premium-form-grid" style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                            <div className="premium-form-group">
+                                <label>Nom (ex: Italiano)</label>
                                 <input
                                     type="text"
                                     value={newLangData.label}
                                     onChange={e => setNewLangData({ ...newLangData, label: e.target.value })}
-                                    style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #ddd' }}
                                     placeholder="Nom de la langue..."
                                 />
                             </div>
-                            <div>
-                                <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: 'bold' }}>Code (ex: it)</label>
+                            <div className="premium-form-group">
+                                <label>Code (ex: it)</label>
                                 <input
                                     type="text"
                                     value={newLangData.code}
                                     onChange={e => setNewLangData({ ...newLangData, code: e.target.value })}
-                                    style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #ddd' }}
                                     placeholder="it, es, de..."
                                 />
                             </div>
-                            <div>
-                                <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: 'bold' }}>Emoji (ex: 🇮🇹)</label>
+                            <div className="premium-form-group">
+                                <label>Emoji (ex: 🇮🇹)</label>
                                 <input
                                     type="text"
                                     value={newLangData.emoji}
                                     onChange={e => setNewLangData({ ...newLangData, emoji: e.target.value })}
-                                    style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #ddd' }}
                                     placeholder="🇮🇹"
                                 />
                             </div>
-                            <div>
-                                <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: 'bold' }}>URL de l'icône (Image)</label>
+                            <div className="premium-form-group">
+                                <label>URL de l'icône (Image)</label>
                                 <input
                                     type="text"
                                     value={newLangData.icon}
                                     onChange={e => setNewLangData({ ...newLangData, icon: e.target.value })}
-                                    style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #ddd' }}
                                     placeholder="https://.../flag.png"
                                 />
                             </div>
                         </div>
 
-                        <div style={{ display: 'flex', gap: '10px', marginTop: '25px', justifyContent: 'flex-end' }}>
-                            <button onClick={() => setIsAddLanguageModalOpen(false)} style={{
-                                padding: '10px 20px', background: '#f8f9fa', color: '#333',
-                                border: '1px solid #ddd', borderRadius: '8px', cursor: 'pointer'
-                            }}>
+                        <div className="premium-btn-group" style={{ marginTop: '25px' }}>
+                            <button onClick={() => setIsAddLanguageModalOpen(false)} className="premium-btn-cta secondary">
                                 Annuler
                             </button>
                             <button
@@ -514,10 +541,7 @@ export default function Navbar({ initialCartCount = 0 }) {
                                         setNewLangData({ label: '', code: '', emoji: '', icon: '' });
                                     }
                                 }}
-                                style={{
-                                    padding: '10px 20px', background: '#D4AF37', color: '#fff',
-                                    border: 'none', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px'
-                                }}
+                                className="premium-btn-cta gold"
                             >
                                 <FaSave /> Ajouter
                             </button>

@@ -521,16 +521,15 @@ export default function ProductGrid() {
 
     const [isAdmin, setIsAdmin] = useState(false);
     const [isEditingField, setIsEditingField] = useState(null); // 'title', 'subtitle', 'sidebar', 'reset', 'info', 'navTitle', 'cartBtn'
-    const [shopContent, setShopContent] = useState({
-        fr: { colTitle: '', colAccent: '', colSub: '', sidebar: '', reset: '', info: '', navTitle: '', cartBtn: '' },
-        ar: { colTitle: '', colAccent: '', colSub: '', sidebar: '', reset: '', info: '', navTitle: '', cartBtn: '' },
-        en: { colTitle: '', colAccent: '', colSub: '', sidebar: '', reset: '', info: '', navTitle: '', cartBtn: '' }
-    });
-    const [editShopContent, setEditShopContent] = useState({
-        fr: { colTitle: '', colAccent: '', colSub: '', sidebar: '', reset: '', info: '', navTitle: '', cartBtn: '' },
-        ar: { colTitle: '', colAccent: '', colSub: '', sidebar: '', reset: '', info: '', navTitle: '', cartBtn: '' },
-        en: { colTitle: '', colAccent: '', colSub: '', sidebar: '', reset: '', info: '', navTitle: '', cartBtn: '' }
-    });
+    // Default structure for content
+    const defaultStructure = {
+        colTitle: '', colAccent: '', colSub: '',
+        sidebar: '', reset: '', navTitle: '', searchPlaceholder: '',
+        info: '', cartBtn: ''
+    };
+
+    const [shopContent, setShopContent] = useState({});
+    const [editShopContent, setEditShopContent] = useState({});
 
     useEffect(() => {
         // Check Admin
@@ -566,8 +565,9 @@ export default function ProductGrid() {
     const initializeAllLanguages = (currentValues) => {
         const initialized = {};
         languages.forEach(lang => {
-            initialized[lang.code] = currentValues[lang.code] || {
-                colTitle: '', colAccent: '', colSub: '', sidebar: '', reset: '', info: '', navTitle: '', cartBtn: ''
+            initialized[lang.code] = {
+                ...defaultStructure,
+                ...(currentValues[lang.code] || {})
             };
         });
         return initialized;
@@ -577,27 +577,13 @@ export default function ProductGrid() {
         return (shopContent[appLanguage] && shopContent[appLanguage][key]) || defaultVal;
     };
 
-    const EditBtn = ({ field }) => (
+    const EditBtn = ({ field, style = {} }) => (
         isAdmin && (
             <button
                 onClick={() => { setEditShopContent(initializeAllLanguages(shopContent)); setIsEditingField(field); }}
-                className="edit-btn-minimal"
+                className="edit-btn-minimal-lux"
                 title="Modifier"
-                style={{
-                    background: 'rgba(212, 175, 55, 0.1)',
-                    border: '1px solid rgba(212, 175, 55, 0.2)',
-                    color: '#D4AF37',
-                    borderRadius: '50%',
-                    width: '30px',
-                    height: '30px',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    marginLeft: '8px',
-                    cursor: 'pointer',
-                    transition: 'all 0.3s',
-                    verticalAlign: 'middle'
-                }}
+                style={style}
             >
                 <FaEdit size={14} />
             </button>
@@ -1038,20 +1024,18 @@ export default function ProductGrid() {
     return (
         <>
             <Navbar />
-            <br /><br /><br /><br /><br /><br />
 
             <section className="product-grid-section" dir={direction}>
 
-                <div className="grid-header" style={{ textAlign: 'center', marginBottom: '60px' }}>
-                    <h2 className="grid-main-title" style={{ justifyContent: 'center', display: 'flex', alignItems: 'center' }}>
-                        <span style={{ color: "#333333" }}>{getT('colTitle', t.collectionTitle)}</span>
-                        <span className="vip-accent-text" style={{ color: "#D4AF37", marginLeft: '10px' }}>{getT('colAccent', t.collectionAccent)}</span>
-                        <EditBtn field="title" />
+                <div className="grid-header" style={{ textAlign: 'center', marginBottom: '60px', position: 'relative' }}>
+                    <EditBtn field="hero" style={{ position: 'absolute', top: '0', right: '20px' }} />
+                    <h2 className="grid-main-title">
+                        <span>{getT('colTitle', t.collectionTitle)}</span>
+                        <span className="vip-accent-text">{getT('colAccent', t.collectionAccent)}</span>
                     </h2>
                     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginTop: '15px' }}>
                         <p className="grid-sub-text" style={{ margin: 0 }}>
                             {getT('colSub', t.collectionSubtitle)}
-                            <EditBtn field="subtitle" />
                         </p>
                     </div>
                     {isAdmin && (
@@ -1082,16 +1066,16 @@ export default function ProductGrid() {
 
 
                     {/* 2. Barre latérale des filtres */}
-                    <aside className={`filter-sidebar ${isFilterOpen ? 'is-open' : ''} ${appLanguage === 'ar' ? 'rtl-sidebar' : ''}`}>
+                    <aside className={`filter-sidebar ${isFilterOpen ? 'is-open' : ''} ${appLanguage === 'ar' ? 'rtl-sidebar' : ''}`} style={{ position: 'relative' }}>
+                        <EditBtn field="filters" style={{ position: 'absolute', top: '20px', right: '20px', zIndex: 10 }} />
                         <div style={{ display: 'flex', alignItems: 'center', marginBottom: '15px' }}>
                             <h3 className="sidebar-title" style={{ margin: 0 }}>{getT('sidebar', t.sidebarTitle)}</h3>
-                            <EditBtn field="sidebar" />
                         </div>
 
                         <div className="filter-group search-filter">
                             <input
                                 type="text"
-                                placeholder={t.searchPlaceholder}
+                                placeholder={getT('searchPlaceholder', t.searchPlaceholder)}
                                 className="search-input"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -1104,7 +1088,6 @@ export default function ProductGrid() {
                             <h4 className="filter-group-title" style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                                 {getT('navTitle', t.filterCategory(t.navTitle))}
                                 <FaChevronDown className="dropdown-icon" />
-                                <EditBtn field="navTitle" />
                             </h4>
                             <ul className="category-list">
                                 {currentCategories.map((cat, index) => {
@@ -1129,7 +1112,6 @@ export default function ProductGrid() {
 
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '20px' }}>
                             <button className="reset-filters-button" onClick={resetFilters}>{getT('reset', t.resetFilters)}</button>
-                            <EditBtn field="reset" />
                         </div>
 
                     </aside>
@@ -1148,7 +1130,7 @@ export default function ProductGrid() {
                                     return t.infoBar(filteredProducts.length, productsToFilter.length);
                                 })()}
                             </p>
-                            <EditBtn field="info" />
+                            <EditBtn field="productsInfo" />
                         </div>
 
                         <div className="product-grid-container">
@@ -1221,30 +1203,6 @@ export default function ProductGrid() {
                                                 >
                                                     <FaShoppingCart />
                                                     {getT('cartBtn', t.addToCart)}
-
-                                                    {isAdmin && (
-                                                        <span
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                setEditShopContent(shopContent);
-                                                                setIsEditingField('cartBtn');
-                                                            }}
-                                                            style={{
-                                                                marginLeft: '10px',
-                                                                padding: '6px',
-                                                                background: 'rgba(255,255,255,0.25)',
-                                                                borderRadius: '50%',
-                                                                display: 'flex',
-                                                                alignItems: 'center',
-                                                                transition: 'background 0.2s'
-                                                            }}
-                                                            onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.4)'}
-                                                            onMouseOut={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.25)'}
-                                                            title="Modifier le texte du bouton"
-                                                        >
-                                                            <FaEdit size={12} />
-                                                        </span>
-                                                    )}
                                                 </button>
                                             </div>
                                         </div>
@@ -1291,124 +1249,119 @@ export default function ProductGrid() {
             {/* 🛑 Admin Editing Modal */}
             {
                 isEditingField && (
-                    <div className="modal-overlay" style={{ zIndex: 2000 }}>
-                        <div className="modal-content" style={{
-                            background: '#fff', padding: '30px', borderRadius: '15px', width: '90%', maxWidth: '600px',
-                            maxHeight: '80vh', overflowY: 'auto'
-                        }}>
-                            <h3 style={{ marginBottom: '20px', textAlign: 'center' }}>Modifier {isEditingField}</h3>
+                    <div className="premium-modal-backdrop" onClick={() => setIsEditingField(null)}>
+                        <div className="premium-modal-content large" onClick={(e) => e.stopPropagation()}>
+                            <button className="premium-modal-close-icon" onClick={() => setIsEditingField(null)}><FaTimes /></button>
+                            <h2 className="premium-modal-title">
+                                Modifier: {
+                                    isEditingField === 'hero' ? 'En-tête (Hero)' :
+                                        isEditingField === 'filters' ? 'Filtres & Sidebar' :
+                                            isEditingField === 'productsInfo' ? 'Infos Produits & Bouton' :
+                                                isEditingField
+                                }
+                            </h2>
 
-                            {languages.map(lang => (
-                                <div key={lang.code} style={{ marginBottom: '25px', padding: '15px', border: '1px solid #eee', borderRadius: '10px' }}>
-                                    <h4 style={{ marginBottom: '10px', textTransform: 'uppercase', color: '#D4AF37' }}>
-                                        {lang.label}
-                                    </h4>
+                            <div className="premium-form-grid">
+                                {languages.map(lang => (
+                                    <div key={lang.code} className="premium-lang-section">
+                                        <h4 className="lang-indicator">{lang.label}</h4>
 
-                                    {isEditingField === 'title' && (
-                                        <>
-                                            <div style={{ marginBottom: '10px' }}>
-                                                <label style={{ display: 'block', fontSize: '12px', color: '#888' }}>Titre Principal</label>
-                                                <input
-                                                    type="text"
-                                                    value={editShopContent[lang.code]?.colTitle || ''}
-                                                    onChange={e => setEditShopContent({ ...editShopContent, [lang.code]: { ...editShopContent[lang.code], colTitle: e.target.value } })}
-                                                    style={{ width: '100%', padding: '8px', borderRadius: '5px', border: '1px solid #ddd' }}
-                                                />
-                                            </div>
-                                            <div style={{ marginBottom: '10px' }}>
-                                                <label style={{ display: 'block', fontSize: '12px', color: '#888' }}>Accent (Or)</label>
-                                                <input
-                                                    type="text"
-                                                    value={editShopContent[lang.code]?.colAccent || ''}
-                                                    onChange={e => setEditShopContent({ ...editShopContent, [lang.code]: { ...editShopContent[lang.code], colAccent: e.target.value } })}
-                                                    style={{ width: '100%', padding: '8px', borderRadius: '5px', border: '1px solid #ddd' }}
-                                                />
-                                            </div>
-                                        </>
-                                    )}
+                                        {isEditingField === 'hero' && (
+                                            <>
+                                                <div className="premium-form-group">
+                                                    <label>Titre Principal</label>
+                                                    <input
+                                                        type="text"
+                                                        value={editShopContent[lang.code]?.colTitle || ''}
+                                                        onChange={e => setEditShopContent({ ...editShopContent, [lang.code]: { ...editShopContent[lang.code], colTitle: e.target.value } })}
+                                                    />
+                                                </div>
+                                                <div className="premium-form-group">
+                                                    <label>Accent (Or)</label>
+                                                    <input
+                                                        type="text"
+                                                        value={editShopContent[lang.code]?.colAccent || ''}
+                                                        onChange={e => setEditShopContent({ ...editShopContent, [lang.code]: { ...editShopContent[lang.code], colAccent: e.target.value } })}
+                                                    />
+                                                </div>
+                                                <div className="premium-form-group">
+                                                    <label>Sous-titre</label>
+                                                    <textarea
+                                                        value={editShopContent[lang.code]?.colSub || ''}
+                                                        onChange={e => setEditShopContent({ ...editShopContent, [lang.code]: { ...editShopContent[lang.code], colSub: e.target.value } })}
+                                                        rows="3"
+                                                    />
+                                                </div>
+                                            </>
+                                        )}
 
-                                    {isEditingField === 'subtitle' && (
-                                        <div style={{ marginBottom: '10px' }}>
-                                            <label style={{ display: 'block', fontSize: '12px', color: '#888' }}>Sous-titre</label>
-                                            <textarea
-                                                value={editShopContent[lang.code]?.colSub || ''}
-                                                onChange={e => setEditShopContent({ ...editShopContent, [lang.code]: { ...editShopContent[lang.code], colSub: e.target.value } })}
-                                                rows="3"
-                                                style={{ width: '100%', padding: '8px', borderRadius: '5px', border: '1px solid #ddd' }}
-                                            />
-                                        </div>
-                                    )}
+                                        {isEditingField === 'filters' && (
+                                            <>
+                                                <div className="premium-form-group">
+                                                    <label>Titre Sidebar</label>
+                                                    <input
+                                                        type="text"
+                                                        value={editShopContent[lang.code]?.sidebar || ''}
+                                                        onChange={e => setEditShopContent({ ...editShopContent, [lang.code]: { ...editShopContent[lang.code], sidebar: e.target.value } })}
+                                                    />
+                                                </div>
+                                                <div className="premium-form-group">
+                                                    <label>Titre Catégories</label>
+                                                    <input
+                                                        type="text"
+                                                        value={editShopContent[lang.code]?.navTitle || ''}
+                                                        onChange={e => setEditShopContent({ ...editShopContent, [lang.code]: { ...editShopContent[lang.code], navTitle: e.target.value } })}
+                                                    />
+                                                </div>
+                                                <div className="premium-form-group">
+                                                    <label>Placeholder Recherche</label>
+                                                    <input
+                                                        type="text"
+                                                        value={editShopContent[lang.code]?.searchPlaceholder || ''}
+                                                        onChange={e => setEditShopContent({ ...editShopContent, [lang.code]: { ...editShopContent[lang.code], searchPlaceholder: e.target.value } })}
+                                                    />
+                                                </div>
+                                                <div className="premium-form-group">
+                                                    <label>Bouton Reset</label>
+                                                    <input
+                                                        type="text"
+                                                        value={editShopContent[lang.code]?.reset || ''}
+                                                        onChange={e => setEditShopContent({ ...editShopContent, [lang.code]: { ...editShopContent[lang.code], reset: e.target.value } })}
+                                                    />
+                                                </div>
+                                            </>
+                                        )}
 
-                                    {isEditingField === 'sidebar' && (
-                                        <div style={{ marginBottom: '10px' }}>
-                                            <label style={{ display: 'block', fontSize: '12px', color: '#888' }}>Titre Sidebar</label>
-                                            <input
-                                                type="text"
-                                                value={editShopContent[lang.code]?.sidebar || ''}
-                                                onChange={e => setEditShopContent({ ...editShopContent, [lang.code]: { ...editShopContent[lang.code], sidebar: e.target.value } })}
-                                                style={{ width: '100%', padding: '8px', borderRadius: '5px', border: '1px solid #ddd' }}
-                                            />
-                                        </div>
-                                    )}
-
-                                    {isEditingField === 'reset' && (
-                                        <div style={{ marginBottom: '10px' }}>
-                                            <label style={{ display: 'block', fontSize: '12px', color: '#888' }}>Bouton Reset</label>
-                                            <input
-                                                type="text"
-                                                value={editShopContent[lang.code]?.reset || ''}
-                                                onChange={e => setEditShopContent({ ...editShopContent, [lang.code]: { ...editShopContent[lang.code], reset: e.target.value } })}
-                                                style={{ width: '100%', padding: '8px', borderRadius: '5px', border: '1px solid #ddd' }}
-                                            />
-                                        </div>
-                                    )}
-
-                                    {isEditingField === 'info' && (
-                                        <div style={{ marginBottom: '10px' }}>
-                                            <label style={{ display: 'block', fontSize: '12px', color: '#888' }}>
-                                                Barre Info (Utilisez {'{f}'} pour le nombre filtré et {'{t}'} pour le total)
-                                            </label>
-                                            <input
-                                                type="text"
-                                                value={editShopContent[lang.code]?.info || ''}
-                                                onChange={e => setEditShopContent({ ...editShopContent, [lang.code]: { ...editShopContent[lang.code], info: e.target.value } })}
-                                                style={{ width: '100%', padding: '8px', borderRadius: '5px', border: '1px solid #ddd' }}
-                                                placeholder="Ex: Affichage de {f} sur {t} produits"
-                                            />
-                                        </div>
-                                    )}
-
-                                    {isEditingField === 'navTitle' && (
-                                        <div style={{ marginBottom: '10px' }}>
-                                            <label style={{ display: 'block', fontSize: '12px', color: '#888' }}>Titre Catégories</label>
-                                            <input
-                                                type="text"
-                                                value={editShopContent[lang.code]?.navTitle || ''}
-                                                onChange={e => setEditShopContent({ ...editShopContent, [lang.code]: { ...editShopContent[lang.code], navTitle: e.target.value } })}
-                                                style={{ width: '100%', padding: '8px', borderRadius: '5px', border: '1px solid #ddd' }}
-                                            />
-                                        </div>
-                                    )}
-
-                                    {isEditingField === 'cartBtn' && (
-                                        <div style={{ marginBottom: '10px' }}>
-                                            <label style={{ display: 'block', fontSize: '12px', color: '#888' }}>Bouton d'achat</label>
-                                            <input
-                                                type="text"
-                                                value={editShopContent[lang.code]?.cartBtn || ''}
-                                                onChange={e => setEditShopContent({ ...editShopContent, [lang.code]: { ...editShopContent[lang.code], cartBtn: e.target.value } })}
-                                                style={{ width: '100%', padding: '8px', borderRadius: '5px', border: '1px solid #ddd' }}
-                                            />
-                                        </div>
-                                    )}
-                                </div>
-                            ))}
+                                        {isEditingField === 'productsInfo' && (
+                                            <>
+                                                <div className="premium-form-group">
+                                                    <label>Barre Info (Utilisez {'{f}'} pour le nombre filtré et {'{t}'} pour le total)</label>
+                                                    <input
+                                                        type="text"
+                                                        value={editShopContent[lang.code]?.info || ''}
+                                                        onChange={e => setEditShopContent({ ...editShopContent, [lang.code]: { ...editShopContent[lang.code], info: e.target.value } })}
+                                                        placeholder="Ex: Affichage de {f} sur {t} produits"
+                                                    />
+                                                </div>
+                                                <div className="premium-form-group">
+                                                    <label>Bouton d'achat</label>
+                                                    <input
+                                                        type="text"
+                                                        value={editShopContent[lang.code]?.cartBtn || ''}
+                                                        onChange={e => setEditShopContent({ ...editShopContent, [lang.code]: { ...editShopContent[lang.code], cartBtn: e.target.value } })}
+                                                    />
+                                                </div>
+                                            </>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
 
                             <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '20px' }}>
-                                <button onClick={() => setIsEditingField(null)} style={{ padding: '10px 20px', borderRadius: '5px', border: '1px solid #ddd', background: '#fff' }}>
+                                <button onClick={() => setIsEditingField(null)} className="premium-modal-close-icon" style={{ position: 'static' }}>
                                     Annuler
                                 </button>
-                                <button onClick={handleSaveShopContent} style={{ padding: '10px 20px', borderRadius: '5px', border: 'none', background: '#28a745', color: '#fff' }}>
+                                <button onClick={handleSaveShopContent} className="premium-save-btn">
                                     <FaSave /> Enregistrer
                                 </button>
                             </div>

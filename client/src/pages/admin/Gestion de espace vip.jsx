@@ -1,235 +1,23 @@
-// Gestion_de_espace_vip.js
-
 import React, { useState, useEffect } from 'react';
 import NavbarAdmin from '../../comp/Navbar_admin';
 import axios from 'axios';
-import { FaPlusCircle, FaTrash, FaEdit, FaSave, FaBookOpen, FaVideo, FaLayerGroup, FaSpinner, FaExclamationTriangle } from 'react-icons/fa';
-import '../admin_css/Gestion de espace vip.css';
+import { FaPlusCircle, FaTrash, FaEdit, FaSave, FaBookOpen, FaVideo, FaLayerGroup, FaSpinner, FaExclamationTriangle, FaTimes, FaImage, FaClock, FaCheckCircle } from 'react-icons/fa';
 import GestionCoursSpecialises from './Gestion_cours_specialises.jsx';
 import GestionVedioSpecialises from './Gestion_vedio_specialises.jsx';
 import BASE_URL from '../../apiConfig';
+import { useAlert } from '../../context/AlertContext';
 
-// ⚙️ Configuration de l'API (à ajustré selon votre backend)
 const API_URL = `${BASE_URL}/api/vip-categories`;
 
-// --- STYLES EN LIGNE MODERNES ET RESPONSIVES ---
-const styles = {
-    // Conteneur principal
-    container: {
-        maxWidth: '1200px',
-        margin: '30px auto',
-        padding: '0 20px',
-        fontFamily: 'Arial, sans-serif',
-    },
-    // Header (Boutons et Titre)
-    headerGroup: {
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'flex-start',
-        gap: '15px',
-        marginBottom: '30px',
-        borderBottom: '2px solid #e9ecef',
-        paddingBottom: '20px',
-    },
-    headerTitle: {
-        fontSize: '2rem',
-        color: '#343a40',
-        fontWeight: '700',
-        display: 'flex',
-        alignItems: 'center',
-    },
-    buttonRow: {
-        display: 'flex',
-        flexWrap: 'wrap',
-        gap: '10px',
-    },
-    // Boutons d'action
-    actionButton: {
-        padding: '10px 15px',
-        borderRadius: '8px',
-        fontWeight: '600',
-        cursor: 'pointer',
-        color: 'white',
-        border: 'none',
-        transition: 'background-color 0.3s, transform 0.2s',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '8px',
-        fontSize: '1rem',
-    },
-    manageCoursButton: {
-        backgroundColor: '#10b981',
-    },
-    manageVedioButton: {
-        backgroundColor: '#3b82f6',
-    },
-    // Formulaire d'Ajout
-    addFormContainer: {
-        background: '#ffffff',
-        padding: '25px',
-        borderRadius: '12px',
-        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
-        marginBottom: '40px',
-    },
-    addFormTitle: {
-        fontSize: '1.5rem',
-        color: '#495057',
-        marginBottom: '20px',
-        borderBottom: '1px solid #e9ecef',
-        paddingBottom: '10px',
-    },
-    formGrid: {
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-        gap: '15px',
-    },
-    inputField: {
-        padding: '12px',
-        border: '1px solid #ced4da',
-        borderRadius: '6px',
-        fontSize: '1rem',
-        width: '100%',
-        boxSizing: 'border-box',
-    },
-    inputFull: {
-        gridColumn: '1 / -1',
-    },
-    addButton: {
-        backgroundColor: '#28a745',
-        color: 'white',
-        padding: '12px',
-        borderRadius: '6px',
-        fontWeight: '600',
-        border: 'none',
-        cursor: 'pointer',
-        gridColumn: '1 / -1',
-        marginTop: '10px',
-    },
-    // Tableau
-    tableTitle: {
-        fontSize: '1.5rem',
-        color: '#495057',
-        marginBottom: '15px',
-        borderLeft: '4px solid #3b82f6',
-        paddingLeft: '10px',
-    },
-    tableResponsive: {
-        overflowX: 'auto',
-        borderRadius: '8px',
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
-    },
-    categoryTable: {
-        width: '100%',
-        minWidth: '700px',
-        borderCollapse: 'separate',
-        borderSpacing: '0',
-    },
-    tableTh: {
-        backgroundColor: '#f8f9fa',
-        padding: '12px 15px',
-        textAlign: 'left',
-        fontWeight: '700',
-        color: '#495057',
-        borderBottom: '2px solid #e9ecef',
-    },
-    tableTd: {
-        padding: '15px',
-        borderBottom: '1px solid #e9ecef',
-        fontSize: '0.95rem',
-        verticalAlign: 'middle',
-    },
-    // Actions
-    actionsCell: {
-        whiteSpace: 'nowrap',
-        display: 'flex',
-        gap: '5px',
-    },
-    actionBtnIcon: {
-        padding: '8px',
-        borderRadius: '4px',
-        color: 'white',
-        border: 'none',
-        cursor: 'pointer',
-        fontSize: '1rem',
-    },
-    editBtn: { backgroundColor: '#ffc107', },
-    saveBtn: { backgroundColor: '#28a745', },
-    deleteBtn: { backgroundColor: '#dc3545', },
-    coursBtn: { backgroundColor: '#007bff', },
-
-    // 🆕 Styles pour la fenêtre de confirmation personnalisée
-    confirmOverlay: {
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        background: 'rgba(0, 0, 0, 0.7)',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        zIndex: 2000, // Au-dessus de toutes les autres modales
-    },
-    confirmBox: {
-        background: 'white',
-        padding: '30px',
-        borderRadius: '12px',
-        maxWidth: '400px',
-        textAlign: 'center',
-        boxShadow: '0 10px 30px rgba(0, 0, 0, 0.5)',
-    },
-    confirmTitle: {
-        color: '#dc3545',
-        fontSize: '1.5rem',
-        marginBottom: '15px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: '10px',
-    },
-    confirmText: {
-        color: '#495057',
-        marginBottom: '25px',
-    },
-    confirmButtons: {
-        display: 'flex',
-        justifyContent: 'space-around',
-        gap: '10px',
-    },
-    confirmButtonBase: {
-        padding: '10px 20px',
-        borderRadius: '6px',
-        fontWeight: '600',
-        cursor: 'pointer',
-        border: 'none',
-        flexGrow: 1,
-    },
-    confirmYes: {
-        backgroundColor: '#dc3545',
-        color: 'white',
-    },
-    confirmNo: {
-        backgroundColor: '#f8f9fa',
-        color: '#495057',
-        border: '1px solid #ced4da',
-    }
-};
-
-
 export default function Gestion_de_espace_vip() {
-    // ... (États existants)
     const [newCategory, setNewCategory] = useState({ title: '', description: '', duration: '', image: '' });
     const [categories, setCategories] = useState([]);
-    const [error, setError] = useState(null);
     const [loading, setLoading] = useState(true);
     const [editingId, setEditingId] = useState(null);
     const [editData, setEditData] = useState({});
     const [isCoursModalOpen, setIsCoursModalOpen] = useState(false);
-    const [selectedCategoryId, setSelectedCategoryId] = useState(null);
     const [isVedioModalOpen, setIsVedioModalOpen] = useState(false);
-
-    // 🆕 État pour la fenêtre de confirmation
-    const [confirmDialog, setConfirmDialog] = useState(null); // { id: ID_A_SUPPRIMER, title: TITRE }
+    const { showAlert } = useAlert();
 
     useEffect(() => {
         fetchCategories();
@@ -240,10 +28,8 @@ export default function Gestion_de_espace_vip() {
         try {
             const response = await axios.get(API_URL);
             setCategories(response.data);
-            setError(null);
         } catch (err) {
-            setError("Erreur lors du chargement des catégories.");
-            console.error(err);
+            showAlert('error', 'Erreur', 'Échec du chargement des catégories.');
         } finally {
             setLoading(false);
         }
@@ -259,320 +45,167 @@ export default function Gestion_de_espace_vip() {
             const response = await axios.post(API_URL, newCategory);
             setCategories([response.data, ...categories]);
             setNewCategory({ title: '', description: '', duration: '', image: '' });
-            setError(null);
+            showAlert('success', 'Succès', 'Catégorie créée !');
         } catch (err) {
-            setError("Erreur lors de l'ajout de la catégorie.");
-            console.error(err);
+            showAlert('error', 'Erreur', "Échec de l'ajout.");
         }
     };
 
-    // 🆕 Remplace window.confirm par l'ouverture de la modale personnalisée
-    const confirmDelete = (id, title) => {
-        setConfirmDialog({ id, title });
-    };
-
-    // 🗑️ Fonction de suppression réelle
-    const handleDelete = async (id) => {
-        setConfirmDialog(null); // Fermer la modale
-
-        try {
-            await axios.delete(`${API_URL}/${id}`);
-            setCategories(categories.filter(cat => cat._id !== id));
-            setError(null);
-        } catch (err) {
-            setError("Erreur lors de la suppression.");
-            console.error(err);
-        }
+    const handleDelete = (id, title) => {
+        showAlert('confirm', 'Supprimer Catégorie', `Voulez-vous supprimer "${title}" ?`, async () => {
+            try {
+                await axios.delete(`${API_URL}/${id}`);
+                setCategories(categories.filter(cat => cat._id !== id));
+                showAlert('success', 'Succès', 'Catégorie supprimée.');
+            } catch (err) {
+                showAlert('error', 'Erreur', 'Échec de la suppression.');
+            }
+        });
     };
 
     const handleEditStart = (category) => {
         setEditingId(category._id);
-        setEditData({
-            title: category.title,
-            description: category.description,
-            duration: category.duration,
-            image: category.image
-        });
-    };
-
-    const handleEditChange = (e) => {
-        setEditData({ ...editData, [e.target.name]: e.target.value });
+        setEditData({ ...category });
     };
 
     const handleEditSave = async (id) => {
         try {
             const response = await axios.put(`${API_URL}/${id}`, editData);
-            setCategories(categories.map(cat =>
-                cat._id === id ? response.data : cat
-            ));
+            setCategories(categories.map(cat => cat._id === id ? response.data : cat));
             setEditingId(null);
-            setError(null);
+            showAlert('success', 'Succès', 'Mise à jour réussie !');
         } catch (err) {
-            setError("Erreur lors de la mise à jour.");
-            console.error(err);
+            showAlert('error', 'Erreur', 'Échec de mise à jour.');
         }
     };
 
-    const handleOpenCoursModal = (categoryId) => {
-        setSelectedCategoryId(categoryId);
-        setIsCoursModalOpen(true);
-    };
-
-    const handleCloseCoursModal = () => {
-        setIsCoursModalOpen(false);
-        setSelectedCategoryId(null);
-    };
-
-    const handleOpenVedioModal = () => {
-        setIsVedioModalOpen(true);
-    };
-
-    const handleCloseVedioModal = () => {
-        setIsVedioModalOpen(false);
-    };
-
-    // 🆕 Composant de la fenêtre de confirmation
-    const ConfirmationDialog = ({ onConfirm, onCancel, itemTitle }) => (
-        <div style={styles.confirmOverlay}>
-            <div style={styles.confirmBox}>
-                <h3 style={styles.confirmTitle}>
-                    <FaExclamationTriangle size={24} /> Confirmation de Suppression
-                </h3>
-                <p style={styles.confirmText}>
-                    Êtes-vous sûr de vouloir supprimer la catégorie **"{itemTitle}"** ? Cette action est irréversible.
-                </p>
-                <div style={styles.confirmButtons}>
-                    <button
-                        onClick={onCancel}
-                        style={{ ...styles.confirmButtonBase, ...styles.confirmNo }}
-                    >
-                        Annuler
-                    </button>
-                    <button
-                        onClick={onConfirm}
-                        style={{ ...styles.confirmButtonBase, ...styles.confirmYes }}
-                    >
-                        Oui, Supprimer
-                    </button>
-                </div>
+    if (loading) return (
+        <div style={{ background: '#f8fafc', minHeight: '100vh' }}>
+            <NavbarAdmin />
+            <div style={{ textAlign: 'center', padding: '100px' }}>
+                <FaSpinner className="spinner" style={{ fontSize: '3rem', color: '#D4AF37' }} />
+                <p style={{ marginTop: '20px', fontWeight: 'bold' }}>Chargement Espace Vip...</p>
             </div>
         </div>
     );
 
-    if (loading) return (
-        <>
-            <NavbarAdmin />
-            <div style={{ textAlign: 'center', marginTop: '150px', color: '#343a40' }}>
-                <FaSpinner size={30} style={{ animation: 'spin 1s linear infinite' }} />
-                <p style={{ marginTop: '15px' }}>Chargement Espace Vip...</p>
-            </div>
-            <style>{`
-                @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-            `}</style>
-        </>
-    );
-
     return (
-        <>
+        <div style={{ background: '#f8fafc', minHeight: '100vh' }}>
             <NavbarAdmin />
-            <div style={styles.container}>
 
-                {/* 🆕 AFFICHER LA FENÊTRE DE CONFIRMATION */}
-                {confirmDialog && (
-                    <ConfirmationDialog
-                        itemTitle={confirmDialog.title}
-                        onConfirm={() => handleDelete(confirmDialog.id)}
-                        onCancel={() => setConfirmDialog(null)}
-                    />
-                )}
+            <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '40px 20px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
+                    <div>
+                        <h1 style={{ fontSize: '2.2rem', color: '#1e293b', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '15px' }}>
+                            <FaLayerGroup style={{ color: '#D4AF37' }} /> Gestion Espace VIP
+                        </h1>
+                        <p style={{ color: '#64748b', marginTop: '10px' }}>Organisez vos formations et contenus privilégiés.</p>
+                    </div>
 
-                {/* --- HEADER AVEC BOUTONS DE GESTION --- */}
-                <div style={styles.headerGroup}>
-                    <h1 style={styles.headerTitle}>
-                        <FaLayerGroup style={{ marginRight: '10px', color: '#3b82f6' }} /> Gestion de l'Espace VIP
-                    </h1>
-
-                    <div style={styles.buttonRow}>
-                        {/* Bouton Gérer les Cours Spécialisés */}
-                        <button
-                            onClick={() => handleOpenCoursModal(null)}
-                            style={{ ...styles.actionButton, ...styles.manageCoursButton }}
-                            title="Gérer les Cours Spécialisés (Tous)"
-                        >
-                            <FaBookOpen /> Gérer les Cours Spécialisés
+                    <div style={{ display: 'flex', gap: '15px' }}>
+                        <button onClick={() => setIsCoursModalOpen(true)} className="premium-btn-cta secondary" style={{ padding: '12px 20px' }}>
+                            <FaBookOpen /> Gérer Cours
                         </button>
-                        {/* 🆕 Bouton Gérer les Vidéos Spécialisées */}
-                        <button
-                            onClick={handleOpenVedioModal}
-                            style={{ ...styles.actionButton, ...styles.manageVedioButton }}
-                            title="Gérer les Vidéos Spécialisées"
-                        >
-                            <FaVideo /> Gérer les vidéos Spécialisées
+                        <button onClick={() => setIsVedioModalOpen(true)} className="premium-btn-cta gold" style={{ padding: '12px 20px' }}>
+                            <FaVideo /> Gérer Vidéos
                         </button>
-
-
                     </div>
                 </div>
 
-                {/* Affichage des Erreurs */}
-                {error && (
-                    <div style={{ padding: '15px', background: '#fef2f2', color: '#b91c1c', border: '1px solid #fecaca', borderRadius: '8px', marginBottom: '20px' }}>
-                        {error}
-                    </div>
-                )}
-
-                {/* --- 1. Formulaire d'Ajout --- */}
-                <div style={styles.addFormContainer}>
-                    <h2 style={styles.addFormTitle}>
-                        <FaPlusCircle style={{ marginRight: '0.5rem', color: '#28a745' }} /> Ajouter une Nouvelle Catégorie
-                    </h2>
-                    <form onSubmit={handleAddSubmit} style={styles.formGrid}>
-                        <input
-                            type="text"
-                            name="title"
-                            value={newCategory.title}
-                            onChange={handleAddChange}
-                            placeholder="Titre (Ex: Les Corsage)"
-                            required
-                            style={styles.inputField}
-                        />
-                        <input
-                            type="text"
-                            name="duration"
-                            value={newCategory.duration}
-                            onChange={handleAddChange}
-                            placeholder="Durée (Ex: 10 Leçons)"
-                            style={styles.inputField}
-                        />
-                        <input
-                            type="url"
-                            name="image"
-                            value={newCategory.image}
-                            onChange={handleAddChange}
-                            placeholder="URL de l'image"
-                            required
-                            style={{ ...styles.inputField, ...styles.inputFull }}
-                        />
-                        <textarea
-                            name="description"
-                            value={newCategory.description}
-                            onChange={handleAddChange}
-                            placeholder="Description détaillée"
-                            required
-                            rows="2"
-                            style={{ ...styles.inputField, ...styles.inputFull }}
-                        ></textarea>
-                        <button type="submit" style={styles.addButton}>
-                            Ajouter la Catégorie
-                        </button>
+                <div className="premium-card" style={{ padding: '30px', marginBottom: '50px' }}>
+                    <h3 style={{ marginBottom: '25px', color: '#1e293b', borderLeft: '4px solid #D4AF37', paddingLeft: '15px' }}>Nouvelle Catégorie VIP</h3>
+                    <form onSubmit={handleAddSubmit} className="premium-form-grid">
+                        <div className="premium-form-group" style={{ gridColumn: 'span 2' }}>
+                            <label>Titre</label>
+                            <input type="text" name="title" value={newCategory.title} onChange={handleAddChange} placeholder="Titre de la formation" required />
+                        </div>
+                        <div className="premium-form-group" style={{ gridColumn: 'span 2' }}>
+                            <label>Durée / Infos</label>
+                            <input type="text" name="duration" value={newCategory.duration} onChange={handleAddChange} placeholder="Ex: 12 Modules" />
+                        </div>
+                        <div className="premium-form-group" style={{ gridColumn: 'span 4' }}>
+                            <label>URL Image de Couverture</label>
+                            <div style={{ position: 'relative' }}>
+                                <FaImage style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#D4AF37' }} />
+                                <input type="url" name="image" value={newCategory.image} onChange={handleAddChange} placeholder="https://..." style={{ paddingLeft: '40px' }} required />
+                            </div>
+                        </div>
+                        <div className="premium-form-group" style={{ gridColumn: 'span 4' }}>
+                            <label>Description</label>
+                            <textarea name="description" value={newCategory.description} onChange={handleAddChange} placeholder="Description attractive pour les membres..." required rows="3" />
+                        </div>
+                        <div style={{ gridColumn: 'span 4' }}>
+                            <button type="submit" className="premium-btn-cta gold" style={{ width: '100%', padding: '15px' }}>
+                                <FaPlusCircle /> Créer la Catégorie
+                            </button>
+                        </div>
                     </form>
                 </div>
 
-                {/* --- 2. Tableau des Catégories Existantes --- */}
-                <h2 style={styles.tableTitle}>
-                    Liste des Catégories ({categories.length})
-                </h2>
-                <div style={styles.tableResponsive}>
-                    <table style={styles.categoryTable}>
-                        <thead style={styles.tableHeader}>
-                            <tr>
-                                <th style={styles.tableTh}>Image</th>
-                                <th style={styles.tableTh}>Titre</th>
-                                <th style={styles.tableTh}>Description</th>
-                                <th style={styles.tableTh}>Durée</th>
-                                <th style={styles.tableTh}>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody style={styles.tableTbody}>
-                            {categories.map((category) => (
-                                <tr key={category._id} style={styles.tableRow}>
-                                    <td style={{ ...styles.tableTd, width: '100px' }}>
-                                        <img src={category.image} alt={category.title} style={{ width: '80px', height: 'auto', borderRadius: '4px', objectFit: 'cover' }} />
-                                    </td>
-                                    <td style={styles.tableTd}>
-                                        {editingId === category._id ? (
-                                            <input type="text" name="title" value={editData.title} onChange={handleEditChange} style={{ ...styles.inputField, padding: '8px' }} />
-                                        ) : (
-                                            <span style={{ fontWeight: '600' }}>{category.title}</span>
-                                        )}
-                                    </td>
-                                    <td style={styles.tableTd}>
-                                        {editingId === category._id ? (
-                                            <textarea name="description" value={editData.description} onChange={handleEditChange} rows="2" style={{ ...styles.inputField, padding: '8px' }} />
-                                        ) : (
-                                            <span style={{ display: 'block', maxWidth: '300px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{category.description}</span>
-                                        )}
-                                    </td>
-                                    <td style={styles.tableTd}>
-                                        {editingId === category._id ? (
-                                            <input type="text" name="duration" value={editData.duration} onChange={handleEditChange} style={{ ...styles.inputField, padding: '8px', width: '80px' }} />
-                                        ) : (
-                                            category.duration
-                                        )}
-                                    </td>
-                                    <td style={{ ...styles.tableTd, ...styles.actionsCell }}>
-                                        {/* Bouton Gérer les Cours pour cette catégorie spécifique */}
-                                        {/* <button 
-                                            onClick={() => handleOpenCoursModal(category._id)} 
-                                            style={{...styles.actionBtnIcon, backgroundColor: styles.manageCoursButton.backgroundColor}}
-                                            title="Gérer les cours liés"
-                                        >
-                                            <FaBookOpen size={18} />
-                                        </button> */}
+                <div className="premium-list-container">
+                    <h3 style={{ marginBottom: '30px', color: '#1e293b', borderLeft: '4px solid #D4AF37', paddingLeft: '15px' }}>
+                        Catégories Actives ({categories.length})
+                    </h3>
 
-                                        {editingId === category._id ? (
-                                            <button
-                                                onClick={() => handleEditSave(category._id)}
-                                                style={{ ...styles.actionBtnIcon, ...styles.saveBtn }}
-                                                title="Sauvegarder"
-                                            >
-                                                <FaSave size={18} />
-                                            </button>
-                                        ) : (
-                                            <button
-                                                onClick={() => handleEditStart(category)}
-                                                style={{ ...styles.actionBtnIcon, ...styles.editBtn }}
-                                                title="Éditer"
-                                            >
-                                                <FaEdit size={18} />
-                                            </button>
-                                        )}
-                                        {/* 🆕 APPEL À LA FENÊTRE DE CONFIRMATION PERSONNALISÉE */}
-                                        <button
-                                            onClick={() => confirmDelete(category._id, category.title)}
-                                            style={{ ...styles.actionBtnIcon, ...styles.deleteBtn }}
-                                            title="Supprimer"
-                                        >
-                                            <FaTrash size={18} />
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                        {categories.map((cat) => (
+                            <div key={cat._id} className="premium-card" style={{ padding: '20px', display: 'flex', gap: '25px', alignItems: 'center', border: editingId === cat._id ? '2px solid #D4AF37' : '1px solid #e2e8f0' }}>
+                                <div style={{ width: '120px', height: '120px', borderRadius: '15px', overflow: 'hidden', flexShrink: 0, boxShadow: '0 4px 10px rgba(0,0,0,0.1)' }}>
+                                    <img src={cat.image} alt={cat.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                </div>
+
+                                <div style={{ flex: 1 }}>
+                                    {editingId === cat._id ? (
+                                        <div className="premium-form-grid" style={{ gap: '10px' }}>
+                                            <input type="text" name="title" value={editData.title} onChange={e => setEditData({ ...editData, title: e.target.value })} style={{ gridColumn: 'span 2' }} />
+                                            <input type="text" name="duration" value={editData.duration} onChange={e => setEditData({ ...editData, duration: e.target.value })} style={{ gridColumn: 'span 2' }} />
+                                            <textarea name="description" value={editData.description} onChange={e => setEditData({ ...editData, description: e.target.value })} style={{ gridColumn: 'span 4' }} rows="2" />
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <h4 style={{ margin: '0 0 8px 0', fontSize: '1.2rem', color: '#1e293b' }}>{cat.title}</h4>
+                                            <p style={{ margin: '0 0 15px 0', fontSize: '0.9rem', color: '#64748b', lineHeight: '1.5' }}>{cat.description}</p>
+                                            <div style={{ display: 'flex', gap: '15px' }}>
+                                                <span style={{ background: '#fef3c7', color: '#d97706', padding: '4px 12px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                                    <FaClock size={10} /> {cat.duration}
+                                                </span>
+                                                <span style={{ background: '#ecfdf5', color: '#059669', padding: '4px 12px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                                    <FaCheckCircle size={10} /> Actif
+                                                </span>
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                    {editingId === cat._id ? (
+                                        <button onClick={() => handleEditSave(cat._id)} className="premium-btn-cta gold" style={{ padding: '10px', minWidth: 'auto' }}><FaSave /></button>
+                                    ) : (
+                                        <button onClick={() => handleEditStart(cat)} className="premium-btn-cta secondary" style={{ padding: '10px', minWidth: 'auto' }}><FaEdit /></button>
+                                    )}
+                                    <button onClick={() => handleDelete(cat._id, cat.title)} className="premium-btn-cta secondary" style={{ padding: '10px', minWidth: 'auto', background: '#fee2e2', color: '#ef4444', borderColor: '#fecaca' }}><FaTrash /></button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                 </div>
-
-                {/* --- 3. Modales de Gestion (Cours et Vidéos) --- */}
-                {isCoursModalOpen && (
-                    <div className="modal-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
-                        <div className="modal-content" style={{ background: 'white', borderRadius: '8px' }}>
-                            <GestionCoursSpecialises
-                                categoryId={selectedCategoryId}
-                                onClose={handleCloseCoursModal}
-                            />
-                        </div>
-                    </div>
-                )}
-                {isVedioModalOpen && (
-                    <div className="modal-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
-                        <div className="modal-content" style={{ background: 'white', borderRadius: '8px' }}>
-                            <GestionVedioSpecialises
-                                onClose={handleCloseVedioModal}
-                            />
-                        </div>
-                    </div>
-                )}
             </div>
-        </>
+
+            {isCoursModalOpen && (
+                <div className="premium-modal-backdrop" onClick={() => setIsCoursModalOpen(false)}>
+                    <div className="premium-modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '1000px', maxHeight: '90vh', overflowY: 'auto' }}>
+                        <GestionCoursSpecialises onClose={() => setIsCoursModalOpen(false)} />
+                    </div>
+                </div>
+            )}
+
+            {isVedioModalOpen && (
+                <div className="premium-modal-backdrop" onClick={() => setIsVedioModalOpen(false)}>
+                    <div className="premium-modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '1000px', maxHeight: '90vh', overflowY: 'auto' }}>
+                        <GestionVedioSpecialises onClose={() => setIsVedioModalOpen(false)} />
+                    </div>
+                </div>
+            )}
+        </div>
     );
 }

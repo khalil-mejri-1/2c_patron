@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import './contact_premium.css';
 import { useLanguage } from '../context/LanguageContext';
 import { FaMapMarkerAlt, FaUser, FaEnvelope, FaPhone, FaClock, FaPaperPlane, FaChevronRight, FaEdit, FaSave, FaTimes } from 'react-icons/fa';
 import Navbar from '../comp/navbar';
@@ -90,22 +91,21 @@ const translations = {
     }
 };
 
-const API_ENDPOINT = `${BASE_URL}/api/messages`;
+const API_ENDPOINT = `${BASE_URL} /api/messages`;
 
 export default function Contact() {
     const { appLanguage, languages } = useLanguage();
     const [isAdmin, setIsAdmin] = useState(false);
     const [isEditingField, setIsEditingField] = useState(null);
-    const [contactContent, setContactContent] = useState({
-        fr: { headerTitle: '', headerAccent: '', headerSubtitle: '', formTitle: '', infoTitle: '', addressValue: '', phoneValue: '', emailValue: '', hoursValue: '', submitBtn: '' },
-        ar: { headerTitle: '', headerAccent: '', headerSubtitle: '', formTitle: '', infoTitle: '', addressValue: '', phoneValue: '', emailValue: '', hoursValue: '', submitBtn: '' },
-        en: { headerTitle: '', headerAccent: '', headerSubtitle: '', formTitle: '', infoTitle: '', addressValue: '', phoneValue: '', emailValue: '', hoursValue: '', submitBtn: '' }
-    });
-    const [editContactContent, setEditContactContent] = useState({
-        fr: { headerTitle: '', headerAccent: '', headerSubtitle: '', formTitle: '', infoTitle: '', addressValue: '', phoneValue: '', emailValue: '', hoursValue: '', submitBtn: '' },
-        ar: { headerTitle: '', headerAccent: '', headerSubtitle: '', formTitle: '', infoTitle: '', addressValue: '', phoneValue: '', emailValue: '', hoursValue: '', submitBtn: '' },
-        en: { headerTitle: '', headerAccent: '', headerSubtitle: '', formTitle: '', infoTitle: '', addressValue: '', phoneValue: '', emailValue: '', hoursValue: '', submitBtn: '' }
-    });
+    // Default structure for content
+    const defaultStructure = {
+        headerTitle: '', headerAccent: '', headerSubtitle: '', heroImage: '',
+        formTitle: '', submitBtn: '',
+        infoTitle: '', addressValue: '', phoneValue: '', emailValue: '', hoursValue: ''
+    };
+
+    const [contactContent, setContactContent] = useState({});
+    const [editContactContent, setEditContactContent] = useState({});
 
     // 1. ⚙️ جلب التحقق من المسؤول
     useEffect(() => {
@@ -117,7 +117,7 @@ export default function Contact() {
         if (currentUser?.statut === 'admin') setIsAdmin(true);
 
         // Load Content
-        fetch(`${BASE_URL}/api/settings/contact-content`)
+        fetch(`${BASE_URL} /api/settings / contact - content`)
             .then(res => res.ok ? res.json() : null)
             .then(data => data && setContactContent(data))
             .catch(() => { });
@@ -127,7 +127,7 @@ export default function Contact() {
         setContactContent(editContactContent);
         setIsEditingField(null);
         try {
-            await fetch(`${BASE_URL}/api/settings/contact-content`, {
+            await fetch(`${BASE_URL} /api/settings / contact - content`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ value: editContactContent })
@@ -139,9 +139,9 @@ export default function Contact() {
     const initializeAllLanguages = (currentValues) => {
         const initialized = {};
         languages.forEach(lang => {
-            initialized[lang.code] = currentValues[lang.code] || {
-                headerTitle: '', headerAccent: '', headerSubtitle: '', formTitle: '', infoTitle: '',
-                addressValue: '', phoneValue: '', emailValue: '', hoursValue: '', submitBtn: ''
+            initialized[lang.code] = {
+                ...defaultStructure,
+                ...(currentValues[lang.code] || {})
             };
         });
         return initialized;
@@ -151,27 +151,13 @@ export default function Contact() {
         return (contactContent[appLanguage] && contactContent[appLanguage][key]) || defaultVal;
     };
 
-    const EditBtn = ({ field }) => (
+    const EditBtn = ({ field, style = {} }) => (
         isAdmin && (
             <button
                 onClick={() => { setEditContactContent(initializeAllLanguages(contactContent)); setIsEditingField(field); }}
-                className="edit-btn-minimal"
+                className="edit-btn-minimal-lux"
                 title="Modifier"
-                style={{
-                    background: 'rgba(212, 175, 55, 0.1)',
-                    border: '1px solid rgba(212, 175, 55, 0.2)',
-                    color: '#D4AF37',
-                    borderRadius: '50%',
-                    width: '30px',
-                    height: '30px',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    marginLeft: '8px',
-                    cursor: 'pointer',
-                    transition: 'all 0.3s',
-                    verticalAlign: 'middle'
-                }}
+                style={style}
             >
                 <FaEdit size={14} />
             </button>
@@ -251,288 +237,316 @@ export default function Contact() {
     };
 
     return (
-        <>
+        <div className="contact-page-wrapper">
             <Navbar />
-            <section className="contact-section" dir={direction}>
 
-                {/* 1. رأس الصفحة (محدث باللغات) */}
-                <div className="contact-header">
-                    <h1 className="contact-main-title">
-                        {getT('headerTitle', t.headerTitle(''))} <span className="contact-accent-text">{getT('headerAccent', t.headerAccent)}</span>
-                        <EditBtn field="headerTitle" />
+            {/* --- CINEMATIC HERO --- */}
+            <header
+                className="contact-premium-hero"
+                dir={direction}
+                style={{
+                    backgroundImage: `url(${getT('heroImage', 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=2670&auto=format&fit=crop')})`
+                }}
+            >
+                <div className="contact-hero-overlay"></div>
+                <EditBtn field="heroImage" style={{ position: 'absolute', top: '20px', right: '20px', zIndex: 10 }} />
+
+                <div className="contact-hero-content">
+                    <div className="contact-hero-badge">
+                        <FaEnvelope /> 2C Patron Studio
+                    </div>
+                    <h1 className="contact-glam-title">
+                        {getT('headerTitle', t.headerTitle(''))} <span>{getT('headerAccent', t.headerAccent)}</span>
+                        <EditBtn field="hero" style={{ marginLeft: '15px' }} />
                     </h1>
-                    <p className="contact-sub-text">
+                    <p className="contact-hero-desc">
                         {getT('headerSubtitle', t.headerSubtitle)}
-                        <EditBtn field="headerSubtitle" />
                     </p>
                 </div>
+            </header>
 
-                {/* 2. حاوية المحتوى الرئيسية (النموذج والمعلومات) */}
-                <div className="contact-content-wrapper">
+            {/* --- MAIN CONTENT GRID --- */}
+            <main className="contact-main-grid-container" dir={direction}>
 
-                    {/* A. نموذج الاتصال (محدث باللغات) */}
-                    <div className="contact-form-block">
-                        <h2 className="form-title">
+                {/* A. PREMIUM FORM BLOCK */}
+                <div className="contact-premium-form-card" style={{ position: 'relative' }}>
+                    <EditBtn field="form" style={{ position: 'absolute', top: '20px', right: '20px' }} />
+                    <div className="form-block-header">
+                        <h2>
                             {getT('formTitle', t.formTitle)}
-                            <EditBtn field="formTitle" />
                         </h2>
-
-                        {/* رسالة الحالة المُحدثة */}
-                        {renderStatusMessage()}
-
-                        <form onSubmit={handleSubmit} className="contact-form">
-
-                            <div className="input-group">
-                                <FaUser className="input-icon" />
-                                <input
-                                    type="text"
-                                    placeholder={t.namePlaceholder}
-                                    value={name}
-                                    onChange={(e) => setName(e.target.value)}
-                                    required
-                                    disabled={status === 'loading'}
-                                    dir={direction}
-                                />
-                            </div>
-
-                            <div className="input-group">
-                                <FaEnvelope className="input-icon" />
-                                <input
-                                    type="email"
-                                    placeholder={t.emailPlaceholder}
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    required
-                                    disabled={status === 'loading'}
-                                    dir="ltr" // البريد الإلكتروني يبقى لغة لاتينية
-                                />
-                            </div>
-
-                            <div className="input-group">
-                                <input
-                                    type="text"
-                                    placeholder={t.subjectPlaceholder}
-                                    value={subject}
-                                    onChange={(e) => setSubject(e.target.value)}
-                                    required
-                                    disabled={status === 'loading'}
-                                    dir={direction}
-                                />
-                            </div>
-
-                            <div className="input-group">
-                                <textarea
-                                    placeholder={t.messagePlaceholder}
-                                    rows="6"
-                                    value={message}
-                                    onChange={(e) => setMessage(e.target.value)}
-                                    required
-                                    disabled={status === 'loading'}
-                                    dir={direction}
-                                ></textarea>
-                            </div>
-
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                                <button type="submit" className="contact-submit-btn" disabled={status === 'loading'} style={{ flex: 1 }}>
-                                    {status === 'loading' ? t.sending : getT('submitBtn', t.submitBtn)} <FaChevronRight />
-                                </button>
-                                <EditBtn field="submitBtn" />
-                            </div>
-                        </form>
+                        <p>Laissez-nous un mot, nous vous répondrons dans les plus brefs délais.</p>
                     </div>
 
-                    {/* B. معلومات الاتصال الجانبية (محدثة باللغات) */}
-                    <div className="contact-info-block">
-                        <h2 className="info-title">
-                            {getT('infoTitle', t.infoTitle)}
-                            <EditBtn field="infoTitle" />
-                        </h2>
+                    <form onSubmit={handleSubmit} className="contact-glam-form">
+                        <div className="contact-form-premium-grid">
+                            <div className="premium-form-group">
+                                <label>{t.namePlaceholder}</label>
+                                <div style={{ position: 'relative' }}>
+                                    <FaUser className="field-icon-lux" style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+                                    <input
+                                        type="text"
+                                        placeholder={t.namePlaceholder}
+                                        value={name}
+                                        onChange={(e) => setName(e.target.value)}
+                                        required
+                                        disabled={status === 'loading'}
+                                    />
+                                </div>
+                            </div>
 
-                        <div className="contact-detail">
-                            <FaMapMarkerAlt className="detail-icon" />
-                            <div>
-                                <h4>{t.addressLabel}</h4>
-                                <p dir="ltr">
-                                    {getT('addressValue', t.addressValue)}
-                                    <EditBtn field="addressValue" />
-                                </p>
+                            <div className="premium-form-group">
+                                <label>{t.emailPlaceholder}</label>
+                                <div style={{ position: 'relative' }}>
+                                    <FaEnvelope className="field-icon-lux" style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+                                    <input
+                                        type="email"
+                                        placeholder={t.emailPlaceholder}
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        required
+                                        disabled={status === 'loading'}
+                                        dir="ltr"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="premium-form-group">
+                                <label>{t.subjectPlaceholder}</label>
+                                <div style={{ position: 'relative' }}>
+                                    <FaEdit className="field-icon-lux" style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+                                    <input
+                                        type="text"
+                                        placeholder={t.subjectPlaceholder}
+                                        value={subject}
+                                        onChange={(e) => setSubject(e.target.value)}
+                                        required
+                                        disabled={status === 'loading'}
+                                    />
+                                </div>
                             </div>
                         </div>
 
-                        <div className="contact-detail">
-                            <FaPhone className="detail-icon" />
-                            <div>
-                                <h4>{t.phoneLabel}</h4>
-                                <p dir="ltr">
-                                    {getT('phoneValue', t.phoneValue)}
-                                    <EditBtn field="phoneValue" />
-                                </p>
-                            </div>
+                        <div className="premium-form-group" style={{ marginTop: '20px' }}>
+                            <label>{t.messagePlaceholder}</label>
+                            <textarea
+                                placeholder={t.messagePlaceholder}
+                                value={message}
+                                onChange={(e) => setMessage(e.target.value)}
+                                required
+                                disabled={status === 'loading'}
+                                rows="6"
+                            ></textarea>
                         </div>
 
-                        <div className="contact-detail">
-                            <FaEnvelope className="detail-icon" />
-                            <div>
-                                <h4>{t.emailLabel}</h4>
-                                <p dir="ltr">
-                                    {getT('emailValue', t.emailValue)}
-                                    <EditBtn field="emailValue" />
-                                </p>
-                            </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginTop: '30px' }}>
+                            <button type="submit" className="premium-btn-cta-lux" disabled={status === 'loading'}>
+                                {status === 'loading' ? (
+                                    <> {t.sending} <FaEdit className="spinner" style={{ animation: 'spin 1s linear infinite' }} /> </>
+                                ) : (
+                                    <> {getT('submitBtn', t.submitBtn)} <FaPaperPlane /> </>
+                                )}
+                            </button>
                         </div>
-
-                        <div className="contact-detail">
-                            <FaClock className="detail-icon" />
-                            <div>
-                                <h4>{t.hoursLabel}</h4>
-                                <p dir="ltr">
-                                    {getT('hoursValue', t.hoursValue)}
-                                    <EditBtn field="hoursValue" />
-                                </p>
-                            </div>
-                        </div>
-
-                        {/* تضمين خريطة وهمية */}
-                        <div className="map-placeholder">
-
-                        </div>
-                    </div>
-
+                    </form>
                 </div>
 
-                {/* 🛑 Admin Editing Modal */}
-                {isEditingField && (
-                    <div className="modal-overlay" style={{ zIndex: 2000 }}>
-                        <div className="modal-content" style={{
-                            background: '#fff', padding: '30px', borderRadius: '15px', width: '90%', maxWidth: '600px',
-                            maxHeight: '80vh', overflowY: 'auto'
-                        }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                                <h3 style={{ margin: 0 }}>Modifier: {isEditingField}</h3>
-                                <button onClick={() => setIsEditingField(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#888' }}><FaTimes size={20} /></button>
-                            </div>
+                {/* B. LUXURY INFO SIDEBAR */}
+                <div className="contact-sidebar-info" style={{ position: 'relative' }}>
+                    <EditBtn field="info" style={{ position: 'absolute', top: '0', right: '0' }} />
 
+                    <div className="info-detail-luxury-card">
+                        <div className="luxury-icon-box"><FaMapMarkerAlt /></div>
+                        <div className="luxury-info-content">
+                            <h4>{t.addressLabel}</h4>
+                            <p>{getT('addressValue', t.addressValue)}</p>
+                        </div>
+                    </div>
+
+                    <div className="info-detail-luxury-card">
+                        <div className="luxury-icon-box"><FaPhone /></div>
+                        <div className="luxury-info-content">
+                            <h4>{t.phoneLabel}</h4>
+                            <p dir="ltr">{getT('phoneValue', t.phoneValue)}</p>
+                        </div>
+                    </div>
+
+                    <div className="info-detail-luxury-card">
+                        <div className="luxury-icon-box"><FaEnvelope /></div>
+                        <div className="luxury-info-content">
+                            <h4>{t.emailLabel}</h4>
+                            <p dir="ltr">{getT('emailValue', t.emailValue)}</p>
+                        </div>
+                    </div>
+
+                    <div className="info-detail-luxury-card">
+                        <div className="luxury-icon-box"><FaClock /></div>
+                        <div className="luxury-info-content">
+                            <h4>{t.hoursLabel}</h4>
+                            <p>{getT('hoursValue', t.hoursValue)}</p>
+                        </div>
+                    </div>
+
+                    <div className="contact-map-art-box">
+                        <div className="map-placeholder-overlay">
+                            <FaMapMarkerAlt className="pin-icon" />
+                            <h3>Atelier Couture</h3>
+                            <p>Vous êtes toujours les bienvenus dans notre espace de création.</p>
+                        </div>
+                    </div>
+                </div>
+            </main>
+
+            {/* --- STATUS TOAST NOTIFICATION --- */}
+            {status && (
+                <div className="contact-status-toast">
+                    <div className={`status - alert - box ${status} `}>
+                        {status === 'loading' && <FaEdit className="spinner" style={{ animation: 'spin 1s linear infinite' }} />}
+                        {status === 'success' && <FaPaperPlane />}
+                        {status === 'error' && <FaTimes />}
+                        <span>
+                            {status === 'loading' ? t.statusLoading :
+                                status === 'success' ? t.statusSuccess : t.statusError}
+                        </span>
+                    </div>
+                </div>
+            )}
+
+            <Footer />
+
+            {/* Admin Editing Modal (Unchanged) */}
+            {isEditingField && (
+                <div className="premium-modal-backdrop" onClick={() => setIsEditingField(null)}>
+                    <div className="premium-modal-content large" onClick={(e) => e.stopPropagation()}>
+                        <button className="premium-modal-close-icon" onClick={() => setIsEditingField(null)}><FaTimes /></button>
+                        <h2 className="premium-modal-title">
+                            Modifier: {
+                                isEditingField === 'hero' ? 'En-tête (Hero)' :
+                                    isEditingField === 'heroImage' ? 'Image de Fond (Hero)' :
+                                        isEditingField === 'form' ? 'Formulaire & Bouton' :
+                                            isEditingField === 'info' ? 'Coordonnées de Contact' :
+                                                isEditingField
+                            }
+                        </h2>
+
+                        <div className="premium-form-grid">
                             {languages.map(lang => (
-                                <div key={lang.code} style={{ marginBottom: '25px', padding: '15px', border: '1px solid #eee', borderRadius: '10px' }}>
-                                    <h4 style={{ marginBottom: '10px', textTransform: 'uppercase', color: '#D4AF37' }}>
-                                        {lang.label}
-                                    </h4>
+                                <div key={lang.code} className="premium-lang-section">
+                                    <h4 className="lang-indicator">{lang.label}</h4>
 
-                                    {isEditingField === 'headerTitle' && (
+                                    {isEditingField === 'heroImage' && (
+                                        <div className="premium-form-group">
+                                            <label>URL Image de Fond (Hero)</label>
+                                            <input
+                                                type="text"
+                                                value={editContactContent[lang.code]?.heroImage || ''}
+                                                onChange={e => setEditContactContent({ ...editContactContent, [lang.code]: { ...editContactContent[lang.code], heroImage: e.target.value } })}
+                                                placeholder="https://..."
+                                            />
+                                        </div>
+                                    )}
+
+                                    {isEditingField === 'hero' && (
                                         <>
-                                            <div style={{ marginBottom: '10px' }}>
-                                                <label style={{ display: 'block', fontSize: '12px', color: '#888' }}>Titre Principal</label>
+                                            <div className="premium-form-group">
+                                                <label>Titre Principal</label>
                                                 <input
                                                     type="text"
                                                     value={editContactContent[lang.code]?.headerTitle || ''}
                                                     onChange={e => setEditContactContent({ ...editContactContent, [lang.code]: { ...editContactContent[lang.code], headerTitle: e.target.value } })}
-                                                    style={{ width: '100%', padding: '8px', borderRadius: '5px', border: '1px solid #ddd' }}
                                                 />
                                             </div>
-                                            <div style={{ marginBottom: '10px' }}>
-                                                <label style={{ display: 'block', fontSize: '12px', color: '#888' }}>Accent</label>
+                                            <div className="premium-form-group">
+                                                <label>Accent</label>
                                                 <input
                                                     type="text"
                                                     value={editContactContent[lang.code]?.headerAccent || ''}
                                                     onChange={e => setEditContactContent({ ...editContactContent, [lang.code]: { ...editContactContent[lang.code], headerAccent: e.target.value } })}
-                                                    style={{ width: '100%', padding: '8px', borderRadius: '5px', border: '1px solid #ddd' }}
+                                                />
+                                            </div>
+                                            <div className="premium-form-group">
+                                                <label>Sous-Titre</label>
+                                                <textarea
+                                                    value={editContactContent[lang.code]?.headerSubtitle || ''}
+                                                    onChange={e => setEditContactContent({ ...editContactContent, [lang.code]: { ...editContactContent[lang.code], headerSubtitle: e.target.value } })}
+                                                    style={{ minHeight: '80px' }}
                                                 />
                                             </div>
                                         </>
                                     )}
 
-                                    {isEditingField === 'headerSubtitle' && (
-                                        <textarea
-                                            value={editContactContent[lang.code]?.headerSubtitle || ''}
-                                            onChange={e => setEditContactContent({ ...editContactContent, [lang.code]: { ...editContactContent[lang.code], headerSubtitle: e.target.value } })}
-                                            style={{ width: '100%', padding: '8px', borderRadius: '5px', border: '1px solid #ddd', minHeight: '80px' }}
-                                        />
+                                    {isEditingField === 'form' && (
+                                        <>
+                                            <div className="premium-form-group">
+                                                <label>Titre du Formulaire</label>
+                                                <input
+                                                    type="text"
+                                                    value={editContactContent[lang.code]?.formTitle || ''}
+                                                    onChange={e => setEditContactContent({ ...editContactContent, [lang.code]: { ...editContactContent[lang.code], formTitle: e.target.value } })}
+                                                />
+                                            </div>
+                                            <div className="premium-form-group">
+                                                <label>Texte du Bouton</label>
+                                                <input
+                                                    type="text"
+                                                    value={editContactContent[lang.code]?.submitBtn || ''}
+                                                    onChange={e => setEditContactContent({ ...editContactContent, [lang.code]: { ...editContactContent[lang.code], submitBtn: e.target.value } })}
+                                                />
+                                            </div>
+                                        </>
                                     )}
 
-                                    {isEditingField === 'formTitle' && (
-                                        <input
-                                            type="text"
-                                            value={editContactContent[lang.code]?.formTitle || ''}
-                                            onChange={e => setEditContactContent({ ...editContactContent, [lang.code]: { ...editContactContent[lang.code], formTitle: e.target.value } })}
-                                            style={{ width: '100%', padding: '8px', borderRadius: '5px', border: '1px solid #ddd' }}
-                                        />
-                                    )}
-
-                                    {isEditingField === 'infoTitle' && (
-                                        <input
-                                            type="text"
-                                            value={editContactContent[lang.code]?.infoTitle || ''}
-                                            onChange={e => setEditContactContent({ ...editContactContent, [lang.code]: { ...editContactContent[lang.code], infoTitle: e.target.value } })}
-                                            style={{ width: '100%', padding: '8px', borderRadius: '5px', border: '1px solid #ddd' }}
-                                        />
-                                    )}
-
-                                    {isEditingField === 'addressValue' && (
-                                        <input
-                                            type="text"
-                                            value={editContactContent[lang]?.addressValue || ''}
-                                            onChange={e => setEditContactContent({ ...editContactContent, [lang]: { ...editContactContent[lang], addressValue: e.target.value } })}
-                                            style={{ width: '100%', padding: '8px', borderRadius: '5px', border: '1px solid #ddd' }}
-                                        />
-                                    )}
-
-                                    {isEditingField === 'phoneValue' && (
-                                        <input
-                                            type="text"
-                                            value={editContactContent[lang.code]?.officeLabel || ''}
-                                            onChange={e => setEditContactContent({ ...editContactContent, [lang.code]: { ...editContactContent[lang.code], officeLabel: e.target.value } })}
-                                            style={{ width: '100%', padding: '8px', borderRadius: '5px', border: '1px solid #ddd' }}
-                                        />
-                                    )}
-
-                                    {isEditingField === 'emailValue' && (
-                                        <input
-                                            type="text"
-                                            value={editContactContent[lang.code]?.emailLabel || ''}
-                                            onChange={e => setEditContactContent({ ...editContactContent, [lang.code]: { ...editContactContent[lang.code], emailLabel: e.target.value } })}
-                                            style={{ width: '100%', padding: '8px', borderRadius: '5px', border: '1px solid #ddd' }}
-                                        />
-                                    )}
-
-                                    {isEditingField === 'hoursValue' && (
-                                        <input
-                                            type="text"
-                                            value={editContactContent[lang.code]?.infoSubtitle || ''}
-                                            onChange={e => setEditContactContent({ ...editContactContent, [lang.code]: { ...editContactContent[lang.code], infoSubtitle: e.target.value } })}
-                                            style={{ width: '100%', padding: '8px', borderRadius: '5px', border: '1px solid #ddd' }}
-                                        />
-                                    )}
-
-                                    {isEditingField === 'submitBtn' && (
-                                        <input
-                                            type="text"
-                                            value={editContactContent[lang.code]?.submitBtn || ''}
-                                            onChange={e => setEditContactContent({ ...editContactContent, [lang.code]: { ...editContactContent[lang.code], submitBtn: e.target.value } })}
-                                            style={{ width: '100%', padding: '8px', borderRadius: '5px', border: '1px solid #ddd' }}
-                                        />
+                                    {isEditingField === 'info' && (
+                                        <>
+                                            <div className="premium-form-group">
+                                                <label>Adresse</label>
+                                                <input
+                                                    type="text"
+                                                    value={editContactContent[lang.code]?.addressValue || ''}
+                                                    onChange={e => setEditContactContent({ ...editContactContent, [lang.code]: { ...editContactContent[lang.code], addressValue: e.target.value } })}
+                                                />
+                                            </div>
+                                            <div className="premium-form-group">
+                                                <label>Téléphone</label>
+                                                <input
+                                                    type="text"
+                                                    value={editContactContent[lang.code]?.phoneValue || ''}
+                                                    onChange={e => setEditContactContent({ ...editContactContent, [lang.code]: { ...editContactContent[lang.code], phoneValue: e.target.value } })}
+                                                />
+                                            </div>
+                                            <div className="premium-form-group">
+                                                <label>E-mail</label>
+                                                <input
+                                                    type="text"
+                                                    value={editContactContent[lang.code]?.emailValue || ''}
+                                                    onChange={e => setEditContactContent({ ...editContactContent, [lang.code]: { ...editContactContent[lang.code], emailValue: e.target.value } })}
+                                                />
+                                            </div>
+                                            <div className="premium-form-group">
+                                                <label>Heures d'Ouverture</label>
+                                                <input
+                                                    type="text"
+                                                    value={editContactContent[lang.code]?.hoursValue || ''}
+                                                    onChange={e => setEditContactContent({ ...editContactContent, [lang.code]: { ...editContactContent[lang.code], hoursValue: e.target.value } })}
+                                                />
+                                            </div>
+                                        </>
                                     )}
                                 </div>
                             ))}
+                        </div>
 
-                            <div style={{ display: 'flex', gap: '15px' }}>
-                                <button
-                                    onClick={handleSaveContactContent}
-                                    style={{ flex: 1, padding: '12px', background: '#D4AF37', color: '#fff', border: 'none', borderRadius: '50px', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
-                                >
-                                    <FaSave /> Enregistrer
-                                </button>
-                                <button
-                                    onClick={() => setIsEditingField(null)}
-                                    style={{ padding: '12px 25px', background: '#f5f5f5', color: '#333', border: 'none', borderRadius: '50px', fontWeight: 'bold' }}
-                                >
-                                    Annuler
-                                </button>
-                            </div>
+                        <div className="premium-btn-group">
+                            <button className="premium-btn-cta secondary" onClick={() => setIsEditingField(null)}>
+                                Annuler
+                            </button>
+                            <button className="premium-btn-cta gold" onClick={handleSaveContactContent}>
+                                <FaSave /> Enregistrer
+                            </button>
                         </div>
                     </div>
-                )}
-            </section>
-            <Footer />
-        </>
+                </div>
+            )}
+        </div>
     );
 }

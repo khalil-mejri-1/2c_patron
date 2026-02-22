@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../context/LanguageContext';
-import { FaPlay, FaLongArrowAltRight, FaEdit, FaSave } from 'react-icons/fa';
+import { FaPlay, FaLongArrowAltRight, FaEdit, FaSave, FaTimes } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import BASE_URL from '../apiConfig';
 
@@ -137,12 +137,22 @@ export default function FeaturedProduct() {
 
                 {isAdmin && (
                     <button
-                        onClick={() => { setEditData({ ...editData, ...featuredData }); setIsEditing(true); }}
-                        className="hero-edit-title-btn small-edit-btn"
-                        style={{ position: 'absolute', top: '10px', right: '10px' }}
-                        title="Modifier le contenu du produit vedette"
+                        onClick={() => {
+                            const initialEditData = {
+                                fr: { ...translations.fr, ...featuredData.fr },
+                                ar: { ...translations.ar, ...featuredData.ar },
+                                en: { ...translations.en, ...featuredData.en }
+                            };
+                            setEditData(initialEditData);
+                            setIsEditing(true);
+                        }}
+                        className="admin-edit-master-btn"
+                        style={{
+                            marginBottom: '25px',
+                            width: 'fit-content'
+                        }}
                     >
-                        <FaEdit />
+                        <FaEdit /> {currentLang === 'ar' ? 'تعديل السلعة المميزة' : 'Modifier Best Seller'}
                     </button>
                 )}
 
@@ -165,63 +175,77 @@ export default function FeaturedProduct() {
                         {/* عكس اتجاه الأيقونة لـ RTL */}
                         {isRTL ? <FaLongArrowAltRight style={{ transform: 'scaleX(-1)' }} /> : <FaLongArrowAltRight />}
                     </Link>
-                    {isAdmin && (
-                        <button
-                            onClick={() => { setEditData({ ...editData, ...featuredData }); setIsEditing(true); }}
-                            className="hero-edit-title-btn small-edit-btn"
-                            title="Modifier le texte du bouton CTA"
-                        >
-                            <FaEdit />
-                        </button>
-                    )}
                 </div>
             </div>
 
-            {/* 🛑 Edit Modal */}
+            {/* 🛑 Stylish Edit Modal */}
             {isEditing && (
-                <div className="modal-overlay" style={{ zIndex: 2000 }}>
-                    <div className="modal-content" style={{
-                        background: '#fff', padding: '30px', borderRadius: '15px', width: '90%', maxWidth: '600px',
-                        maxHeight: '80vh', overflowY: 'auto'
-                    }}>
-                        <h3 style={{ marginBottom: '20px', textAlign: 'center' }}>Modifier le Produit Vedette</h3>
+                <div className="premium-modal-backdrop" onClick={() => setIsEditing(false)}>
+                    <div className="premium-modal-content large" onClick={(e) => e.stopPropagation()}>
+                        <button className="premium-modal-close-icon" onClick={() => setIsEditing(false)}><FaTimes /></button>
+                        <h2 className="premium-modal-title">
+                            {currentLang === 'ar' ? 'تعديل المنتج المفضل' : 'Modifier le Produit Vedette'}
+                        </h2>
 
-                        {languages.map(lang => (
-                            <div key={lang.code} style={{ marginBottom: '25px', padding: '15px', border: '1px solid #eee', borderRadius: '10px' }}>
-                                <h4 style={{ marginBottom: '10px', textTransform: 'uppercase', color: '#D4AF37' }}>
-                                    {lang.label}
-                                </h4>
-
-                                {['tag', 'title', 'subtitle', 'cta'].map(field => (
-                                    <div key={field} style={{ marginBottom: '10px' }}>
-                                        <label style={{ display: 'block', fontSize: '12px', color: '#888' }}>{field}</label>
+                        <div className="premium-form-grid">
+                            {languages.map(lang => (
+                                <div key={lang.code} className="premium-lang-section">
+                                    <h4 className="lang-indicator">{lang.label}</h4>
+                                    <div className="premium-form-group">
+                                        <label>Tag (Badge)</label>
                                         <input
                                             type="text"
-                                            value={editData[lang.code]?.[field] || ''}
-                                            onChange={e => setEditData({ ...editData, [lang.code]: { ...editData[lang.code], [field]: e.target.value } })}
-                                            style={{ width: '100%', padding: '8px', borderRadius: '5px', border: '1px solid #ddd' }}
+                                            value={editData[lang.code]?.tag || ''}
+                                            onChange={e => setEditData({ ...editData, [lang.code]: { ...editData[lang.code], tag: e.target.value } })}
+                                            dir={lang.code === 'ar' ? 'rtl' : 'ltr'}
                                         />
                                     </div>
-                                ))}
-
-                                <div style={{ marginBottom: '10px' }}>
-                                    <label style={{ display: 'block', fontSize: '12px', color: '#888' }}>description</label>
-                                    <textarea
-                                        value={editData[lang.code]?.description || ''}
-                                        onChange={e => setEditData({ ...editData, [lang.code]: { ...editData[lang.code], description: e.target.value } })}
-                                        rows="3"
-                                        style={{ width: '100%', padding: '8px', borderRadius: '5px', border: '1px solid #ddd' }}
-                                    />
+                                    <div className="premium-form-group">
+                                        <label>Titre Principal</label>
+                                        <input
+                                            type="text"
+                                            value={editData[lang.code]?.title || ''}
+                                            onChange={e => setEditData({ ...editData, [lang.code]: { ...editData[lang.code], title: e.target.value } })}
+                                            dir={lang.code === 'ar' ? 'rtl' : 'ltr'}
+                                        />
+                                    </div>
+                                    <div className="premium-form-group">
+                                        <label>Sous-Titre</label>
+                                        <input
+                                            type="text"
+                                            value={editData[lang.code]?.subtitle || ''}
+                                            onChange={e => setEditData({ ...editData, [lang.code]: { ...editData[lang.code], subtitle: e.target.value } })}
+                                            dir={lang.code === 'ar' ? 'rtl' : 'ltr'}
+                                        />
+                                    </div>
+                                    <div className="premium-form-group">
+                                        <label>Texte du Bouton</label>
+                                        <input
+                                            type="text"
+                                            value={editData[lang.code]?.cta || ''}
+                                            onChange={e => setEditData({ ...editData, [lang.code]: { ...editData[lang.code], cta: e.target.value } })}
+                                            dir={lang.code === 'ar' ? 'rtl' : 'ltr'}
+                                        />
+                                    </div>
+                                    <div className="premium-form-group" style={{ gridColumn: '1 / -1' }}>
+                                        <label>Description</label>
+                                        <textarea
+                                            value={editData[lang.code]?.description || ''}
+                                            onChange={e => setEditData({ ...editData, [lang.code]: { ...editData[lang.code], description: e.target.value } })}
+                                            rows="3"
+                                            dir={lang.code === 'ar' ? 'rtl' : 'ltr'}
+                                        />
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
+                            ))}
+                        </div>
 
-                        <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '20px' }}>
-                            <button onClick={() => setIsEditing(false)} style={{ padding: '10px 20px', borderRadius: '5px', border: '1px solid #ddd', background: '#fff' }}>
-                                Annuler
+                        <div className="premium-btn-group">
+                            <button className="premium-btn-cta secondary" onClick={() => setIsEditing(false)}>
+                                {currentLang === 'ar' ? 'إلغاء' : 'Annuler'}
                             </button>
-                            <button onClick={handleSave} style={{ padding: '10px 20px', borderRadius: '5px', border: 'none', background: '#28a745', color: '#fff' }}>
-                                <FaSave /> Enregistrer
+                            <button className="premium-btn-cta gold" onClick={handleSave}>
+                                <FaSave /> {currentLang === 'ar' ? 'حفظ التعديلات' : 'Enregistrer tout'}
                             </button>
                         </div>
                     </div>

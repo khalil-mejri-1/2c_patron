@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import NavbarAdmin from '../../comp/Navbar_admin';
-// نفترض أن لديك ملف أنماط CSS:
-import '../admin_css/GestionDeCommand.css';
-import { FaImage, FaSpinner } from 'react-icons/fa'; // Import pour l'icône de placeholder
+import { FaImage, FaSpinner, FaShoppingBag, FaTimes, FaTrash, FaEdit, FaCheckCircle, FaBus, FaClock, FaBan, FaCalendarAlt, FaUser, FaPhoneAlt, FaMapMarkerAlt } from 'react-icons/fa';
 import BASE_URL from '../../apiConfig';
+import { useAlert } from '../../context/AlertContext';
 
 const API_BASE_URL = `${BASE_URL}/api/commands`;
 
-// قائمة بحالات الطلب المتاحة
 const statusOptions = [
     'En attente',
     'En cours de traitement',
@@ -16,325 +14,191 @@ const statusOptions = [
     'Annulée'
 ];
 
-// 🖼️ Composant utilitaire pour afficher l'image du produit
-const ProductImageCell = ({ imageUrl, productName }) => {
-    if (imageUrl) {
-        return (
-            <img
-                src={imageUrl}
-                alt={productName || "Produit"}
-                className="product-thumbnail"
-            />
-        );
+const getStatusStyles = (status) => {
+    switch (status) {
+        case 'Livrée': return { bg: '#ecfdf5', color: '#059669', icon: <FaCheckCircle /> };
+        case 'Expédiée': return { bg: '#eff6ff', color: '#2563eb', icon: <FaBus /> };
+        case 'En cours de traitement': return { bg: '#fef3c7', color: '#d97706', icon: <FaClock /> };
+        case 'Annulée': return { bg: '#fee2e2', color: '#dc2626', icon: <FaBan /> };
+        default: return { bg: '#f1f5f9', color: '#475569', icon: <FaClock /> };
     }
-    // Afficher un placeholder si l'URL est manquante
-    return (
-        <div className="product-thumbnail-placeholder">
-            <FaImage size={20} color="#ccc" />
-        </div>
-    );
 };
 
-
 export default function Gestion_de_Command() {
-
-    // -------------------- 1. Détat du Composant --------------------
     const [commands, setCommands] = useState([]);
     const [loading, setLoading] = useState(false);
-    const [notification, setNotification] = useState({ message: '', type: '' });
-
-    // Détat لإدارة مودال التحديث
+    const { showAlert } = useAlert();
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [currentCommand, setCurrentCommand] = useState(null);
     const [newStatus, setNewStatus] = useState('');
 
-    // Détat لإدارة مودال الحذف
-    const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
-    const [commandToDeleteId, setCommandToDeleteId] = useState(null);
-
-    // -------------------- 2. Fonctions Utilitaires --------------------
-
-    const showNotification = (message, type) => {
-        setNotification({ message, type });
-        setTimeout(() => setNotification({ message: '', type: '' }), 3000);
-    };
-
-    // -------------------- 3. Fonctions API --------------------
-
-    // 💡 AFFICHER (GET) - جلب جميع الطلبات
-    const fetchCommands = async () => {
-        setLoading(true);
-        try {
-            const response = await fetch(API_BASE_URL);
-            if (!response.ok) throw new Error("Échec du chargement des commandes.");
-
-            const data = await response.json();
-            setCommands(data);
-        } catch (err) {
-            console.error("Erreur de récupération:", err);
-            showNotification(err.message, 'error');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    // جلب الطلبات عند تحميل المكون
     useEffect(() => {
         fetchCommands();
     }, []);
 
-    // 💡 DELETE - حذف طلب
-    const handleDeleteCommand = async () => {
-        if (!commandToDeleteId) return;
-
-        setIsConfirmModalOpen(false);
+    const fetchCommands = async () => {
         setLoading(true);
-
         try {
-            const response = await fetch(`${API_BASE_URL}/${commandToDeleteId}`, {
-                method: 'DELETE',
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || `Échec de la suppression de la commande ${commandToDeleteId}.`);
-            }
-
-            // تحديث القائمة بعد الحذف
-            setCommands(prev => prev.filter(cmd => cmd._id !== commandToDeleteId));
-            showNotification(`Commande ${commandToDeleteId} supprimée avec succès.`, 'success');
-
+            const response = await fetch(API_BASE_URL);
+            if (!response.ok) throw new Error("Échec du chargement.");
+            const data = await response.json();
+            setCommands(data);
         } catch (err) {
-            console.error("Erreur de suppression:", err);
-            showNotification(err.message || 'Échec de la suppression.', 'error');
+            showAlert('error', 'Erreur', err.message);
         } finally {
             setLoading(false);
-            setCommandToDeleteId(null);
         }
     };
 
-    // 💡 UPDATE STATUT (PUT) - تحديث حالة الطلب
+    const handleDeleteCommand = (id) => {
+        showAlert('confirm', 'Supprimer Commande', 'Voulez-vous supprimer cette commande ?', async () => {
+            try {
+                const response = await fetch(`${API_BASE_URL}/${id}`, { method: 'DELETE' });
+                if (!response.ok) throw new Error('Erreur de suppression.');
+                setCommands(prev => prev.filter(cmd => cmd._id !== id));
+                showAlert('success', 'Succès', 'Commande supprimée.');
+            } catch (err) {
+                showAlert('error', 'Erreur', err.message);
+            }
+        });
+    };
+
     const handleUpdateStatus = async (e) => {
         e.preventDefault();
-        if (!currentCommand || !newStatus) return;
-
-        setLoading(true);
-
         try {
             const response = await fetch(`${API_BASE_URL}/${currentCommand._id}/status`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ status: newStatus }),
             });
-
-            const updatedCommand = await response.json();
-
-            if (!response.ok) {
-                throw new Error(updatedCommand.message || `Échec de la mise à jour du statut pour la commande ${currentCommand._id}.`);
-            }
-
-            // تحديث الطلب في قائمة الطلبات المحلية
-            setCommands(prev => prev.map(cmd =>
-                cmd._id === updatedCommand._id ? updatedCommand : cmd
-            ));
-
-            showNotification(`Statut de la commande ${updatedCommand._id} mis à jour à "${updatedCommand.status}".`, 'success');
+            const updated = await response.json();
+            if (!response.ok) throw new Error('Erreur de mise à jour.');
+            setCommands(prev => prev.map(cmd => cmd._id === updated._id ? updated : cmd));
+            showAlert('success', 'Succès', 'Statut mis à jour.');
             setIsEditModalOpen(false);
-            setCurrentCommand(null);
-
         } catch (err) {
-            console.error("Erreur de mise à jour:", err);
-            showNotification(err.message || 'Échec de la mise à jour du statut.', 'error');
-        } finally {
-            setLoading(false);
+            showAlert('error', 'Erreur', err.message);
         }
     };
 
-    // دوال فتح وإغلاق المودال
-    const openEditModal = (command) => {
-        setCurrentCommand(command);
-        setNewStatus(command.status); // تعيين الحالة الحالية كقيمة افتراضية
-        setIsEditModalOpen(true);
-    };
-
-    const closeEditModal = () => {
-        setIsEditModalOpen(false);
-        setCurrentCommand(null);
-        setNewStatus('');
-    };
-
-    const openConfirmModal = (commandId) => {
-        setCommandToDeleteId(commandId);
-        setIsConfirmModalOpen(true);
-    };
-
-    const closeConfirmModal = () => {
-        setIsConfirmModalOpen(false);
-        setCommandToDeleteId(null);
-    };
-
-
     const formatDate = (dateString) => {
-        const date = new Date(dateString);
-        const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
-        return date.toLocaleDateString('fr-FR', options);
+        return new Date(dateString).toLocaleDateString('fr-FR', {
+            day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+        });
     };
 
-    if (loading) return (
-        <>
-            <NavbarAdmin />
-            <div className="abonnement-container loading-state">
-                <FaSpinner className="spinner" />
-                <p>Chargement des Commandes...</p>
-            </div>
-        </>
-    );
-
-
-    // -------------------- 4. Rendu du Composant --------------------
     return (
-        <>
+        <div style={{ background: '#f8fafc', minHeight: '100vh' }}>
             <NavbarAdmin />
 
-            {/* Notification/Toast */}
-            {notification.message && (
-                <div className={`notification ${notification.type}`}>
-                    <p>{notification.message}</p>
-                    <button onClick={() => setNotification({ message: '', type: '' })}>&times;</button>
+            <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '40px 20px' }}>
+                <div style={{ marginBottom: '40px' }}>
+                    <h1 style={{ fontSize: '2.2rem', color: '#1e293b', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '15px' }}>
+                        <FaShoppingBag style={{ color: '#D4AF37' }} /> Gestion des Commandes
+                    </h1>
+                    <p style={{ color: '#64748b', marginTop: '10px' }}>Suivez et gérez les commandes de vos clients.</p>
                 </div>
-            )}
 
-            <div className="command-management-container">
-                <h2 className="client-title">🛒 Gestion des Commandes</h2>
-                <hr />
-
-                {commands.length === 0 ? (
-                    <p className="no-data-message">Aucune commande trouvée.</p>
+                {loading ? (
+                    <div style={{ textAlign: 'center', padding: '100px' }}>
+                        <FaSpinner className="spinner" style={{ fontSize: '3rem', color: '#D4AF37' }} />
+                        <p style={{ marginTop: '20px', fontWeight: 'bold' }}>Chargement...</p>
+                    </div>
                 ) : (
-                    <table className="commands-table">
-                        <thead>
-                            <tr>
-                                {/* <th>ID Commande</th>  */}
-                                <th>Image</th>
-                                <th>Client</th>
-                                <th>Nom du Produit</th> {/* 💡 تم تغيير الاسم ليتناسب مع الفرنسية */}
-                                <th>Date</th>
-                                <th>Phone</th>
-                                <th>Address</th>
-                                <th>Total</th>
-                                <th>Statut</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {commands.map(command => (
-                                <tr key={command._id}>
-                                    {/* <td>{command._id.substring(0, 8)}...</td>  */}
-                                    {/* 🖼️ خلية عرض الصورة (لأول منتج) */}
-                                    <td>
-                                        <ProductImageCell
-                                            imageUrl={command.items[0]?.productImage}
-                                            productName={command.items[0]?.productName}
-                                        />
-                                    </td>
-                                    {/* معلومات العميل */}
-                                    <td>{command.clientName || 'N/A'}</td>
+                    <div className="premium-list-container">
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                            {commands.map(cmd => {
+                                const st = getStatusStyles(cmd.status);
+                                return (
+                                    <div key={cmd._id} className="premium-card" style={{ padding: '25px', display: 'grid', gridTemplateColumns: 'auto 1fr auto', gap: '30px', alignItems: 'center' }}>
+                                        <div style={{ width: '100px', height: '100px', background: '#f1f5f9', borderRadius: '15px', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                            {cmd.items[0]?.productImage ? (
+                                                <img src={cmd.items[0].productImage} alt="Product" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                            ) : (
+                                                <FaImage size={30} color="#cbd5e1" />
+                                            )}
+                                        </div>
 
-                                    {/* 🎯 التصحيح: اسم المنتج موجود في items[0] */}
-                                    <td>{command.items[0]?.productName || 'N/A'}</td>
+                                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
+                                            <div>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#64748b', fontSize: '0.85rem', marginBottom: '5px' }}>
+                                                    <FaUser size={12} /> {cmd.clientName}
+                                                </div>
+                                                <h4 style={{ margin: '0 0 10px 0', color: '#1e293b' }}>{cmd.items[0]?.productName || 'Commande multiple'}</h4>
+                                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px', fontSize: '0.85rem', color: '#64748b' }}>
+                                                    <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}><FaPhoneAlt size={10} /> {cmd.clientPhone}</span>
+                                                    <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}><FaMapMarkerAlt size={10} /> {cmd.shippingAddress}</span>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#64748b', fontSize: '0.85rem', marginBottom: '8px' }}>
+                                                    <FaCalendarAlt size={12} /> {formatDate(cmd.orderDate)}
+                                                </div>
+                                                <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#D4AF37' }}>{cmd.totalAmount.toFixed(2)} DT</div>
+                                            </div>
+                                            <div style={{ display: 'flex', alignItems: 'center' }}>
+                                                <span style={{
+                                                    display: 'flex', alignItems: 'center', gap: '8px',
+                                                    padding: '8px 15px', borderRadius: '25px',
+                                                    fontSize: '0.85rem', fontWeight: 'bold',
+                                                    background: st.bg, color: st.color
+                                                }}>
+                                                    {st.icon} {cmd.status}
+                                                </span>
+                                            </div>
+                                        </div>
 
-                                    <td>{formatDate(command.orderDate)}</td>
-                                    <td>{command.clientPhone || 'N/A'}</td>
-                                    <td>{command.shippingAddress || 'N/A'}</td>
-
-                                    <td>{command.totalAmount.toFixed(2)} DT</td>
-                                    <td className={`status-${command.status.replace(/\s/g, '').toLowerCase()}`}>{command.status}</td>
-                                    <td>
-                                        <button
-                                            className="action-btn edit-btn"
-                                            onClick={() => openEditModal(command)}
-                                        >
-                                            Modifier Statut
-                                        </button>
-                                        <button
-                                            className="action-btn delete-btn"
-                                            onClick={() => openConfirmModal(command._id)}
-                                        >
-                                            Supprimer
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                            <button
+                                                onClick={() => { setCurrentCommand(cmd); setNewStatus(cmd.status); setIsEditModalOpen(true); }}
+                                                className="premium-btn-cta secondary"
+                                                style={{ padding: '10px 20px', fontSize: '0.85rem' }}
+                                            >
+                                                <FaEdit /> Statut
+                                            </button>
+                                            <button
+                                                onClick={() => handleDeleteCommand(cmd._id)}
+                                                className="premium-btn-cta secondary"
+                                                style={{ padding: '10px 20px', fontSize: '0.85rem', color: '#ef4444', borderColor: '#fecaca' }}
+                                            >
+                                                <FaTrash /> Supprimer
+                                            </button>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                        {commands.length === 0 && (
+                            <div style={{ textAlign: 'center', padding: '60px', background: '#fff', borderRadius: '20px', color: '#64748b' }}>
+                                Aucune commande trouvée.
+                            </div>
+                        )}
+                    </div>
                 )}
-
             </div>
 
-            {/* -------------------- Modal Mise à Jour Statut -------------------- */}
             {isEditModalOpen && currentCommand && (
-                <div className="modal-overlay">
-                    <div className="modal-content">
-                        <h3>⚙️ Modifier le Statut de la Commande {currentCommand._id.substring(0, 8)}...</h3>
-
-                        <form onSubmit={handleUpdateStatus}>
-                            <div className="form-group">
-                                <label htmlFor="newStatus">Nouveau Statut</label>
-                                <select
-                                    id="newStatus"
-                                    name="newStatus"
-                                    value={newStatus}
-                                    onChange={(e) => setNewStatus(e.target.value)}
-                                    required
-                                >
-                                    {statusOptions.map(status => (
-                                        <option key={status} value={status}>{status}</option>
-                                    ))}
+                <div className="premium-modal-backdrop" onClick={() => setIsEditModalOpen(false)}>
+                    <div className="premium-modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '450px' }}>
+                        <div className="premium-modal-header">
+                            <h3 className="premium-modal-title">Modifier Statut</h3>
+                            <button onClick={() => setIsEditModalOpen(false)} className="premium-modal-close-icon"><FaTimes /></button>
+                        </div>
+                        <form onSubmit={handleUpdateStatus} className="premium-form-grid" style={{ marginTop: '20px' }}>
+                            <div className="premium-form-group" style={{ gridColumn: 'span 4' }}>
+                                <label>Nouveau Statut</label>
+                                <select value={newStatus} onChange={(e) => setNewStatus(e.target.value)}>
+                                    {statusOptions.map(s => <option key={s} value={s}>{s}</option>)}
                                 </select>
                             </div>
-
-                            <div className="modal-actions">
-                                <button type="submit" className="submit-button" disabled={loading}>
-                                    {loading ? 'Mise à jour...' : 'Enregistrer'}
-                                </button>
-                                <button type="button" className="cancel-button" onClick={closeEditModal} disabled={loading}>
-                                    Annuler
-                                </button>
+                            <div className="premium-btn-group" style={{ gridColumn: 'span 4', marginTop: '20px' }}>
+                                <button type="button" onClick={() => setIsEditModalOpen(false)} className="premium-btn-cta secondary">Annuler</button>
+                                <button type="submit" className="premium-btn-cta gold"><FaSave /> Enregistrer</button>
                             </div>
                         </form>
                     </div>
                 </div>
             )}
-
-            {/* -------------------- Modal Confirmation Suppression -------------------- */}
-            {isConfirmModalOpen && commandToDeleteId && (
-                <div className="modal-overlay">
-                    <div className="modal-content confirmation-modal">
-                        <h3>⚠️ Confirmer la Suppression</h3>
-                        <p className="confirmation-message">
-                            Êtes-vous sûr de vouloir supprimer la commande **{commandToDeleteId.substring(0, 8)}...** ?
-                        </p>
-                        <div className="modal-actions">
-                            <button
-                                type="button"
-                                className="action-btn delete-btn"
-                                onClick={handleDeleteCommand}
-                                disabled={loading}
-                            >
-                                {loading ? 'Suppression...' : 'Oui, Supprimer'}
-                            </button>
-                            <button
-                                type="button"
-                                className="cancel-button"
-                                onClick={closeConfirmModal}
-                                disabled={loading}
-                            >
-                                Annuler
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-        </>
+        </div>
     );
 }

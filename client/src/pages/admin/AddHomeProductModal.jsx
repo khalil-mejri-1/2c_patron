@@ -6,39 +6,35 @@ function ConfirmationModal({ message, details, onConfirm, onCancel }) {
     if (!onCancel) return null;
 
     return (
-        <div className="confirmation-modal-overlay">
-            <div className="confirmation-modal-content">
+        <div className="premium-modal-backdrop" onClick={onCancel}>
+            <div className="premium-modal-content" style={{ maxWidth: '450px' }} onClick={e => e.stopPropagation()}>
+                <button className="premium-modal-close-icon" onClick={onCancel}>
+                    <FaTimes />
+                </button>
 
-                <div className="confirmation-modal-header">
-                    <FaTrash className="header-icon" />
-                    <h4>Confirmer l'Action</h4>
-                    <button className="close-btn" onClick={onCancel}>
-                        <FaTimes />
-                    </button>
+                <div className="premium-modal-header">
+                    <div className="vip-cert-icon-wrapper" style={{ margin: '0 auto 15px', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' }}>
+                        <FaTrash />
+                    </div>
+                    <h2 className="premium-modal-title">Confirmer l'Action</h2>
                 </div>
 
-                <div className="confirmation-modal-body">
-                    <p className="main-message">
-                        **{message}**
+                <div style={{ textAlign: 'center', marginBottom: '30px' }}>
+                    <p style={{ fontSize: '1.1rem', color: '#1f2937', fontWeight: '600', marginBottom: '10px' }}>
+                        {message}
                     </p>
-                    {details && <p className="details-text">{details}</p>}
+                    {details && <p style={{ color: '#6b7280', fontSize: '0.95rem' }}>"{details}"</p>}
 
-                    <p className="warning-text">
-                        Cette action est **irréversible**.
-                    </p>
+                    <div style={{ marginTop: '20px', background: '#fef2f2', color: '#b91c1c', padding: '10px', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 'bold' }}>
+                        ⚠️ Cette action est irréversible.
+                    </div>
                 </div>
 
-                <div className="confirmation-modal-actions">
-                    <button
-                        className="cancel-action-btn"
-                        onClick={onCancel}
-                    >
+                <div className="premium-btn-group">
+                    <button className="premium-btn-cta secondary" onClick={onCancel}>
                         Annuler
                     </button>
-                    <button
-                        className="confirm-action-btn"
-                        onClick={onConfirm}
-                    >
+                    <button className="premium-btn-cta gold" style={{ background: '#ef4444', borderColor: '#dc2626' }} onClick={onConfirm}>
                         Oui, Supprimer
                     </button>
                 </div>
@@ -198,76 +194,75 @@ export default function AddHomeProductModal({ onClose, onProductAdded }) {
     };
 
     const renderForm = () => {
-        const buttonText = isEditing ? "Modifier le Produit" : "Ajouter à l'Accueil";
+        const buttonText = isEditing ? "Enregistrer les modifications" : "Ajouter à l'Accueil";
 
         return (
-            <>
-                <div className="home-product-modal-section-header">
-                    <h4>{isEditing ? `✏️ Modification du Produit: ${homeProduct.nom}` : "➕ Ajouter un nouveau produit"}</h4>
-                    <p className="home-product-modal-subheader">Saisissez les détails du produit à afficher sur la page d'accueil.</p>
+            <div className="premium-card" style={{ background: '#f8fafc', padding: '25px', borderRadius: '15px', border: '1px solid #e2e8f0', marginBottom: '30px' }}>
+                <div style={{ marginBottom: '20px' }}>
+                    <h4 style={{ margin: 0, color: '#1e293b', fontSize: '1.2rem' }}>
+                        {isEditing ? `✏️ Modification: ${homeProduct.nom}` : "➕ Nouveau Produit Spécialisé"}
+                    </h4>
+                    <p style={{ margin: '5px 0 0', color: '#64748b', fontSize: '0.9rem' }}>Ces produits seront mis en avant sur la page d'accueil.</p>
                 </div>
 
-                {submissionError && <p className="home-product-error-message">❌ {submissionError}</p>}
+                {submissionError && <div className="premium-error-alert" style={{ marginBottom: '20px', background: '#fef2f2', color: '#b91c1c', padding: '12px', borderRadius: '10px', fontSize: '0.9rem' }}>❌ {submissionError}</div>}
 
-                <form onSubmit={handleSubmit} className="home-product-form">
-
-                    <div className="home-product-form-group">
-                        <label htmlFor="nom">Titre</label>
+                <form onSubmit={handleSubmit} className="premium-form-grid">
+                    <div className="premium-form-group">
+                        <label>Titre du Produit</label>
                         <input
                             type="text"
-                            id="nom"
                             name="nom"
                             value={homeProduct.nom}
                             onChange={handleChange}
                             required
+                            placeholder="Ex: Patron Robe de Soirée"
                         />
                     </div>
 
-                    <div className="home-product-form-group">
-                        <label htmlFor="image"><FaLink /> URL Image</label>
+                    <div className="premium-form-group">
+                        <label><FaLink /> URL de l'Image</label>
                         <input
                             type="url"
-                            id="image"
                             name="image"
                             value={homeProduct.image}
                             onChange={handleChange}
                             required
+                            placeholder="https://..."
                         />
                     </div>
 
-                    <div className="home-product-form-group">
-                        <label htmlFor="description">Description</label>
+                    <div className="premium-form-group" style={{ gridColumn: 'span 2' }}>
+                        <label>Description Courte</label>
                         <textarea
-                            id="description"
                             name="description"
                             value={homeProduct.description}
                             onChange={handleChange}
                             required
-                            rows="3"
+                            rows="2"
+                            placeholder="Décrivez brièvement le produit..."
                         />
                     </div>
 
-                    <div className="home-product-form-group">
-                        <label htmlFor="categorie">Catégorie</label>
+                    <div className="premium-form-group">
+                        <label>Catégorie</label>
                         <select
-                            id="categorie"
                             name="categorie"
                             value={homeProduct.categorie}
                             onChange={handleChange}
                             required
                         >
-                            <option value="">-- Choisir une catégorie --</option>
+                            <option value="">-- Choisir --</option>
                             <option value="Homme">Homme</option>
                             <option value="Famme">Famme</option>
                             <option value="Enfant">Enfant</option>
                         </select>
                     </div>
 
-                    <div className="home-product-form-group half-width">
-                        <label htmlFor="prix">Prix (DT)</label>
+                    <div className="premium-form-group">
+                        <label>Prix (DT)</label>
                         <input
                             type="number"
-                            id="prix"
                             name="prix"
                             value={homeProduct.prix}
                             onChange={handleChange}
@@ -277,73 +272,88 @@ export default function AddHomeProductModal({ onClose, onProductAdded }) {
                         />
                     </div>
 
-                    <div className="home-product-modal-actions">
-                        <button type="submit" className="home-product-submit-btn" disabled={loading}>
-                            {loading ? (isEditing ? "Modification en cours..." : "Ajout en cours...") : buttonText}
-                        </button>
-
+                    <div className="premium-btn-group" style={{ gridColumn: 'span 2', marginTop: '10px' }}>
                         {isEditing && (
                             <button
                                 type="button"
-                                className="home-product-cancel-btn"
+                                className="premium-btn-cta secondary"
                                 onClick={handleCancelEdit}
                                 disabled={loading}
                             >
-                                Annuler Modification
+                                Annuler
                             </button>
                         )}
+                        <button type="submit" className="premium-btn-cta gold" disabled={loading} style={{ flex: 2 }}>
+                            {loading ? "Traitement..." : buttonText}
+                        </button>
                     </div>
                 </form>
-            </>
+            </div>
         );
     };
 
     const renderList = () => {
         if (listLoading) {
-            return <p className="home-product-loading">⏳ Chargement des produits en ligne...</p>;
+            return (
+                <div style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
+                    <p>⏳ Chargement des produits...</p>
+                </div>
+            );
         }
 
         if (listError) {
-            return <p className="home-product-error-message error-list">❌ {listError}</p>;
+            return <div className="premium-error-alert">❌ {listError}</div>;
         }
 
         return (
-            <div className="home-product-list-container">
-                <div className="home-product-list-header">
-                    <h4>Vidéos en ligne ({productsList.length})</h4>
+            <div className="premium-list-container">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                    <h4 style={{ margin: 0, color: '#1e293b' }}>Produits en Ligne ({productsList.length})</h4>
                 </div>
 
-                <div className="home-product-list">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                     {productsList.length === 0 ? (
-                        <p className="home-product-no-items">Aucun produit n'est actuellement affiché. Ajoutez-en un ci-dessus.</p>
+                        <p style={{ textAlign: 'center', color: '#94a3b8', padding: '20px', background: '#f8fafc', borderRadius: '12px' }}>
+                            Aucun produit n'est actuellement affiché.
+                        </p>
                     ) : (
                         productsList.map((product) => (
-                            <div key={product._id} className={`home-product-list-item ${productToEditId === product._id ? 'editing' : ''}`}>
-
-                                <div className="home-product-media-placeholder">
-                                    [Image du produit]
+                            <div key={product._id} className="premium-list-item" style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '20px',
+                                padding: '15px',
+                                background: '#fff',
+                                borderRadius: '12px',
+                                border: productToEditId === product._id ? '2px solid #D4AF37' : '1px solid #e2e8f0',
+                                transition: 'all 0.3s ease'
+                            }}>
+                                <div style={{ width: '80px', height: '80px', borderRadius: '10px', overflow: 'hidden', background: '#f1f5f9', flexShrink: 0 }}>
+                                    <img src={product.image} alt={product.nom} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => e.target.src = 'https://via.placeholder.com/80?text=No+Img'} />
                                 </div>
 
-                                <div className="home-product-list-details">
-                                    <h5>{product.nom}</h5>
-                                    <p className="category-tag">Catégorie: {product.categorie}</p>
-                                    <p className="price-tag">Prix: **{product.prix} DT**</p>
+                                <div style={{ flex: 1 }}>
+                                    <h5 style={{ margin: '0 0 5px', color: '#1e293b', fontSize: '1rem' }}>{product.nom}</h5>
+                                    <div style={{ display: 'flex', gap: '15px', fontSize: '0.85rem' }}>
+                                        <span style={{ color: '#D4AF37', fontWeight: 'bold' }}>{product.prix} DT</span>
+                                        <span style={{ color: '#64748b' }}>• {product.categorie}</span>
+                                    </div>
                                 </div>
 
-                                <div className="home-product-list-actions">
+                                <div style={{ display: 'flex', gap: '10px' }}>
                                     <button
-                                        className="home-product-action-btn edit"
+                                        className="premium-btn-cta secondary"
+                                        style={{ padding: '10px', minWidth: '40px', borderRadius: '10px' }}
                                         onClick={() => handleEdit(product)}
                                         disabled={listLoading || isEditing}
-                                        title="Modifier ce produit"
                                     >
                                         <FaEdit />
                                     </button>
                                     <button
-                                        className="home-product-action-btn delete"
+                                        className="premium-btn-cta gold"
+                                        style={{ padding: '10px', minWidth: '40px', borderRadius: '10px', background: '#fee2e2', color: '#ef4444', borderColor: '#fecaca' }}
                                         onClick={() => requestDeleteConfirmation(product)}
                                         disabled={listLoading || loading}
-                                        title="Supprimer ce produit"
                                     >
                                         <FaTrash />
                                     </button>
@@ -357,48 +367,45 @@ export default function AddHomeProductModal({ onClose, onProductAdded }) {
     };
 
     return (
-        <div className="home-product-modal-overlay">
-            <div className="home-product-modal-content">
+        <div className="premium-modal-backdrop" onClick={onClose}>
+            <div className="premium-modal-content large" onClick={(e) => e.stopPropagation()}>
 
-                <div className="home-product-modal-header">
-                    <h3>Gestion des Produits Spécialisés</h3>
-                    <button className="home-product-close-btn" onClick={onClose} disabled={loading || listLoading}>
+                <div className="premium-modal-header" style={{ marginBottom: '30px' }}>
+                    <h2 className="premium-modal-title">Gestion des Produits Spécialisés</h2>
+                    <button className="premium-modal-close-icon" onClick={onClose} disabled={loading || listLoading}>
                         <FaTimes />
                     </button>
                 </div>
 
-                {renderForm()}
+                <div style={{ maxHeight: 'calc(85vh - 100px)', overflowY: 'auto', paddingRight: '10px' }}>
+                    {renderForm()}
+                    <hr style={{ border: 'none', borderTop: '1px solid #e2e8f0', margin: '30px 0' }} />
+                    {renderList()}
+                </div>
 
-                <hr className="home-product-separator" />
+                {/* --- Rendu du Modal de Confirmation --- */}
+                {productToDelete && (
+                    <ConfirmationModal
+                        message={`Voulez-vous supprimer ce produit ?`}
+                        details={productToDelete.nom}
+                        onConfirm={async () => {
+                            const localProductId = productToDelete._id;
+                            const localProductName = productToDelete.nom;
+                            setListLoading(true);
 
-                {renderList()}
-
+                            try {
+                                await _handleDelete(localProductId);
+                                console.log(`Produit supprimé: ${localProductName}`);
+                            } catch (error) {
+                            } finally {
+                                setProductToDelete(null);
+                                setListLoading(false);
+                            }
+                        }}
+                        onCancel={() => setProductToDelete(null)}
+                    />
+                )}
             </div>
-
-            {/* --- Rendu du Modal de Confirmation avec variable locale pour éviter null --- */}
-            {productToDelete && (
-                <ConfirmationModal
-                    message={`Êtes-vous sûr de vouloir supprimer le produit :`}
-                    details={productToDelete.nom} // ⚡ فقط للعرض، هذا لا يتغير
-                    onConfirm={async () => {
-                        const localProductId = productToDelete._id; // ⚡ نسخ المعرف محليًا
-                        const localProductName = productToDelete.nom; // ⚡ نسخ الاسم محليًا
-                        setListLoading(true);
-
-                        try {
-                            await _handleDelete(localProductId);
-                            console.log(`Produit supprimé: ${localProductName}`);
-                        } catch (error) {
-                        } finally {
-                            setProductToDelete(null); // تحديث state بعد استخدام النسخ المحلية
-                            setListLoading(false);
-                        }
-                    }}
-                    onCancel={() => setProductToDelete(null)}
-                />
-            )}
-
-
         </div>
     );
 }

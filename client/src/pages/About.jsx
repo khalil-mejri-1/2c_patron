@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../context/LanguageContext';
-import { FaHeart, FaHandsHelping, FaLightbulb, FaTools, FaEdit, FaSave, FaTimes } from 'react-icons/fa'; // أيقونات للقيم
+import { FaHeart, FaHandsHelping, FaLightbulb, FaTools, FaEdit, FaSave, FaTimes, FaChevronRight } from 'react-icons/fa'; // أيقونات للقيم
 import Navbar from '../comp/navbar';
 import Footer from '../comp/Footer';
 import { Link } from 'react-router-dom';
 import BASE_URL from '../apiConfig';
+import './about_premium.css';
 
 // 🌐 كائن الترجمة
-const translations = {
+const aboutTranslations = {
     ar: {
         heroTitle: () => `فن الخياطة  `,
         heroAccent: "شغفنا",
@@ -117,15 +118,24 @@ export default function About() {
     const { appLanguage, languages } = useLanguage();
     const [isAdmin, setIsAdmin] = useState(false);
     const [isEditingField, setIsEditingField] = useState(null);
+
+    // Default structure for content
+    const defaultStructure = {
+        heroTitle: '', heroAccent: '', heroTagline: '', heroImage: '',
+        storyTitle: '', storyPara1: '', storyPara2: '', storyImage: '',
+        contactBtn: '', valuesTitle: '',
+        vt1: '', vd1: '', vt2: '', vd2: '', vt3: '', vd3: '', vt4: '', vd4: ''
+    };
+
     const [aboutContent, setAboutContent] = useState({
-        fr: { heroTitle: '', heroAccent: '', heroTagline: '', storyTitle: '', storyPara1: '', storyPara2: '', contactBtn: '', valuesTitle: '', vt1: '', vd1: '', vt2: '', vd2: '', vt3: '', vd3: '', vt4: '', vd4: '' },
-        ar: { heroTitle: '', heroAccent: '', heroTagline: '', storyTitle: '', storyPara1: '', storyPara2: '', contactBtn: '', valuesTitle: '', vt1: '', vd1: '', vt2: '', vd2: '', vt3: '', vd3: '', vt4: '', vd4: '' },
-        en: { heroTitle: '', heroAccent: '', heroTagline: '', storyTitle: '', storyPara1: '', storyPara2: '', contactBtn: '', valuesTitle: '', vt1: '', vd1: '', vt2: '', vd2: '', vt3: '', vd3: '', vt4: '', vd4: '' }
+        fr: { ...defaultStructure },
+        ar: { ...defaultStructure },
+        en: { ...defaultStructure }
     });
     const [editAboutContent, setEditAboutContent] = useState({
-        fr: { heroTitle: '', heroAccent: '', heroTagline: '', storyTitle: '', storyPara1: '', storyPara2: '', contactBtn: '', valuesTitle: '', vt1: '', vd1: '', vt2: '', vd2: '', vt3: '', vd3: '', vt4: '', vd4: '' },
-        ar: { heroTitle: '', heroAccent: '', heroTagline: '', storyTitle: '', storyPara1: '', storyPara2: '', contactBtn: '', valuesTitle: '', vt1: '', vd1: '', vt2: '', vd2: '', vt3: '', vd3: '', vt4: '', vd4: '' },
-        en: { heroTitle: '', heroAccent: '', heroTagline: '', storyTitle: '', storyPara1: '', storyPara2: '', contactBtn: '', valuesTitle: '', vt1: '', vd1: '', vt2: '', vd2: '', vt3: '', vd3: '', vt4: '', vd4: '' }
+        fr: { ...defaultStructure },
+        ar: { ...defaultStructure },
+        en: { ...defaultStructure }
     });
 
     // 1. ⚙️ جلب التحقق من المسؤول
@@ -160,9 +170,9 @@ export default function About() {
     const initializeAllLanguages = (currentValues) => {
         const initialized = {};
         languages.forEach(lang => {
-            initialized[lang.code] = currentValues[lang.code] || {
-                heroTitle: '', heroAccent: '', heroTagline: '', storyTitle: '', storyPara1: '', storyPara2: '',
-                contactBtn: '', valuesTitle: '', vt1: '', vd1: '', vt2: '', vd2: '', vt3: '', vd3: '', vt4: '', vd4: ''
+            initialized[lang.code] = {
+                ...defaultStructure,
+                ...(currentValues[lang.code] || {})
             };
         });
         return initialized;
@@ -172,248 +182,276 @@ export default function About() {
         return (aboutContent[appLanguage] && aboutContent[appLanguage][key]) || defaultVal;
     };
 
-    const EditBtn = ({ field }) => (
+    const EditBtn = ({ field, style = {} }) => (
         isAdmin && (
             <button
                 onClick={() => { setEditAboutContent(initializeAllLanguages(aboutContent)); setIsEditingField(field); }}
-                className="edit-btn-minimal"
+                className="edit-btn-minimal-lux"
                 title="Modifier"
-                style={{
-                    background: 'rgba(212, 175, 55, 0.1)',
-                    border: '1px solid rgba(212, 175, 55, 0.2)',
-                    color: '#D4AF37',
-                    borderRadius: '50%',
-                    width: '30px',
-                    height: '30px',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    marginLeft: '8px',
-                    cursor: 'pointer',
-                    transition: 'all 0.3s',
-                    verticalAlign: 'middle'
-                }}
+                style={style}
             >
                 <FaEdit size={14} />
+
             </button>
         )
     );
 
-    const t = translations[appLanguage] || translations.fr;
+    const t = aboutTranslations[appLanguage] || aboutTranslations.fr;
     const direction = appLanguage === 'ar' ? 'rtl' : 'ltr';
     const accentText = <span className="about-accent">{getT('heroAccent', t.heroAccent)}</span>;
 
     return (
         <>
             <Navbar />
-            <div className="simple-about-page" dir={direction}>
+            <div dir={direction}>
+                <main className="about-page-premium">
 
-                {/* 1. Hero Section - Clean & Centered */}
-                <header className="simple-hero">
-                    <div className="container">
-                        <h1 className="simple-hero-title">
-                            {getT('heroTitle', t.heroTitle(''))} {accentText}
-                            <EditBtn field="title" />
-                        </h1>
-                        <p className="simple-hero-subtitle">
-                            {getT('heroTagline', t.heroTagline)}
-                            <EditBtn field="heroTagline" />
-                        </p>
-                    </div>
-                </header>
+                    {/* 1. Hero Section - Premium & Cinematic */}
+                    <header
+                        className="about-hero-premium"
+                        style={{
+                            backgroundImage: `url(${getT('heroImage', 'https://images.unsplash.com/photo-1556015048-4ded3446a160?q=80&w=2560&auto=format&fit=crop')})`
+                        }}
+                    >
+                        <div className="about-hero-overlay"></div>
+                        <EditBtn field="heroImage" style={{ position: 'absolute', top: '20px', right: '20px', zIndex: 10 }} />
 
-                {/* 2. Story Section - Standard Two Column */}
-                <section className="simple-story-section">
-                    <div className="container story-grid">
-                        <div className="story-image-wrapper">
-                            <img
-                                src="https://images.unsplash.com/photo-1537832816519-689ad163238b?q=80&w=2559&auto=format&fit=crop"
-                                alt="Atelier Interior"
-                                className="story-img"
-                            />
+                        <div className="container" style={{ position: 'relative', zIndex: 5 }}>
+                            <div className="about-badge-lux">
+                                2C Patron Studio
+                            </div>
+                            <h1 className="about-main-title">
+                                {getT('heroTitle', t.heroTitle(''))} {accentText}
+                            </h1>
+                            <p className="about-sub-text">
+                                {getT('heroTagline', t.heroTagline)}
+                            </p>
+                            <EditBtn field="hero" style={{ position: 'absolute', top: '0', right: '0' }} />
                         </div>
-                        <div className="story-text-wrapper">
-                            <h2 className="section-title">
-                                {getT('storyTitle', t.storyTitle)}
-                                <EditBtn field="storyTitle" />
-                            </h2>
-                            <div className="story-divider"></div>
-                            <p className="story-text">
-                                {getT('storyPara1', t.storyPara1)}
-                                <EditBtn field="storyPara1" />
-                            </p>
-                            <p className="story-text">
-                                {getT('storyPara2', t.storyPara2)}
-                                <EditBtn field="storyPara2" />
-                            </p>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                <Link to="/contact" className="simple-btn">
-                                    {getT('contactBtn', t.contactBtn)}
-                                </Link>
-                                <EditBtn field="contactBtn" />
+                    </header>
+
+                    {/* 2. Story Section - Premium Two Column */}
+                    <section className="about-story-section">
+                        <div className="story-grid-premium">
+                            <div className="story-image-wrapper-lux" style={{ position: 'relative' }}>
+                                <img
+                                    src={getT('storyImage', 'https://images.unsplash.com/photo-1556015048-4ded3446a160?q=80&w=2560&auto=format&fit=crop')}
+                                    alt="Atelier Couture"
+                                    className="story-img-lux"
+                                />
+                                <EditBtn field="storyImage" style={{ position: 'absolute', top: '20px', right: '20px' }} />
+                            </div>
+                            <div className="story-content-lux" style={{ position: 'relative' }}>
+                                <h2 className="story-title-lux">
+                                    {getT('storyTitle', t.storyTitle)}
+                                </h2>
+                                <p className="story-para-lux">
+                                    {getT('storyPara1', t.storyPara1)}
+                                </p>
+                                <p className="story-para-lux">
+                                    {getT('storyPara2', t.storyPara2)}
+                                </p>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                    <Link to="/contact" className="about-cta-btn">
+                                        {getT('contactBtn', t.contactBtn)} <FaChevronRight size={14} />
+                                    </Link>
+                                </div>
+                                <EditBtn field="story" style={{ position: 'absolute', top: '0', right: '0' }} />
                             </div>
                         </div>
-                    </div>
-                </section>
+                    </section>
 
-                {/* 3. Values Section - Uniform Grid */}
-                <section className="simple-values-section">
-                    <div className="container">
-                        <h2 className="section-title center-text">
-                            {getT('valuesTitle', t.valuesTitle)}
-                            <EditBtn field="valuesTitle" />
-                        </h2>
-                        <div className="values-grid-simple">
-                            {t.values.map((value, index) => (
-                                <div key={index} className="simple-value-card">
-                                    <div className="icon-wrapper">
-                                        <value.icon />
+                    {/* 3. Values Section - Premium Grid */}
+                    <section className="values-section-premium">
+                        <div className="container">
+                            <div className="values-header-lux" style={{ position: 'relative' }}>
+                                <h2 className="values-title-lux">
+                                    {getT('valuesTitle', t.valuesTitle)}
+                                </h2>
+                                <EditBtn field="valuesTitle" style={{ position: 'absolute', top: '0', right: '0' }} />
+                            </div>
+                            <div className="values-grid-lux">
+                                {t.values.map((value, index) => (
+                                    <div key={index} className="value-card-lux" style={{ position: 'relative' }}>
+                                        <div className="value-icon-wrapper-lux">
+                                            <value.icon />
+                                        </div>
+                                        <h3 className="v-card-title-lux">
+                                            {getT(`vt${index + 1}`, value.title)}
+                                        </h3>
+                                        <p className="v-card-desc-lux">
+                                            {getT(`vd${index + 1}`, value.description)}
+                                        </p>
+                                        <EditBtn field={`value_${index + 1}`} style={{ position: 'absolute', top: '15px', right: '15px' }} />
                                     </div>
-                                    <h3 className="value-title">
-                                        {getT(`vt${index + 1}`, value.title)}
-                                        <EditBtn field={`vt${index + 1}`} />
-                                    </h3>
-                                    <p className="value-desc">
-                                        {getT(`vd${index + 1}`, value.description)}
-                                        <EditBtn field={`vd${index + 1}`} />
-                                    </p>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </section>
-
-                {/* 🛑 Admin Editing Modal */}
-                {isEditingField && (
-                    <div className="modal-overlay" style={{ zIndex: 2000 }}>
-                        <div className="modal-content" style={{
-                            background: '#fff', padding: '30px', borderRadius: '15px', width: '90%', maxWidth: '600px',
-                            maxHeight: '80vh', overflowY: 'auto'
-                        }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                                <h3 style={{ margin: 0 }}>Modifier: {isEditingField}</h3>
-                                <button onClick={() => setIsEditingField(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#888' }}><FaTimes size={20} /></button>
-                            </div>
-
-                            {languages.map(lang => (
-                                <div key={lang.code} style={{ marginBottom: '25px', padding: '15px', border: '1px solid #eee', borderRadius: '10px' }}>
-                                    <h4 style={{ marginBottom: '10px', textTransform: 'uppercase', color: '#D4AF37' }}>
-                                        {lang.label}
-                                    </h4>
-
-                                    {isEditingField === 'title' && (
-                                        <>
-                                            <div style={{ marginBottom: '10px' }}>
-                                                <label style={{ display: 'block', fontSize: '12px', color: '#888' }}>Titre Principal</label>
-                                                <input
-                                                    type="text"
-                                                    value={editAboutContent[lang.code]?.heroTitle || ''}
-                                                    onChange={e => setEditAboutContent({ ...editAboutContent, [lang.code]: { ...editAboutContent[lang.code], heroTitle: e.target.value } })}
-                                                    style={{ width: '100%', padding: '8px', borderRadius: '5px', border: '1px solid #ddd' }}
-                                                />
-                                            </div>
-                                            <div style={{ marginBottom: '10px' }}>
-                                                <label style={{ display: 'block', fontSize: '12px', color: '#888' }}>Accent (Or)</label>
-                                                <input
-                                                    type="text"
-                                                    value={editAboutContent[lang.code]?.heroAccent || ''}
-                                                    onChange={e => setEditAboutContent({ ...editAboutContent, [lang.code]: { ...editAboutContent[lang.code], heroAccent: e.target.value } })}
-                                                    style={{ width: '100%', padding: '8px', borderRadius: '5px', border: '1px solid #ddd' }}
-                                                />
-                                            </div>
-                                        </>
-                                    )}
-
-                                    {isEditingField === 'heroTagline' && (
-                                        <textarea
-                                            value={editAboutContent[lang.code]?.heroTagline || ''}
-                                            onChange={e => setEditAboutContent({ ...editAboutContent, [lang.code]: { ...editAboutContent[lang.code], heroTagline: e.target.value } })}
-                                            style={{ width: '100%', padding: '8px', borderRadius: '5px', border: '1px solid #ddd', minHeight: '80px' }}
-                                        />
-                                    )}
-
-                                    {isEditingField === 'storyTitle' && (
-                                        <input
-                                            type="text"
-                                            value={editAboutContent[lang.code]?.storyTitle || ''}
-                                            onChange={e => setEditAboutContent({ ...editAboutContent, [lang.code]: { ...editAboutContent[lang.code], storyTitle: e.target.value } })}
-                                            style={{ width: '100%', padding: '8px', borderRadius: '5px', border: '1px solid #ddd' }}
-                                        />
-                                    )}
-
-                                    {isEditingField === 'storyPara1' && (
-                                        <textarea
-                                            value={editAboutContent[lang.code]?.storyPara1 || ''}
-                                            onChange={e => setEditAboutContent({ ...editAboutContent, [lang.code]: { ...editAboutContent[lang.code], storyPara1: e.target.value } })}
-                                            style={{ width: '100%', padding: '8px', borderRadius: '5px', border: '1px solid #ddd', minHeight: '100px' }}
-                                        />
-                                    )}
-
-                                    {isEditingField === 'storyPara2' && (
-                                        <textarea
-                                            value={editAboutContent[lang.code]?.storyPara2 || ''}
-                                            onChange={e => setEditAboutContent({ ...editAboutContent, [lang.code]: { ...editAboutContent[lang.code], storyPara2: e.target.value } })}
-                                            style={{ width: '100%', padding: '8px', borderRadius: '5px', border: '1px solid #ddd', minHeight: '100px' }}
-                                        />
-                                    )}
-
-                                    {isEditingField === 'contactBtn' && (
-                                        <input
-                                            type="text"
-                                            value={editAboutContent[lang.code]?.contactBtn || ''}
-                                            onChange={e => setEditAboutContent({ ...editAboutContent, [lang.code]: { ...editAboutContent[lang.code], contactBtn: e.target.value } })}
-                                            style={{ width: '100%', padding: '8px', borderRadius: '5px', border: '1px solid #ddd' }}
-                                        />
-                                    )}
-
-                                    {isEditingField === 'valuesTitle' && (
-                                        <input
-                                            type="text"
-                                            value={editAboutContent[lang.code]?.valuesTitle || ''}
-                                            onChange={e => setEditAboutContent({ ...editAboutContent, [lang.code]: { ...editAboutContent[lang.code], valuesTitle: e.target.value } })}
-                                            style={{ width: '100%', padding: '8px', borderRadius: '5px', border: '1px solid #ddd' }}
-                                        />
-                                    )}
-
-                                    {isEditingField.startsWith('vt') && (
-                                        <input
-                                            type="text"
-                                            value={editAboutContent[lang]?.[isEditingField] || ''}
-                                            onChange={e => setEditAboutContent({ ...editAboutContent, [lang]: { ...editAboutContent[lang], [isEditingField]: e.target.value } })}
-                                            style={{ width: '100%', padding: '8px', borderRadius: '5px', border: '1px solid #ddd' }}
-                                        />
-                                    )}
-
-                                    {isEditingField.startsWith('vd') && (
-                                        <textarea
-                                            value={editAboutContent[lang]?.[isEditingField] || ''}
-                                            onChange={e => setEditAboutContent({ ...editAboutContent, [lang]: { ...editAboutContent[lang], [isEditingField]: e.target.value } })}
-                                            style={{ width: '100%', padding: '8px', borderRadius: '5px', border: '1px solid #ddd', minHeight: '80px' }}
-                                        />
-                                    )}
-                                </div>
-                            ))}
-
-                            <div style={{ display: 'flex', gap: '15px' }}>
-                                <button
-                                    onClick={handleSaveAboutContent}
-                                    style={{ flex: 1, padding: '12px', background: '#D4AF37', color: '#fff', border: 'none', borderRadius: '50px', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
-                                >
-                                    <FaSave /> Enregistrer
-                                </button>
-                                <button
-                                    onClick={() => setIsEditingField(null)}
-                                    style={{ padding: '12px 25px', background: '#f5f5f5', color: '#333', border: 'none', borderRadius: '50px', fontWeight: 'bold' }}
-                                >
-                                    Annuler
-                                </button>
+                                ))}
                             </div>
                         </div>
-                    </div>
-                )}
+                    </section>
 
-            </div>
-            <Footer />
+
+                    {/* 🛑 Admin Editing Modal */}
+                    {isEditingField && (
+                        <div className="premium-modal-backdrop" onClick={() => setIsEditingField(null)}>
+                            <div className="premium-modal-content large" onClick={(e) => e.stopPropagation()}>
+                                <button className="premium-modal-close-icon" onClick={() => setIsEditingField(null)}><FaTimes /></button>
+                                <h2 className="premium-modal-title">
+                                    Modifier: {
+                                        isEditingField === 'hero' ? 'En-tête (Hero)' :
+                                            isEditingField === 'heroImage' ? 'Image de Fond (Hero)' :
+                                                isEditingField === 'story' ? 'Notre Histoire (Contenu)' :
+                                                    isEditingField === 'storyImage' ? 'Image de l\'Histoire' :
+                                                        isEditingField === 'valuesTitle' ? 'Titre de la Section Valeurs' :
+                                                            isEditingField.startsWith('value_') ? `Valeur #${isEditingField.split('_')[1]}` :
+                                                                isEditingField
+                                    }
+                                </h2>
+
+                                <div className="premium-form-grid">
+                                    {languages.map(lang => (
+                                        <div key={lang.code} className="premium-lang-section">
+                                            <h4 className="lang-indicator">{lang.label}</h4>
+
+                                            {isEditingField === 'heroImage' && (
+                                                <div className="premium-form-group">
+                                                    <label>URL Image de Fond (Hero)</label>
+                                                    <input
+                                                        type="text"
+                                                        value={editAboutContent[lang.code]?.heroImage || ''}
+                                                        onChange={e => setEditAboutContent({ ...editAboutContent, [lang.code]: { ...editAboutContent[lang.code], heroImage: e.target.value } })}
+                                                        placeholder="https://..."
+                                                    />
+                                                </div>
+                                            )}
+
+                                            {isEditingField === 'hero' && (
+                                                <>
+                                                    <div className="premium-form-group">
+                                                        <label>Titre Principal</label>
+                                                        <input
+                                                            type="text"
+                                                            value={editAboutContent[lang.code]?.heroTitle || ''}
+                                                            onChange={e => setEditAboutContent({ ...editAboutContent, [lang.code]: { ...editAboutContent[lang.code], heroTitle: e.target.value } })}
+                                                        />
+                                                    </div>
+                                                    <div className="premium-form-group">
+                                                        <label>Accent (Or)</label>
+                                                        <input
+                                                            type="text"
+                                                            value={editAboutContent[lang.code]?.heroAccent || ''}
+                                                            onChange={e => setEditAboutContent({ ...editAboutContent, [lang.code]: { ...editAboutContent[lang.code], heroAccent: e.target.value } })}
+                                                        />
+                                                    </div>
+                                                    <div className="premium-form-group">
+                                                        <label>Tagline</label>
+                                                        <textarea
+                                                            value={editAboutContent[lang.code]?.heroTagline || ''}
+                                                            onChange={e => setEditAboutContent({ ...editAboutContent, [lang.code]: { ...editAboutContent[lang.code], heroTagline: e.target.value } })}
+                                                            style={{ minHeight: '80px' }}
+                                                        />
+                                                    </div>
+                                                </>
+                                            )}
+
+                                            {isEditingField === 'story' && (
+                                                <>
+                                                    <div className="premium-form-group">
+                                                        <label>Titre de l'Histoire</label>
+                                                        <input
+                                                            type="text"
+                                                            value={editAboutContent[lang.code]?.storyTitle || ''}
+                                                            onChange={e => setEditAboutContent({ ...editAboutContent, [lang.code]: { ...editAboutContent[lang.code], storyTitle: e.target.value } })}
+                                                        />
+                                                    </div>
+                                                    <div className="premium-form-group">
+                                                        <label>Paragraphe 1</label>
+                                                        <textarea
+                                                            value={editAboutContent[lang.code]?.storyPara1 || ''}
+                                                            onChange={e => setEditAboutContent({ ...editAboutContent, [lang.code]: { ...editAboutContent[lang.code], storyPara1: e.target.value } })}
+                                                            style={{ minHeight: '100px' }}
+                                                        />
+                                                    </div>
+                                                    <div className="premium-form-group">
+                                                        <label>Paragraphe 2</label>
+                                                        <textarea
+                                                            value={editAboutContent[lang.code]?.storyPara2 || ''}
+                                                            onChange={e => setEditAboutContent({ ...editAboutContent, [lang.code]: { ...editAboutContent[lang.code], storyPara2: e.target.value } })}
+                                                            style={{ minHeight: '100px' }}
+                                                        />
+                                                    </div>
+                                                    <div className="premium-form-group">
+                                                        <label>Texte Bouton Contact</label>
+                                                        <input
+                                                            type="text"
+                                                            value={editAboutContent[lang.code]?.contactBtn || ''}
+                                                            onChange={e => setEditAboutContent({ ...editAboutContent, [lang.code]: { ...editAboutContent[lang.code], contactBtn: e.target.value } })}
+                                                        />
+                                                    </div>
+                                                </>
+                                            )}
+
+                                            {isEditingField === 'storyImage' && (
+                                                <div className="premium-form-group">
+                                                    <label>URL de l'image (Story)</label>
+                                                    <input
+                                                        type="text"
+                                                        value={editAboutContent[lang.code]?.storyImage || ''}
+                                                        onChange={e => setEditAboutContent({ ...editAboutContent, [lang.code]: { ...editAboutContent[lang.code], storyImage: e.target.value } })}
+                                                        placeholder="https://..."
+                                                    />
+                                                </div>
+                                            )}
+
+                                            {isEditingField === 'valuesTitle' && (
+                                                <div className="premium-form-group">
+                                                    <label>Titre des Valeurs</label>
+                                                    <input
+                                                        type="text"
+                                                        value={editAboutContent[lang.code]?.valuesTitle || ''}
+                                                        onChange={e => setEditAboutContent({ ...editAboutContent, [lang.code]: { ...editAboutContent[lang.code], valuesTitle: e.target.value } })}
+                                                    />
+                                                </div>
+                                            )}
+
+                                            {isEditingField.startsWith('value_') && (
+                                                <>
+                                                    <div className="premium-form-group">
+                                                        <label>Titre de la Valeur</label>
+                                                        <input
+                                                            type="text"
+                                                            value={editAboutContent[lang.code]?.[`vt${isEditingField.split('_')[1]}`] || ''}
+                                                            onChange={e => setEditAboutContent({ ...editAboutContent, [lang.code]: { ...editAboutContent[lang.code], [`vt${isEditingField.split('_')[1]}`]: e.target.value } })}
+                                                        />
+                                                    </div>
+                                                    <div className="premium-form-group">
+                                                        <label>Description de la Valeur</label>
+                                                        <textarea
+                                                            value={editAboutContent[lang.code]?.[`vd${isEditingField.split('_')[1]}`] || ''}
+                                                            onChange={e => setEditAboutContent({ ...editAboutContent, [lang.code]: { ...editAboutContent[lang.code], [`vd${isEditingField.split('_')[1]}`]: e.target.value } })}
+                                                            style={{ minHeight: '80px' }}
+                                                        />
+                                                    </div>
+                                                </>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <div className="premium-btn-group">
+                                    <button className="premium-btn-cta secondary" onClick={() => setIsEditingField(null)}>
+                                        Annuler
+                                    </button>
+                                    <button className="premium-btn-cta gold" onClick={handleSaveAboutContent}>
+                                        <FaSave /> Enregistrer
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                </main>
+                <Footer />
+            </div >
         </>
     );
 }

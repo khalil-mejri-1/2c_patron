@@ -1,0 +1,396 @@
+/* ========================================= */
+/* 🎓 SPECIALIZED COURSES PREMIUM REDESIGN 🎓 */
+/* ========================================= */
+
+.courses-premium-page {
+    background-color: #ededed;
+    min-height: 100vh;
+}
+
+/* --- ✨ HERO SECTION ✨ --- */
+.course-hero-premium {
+    padding: 180px 20px 120px;
+    background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)),
+        url('https://images.unsplash.com/photo-1512436991641-6745cdb1723f?q=80&w=2670&auto=format&fit=crop') center/cover no-repeat;
+    text-align: center;
+    color: #fff;
+    position: relative;
+    margin-bottom: 80px;
+}
+
+.course-hero-premium::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    right: 0;
+    height: 120px;
+    background: linear-gradient(to top, #fdfbf7, transparent);
+    z-index: 2;
+}
+
+.course-category-tag {
+    display: inline-block;
+    padding: 10px 20px;
+    background: rgba(212, 175, 55, 0.2);
+    border: 1px solid rgba(212, 175, 55, 0.5);
+    border-radius: 50px;
+    color: #d4af37;
+    font-size: 0.9rem;
+    font-weight: 800;
+    letter-spacing: 3px;
+    margin-bottom: 25px;
+    text-transform: uppercase;
+    backdrop-filter: blur(10px);
+}
+
+.course-main-title-premium {
+    font-family: 'Playfair Display', serif;
+    font-size: 4.5rem;
+    line-height: 1.1;
+    margin-bottom: 25px;
+    font-weight: 700;
+}
+
+.course-sub-text-premium {
+    font-size: 1.25rem;
+    color: rgba(255, 255, 255, 0.9);
+    max-width: 800px;
+    margin: 0 auto;
+    line-height: 1.7;
+}
+
+/* --- 📹 VIDEO INTRODUCTION PREMIUM 📹 --- */
+.premium-video-intro-box {
+    max-width: 1200px;
+    margin: -60px auto 100px;
+    background: #ffffff;
+    border-radius: 32px;
+    display: flex;
+    overflow: hidden;
+    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.08);
+    position: relative;
+    z-index: 10;
+}
+
+.premium-video-info {
+    flex: 1;
+    padding: 60px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.premium-video-tag {
+    color: #d4af37;
+    font-weight: 800;
+    font-size: 0.85rem;
+    letter-spacing: 2px;
+    margin-bottom: 15px;
+    text-transform: uppercase;
+}
+
+.premium-video-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.4rem;
+    color: #1a1a1a;
+    margin-bottom: 20px;
+    line-height: 1.2;
+}
+
+.premium-video-desc {
+    color: #64748b;
+    line-height: 1.7;
+    margin-bottom: 35px;
+    font-size: 1.05rem;
+}
+
+.premium-video-features {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 15px;
+}
+
+.p-feature-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 600;
+    color: #1e293b;
+    font-size: 0.95rem;
+}
+
+.p-feature-item svg {
+    color: #d4af37;
+    font-size: 1.2rem;
+}
+
+.premium-video-player-side {
+    flex: 1.2;
+    background: #000;
+    position: relative;
+    min-height: 450px;
+}
+
+.p-video-iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+/* --- 📚 LESSONS GRID 📚 --- */
+.lessons-grid-section {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 20px 120px;
+}
+
+.lessons-section-header {
+    text-align: center;
+    margin-bottom: 60px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.lessons-section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.8rem;
+    color: #1a1a1a;
+}
+
+.lessons-section-title span {
+    color: #d4af37;
+    font-style: italic;
+    margin-left: 10px;
+}
+
+.premium-lessons-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    gap: 40px;
+}
+
+/* --- 🎗️ LESSON CARD PREMIUM 🎗️ --- */
+.lesson-card-premium {
+    background: #ffffff;
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.04);
+    transition: all 0.5s cubic-bezier(0.165, 0.84, 0.44, 1);
+    border: 1px solid rgba(0, 0, 0, 0.02);
+}
+
+.lesson-card-premium:hover {
+    transform: translateY(-12px);
+    box-shadow: 0 40px 80px rgba(212, 175, 55, 0.12);
+}
+
+.l-card-img-wrapper {
+    position: relative;
+    height: 240px;
+    overflow: hidden;
+}
+
+.l-card-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.8s ease;
+}
+
+.lesson-card-premium:hover .l-card-img {
+    transform: scale(1.1);
+}
+
+.l-card-body {
+    padding: 35px;
+}
+
+.l-card-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.7rem;
+    color: #1a1a1a;
+    margin-bottom: 25px;
+    line-height: 1.3;
+}
+
+.l-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 25px;
+    border-top: 1px solid #f1f1f1;
+}
+
+.l-meta-duration {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #94a3b8;
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+.l-meta-duration svg {
+    color: #d4af37;
+}
+
+.l-nav-link {
+    text-decoration: none;
+}
+
+.l-action-btn {
+    padding: 12px 24px;
+    background: #1a1a1a;
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.3s ease;
+}
+
+.lesson-card-premium:hover .l-action-btn {
+    background: #d4af37;
+    box-shadow: 0 10px 20px rgba(212, 175, 55, 0.2);
+}
+
+/* --- 🛠️ ADMIN CONTROLS ENHANCEMENTS 🛠️ --- */
+
+.admin-edit-intro-btn {
+    position: absolute;
+    top: 25px;
+    right: 35px;
+    z-index: 100;
+}
+
+[dir="rtl"] .admin-edit-intro-btn {
+    right: auto;
+    left: 35px;
+}
+
+.admin-edit-hero-btn {
+    position: absolute;
+    top: 135px;
+    right: 40px;
+    z-index: 100;
+}
+
+[dir="rtl"] .admin-edit-hero-btn {
+    right: auto;
+    left: 40px;
+}
+
+.admin-edit-hero-btn:hover {
+    background: #d4af37;
+    border-color: #d4af37;
+    transform: translateY(-3px);
+    box-shadow: 0 12px 25px rgba(212, 175, 55, 0.25);
+}
+
+.lessons-section-header {
+    display: flex;
+    justify-content: space-between !important;
+    align-items: center;
+    margin-bottom: 60px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #f1f1f1;
+}
+
+.premium-btn-add {
+    background: #1a1a1a;
+    color: #fff;
+    padding: 12px 28px;
+    border-radius: 12px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.premium-btn-add:hover {
+    background: #d4af37;
+    transform: translateY(-3px);
+    box-shadow: 0 15px 30px rgba(212, 175, 55, 0.3);
+}
+
+/* Card Controls */
+.admin-card-controls {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    gap: 15px;
+    z-index: 20;
+    opacity: 0;
+    transition: all 0.3s ease;
+}
+
+.l-card-img-wrapper:hover .admin-card-controls {
+    opacity: 1;
+}
+
+.control-btn {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #fff;
+    font-size: 1rem;
+    transition: all 0.3s;
+}
+
+.control-btn.edit {
+    background: rgba(59, 130, 246, 0.95);
+}
+
+.control-btn.delete {
+    background: rgba(239, 68, 68, 0.95);
+}
+
+.control-btn:hover {
+    transform: scale(1.1);
+}
+
+/* --- RESPONSIVE --- */
+@media (max-width: 1024px) {
+    .premium-video-intro-box {
+        flex-direction: column;
+    }
+
+    .course-main-title-premium {
+        font-size: 3.2rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .premium-video-info {
+        padding: 40px 30px;
+    }
+
+    .course-hero-premium {
+        padding: 140px 20px 80px;
+    }
+
+    .premium-video-player-side {
+        min-height: 300px;
+    }
+
+    .lessons-section-header {
+        flex-direction: column;
+        gap: 20px;
+        text-align: center;
+    }
+}

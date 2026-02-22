@@ -76,7 +76,7 @@ mongoose.connect(MONGODB_URI)
 app.get('/favicon.ico', (req, res) => res.status(204).end());
 
 app.get('/', (req, res) => {
-    res.send('Hello World! Connected to Express and MongoDB. 2/14/2026');
+    res.send('Hello World! Connected to Express and MongoDB. 2/22/2026');
 });
 
 // **********************************************
@@ -131,8 +131,33 @@ app.post('/api/login-google', async (req, res) => {
         const { mail, mot_de_pass } = req.body;
         const user = await User.findOne({ mail: mail });
         if (!user) return res.status(404).json({ error: 'User not found in database.' });
+
+        const currentIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+
+        // Skip IP lock for Admins
+        if (user.statut !== 'admin') {
+            if (!user.lockedIp) {
+                user.lockedIp = currentIp;
+                await user.save();
+                return res.status(200).json({
+                    firstLogin: true,
+                    message: 'Login successful via Google. Device locked.',
+                    id: user._id,
+                    nom: user.nom,
+                    image: user.image,
+                    statut: user.statut,
+                    abonne: user.abonne
+                });
+            } else if (user.lockedIp !== currentIp) {
+                return res.status(403).json({
+                    errorType: 'IP_LOCKED',
+                    error: 'Accès restreint : الجهاز غير معترف به.'
+                });
+            }
+        }
+
         if (user.mot_de_pass === mot_de_pass) {
-            res.status(200).json({ message: 'Login successful via Google.', id: user._id, nom: user.nom, image: user.image, statut: user.statut, abonne: user.abonne });
+            res.status(200).json({ message: 'Login successful via Google.', id: user._id, nom: user.nom, image: user.image, statut: user.statut, abonne: user.abonne, firstLogin: false });
         } else {
             res.status(401).json({ error: 'Email registered, but password/auth method mismatch.' });
         }
@@ -145,9 +170,26 @@ app.post('/api/login-google', async (req, res) => {
 app.post('/api/users', async (req, res) => {
     try {
         const { nom, mail, mot_de_pass, image, statut, abonne } = req.body;
-        const newUser = new User({ nom, mail, mot_de_pass, image, statut, abonne });
+
+        const currentIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+
+        const newUser = new User({
+            nom,
+            mail,
+            mot_de_pass,
+            image,
+            statut: statut || 'client',
+            abonne,
+            lockedIp: (statut || 'client') === 'admin' ? null : currentIp
+        });
+
         await newUser.save();
-        res.status(201).json({ message: 'User created successfully!', user: newUser });
+
+        res.status(201).json({
+            message: 'User created successfully!',
+            user: newUser,
+            firstLogin: (statut || 'client') === 'admin' ? false : true
+        });
     } catch (error) {
         if (error.code === 11000) return res.status(400).json({ error: 'Email already exists.', details: error.message });
         console.error('Error creating user:', error.message);
@@ -160,8 +202,33 @@ app.post('/api/login-traditional', async (req, res) => {
         const { mail, mot_de_pass } = req.body;
         const user = await User.findOne({ mail: mail });
         if (!user) return res.status(401).json({ error: 'E-mail ou mot de passe incorrect. Veuillez réessayer.' });
+
         if (user.mot_de_pass === mot_de_pass) {
-            res.status(200).json({ message: 'Connexion traditionnelle réussie.', id: user._id, nom: user.nom, image: user.image, statut: user.statut, abonne: user.abonne });
+            const currentIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+
+            // Skip IP lock for Admins
+            if (user.statut !== 'admin') {
+                if (!user.lockedIp) {
+                    user.lockedIp = currentIp;
+                    await user.save();
+                    return res.status(200).json({
+                        firstLogin: true,
+                        message: 'Connexion traditionnelle réussie. Appareil vérrouillé.',
+                        id: user._id,
+                        nom: user.nom,
+                        image: user.image,
+                        statut: user.statut,
+                        abonne: user.abonne
+                    });
+                } else if (user.lockedIp !== currentIp) {
+                    return res.status(403).json({
+                        errorType: 'IP_LOCKED',
+                        error: 'Accès restreint : الجهاز غير معترف به.'
+                    });
+                }
+            }
+
+            res.status(200).json({ message: 'Connexion traditionnelle réussie.', id: user._id, nom: user.nom, image: user.image, statut: user.statut, abonne: user.abonne, firstLogin: false });
         } else {
             res.status(401).json({ error: 'E-mail ou mot de passe incorrect. Veuillez réessayer.' });
         }
@@ -561,7 +628,7 @@ app.get("/api/users/:email", async (req, res) => {
             return res.status(200).json({ abonne: "non" });
         }
 
-        res.status(200).json({ abonne: user.abonne });
+        res.status(200).json({ abonne: user.abonne, statut: user.statut });
     } catch (error) {
         console.error("Erreur lors de la vérification du VIP:", error);
         res.status(500).json({ message: "Erreur serveur" });

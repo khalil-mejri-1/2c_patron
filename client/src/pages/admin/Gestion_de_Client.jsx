@@ -1,36 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import NavbarAdmin from '../../comp/Navbar_admin';
-// 💡 استيراد ملف CSS
-import '../admin_css/GestionDeClient.css';
 import BASE_URL from '../../apiConfig';
-import { FaShoppingCart, FaSearch, FaChevronDown, FaTimes, FaUser, FaEnvelope, FaMapMarkerAlt, FaPhoneAlt, FaMinusCircle, FaPlusCircle, FaSpinner, FaTrash } from 'react-icons/fa'; // 🗑️ Ajout de FaTrash
-
-// 🚀 استيراد SweetAlert2
-import Swal from 'sweetalert2';
-import withReactContent from 'sweetalert2-react-content';
-
-const MySwal = withReactContent(Swal);
+import { FaUser, FaSpinner, FaTrash, FaUserShield, FaUserEdit, FaEnvelope, FaShieldAlt } from 'react-icons/fa';
+import { useAlert } from '../../context/AlertContext';
 
 export default function Gestion_de_Client() {
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const { showAlert } = useAlert();
 
-    // ... (دالة fetchUsers كما هي)
     const fetchUsers = async () => {
         setLoading(true);
         setError(null);
         try {
             const response = await fetch(`${BASE_URL}/api/users/clients`);
             const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(data.message || data.error || 'Échec du chargement des clients.');
-            }
-
+            if (!response.ok) throw new Error(data.message || 'Échec du chargement.');
             setUsers(data);
         } catch (err) {
-            console.error("Erreur de récupération des données:", err);
             setError(err.message);
         } finally {
             setLoading(false);
@@ -41,267 +29,168 @@ export default function Gestion_de_Client() {
         fetchUsers();
     }, []);
 
-    // 🌟 دالة لتحديث حالة المستخدم (Role) باستخدام SweetAlert2 (inchangée)
     const handleStatutChange = async (userId, newStatut) => {
-        // ... (Logique handleStatutChange inchangée)
-        const result = await MySwal.fire({
-            title: 'Confirmer le changement de rôle',
-            html: `Êtes-vous sûr de vouloir changer le rôle de l'utilisateur ID **${userId}** à **${newStatut.toUpperCase()}** ?`,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#3085d6',
-            cancelButtonColor: '#d33',
-            confirmButtonText: 'Oui, changer le rôle!',
-            cancelButtonText: 'Annuler',
-        });
-
-        if (!result.isConfirmed) {
-            return;
-        }
-
-        try {
-            const response = await fetch(`${BASE_URL}/api/users/${userId}/statut`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ statut: newStatut }),
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Échec de la mise à jour du statut.');
+        showAlert('confirm', 'Changement de Rôle', `Voulez-vous changer le rôle de l'utilisateur en ${newStatut.toUpperCase()} ?`, async () => {
+            try {
+                const response = await fetch(`${BASE_URL}/api/users/${userId}/statut`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ statut: newStatut }),
+                });
+                if (!response.ok) throw new Error('Erreur de mise à jour.');
+                setUsers(prev => prev.map(u => u._id === userId ? { ...u, statut: newStatut } : u));
+                showAlert('success', 'Succès', 'Rôle mis à jour !');
+            } catch (err) {
+                showAlert('error', 'Erreur', err.message);
             }
-
-            setUsers(prevUsers =>
-                prevUsers.map(user =>
-                    user._id === userId ? { ...user, statut: newStatut } : user
-                )
-            );
-
-            MySwal.fire(
-                'Rôle mis à jour!',
-                `Le statut de l'utilisateur ID **${userId}** a été mis à jour avec succès à **${newStatut.toUpperCase()}**.`,
-                'success'
-            );
-
-        } catch (err) {
-            console.error("Erreur de mise à jour:", err);
-            MySwal.fire(
-                'Erreur!',
-                `Erreur: ${err.message}`,
-                'error'
-            );
-        }
+        });
     };
 
-    // 🌟 دالة تحديث حالة abonné (الاشتراك) باستخدام SweetAlert2 (inchangée)
     const handleAbonneChange = async (userId, currentAbonne) => {
-        // ... (Logique handleAbonneChange inchangée)
         const newAbonne = currentAbonne === 'oui' ? 'non' : 'oui';
-        const actionText = newAbonne === 'oui' ? 'abonner' : 'désabonner';
-
-        const result = await MySwal.fire({
-            title: `Confirmer ${actionText} l'utilisateur`,
-            html: `Êtes-vous sûr de vouloir **${actionText}** l'utilisateur ID **${userId}**? (Nouvel état: **${newAbonne.toUpperCase()}**)`,
-            icon: 'info',
-            showCancelButton: true,
-            confirmButtonColor: newAbonne === 'oui' ? '#28a745' : '#dc3545',
-            cancelButtonColor: '#6c757d',
-            confirmButtonText: `Oui, ${actionText}!`,
-            cancelButtonText: 'Annuler',
-        });
-
-        if (!result.isConfirmed) {
-            return;
-        }
-
-        try {
-            const response = await fetch(`${BASE_URL}/api/users/${userId}/abonne`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ abonne: newAbonne }),
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || `Échec de la mise à jour de l'abonnement.`);
+        showAlert('confirm', 'Newsletter', `Voulez-vous ${newAbonne === 'oui' ? 'abonner' : 'désabonner'} cet utilisateur ?`, async () => {
+            try {
+                const response = await fetch(`${BASE_URL}/api/users/${userId}/abonne`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ abonne: newAbonne }),
+                });
+                if (!response.ok) throw new Error('Erreur de mise à jour.');
+                setUsers(prev => prev.map(u => u._id === userId ? { ...u, abonne: newAbonne } : u));
+                showAlert('success', 'Succès', 'Abonnement mis à jour !');
+            } catch (err) {
+                showAlert('error', 'Erreur', err.message);
             }
-
-            setUsers(prevUsers =>
-                prevUsers.map(user =>
-                    user._id === userId ? { ...user, abonne: newAbonne } : user
-                )
-            );
-
-            MySwal.fire(
-                'Abonnement mis à jour!',
-                `L'utilisateur ID **${userId}** est maintenant **${newAbonne.toUpperCase()}** aux newsletters.`,
-                'success'
-            );
-
-        } catch (err) {
-            console.error("Erreur de mise à jour de l'abonnement:", err);
-            MySwal.fire(
-                'Erreur!',
-                `Erreur: ${err.message}`,
-                'error'
-            );
-        }
+        });
     };
 
-    // 🗑️ NOUVELLE FONCTION: Gérer la suppression d'un utilisateur
     const handleDeleteUser = async (userId) => {
-        const result = await MySwal.fire({
-            title: 'Confirmer la suppression',
-            html: `Êtes-vous sûr de vouloir **SUPPRIMER** l'utilisateur ID **${userId}** définitivement ? Cette action est **irréversible**!`,
-            icon: 'error',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
-            confirmButtonText: 'Oui, Supprimer!',
-            cancelButtonText: 'Annuler',
-        });
-
-        if (!result.isConfirmed) {
-            return;
-        }
-
-        try {
-            // 🚨 Endpoint de suppression (assurez-vous que votre backend le prend en charge)
-            const response = await fetch(`${BASE_URL}/api/users/${userId}`, {
-                method: 'DELETE', // Utilisation de la méthode DELETE
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Échec de la suppression de l\'utilisateur.');
+        showAlert('confirm', 'Supprimer Utilisateur', 'Êtes-vous sûr ? Cette action est irréversible.', async () => {
+            try {
+                const response = await fetch(`${BASE_URL}/api/users/${userId}`, { method: 'DELETE' });
+                if (!response.ok) throw new Error('Erreur de suppression.');
+                setUsers(prev => prev.filter(u => u._id !== userId));
+                showAlert('success', 'Succès', 'Utilisateur supprimé !');
+            } catch (err) {
+                showAlert('error', 'Erreur', err.message);
             }
-
-            // 🗑️ Mise à jour de l'état local pour retirer l'utilisateur supprimé
-            setUsers(prevUsers => prevUsers.filter(user => user._id !== userId));
-
-            // 💡 Fenêtre de succès
-            MySwal.fire(
-                'Supprimé!',
-                `L'utilisateur ID **${userId}** a été supprimé avec succès.`,
-                'success'
-            );
-
-        } catch (err) {
-            console.error("Erreur de suppression:", err);
-            // 💡 Fenêtre d'erreur
-            MySwal.fire(
-                'Erreur de Suppression!',
-                `Erreur: ${err.message}`,
-                'error'
-            );
-        }
+        });
     };
-    // ... (Logique de chargement et d'erreur inchangée)
-    if (loading) return (
-        <>
-            <NavbarAdmin />
-            <div className="loading-state">
-                <FaSpinner className="spinner" />
-                <p>Chargement des Clients...</p>
-            </div>
-        </>
-    );
-
-    if (error) return (
-        <>
-            <NavbarAdmin />
-            <div className="client-container">
-                {
-                    MySwal.fire({
-                        title: 'Erreur Critique',
-                        text: `Erreur: ${error}. Veuillez réessayer ou contacter le support.`,
-                        icon: 'error',
-                        confirmButtonText: 'OK'
-                    })
-                }
-                <p className="error-message">Une erreur s'est produite lors du chargement des données. Veuillez recharger la page.</p>
-            </div>
-        </>
-    );
 
     return (
-        <>
+        <div style={{ background: '#f8fafc', minHeight: '100vh' }}>
             <NavbarAdmin />
-            <div className="client-container">
-                <h2 className="client-title">Gestion des Clients</h2>
 
-                <div className="table-wrapper">
-                    <table className="client-table">
-                        <thead>
-                            <tr>
-                                <th>Nom</th>
-                                <th>Email</th>
-                                <th>Statut Actuel</th>
-                                <th>Actions (Rôles)</th>
-                                <th>Abonné</th>
-                                <th>Actions (Abonnement)</th>
-                                <th>Supprimer</th> {/* 🗑️ NOUVELLE COLONNE */}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {users.map((user) => (
-                                <tr key={user._id}>
-                                    <td>{user.nom}</td>
-                                    <td>{user.mail}</td>
-                                    <td>
-                                        <span className={`status-badge ${user.statut}`}>
-                                            {user.statut}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        {/* Boutons de rôle */}
-                                        {user.statut !== 'admin' && (
-                                            <button
-                                                onClick={() => handleStatutChange(user._id, 'admin')}
-                                                className="action-button promouvoir-admin"
-                                            >
-                                                Promouvoir Admin
-                                            </button>
-                                        )}
-                                        {user.statut === 'admin' && (
-                                            <button
-                                                onClick={() => handleStatutChange(user._id, 'client')}
-                                                className="action-button retrograder-client"
-                                            >
-                                                Rétrograder Client
-                                            </button>
-                                        )}
-                                    </td>
-                                    <td>
-                                        <span className={`abonne-text abonne-${user.abonne || 'non'}`}>
-                                            {user.abonne || 'non'}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        {/* Boutons d'abonnement */}
-                                        <button
-                                            onClick={() => handleAbonneChange(user._id, user.abonne)}
-                                            className={`action-button ${user.abonne === 'oui' ? 'retrograder-non' : 'promouvoir-oui'}`}
-                                        >
-                                            {user.abonne === 'oui' ? 'Rétrograder Non' : 'Promouvoir OUI'}
-                                        </button>
-                                    </td>
-                                    <td>
-                                        {/* 🗑️ NOUVEAU BOUTON DE SUPPRESSION */}
-                                        <button
-                                            onClick={() => handleDeleteUser(user._id)}
-                                            className="action-button delete-user"
-                                        >
-                                            <FaTrash /> Supprimer
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+            <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '40px 20px' }}>
+                <div style={{ marginBottom: '40px' }}>
+                    <h1 style={{ fontSize: '2rem', color: '#1e293b', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '15px' }}>
+                        <FaUserShield style={{ color: '#D4AF37' }} /> Gestion des Clients
+                    </h1>
+                    <p style={{ color: '#64748b', marginTop: '10px' }}>Gérez les rôles et les accès de vos utilisateurs.</p>
                 </div>
-                {users.length === 0 && !loading && <p className="no-clients-message">Aucun client trouvé.</p>}
+
+                {loading ? (
+                    <div style={{ textAlign: 'center', padding: '100px' }}>
+                        <FaSpinner className="spinner" style={{ fontSize: '3rem', color: '#D4AF37' }} />
+                        <p style={{ marginTop: '20px', color: '#1e293b', fontWeight: 'bold' }}>Chargement des clients...</p>
+                    </div>
+                ) : (
+                    <div className="premium-card" style={{ padding: '0', overflow: 'hidden' }}>
+                        <div className="premium-list-container" style={{ margin: '0' }}>
+                            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                                <thead style={{ background: '#f1f5f9', borderBottom: '2px solid #e2e8f0' }}>
+                                    <tr>
+                                        <th style={{ padding: '20px', color: '#1e293b', fontWeight: 'bold' }}>Client</th>
+                                        <th style={{ padding: '20px', color: '#1e293b', fontWeight: 'bold' }}>Rôle</th>
+                                        <th style={{ padding: '20px', color: '#1e293b', fontWeight: 'bold' }}>Abonnement</th>
+                                        <th style={{ padding: '20px', color: '#1e293b', fontWeight: 'bold', textAlign: 'right' }}>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {users.map((user) => (
+                                        <tr key={user._id} style={{ borderBottom: '1px solid #f1f5f9', transition: 'background 0.2s' }} onMouseOver={e => e.currentTarget.style.background = '#f8fafc'} onMouseOut={e => e.currentTarget.style.background = 'transparent'}>
+                                            <td style={{ padding: '20px' }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                                    <div style={{ width: '45px', height: '45px', borderRadius: '50%', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#D4AF37', fontSize: '1.2rem' }}>
+                                                        <FaUser />
+                                                    </div>
+                                                    <div>
+                                                        <div style={{ fontWeight: 'bold', color: '#1e293b' }}>{user.nom}</div>
+                                                        <div style={{ fontSize: '0.85rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                                            <FaEnvelope size={10} /> {user.mail}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td style={{ padding: '20px' }}>
+                                                <span style={{
+                                                    padding: '5px 12px',
+                                                    borderRadius: '20px',
+                                                    fontSize: '0.75rem',
+                                                    fontWeight: 'bold',
+                                                    background: user.statut === 'admin' ? '#fef3c7' : '#f1f5f9',
+                                                    color: user.statut === 'admin' ? '#d97706' : '#475569',
+                                                    display: 'inline-flex',
+                                                    alignItems: 'center',
+                                                    gap: '5px'
+                                                }}>
+                                                    {user.statut === 'admin' && <FaShieldAlt size={10} />}
+                                                    {user.statut.toUpperCase()}
+                                                </span>
+                                            </td>
+                                            <td style={{ padding: '20px' }}>
+                                                <span style={{
+                                                    padding: '5px 12px',
+                                                    borderRadius: '20px',
+                                                    fontSize: '0.75rem',
+                                                    fontWeight: 'bold',
+                                                    background: user.abonne === 'oui' ? '#ecfdf5' : '#fee2e2',
+                                                    color: user.abonne === 'oui' ? '#059669' : '#dc2626'
+                                                }}>
+                                                    Newsletter: {user.abonne?.toUpperCase() || 'NON'}
+                                                </span>
+                                            </td>
+                                            <td style={{ padding: '20px', textAlign: 'right' }}>
+                                                <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                                                    <button
+                                                        onClick={() => handleStatutChange(user._id, user.statut === 'admin' ? 'client' : 'admin')}
+                                                        className="premium-btn-cta secondary"
+                                                        style={{ padding: '8px 15px', fontSize: '0.8rem', minWidth: 'auto' }}
+                                                        title={user.statut === 'admin' ? 'Rétrograder en Client' : 'Promouvoir en Admin'}
+                                                    >
+                                                        <FaUserEdit /> Rôle
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleAbonneChange(user._id, user.abonne)}
+                                                        className="premium-btn-cta secondary"
+                                                        style={{ padding: '8px 15px', fontSize: '0.8rem', minWidth: 'auto' }}
+                                                        title="Changer statut newsletter"
+                                                    >
+                                                        Newsletter
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDeleteUser(user._id)}
+                                                        className="premium-btn-cta secondary"
+                                                        style={{ padding: '8px 15px', fontSize: '0.8rem', minWidth: 'auto', background: '#fee2e2', color: '#ef4444', borderColor: '#fecaca' }}
+                                                        title="Supprimer l'utilisateur"
+                                                    >
+                                                        <FaTrash />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                            {users.length === 0 && (
+                                <div style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>
+                                    Aucun client trouvé.
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
             </div>
-        </>
+        </div>
     );
 }

@@ -1,63 +1,48 @@
 import React, { useState } from 'react';
-import { Link, NavLink } from 'react-router-dom'; 
-import { FaBars, FaTimes } from 'react-icons/fa'; // Icons for the Hamburger menu
+import { NavLink } from 'react-router-dom';
+import {
+    FaBars, FaTimes, FaUsers, FaBoxOpen, FaShoppingCart,
+    FaEnvelope, FaComments, FaCrown, FaVideo, FaCog, FaChartBar
+} from 'react-icons/fa';
 
-export default function NavbarAdmin() { // Renamed to PascalCase for convention
+export default function NavbarAdmin() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-    const toggleMenu = () => {
-        setIsMenuOpen(!isMenuOpen);
-    };
+    const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+
+    const navLinks = [
+        { to: "/admin", label: "Dashboard", icon: <FaChartBar /> },
+        { to: "/admin_clients", label: "Clients", icon: <FaUsers /> },
+        { to: "/admin_products", label: "Produits", icon: <FaBoxOpen /> },
+        { to: "/admin_command", label: "Commandes", icon: <FaShoppingCart /> },
+        { to: "/admin_videos", label: "Vidéos", icon: <FaVideo /> },
+        { to: "/admin_espace_vip", label: "Espace VIP", icon: <FaCrown /> },
+        { to: "/admin_message", label: "Messages", icon: <FaEnvelope /> },
+        { to: "/admin_commentaire", label: "Avis", icon: <FaComments /> },
+        { to: "/admin_settings", label: "Réglages", icon: <FaCog /> },
+    ];
 
     return (
-        <nav className="navbar-admin"> 
-            <div className="navbar-admin-brand">Admin</div>
+        <nav className="navbar-admin">
+            <div className="navbar-admin-brand">Atelier Sfax <span style={{ fontSize: '0.6rem', opacity: 0.6 }}>ADMIN</span></div>
 
-            {/* 🚀 Hamburger Menu Button (Visible on mobile) */}
-            <button 
-                onClick={toggleMenu} 
-                className="menu-toggle-button"
-                aria-label="Toggle navigation menu"
-            >
+            <button onClick={toggleMenu} className="menu-toggle-button">
                 {isMenuOpen ? <FaTimes /> : <FaBars />}
             </button>
 
-            {/* Navigation Links Container */}
-            <div 
-                // Conditionally apply the 'open' class for mobile responsiveness
-                className={`navbar-admin-links ${isMenuOpen ? 'open' : ''}`}
-            >
-                
-                <NavLink to="/admin_clients" className="navbar-admin-link" onClick={isMenuOpen ? toggleMenu : null}>
-                    Gestion de Client
-               </NavLink>
-
-                <NavLink to="/admin_products" className="navbar-admin-link" onClick={isMenuOpen ? toggleMenu : null}>
-                    Gestion de Produit
-               </NavLink>
-               
-
-                {/* <NavLink to="/admin_videos" className="navbar-admin-link" onClick={isMenuOpen ? toggleMenu : null}>
-                    Gestion de Vidéo
-               </NavLink> */}
-                
-                <NavLink to="/admin_command" className="navbar-admin-link" onClick={isMenuOpen ? toggleMenu : null}>
-                    Gestion de Commande
-               </NavLink>
-                  <NavLink to="/admin_message" className="navbar-admin-link" onClick={isMenuOpen ? toggleMenu : null}>
-                    Gestion de Message
-               </NavLink>
-
-                 <NavLink to="/admin_commentaire" className="navbar-admin-link" onClick={isMenuOpen ? toggleMenu : null}>
-                    Gestion de Commentaire
-               </NavLink>
-
-                 <NavLink to="/admin_abonnement" className="navbar-admin-link" onClick={isMenuOpen ? toggleMenu : null}>
-                    Gestion de Abonnement
-               </NavLink>
-                  <NavLink to="/admin_espace_vip" className="navbar-admin-link" onClick={isMenuOpen ? toggleMenu : null}>
-                    Gestion de Espace Vip
-               </NavLink>
+            <div className={`navbar-admin-links ${isMenuOpen ? 'open' : ''}`}>
+                {navLinks.map((link) => (
+                    <NavLink
+                        key={link.to}
+                        to={link.to}
+                        className={({ isActive }) => `navbar-admin-link ${isActive ? 'active' : ''}`}
+                        onClick={() => isMenuOpen && toggleMenu()}
+                        end={link.to === "/admin"}
+                    >
+                        <span style={{ marginRight: '8px' }}>{link.icon}</span>
+                        {link.label}
+                    </NavLink>
+                ))}
             </div>
         </nav>
     );

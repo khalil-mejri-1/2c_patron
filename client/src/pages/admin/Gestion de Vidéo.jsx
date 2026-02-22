@@ -1,133 +1,60 @@
 import React, { useState, useEffect } from 'react';
 import NavbarAdmin from '../../comp/Navbar_admin';
-import '../admin_css/GestionDeVedio.css';
+import { FaVideo, FaTrash, FaEdit, FaSave, FaTimes, FaCloudUploadAlt, FaExclamationCircle, FaSpinner, FaPlus, FaPlay } from 'react-icons/fa';
 import BASE_URL from '../../apiConfig';
-
-// 🚨 NOTE : Le serveur Node.js doit fonctionner sur ${BASE_URL} et être configuré pour recevoir des fichiers avec Multer.
-// Assurez-vous également d'ajouter la ligne app.use('/uploads/videos', express.static(...)) pour servir les fichiers statiques.
+import { useAlert } from '../../context/AlertContext';
 
 export default function Gestion_de_Vidéo() {
-
-    // -------------------- 1. États du Composant (States) --------------------
     const [videos, setVideos] = useState([]);
     const [loading, setLoading] = useState(false);
-
-    // États de l'Ajout (Upload)
-    // 💡 Ajout de 'categorie' ici
     const [newVideoData, setNewVideoData] = useState({ titre: '', description: '', categorie: '' });
     const [newVideoFile, setNewVideoFile] = useState(null);
-
-    // États de la Modification (Modal d'édition) - Le chemin du fichier (filePath) est stocké ici
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-    // currentVideo contient maintenant titre, description, fileName, filePath, categorie
     const [currentVideo, setCurrentVideo] = useState(null);
-    const [currentEditFile, setCurrentEditFile] = useState(null); // Pour stocker un nouveau fichier pour la mise à jour si nécessaire
+    const [currentEditFile, setCurrentEditFile] = useState(null);
+    const { showAlert } = useAlert();
 
-    // États de la Confirmation (Modal de confirmation)
-    const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
-    const [videoToDelete, setVideoToDelete] = useState(null);
-
-    // État des Notifications (Notification/Toast)
-    const [notification, setNotification] = useState({ message: '', type: '' });
-
-    // 💡 Liste des catégories disponibles (pour la liste déroulante)
     const categoriesList = ["Tutoriel", "Cours", "Actualités", "Divertissement", "Autre"];
-
-    // -------------------- 2. Fonctions Auxiliaires (Helper Functions) --------------------
-
-    const showNotification = (message, type) => {
-        setNotification({ message, type });
-        setTimeout(() => {
-            setNotification({ message: '', type: '' });
-        }, 3000);
-    };
-
-    // Ajout : Traitement des données texte et de la catégorie
-    const handleDataChange = (e) => {
-        const { name, value } = e.target;
-        setNewVideoData(prev => ({ ...prev, [name]: value }));
-    };
-
-    // Ajout : Traitement du téléchargement de fichier
-    const handleFileChange = (e) => {
-        setNewVideoFile(e.target.files[0]);
-    };
-
-    // Modification : Ouverture de la fenêtre de modification
-    const handleEditClick = (video) => {
-        setCurrentVideo(video);
-        setCurrentEditFile(null); // Réinitialisation du fichier de mise à jour
-        setIsEditModalOpen(true);
-    };
-
-    // Modification : Fermeture de la fenêtre de modification
-    const handleCloseEditModal = () => {
-        setIsEditModalOpen(false);
-        setCurrentVideo(null);
-        setCurrentEditFile(null);
-    };
-
-    // Modification : Traitement du changement des champs de modification (Titre, Description & Catégorie)
-    const handleEditDataChange = (e) => {
-        const { name, value } = e.target;
-        setCurrentVideo(prev => ({ ...prev, [name]: value }));
-    };
-
-    // Modification : Traitement du changement du nouveau champ de fichier (optionnel)
-    const handleEditFileChange = (e) => {
-        setCurrentEditFile(e.target.files[0]);
-    };
-
-    // Confirmation : Ouverture de la fenêtre de confirmation
-    const handleOpenConfirm = (videoId) => {
-        setVideoToDelete(videoId);
-        setIsConfirmModalOpen(true);
-    };
-
-    // Confirmation : Fermeture de la fenêtre de confirmation
-    const handleCloseConfirm = () => {
-        setVideoToDelete(null);
-        setIsConfirmModalOpen(false);
-    };
-
-    // -------------------- 3. Fonctions d'Appel au Serveur (API Calls) --------------------
-
-    // 💡 Récupérer les Vidéos (GET)
-    const fetchVideos = async () => {
-        setLoading(true);
-        try {
-            const response = await fetch(`${BASE_URL}/api/videos`);
-            if (!response.ok) throw new Error(`Erreur HTTP: ${response.status}. Vérifiez le serveur Node.js.`);
-
-            const data = await response.json();
-            setVideos(data);
-        } catch (err) {
-            console.error("Erreur de récupération des vidéos:", err);
-            showNotification(err.message || 'Échec de la récupération des vidéos.', 'error');
-        } finally {
-            setLoading(false);
-        }
-    };
 
     useEffect(() => {
         fetchVideos();
     }, []);
 
-    // 💡 Ajouter une Vidéo (POST) - Utilisation de FormData
+    const fetchVideos = async () => {
+        setLoading(true);
+        try {
+            const response = await fetch(`${BASE_URL}/api/videos`);
+            if (!response.ok) throw new Error(`Erreur HTTP: ${response.status}`);
+            const data = await response.json();
+            setVideos(data);
+        } catch (err) {
+            showAlert('error', 'Erreur', 'Échec du chargement des vidéos.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleDataChange = (e) => {
+        const { name, value } = e.target;
+        setNewVideoData(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleFileChange = (e) => {
+        setNewVideoFile(e.target.files[0]);
+    };
+
     const handleAddVideo = async (e) => {
         e.preventDefault();
-
         if (!newVideoFile || !newVideoData.titre || !newVideoData.categorie) {
-            showNotification('Veuillez remplir le titre, la catégorie et sélectionner un fichier vidéo.', 'error');
+            showAlert('error', 'Erreur', 'Veuillez remplir tous les champs obligatoires.');
             return;
         }
 
         setLoading(true);
-
         const formData = new FormData();
         formData.append('titre', newVideoData.titre);
         formData.append('description', newVideoData.description);
-        formData.append('categorie', newVideoData.categorie); // 💡 Ajout de la catégorie
+        formData.append('categorie', newVideoData.categorie);
         formData.append('videoFile', newVideoFile);
 
         try {
@@ -135,314 +62,183 @@ export default function Gestion_de_Vidéo() {
                 method: 'POST',
                 body: formData,
             });
-
             const data = await response.json();
-            if (!response.ok) throw new Error(data.message || "Échec de l'ajout de la vidéo.");
-
+            if (!response.ok) throw new Error(data.message || "Échec de l'ajout.");
             setVideos(prev => [data, ...prev]);
-            // 💡 Réinitialisation de l'état, y compris la catégorie
             setNewVideoData({ titre: '', description: '', categorie: '' });
             setNewVideoFile(null);
-            const fileInput = document.getElementById('videoFile');
-            if (fileInput) fileInput.value = null;
-
-            showNotification(`Vidéo "${data.titre}" ajoutée avec succès.`, 'success');
-
+            showAlert('success', 'Succès', 'Vidéo ajoutée avec succès !');
         } catch (err) {
-            console.error("Erreur d'ajout:", err);
-            showNotification(err.message || "Échec de l'ajout de la vidéo.", 'error');
+            showAlert('error', 'Erreur', err.message);
         } finally {
             setLoading(false);
         }
     };
 
-    // 💡 Supprimer une Vidéo (DELETE)
-    const handleDeleteVideo = async () => {
-        const videoId = videoToDelete;
-        if (!videoId) return;
-
-        handleCloseConfirm();
-        setLoading(true);
-
-        const deleteUrl = `${BASE_URL}/api/videos/${videoId}`;
-
-        try {
-            const response = await fetch(deleteUrl, { method: 'DELETE' });
-            const data = await response.json();
-
-            if (!response.ok) throw new Error(data.message || `Échec de la suppression de la vidéo ID ${videoId}.`);
-
-            setVideos(prev => prev.filter(v => v._id !== videoId));
-            showNotification(`Vidéo ID ${videoId} supprimée avec succès.`, 'success');
-
-        } catch (err) {
-            console.error("Erreur de suppression:", err);
-            showNotification(err.message || 'Échec de la suppression de la vidéo.', 'error');
-        } finally {
-            setLoading(false);
-        }
+    const handleDeleteVideo = (video) => {
+        showAlert('confirm', 'Supprimer Vidéo', `Voulez-vous supprimer "${video.titre}" ?`, async () => {
+            setLoading(true);
+            try {
+                const response = await fetch(`${BASE_URL}/api/videos/${video._id}`, { method: 'DELETE' });
+                if (!response.ok) throw new Error('Échec de la suppression.');
+                setVideos(prev => prev.filter(v => v._id !== video._id));
+                showAlert('success', 'Succès', 'Vidéo supprimée.');
+            } catch (err) {
+                showAlert('error', 'Erreur', err.message);
+            } finally {
+                setLoading(false);
+            }
+        });
     };
 
-    // 💡 Mettre à jour une Vidéo (PUT) - Envoi des métadonnées uniquement ou d'un nouveau fichier
     const handleUpdateVideo = async (e) => {
         e.preventDefault();
         setLoading(true);
-
-        if (!currentVideo || !currentVideo._id) return;
-
-        const updateUrl = `${BASE_URL}/api/videos/${currentVideo._id}`;
-
-        const isFileUpdate = !!currentEditFile;
-
-        let fetchOptions;
-
-        if (isFileUpdate) {
-            // Mise à jour avec un nouveau fichier (FormData)
-            const formData = new FormData();
-            formData.append('titre', currentVideo.titre);
-            formData.append('description', currentVideo.description);
-            formData.append('categorie', currentVideo.categorie); // 💡 Ajout de la catégorie
-            formData.append('videoFile', currentEditFile);
-
-            fetchOptions = {
-                method: 'PUT',
-                body: formData,
-            };
-        } else {
-            // Mise à jour des métadonnées uniquement (JSON)
-            fetchOptions = {
-                method: 'PUT',
-                body: JSON.stringify({ titre: currentVideo.titre, description: currentVideo.description, categorie: currentVideo.categorie }),
-                headers: { 'Content-Type': 'application/json' },
-            };
-        }
-
+        const formData = new FormData();
+        formData.append('titre', currentVideo.titre);
+        formData.append('description', currentVideo.description);
+        formData.append('categorie', currentVideo.categorie);
+        if (currentEditFile) formData.append('videoFile', currentEditFile);
 
         try {
-            const response = await fetch(updateUrl, fetchOptions);
-
+            const response = await fetch(`${BASE_URL}/api/videos/${currentVideo._id}`, {
+                method: 'PUT',
+                body: formData,
+            });
             const updatedVideo = await response.json();
-
-            if (!response.ok) throw new Error(updatedVideo.message || "Échec de la mise à jour de la vidéo.");
-
-            setVideos(prev => prev.map(v =>
-                v._id === updatedVideo._id ? updatedVideo : v
-            ));
-
-            showNotification(`Vidéo "${updatedVideo.titre}" mise à jour avec succès.`, 'success');
-            handleCloseEditModal();
-
+            if (!response.ok) throw new Error(updatedVideo.message || "Échec.");
+            setVideos(prev => prev.map(v => v._id === updatedVideo._id ? updatedVideo : v));
+            showAlert('success', 'Succès', 'Vidéo mise à jour !');
+            setIsEditModalOpen(false);
         } catch (err) {
-            console.error("Erreur de mise à jour:", err);
-            showNotification(err.message || 'Échec de la mise à jour de la vidéo.', 'error');
+            showAlert('error', 'Erreur', err.message);
         } finally {
             setLoading(false);
         }
     };
 
-    // -------------------- 4. Affichage (Render) --------------------
     return (
-        <>
+        <div style={{ background: '#f8fafc', minHeight: '100vh' }}>
             <NavbarAdmin />
 
-            {/* 💡 Composant de Notifications (Notification/Toast) */}
-            {notification.message && (
-                <div className={`notification ${notification.type}`}>
-                    <p>{notification.message}</p>
-                    <button onClick={() => setNotification({ message: '', type: '' })}>&times;</button>
+            <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '40px 20px' }}>
+                <div style={{ marginBottom: '40px' }}>
+                    <h1 style={{ fontSize: '2.2rem', color: '#1e293b', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '15px' }}>
+                        <FaVideo style={{ color: '#D4AF37' }} /> Gestion de Vidéothèque
+                    </h1>
+                    <p style={{ color: '#64748b', marginTop: '10px' }}>Gérez les vidéos publiées sur la plateforme.</p>
                 </div>
-            )}
 
-            <div className="product-management-container">
-                <h2 className="client-title"> 🎥 Gestion des Vidéos</h2>
-
-                {/* -------------------- A. Ajouter une Vidéo (Upload) -------------------- */}
-                <div className="card add-product-section">
-                    <h3>➕ Ajouter une Nouvelle Vidéo (Téléversement)</h3>
-                    <form onSubmit={handleAddVideo} className="product-form">
-                        <div className="form-group">
-                            <label htmlFor="titre">Titre de la Vidéo</label>
-                            <input type="text" id="titre" name="titre" value={newVideoData.titre} onChange={handleDataChange} required />
+                <div className="premium-card" style={{ padding: '30px', marginBottom: '40px' }}>
+                    <h3 style={{ marginBottom: '25px', color: '#1e293b', borderLeft: '4px solid #D4AF37', paddingLeft: '15px' }}>Ajouter une Vidéo</h3>
+                    <form onSubmit={handleAddVideo} className="premium-form-grid">
+                        <div className="premium-form-group" style={{ gridColumn: 'span 2' }}>
+                            <label>Titre *</label>
+                            <input type="text" name="titre" value={newVideoData.titre} onChange={handleDataChange} required />
                         </div>
-
-                        {/* 💡 Ajout du champ Catégorie - Utilisation de la liste déroulante */}
-                        <div className="form-group">
-                            <label htmlFor="categorie">Catégorie</label>
-                            <select
-                                id="categorie"
-                                name="categorie"
-                                value={newVideoData.categorie}
-                                onChange={handleDataChange}
-                                required
-                            >
-                                <option value="" disabled>Sélectionnez une catégorie</option>
-                                {categoriesList.map(cat => (
-                                    <option key={cat} value={cat}>{cat}</option>
-                                ))}
+                        <div className="premium-form-group" style={{ gridColumn: 'span 2' }}>
+                            <label>Catégorie *</label>
+                            <select name="categorie" value={newVideoData.categorie} onChange={handleDataChange} required>
+                                <option value="">-- Choisir --</option>
+                                {categoriesList.map(cat => <option key={cat} value={cat}>{cat}</option>)}
                             </select>
                         </div>
-
-                        <div className="form-group">
-                            <label htmlFor="videoFile">Choisir Fichier Vidéo</label>
-                            <input
-                                type="file"
-                                id="videoFile"
-                                name="videoFile"
-                                accept="video/*"
-                                onChange={handleFileChange}
-                                required
-                            />
+                        <div className="premium-form-group" style={{ gridColumn: 'span 4' }}>
+                            <label>Fichier Vidéo *</label>
+                            <div style={{ position: 'relative' }}>
+                                <input type="file" accept="video/*" onChange={handleFileChange} style={{ padding: '10px' }} required />
+                                {newVideoFile && <div style={{ fontSize: '0.8rem', color: '#D4AF37', marginTop: '5px' }}>Sélectionné : {newVideoFile.name}</div>}
+                            </div>
                         </div>
-
-                        {/* <div className="form-group">
-                            <label htmlFor="description">Description (Optionnelle)</label>
-                            <textarea id="description" name="description" value={newVideoData.description} onChange={handleDataChange} rows="3"></textarea>
-                        </div> */}
-
-                        <button type="submit" className="submit-button" disabled={loading}>
-                            {loading ? 'Téléversement...' : 'Enregistrer la Vidéo'}
-                        </button>
+                        <div className="premium-form-group" style={{ gridColumn: 'span 4' }}>
+                            <label>Description</label>
+                            <textarea name="description" value={newVideoData.description} onChange={handleDataChange} rows="3" />
+                        </div>
+                        <div style={{ gridColumn: 'span 4' }}>
+                            <button type="submit" disabled={loading} className="premium-btn-cta gold" style={{ width: '100%', padding: '15px' }}>
+                                {loading ? <FaSpinner className="spinner" /> : <FaCloudUploadAlt />} Enregistrer la Vidéo
+                            </button>
+                        </div>
                     </form>
                 </div>
 
-                <hr className="divider" />
+                <div className="premium-list-container">
+                    <h3 style={{ marginBottom: '30px', color: '#1e293b', borderLeft: '4px solid #D4AF37', paddingLeft: '15px' }}>
+                        Galerie ({videos.length})
+                    </h3>
 
-                {/* -------------------- B. Liste des Vidéos (Affichage des fichiers téléchargés) -------------------- */}
-                <div className="product-list-section">
-                    <h3>🎬 Liste des Vidéos Actuelles ({videos.length})</h3>
-
-                    {loading && <p>Chargement des vidéos...</p>}
-
-                    {!loading && videos.length > 0 && (
-                        <div className="videos-grid">
-                            {videos.map((video) => (
-                                <div key={video._id} className="video-card">
-                                    <h4 className="video-title">{video.titre}</h4>
-                                    <p className="video-category">Catégorie: **{video.categorie}**</p> {/* 💡 Affichage de la catégorie */}
-                                    <div className="video-player-container">
-                                        {/* 💡 Utilisation du chemin du fichier pour l'affichage */}
-                                        <video
-                                            controls
-                                            // L'API /stream/:id est utilisée pour le streaming via l'ID de la base de données
-                                            src={`${BASE_URL}/api/videos/stream/${video._id}`}
-                                            className="uploaded-video-player"
-                                            onContextMenu={(e) => e.preventDefault()}
-                                            // ✅ Ajout de la propriété pour empêcher le bouton de téléchargement d'apparaître dans le menu de contrôle (trois points)
-                                            controlsList="nodownload"
-                                        >
-                                            Votre navigateur ne supporte pas la balise vidéo.
-                                        </video>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '30px' }}>
+                        {videos.map(video => (
+                            <div key={video._id} className="premium-card" style={{ padding: '0', overflow: 'hidden' }}>
+                                <div style={{ position: 'relative', background: '#000', aspectRatio: '16/9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <video
+                                        src={`${BASE_URL}/api/videos/stream/${video._id}`}
+                                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                        controlsList="nodownload"
+                                        muted
+                                    />
+                                    <div style={{ position: 'absolute', top: '10px', right: '10px', background: 'rgba(212, 175, 55, 0.9)', color: '#fff', padding: '4px 10px', borderRadius: '20px', fontSize: '0.7rem', fontWeight: 'bold' }}>
+                                        {video.categorie}
                                     </div>
-                                    <p className="video-desc">{video.description.substring(0, 100)}...</p>
-                                    <div className="video-actions">
-                                        <button className="action-btn edit-btn" onClick={() => handleEditClick(video)}>
-                                            Modifier
-                                        </button>
-                                        <button className="action-btn delete-btn" onClick={() => handleOpenConfirm(video._id)}>
-                                            Supprimer
-                                        </button>
+                                    <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', opacity: 0.5 }}>
+                                        <FaPlay size={30} color="#fff" />
                                     </div>
                                 </div>
-                            ))}
+                                <div style={{ padding: '20px' }}>
+                                    <h4 style={{ margin: '0 0 10px 0', color: '#1e293b' }}>{video.titre}</h4>
+                                    <p style={{ fontSize: '0.85rem', color: '#64748b', margin: '0 0 20px 0', height: '40px', overflow: 'hidden' }}>{video.description}</p>
+                                    <div className="premium-btn-group" style={{ gap: '10px' }}>
+                                        <button onClick={() => { setCurrentVideo(video); setIsEditModalOpen(true); }} className="premium-btn-cta secondary" style={{ flex: 1, padding: '8px' }}><FaEdit /> Editer</button>
+                                        <button onClick={() => handleDeleteVideo(video)} className="premium-btn-cta secondary" style={{ flex: 1, padding: '8px', color: '#ef4444', borderColor: '#fecaca' }}><FaTrash /> Supprimer</button>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                    {videos.length === 0 && !loading && (
+                        <div style={{ textAlign: 'center', padding: '60px', background: '#fff', borderRadius: '20px', color: '#64748b', border: '2px dashed #e2e8f0' }}>
+                            Aucune vidéo trouvée.
                         </div>
                     )}
-                    {!loading && videos.length === 0 && <p className="no-data-message">Aucune vidéo trouvée.</p>}
                 </div>
-
             </div>
 
-
-            {/* -------------------- C. Modal Mise à Jour (Update Modal) -------------------- */}
             {isEditModalOpen && currentVideo && (
-                <div className="modal-overlay">
-                    <div className="modal-content">
-                        <h3>⚙️ Modifier la Vidéo : {currentVideo.titre}</h3>
-
-                        <form onSubmit={handleUpdateVideo}>
-                            <div className="form-group"><label htmlFor="edit_titre">Titre</label>
-                                <input type="text" id="edit_titre" name="titre" value={currentVideo.titre} onChange={handleEditDataChange} required />
+                <div className="premium-modal-backdrop" onClick={() => setIsEditModalOpen(false)}>
+                    <div className="premium-modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '600px' }}>
+                        <div className="premium-modal-header">
+                            <h3 className="premium-modal-title">Modifier Vidéo</h3>
+                            <button onClick={() => setIsEditModalOpen(false)} className="premium-modal-close-icon"><FaTimes /></button>
+                        </div>
+                        <form onSubmit={handleUpdateVideo} className="premium-form-grid" style={{ marginTop: '25px' }}>
+                            <div className="premium-form-group" style={{ gridColumn: 'span 4' }}>
+                                <label>Titre</label>
+                                <input type="text" value={currentVideo.titre} onChange={e => setCurrentVideo({ ...currentVideo, titre: e.target.value })} required />
                             </div>
-
-                            {/* 💡 Champ de modification de la Catégorie */}
-                            <div className="form-group">
-                                <label htmlFor="edit_categorie">Catégorie</label>
-                                <select
-                                    id="edit_categorie"
-                                    name="categorie"
-                                    value={currentVideo.categorie}
-                                    onChange={handleEditDataChange}
-                                    required
-                                >
-                                    <option value="" disabled>Sélectionnez une catégorie</option>
-                                    {categoriesList.map(cat => (
-                                        <option key={cat} value={cat}>{cat}</option>
-                                    ))}
+                            <div className="premium-form-group" style={{ gridColumn: 'span 4' }}>
+                                <label>Catégorie</label>
+                                <select value={currentVideo.categorie} onChange={e => setCurrentVideo({ ...currentVideo, categorie: e.target.value })} required>
+                                    {categoriesList.map(cat => <option key={cat} value={cat}>{cat}</option>)}
                                 </select>
                             </div>
-
-                            {/* 💡 Mise à jour du Fichier (Optionnel) */}
-                            <div className="form-group">
-                                <label htmlFor="edit_videoFile">Remplacer le fichier vidéo (Optionnel)</label>
-                                <input
-                                    type="file"
-                                    id="edit_videoFile"
-                                    name="videoFile"
-                                    accept="video/*"
-                                    onChange={handleEditFileChange}
-                                />
-                                {currentVideo.fileName && <small>Fichier actuel: **{currentVideo.fileName}**</small>}
+                            <div className="premium-form-group" style={{ gridColumn: 'span 4' }}>
+                                <label>Remplacer le fichier (optionnel)</label>
+                                <input type="file" accept="video/*" onChange={e => setCurrentEditFile(e.target.files[0])} />
                             </div>
-
-                            <div className="form-group"><label htmlFor="edit_description">Description</label>
-                                <textarea id="edit_description" name="description" value={currentVideo.description} onChange={handleEditDataChange} rows="3"></textarea>
+                            <div className="premium-form-group" style={{ gridColumn: 'span 4' }}>
+                                <label>Description</label>
+                                <textarea value={currentVideo.description} onChange={e => setCurrentVideo({ ...currentVideo, description: e.target.value })} rows="3" />
                             </div>
-
-                            <div className="modal-actions">
-                                <button type="submit" className="submit-button" disabled={loading}>
-                                    {loading ? 'Mise à jour...' : 'Enregistrer les modifications'}
-                                </button>
-                                <button type="button" className="cancel-button" onClick={handleCloseEditModal} disabled={loading}>
-                                    Annuler
+                            <div className="premium-btn-group" style={{ gridColumn: 'span 4', marginTop: '20px' }}>
+                                <button type="button" onClick={() => setIsEditModalOpen(false)} className="premium-btn-cta secondary">Annuler</button>
+                                <button type="submit" disabled={loading} className="premium-btn-cta gold">
+                                    {loading ? <FaSpinner className="spinner" /> : <FaSave />} Enregistrer
                                 </button>
                             </div>
                         </form>
                     </div>
                 </div>
             )}
-
-            {/* -------------------- D. Modal Confirmation de Suppression (Delete Confirmation) -------------------- */}
-            {isConfirmModalOpen && videoToDelete && (
-                <div className="modal-overlay">
-                    <div className="modal-content confirmation-modal">
-                        <h3>⚠️ Confirmation de Suppression</h3>
-
-                        <p className="confirmation-message">
-                            Êtes-vous **sûr** de vouloir supprimer définitivement la vidéo avec l'ID :
-                            **{videoToDelete}** ?
-                        </p>
-                        <p className="warning-text">Cette action **ne peut pas être annulée** et supprimera le fichier du serveur.</p>
-
-                        <div className="modal-actions">
-                            <button
-                                type="button"
-                                className="action-btn delete-btn"
-                                onClick={handleDeleteVideo}
-                                disabled={loading}
-                            >
-                                {loading ? 'Suppression...' : 'Oui, Supprimer'}
-                            </button>
-                            <button
-                                type="button"
-                                className="cancel-button"
-                                onClick={handleCloseConfirm}
-                                disabled={loading}
-                            >
-                                Annuler
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-        </>
+        </div>
     );
 }

@@ -1,0 +1,301 @@
+/* ========================================= */
+/* 🌿 PREMIUM ABOUT PAGE REDESIGN 🌿 */
+/* ========================================= */
+
+.about-page-premium {
+    padding: 0 0 100px;
+    background-color: #ededed;
+    min-height: 100vh;
+}
+
+/* --- ✨ ABOUT HERO SECTION ✨ --- */
+.about-hero-premium {
+    height: 70vh;
+    min-height: 600px;
+    padding: 80px 20px 0;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    margin-top: 0;
+    overflow: hidden;
+    color: #fff;
+}
+
+.about-hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(2px);
+    z-index: 1;
+}
+
+.about-badge-lux {
+    display: inline-block;
+    padding: 8px 24px;
+    background: rgba(212, 175, 55, 0.1);
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    border-radius: 50px;
+    color: #d4af37;
+    font-size: 0.8rem;
+    font-weight: 800;
+    letter-spacing: 3px;
+    margin-bottom: 25px;
+    text-transform: uppercase;
+}
+
+.about-main-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 4rem;
+    color: #fff;
+    /* Changed to white for cinematic background */
+    margin-bottom: 20px;
+    font-weight: 700;
+}
+
+.about-main-title span.about-accent {
+    color: #d4af37;
+    font-style: italic;
+}
+
+.about-sub-text {
+    font-size: 1.15rem;
+    color: rgba(255, 255, 255, 0.85);
+    /* Lightened for contrast */
+    max-width: 800px;
+    margin: 0 auto;
+    line-height: 1.8;
+}
+
+/* --- 🏛️ STORY SECTION 🏛️ --- */
+.about-story-section {
+    max-width: 1400px;
+    margin: 80px auto;
+    padding: 0 30px;
+}
+
+.story-grid-premium {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    align-items: center;
+}
+
+.story-img-wrapper-lux {
+    position: relative;
+    border-radius: 40px;
+    overflow: hidden;
+    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.1);
+    height: 550px;
+}
+
+.story-img-lux {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 1.5s ease;
+}
+
+.story-img-wrapper-lux:hover .story-img-lux {
+    transform: scale(1.05);
+}
+
+.story-content-lux {
+    padding-right: 40px;
+}
+
+[dir="rtl"] .story-content-lux {
+    padding-right: 0;
+    padding-left: 40px;
+}
+
+.story-title-lux {
+    font-family: 'Playfair Display', serif;
+    font-size: 3rem;
+    color: #1a1a1a;
+    margin-bottom: 30px;
+    font-weight: 700;
+    position: relative;
+}
+
+.story-title-lux::after {
+    content: '';
+    display: block;
+    width: 60px;
+    height: 4px;
+    background: #d4af37;
+    margin-top: 15px;
+}
+
+.story-para-lux {
+    font-size: 1.1rem;
+    color: #475569;
+    line-height: 1.9;
+    margin-bottom: 25px;
+}
+
+.about-cta-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    padding: 18px 45px;
+    background: #1a1a1a;
+    color: #fff;
+    border-radius: 16px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+    margin-top: 20px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+
+.about-cta-btn:hover {
+    background: #d4af37;
+    transform: translateY(-5px);
+    box-shadow: 0 20px 40px rgba(212, 175, 55, 0.2);
+    color: #fff;
+}
+
+/* --- 💎 VALUES SECTION 💎 --- */
+.values-section-premium {
+    background: #fff;
+    padding: 120px 0;
+    margin-top: 100px;
+}
+
+.values-header-lux {
+    text-align: center;
+    margin-bottom: 80px;
+}
+
+.values-title-lux {
+    font-family: 'Playfair Display', serif;
+    font-size: 3rem;
+    color: #1a1a1a;
+    font-weight: 700;
+}
+
+.values-grid-lux {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 30px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 40px;
+}
+
+.value-card-lux {
+    background: #f8fafc;
+    padding: 50px 40px;
+    border-radius: 32px;
+    transition: all 0.5s ease;
+    border: 1px solid rgba(0, 0, 0, 0.02);
+    text-align: center;
+}
+
+.value-card-lux:hover {
+    background: #fff;
+    transform: translateY(-15px);
+    box-shadow: 0 30px 70px rgba(0, 0, 0, 0.05);
+    border-color: rgba(212, 175, 55, 0.1);
+}
+
+.value-icon-wrapper-lux {
+    width: 80px;
+    height: 80px;
+    background: #fff;
+    border-radius: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    color: #d4af37;
+    margin: 0 auto 30px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.03);
+    transition: all 0.5s ease;
+}
+
+.value-card-lux:hover .value-icon-wrapper-lux {
+    background: #d4af37;
+    color: #fff;
+    transform: rotateY(180deg);
+}
+
+.v-card-title-lux {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.6rem;
+    color: #1a1a1a;
+    margin-bottom: 20px;
+    font-weight: 700;
+}
+
+.v-card-desc-lux {
+    color: #64748b;
+    line-height: 1.8;
+    font-size: 1rem;
+}
+
+/* --- 🛠️ ADMIN TOOLS 🛠️ --- */
+.edit-btn-minimal-lux {
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #fff;
+    width: 100px;
+    height: 36px;
+    border-radius: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 20;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+.edit-btn-minimal-lux:hover {
+    background: #d4af37;
+    border-color: #d4af37;
+    color: #fff;
+    transform: scale(1.1) rotate(15deg);
+    box-shadow: 0 15px 30px rgba(212, 175, 55, 0.3);
+}
+
+/* --- 📱 RESPONSIVE 📱 --- */
+@media (max-width: 1024px) {
+    .story-grid-premium {
+        grid-template-columns: 1fr;
+        gap: 50px;
+    }
+
+    .story-content-lux {
+        padding-right: 0;
+        text-align: center;
+    }
+
+    .story-title-lux::after {
+        margin: 15px auto;
+    }
+
+    .about-main-title {
+        font-size: 3rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .about-page-premium {
+        padding-top: 140px;
+    }
+
+    .about-main-title {
+        font-size: 2.5rem;
+    }
+
+    .story-title-lux {
+        font-size: 2.2rem;
+    }
+}
