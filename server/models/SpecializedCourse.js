@@ -8,8 +8,9 @@ const courseItemSchema = new mongoose.Schema({
 });
 
 const specializedCourseSchema = new mongoose.Schema({
-    video_link: { type: String, required: false }, 
-    courses: [courseItemSchema], 
+    video_link: { type: String, required: false },
+    hero_bg: { type: String, required: false },
+    courses: [courseItemSchema],
     createdAt: { type: Date, default: Date.now },
 });
 

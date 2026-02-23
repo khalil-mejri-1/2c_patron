@@ -4,6 +4,7 @@ import HeroCarousel from '../comp/HeroCarousel.jsx';
 import FeaturedProduct from '../comp/FeaturedProduct.jsx';
 import Footer from '../comp/Footer.jsx';
 import ClientReviews from '../comp/ClientReviews.jsx';
+import './home_premium.css';
 
 export default function Home() {
 

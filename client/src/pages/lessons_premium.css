@@ -1,0 +1,333 @@
+/* ========================================= */
+/* 🎬 LESSONS PAGE PREMIUM REDESIGN 🎬 */
+/* ========================================= */
+
+.lessons-premium-wrapper {
+    min-height: 100vh;
+    padding-bottom: 100px;
+    transition: all 0.5s ease;
+}
+
+/* --- ✨ HERO SECTION ✨ --- */
+.lessons-hero-header {
+    height: 47vh;
+    min-height: 600px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    background-size: cover;
+    background-position: center;
+    color: #fff;
+    clip-path: polygon(0 0, 100% 0, 100% 85%, 0 100%);
+    margin-bottom: -120px;
+}
+
+.lessons-hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(rgba(15, 23, 42, 0.7), rgba(15, 23, 42, 0.5));
+    backdrop-filter: none;
+    z-index: 1;
+}
+
+.lesson-badge-glam {
+    display: inline-block;
+    padding: 8px 18px;
+    background: rgba(212, 175, 55, 0.2);
+    border: 1px solid rgba(212, 175, 55, 0.5);
+    border-radius: 50px;
+    color: #d4af37;
+    font-size: 0.85rem;
+    font-weight: 800;
+    letter-spacing: 2px;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+}
+
+.lessons-main-title-premium {
+    font-family: 'Playfair Display', serif;
+    font-size: 4rem;
+    font-weight: 700;
+    margin-bottom: 20px;
+}
+
+.lessons-main-title-premium span {
+    color: #d4af37;
+}
+
+
+/* --- 📹 CINEMA PLAYER 📹 --- */
+.lessons-explorer-container {
+    max-width: 1300px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.active-focus-cinema {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: #000;
+    border-radius: 32px;
+    overflow: hidden;
+    box-shadow: 0 50px 100px rgba(0, 0, 0, 0.2);
+    margin-bottom: 80px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.active-focus-cinema iframe,
+.active-focus-cinema video {
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+/* --- 📚 CURRICULUM SECTION 📚 --- */
+.curriculum-section-header {
+    text-align: center;
+    margin-bottom: 50px;
+}
+
+.curriculum-section-header h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.5rem;
+    color: #1e293b;
+    margin-bottom: 15px;
+}
+
+.curriculum-line {
+    width: 80px;
+    height: 4px;
+    background: #d4af37;
+    margin: 0 auto;
+    border-radius: 2px;
+}
+
+.lessons-selection-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 30px;
+    margin-bottom: 100px;
+}
+
+/* --- 🃏 LESSON CARD 🃏 --- */
+.lesson-card-item-premium {
+    background: #ffffff;
+    border-radius: 24px;
+    overflow: hidden;
+    display: flex;
+    padding: 15px;
+    gap: 20px;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.lesson-card-item-premium:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.08);
+    border-color: rgba(212, 175, 55, 0.3);
+}
+
+.lesson-card-item-premium.is-active {
+    background: #1e293b;
+    border-color: #d4af37;
+}
+
+.l-card-preview-box {
+    width: 120px;
+    height: 80px;
+    border-radius: 16px;
+    overflow: hidden;
+    position: relative;
+    flex-shrink: 0;
+}
+
+.l-card-preview-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+}
+
+.lesson-card-item-premium:hover .l-card-preview-img {
+    transform: scale(1.1);
+}
+
+.l-play-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.lesson-card-item-premium:hover .l-play-overlay,
+.lesson-card-item-premium.is-active .l-play-overlay {
+    opacity: 1;
+}
+
+.l-play-btn-circle {
+    width: 35px;
+    height: 35px;
+    background: #d4af37;
+    color: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+}
+
+.l-card-details {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    flex: 1;
+}
+
+.l-card-title-text {
+    font-size: 1.1rem;
+    color: #1e293b;
+    margin-bottom: 8px;
+    font-weight: 700;
+    line-height: 1.3;
+}
+
+.is-active .l-card-title-text {
+    color: #fff;
+}
+
+.l-card-meta-bar {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.l-meta-tag {
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: #d4af37;
+    text-transform: uppercase;
+}
+
+.l-meta-duration {
+    font-size: 0.8rem;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+}
+
+.is-active .l-meta-duration {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+/* --- 🏆 CERTIFICATE BOX 🏆 --- */
+.lessons-certificate-box-lux {
+    background: linear-gradient(135deg, #1e293b, #0f172a);
+    border-radius: 40px;
+    padding: 60px;
+    text-align: center;
+    color: #fff;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 40px 80px rgba(0, 0, 0, 0.15);
+}
+
+.lessons-certificate-box-lux::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -20%;
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(212, 175, 55, 0.15) 0%, transparent 70%);
+    filter: none;
+}
+
+.cert-icon-glamor {
+    font-size: 4rem;
+    color: #d4af37;
+    margin-bottom: 25px;
+}
+
+.cert-title-lux {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.5rem;
+    margin-bottom: 20px;
+}
+
+.cert-desc-lux {
+    font-size: 1.1rem;
+    color: rgba(255, 255, 255, 0.7);
+    max-width: 600px;
+    margin: 0 auto 40px;
+    line-height: 1.7;
+}
+
+.cert-whatsapp-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    background: #d4af37;
+    color: #1e293b;
+    padding: 16px 35px;
+    border-radius: 50px;
+    font-weight: 800;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 10px 30px rgba(212, 175, 55, 0.3);
+}
+
+.cert-whatsapp-btn:hover {
+    background: #fff;
+    transform: scale(1.05);
+}
+
+.edit-btn-minimal-lux {
+    background: rgba(30, 41, 59, 0.8);
+    backdrop-filter: none;
+    color: #d4af37;
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    padding: 8px 15px;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.edit-btn-minimal-lux:hover {
+    background: #d4af37;
+    color: #1e293b;
+}
+
+@media (max-width: 768px) {
+    .lessons-main-title-premium {
+        font-size: 2.5rem;
+    }
+
+    .lessons-selection-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .lessons-certificate-box-lux {
+        padding: 40px 20px;
+    }
+}
+
+@media (max-width: 425px) {
+
+    .curriculum-section-header h2 {
+        font-size: 2rem;
+        margin-bottom: 15px;
+    }
+
+}

@@ -162,7 +162,7 @@ export default function FeaturedProduct() {
 
                 <h2 className="product-main-title">
                     {t('title')} <br />
-                    {t('subtitle')}
+                    <span className='product-subtitle'>{t('subtitle')}</span>
                 </h2>
 
                 <p className="product-description">

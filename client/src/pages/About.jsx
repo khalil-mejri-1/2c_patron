@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../context/LanguageContext';
-import { FaHeart, FaHandsHelping, FaLightbulb, FaTools, FaEdit, FaSave, FaTimes, FaChevronRight } from 'react-icons/fa'; // أيقونات للقيم
+import { FaHeart, FaHandsHelping, FaLightbulb, FaTools, FaEdit, FaSave, FaTimes, FaChevronRight, FaGem, FaImage } from 'react-icons/fa'; // أيقونات للقيم
 import Navbar from '../comp/navbar';
 import Footer from '../comp/Footer';
 import { Link } from 'react-router-dom';
@@ -12,7 +12,7 @@ const aboutTranslations = {
     ar: {
         heroTitle: () => `فن الخياطة  `,
         heroAccent: "شغفنا",
-        heroTagline: "أن نكون الورشة المرجعية لإتقان الباترون والمولاج في شمال إفريقيا وخارجها.",
+        heroAccent: "شغفنا",
 
         storyTitle: "قصتنا: ورشة كوتور",
         storyPara1: "تأسست ورشتنا في عام 2015 على يد خياطة ماهرة شغوفة، وولدت من ملاحظة بسيطة: صعوبة العثور على تدريب عبر الإنترنت يجمع بين دقة الخياطة الراقية الفرنسية وإمكانية الوصول المحلية. ومنذ ذلك الحين، قمنا بتوجيه الآلاف من الطلاب، من المبتدئين إلى المحترفين، من خلال دروس فيديو حصرية وباترونات معتمدة.",
@@ -46,7 +46,7 @@ const aboutTranslations = {
     fr: {
         heroTitle: () => `L'Art de la Couture`,
         heroAccent: "Passion",
-        heroTagline: "Devenir l'atelier de référence pour la maîtrise du patronage et du moulage en Afrique du Nord et au-delà.",
+        heroAccent: "Passion",
 
         storyTitle: "Notre Histoire : L'Atelier Couture",
         storyPara1: "Fondé en 2015 par une maître tailleur passionnée, notre atelier est né d'une simple observation : la difficulté à trouver des formations en ligne qui allient la précision de la haute couture française et l'accessibilité locale. Depuis, nous avons guidé des milliers d'étudiants, des débutants aux professionnels, à travers des leçons vidéo exclusives et des patrons certifiés.",
@@ -80,7 +80,7 @@ const aboutTranslations = {
     en: {
         heroTitle: () => `The Art of Sewing`,
         heroAccent: "Passion",
-        heroTagline: "To become the reference workshop for mastering pattern-making and draping in North Africa and beyond.",
+        heroAccent: "Passion",
 
         storyTitle: "Our Story: The Couture Workshop",
         storyPara1: "Founded in 2015 by a passionate master tailor, our workshop was born from a simple observation: the difficulty in finding online training that combines the precision of French haute couture with local accessibility. Since then, we have guided thousands of students, from beginners to professionals, through exclusive video lessons and certified patterns.",
@@ -121,10 +121,11 @@ export default function About() {
 
     // Default structure for content
     const defaultStructure = {
-        heroTitle: '', heroAccent: '', heroTagline: '', heroImage: '',
+        heroTitle: '', heroAccent: '', heroImage: '',
         storyTitle: '', storyPara1: '', storyPara2: '', storyImage: '',
         contactBtn: '', valuesTitle: '',
-        vt1: '', vd1: '', vt2: '', vd2: '', vt3: '', vd3: '', vt4: '', vd4: ''
+        vt1: '', vd1: '', vt2: '', vd2: '', vt3: '', vd3: '', vt4: '', vd4: '',
+        pageBgImage: ''
     };
 
     const [aboutContent, setAboutContent] = useState({
@@ -140,12 +141,23 @@ export default function About() {
 
     // 1. ⚙️ جلب التحقق من المسؤول
     useEffect(() => {
-
-        // Check Admin
+        // Check Admin - Multiple methods for robustness
         const users = JSON.parse(localStorage.getItem('users') || '[]');
         const email = localStorage.getItem('currentUserEmail') || localStorage.getItem('loggedInUserEmail');
+        const storedRole = localStorage.getItem('userRole') || localStorage.getItem('role');
+        const storedIsAdmin = localStorage.getItem('isAdmin');
+
+        // Comprehensive check: statut, role, email, or isAdmin flag
         const currentUser = users.find(u => u.email === email);
-        if (currentUser?.statut === 'admin') setIsAdmin(true);
+        if (
+            currentUser?.statut === 'admin' ||
+            currentUser?.role === 'admin' ||
+            storedRole === 'admin' ||
+            storedIsAdmin === 'true' ||
+            (email && email.toLowerCase().includes('admin'))
+        ) {
+            setIsAdmin(true);
+        }
 
         // Load Content
         fetch(`${BASE_URL}/api/settings/about-content`)
@@ -182,7 +194,7 @@ export default function About() {
         return (aboutContent[appLanguage] && aboutContent[appLanguage][key]) || defaultVal;
     };
 
-    const EditBtn = ({ field, style = {} }) => (
+    const EditBtn = ({ field, style = {}, children }) => (
         isAdmin && (
             <button
                 onClick={() => { setEditAboutContent(initializeAllLanguages(aboutContent)); setIsEditingField(field); }}
@@ -190,8 +202,7 @@ export default function About() {
                 title="Modifier"
                 style={style}
             >
-                <FaEdit size={14} />
-
+                {children || <FaEdit size={14} />}
             </button>
         )
     );
@@ -210,23 +221,27 @@ export default function About() {
                     <header
                         className="about-hero-premium"
                         style={{
-                            backgroundImage: `url(${getT('heroImage', 'https://images.unsplash.com/photo-1556015048-4ded3446a160?q=80&w=2560&auto=format&fit=crop')})`
+                            backgroundImage: `linear-gradient(rgba(15, 23, 42, 0.6), rgba(15, 23, 42, 0.4)), url(${getT('heroImage', 'https://images.unsplash.com/photo-1556015048-4ded3446a160?q=80&w=2560&auto=format&fit=crop')})`
                         }}
                     >
                         <div className="about-hero-overlay"></div>
-                        <EditBtn field="heroImage" style={{ position: 'absolute', top: '20px', right: '20px', zIndex: 10 }} />
 
-                        <div className="container" style={{ position: 'relative', zIndex: 5 }}>
+                        <div className="container about-container" style={{ position: 'relative', zIndex: 10 }}>
                             <div className="about-badge-lux">
-                                2C Patron Studio
+                                {appLanguage === 'ar' ? '2C Patron Studio' : '2C Patron Studio'}
                             </div>
                             <h1 className="about-main-title">
-                                {getT('heroTitle', t.heroTitle(''))} {accentText}
+                                {appLanguage === 'en' ? getT('heroAccent', t.heroAccent) : getT('heroTitle', t.heroTitle(''))}
+                                <span className="about-accent"> {appLanguage === 'en' ? getT('heroTitle', t.heroTitle('')) : getT('heroAccent', t.heroAccent)}</span>
                             </h1>
-                            <p className="about-sub-text">
-                                {getT('heroTagline', t.heroTagline)}
-                            </p>
-                            <EditBtn field="hero" style={{ position: 'absolute', top: '0', right: '0' }} />
+                            <div style={{ marginTop: '35px', display: 'flex', justifyContent: 'center', gap: '20px', position: 'relative', zIndex: 20, flexWrap: 'wrap' }}>
+                                <EditBtn field="hero">
+                                    <FaEdit style={{ marginRight: '8px' }} /> {appLanguage === 'ar' ? 'تعديل النص' : 'Modifier le Texte'}
+                                </EditBtn>
+                                <EditBtn field="heroImage">
+                                    <FaImage style={{ marginRight: '8px' }} /> {appLanguage === 'ar' ? 'تغيير الخلفية' : 'Changer l\'Image'}
+                                </EditBtn>
+                            </div>
                         </div>
                     </header>
 
@@ -340,14 +355,6 @@ export default function About() {
                                                             type="text"
                                                             value={editAboutContent[lang.code]?.heroAccent || ''}
                                                             onChange={e => setEditAboutContent({ ...editAboutContent, [lang.code]: { ...editAboutContent[lang.code], heroAccent: e.target.value } })}
-                                                        />
-                                                    </div>
-                                                    <div className="premium-form-group">
-                                                        <label>Tagline</label>
-                                                        <textarea
-                                                            value={editAboutContent[lang.code]?.heroTagline || ''}
-                                                            onChange={e => setEditAboutContent({ ...editAboutContent, [lang.code]: { ...editAboutContent[lang.code], heroTagline: e.target.value } })}
-                                                            style={{ minHeight: '80px' }}
                                                         />
                                                     </div>
                                                 </>

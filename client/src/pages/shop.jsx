@@ -3,6 +3,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { FaShoppingCart, FaSearch, FaChevronDown, FaTimes, FaUser, FaMapMarkerAlt, FaPhoneAlt, FaMinusCircle, FaPlusCircle, FaSpinner, FaCheckCircle, FaCommentAlt, FaStar, FaRegStar, FaChevronLeft, FaChevronRight, FaEdit, FaSave, FaTrash, FaPlus } from 'react-icons/fa';
 import Navbar from '../comp/navbar';
 import Footer from '../comp/Footer';
+import './shop_redesign.css';
 
 // 🚨 قائمة الفئات النهائية بناءً على طلبك
 const categoriesFr = ['Tous', 'Homme', 'Famme', 'Enfant'];
@@ -523,9 +524,9 @@ export default function ProductGrid() {
     const [isEditingField, setIsEditingField] = useState(null); // 'title', 'subtitle', 'sidebar', 'reset', 'info', 'navTitle', 'cartBtn'
     // Default structure for content
     const defaultStructure = {
-        colTitle: '', colAccent: '', colSub: '',
+        badge: '', colTitle: '', colAccent: '',
         sidebar: '', reset: '', navTitle: '', searchPlaceholder: '',
-        info: '', cartBtn: ''
+        info: '', cartBtn: '', heroImage: ''
     };
 
     const [shopContent, setShopContent] = useState({});
@@ -1004,12 +1005,37 @@ export default function ProductGrid() {
         return (
             <>
                 <Navbar />
-                <div className="loading-state" style={{ textAlign: 'center', padding: '100px', fontSize: '24px' }} dir={direction}>
-                    <FaSpinner className="spinner" style={{ animation: 'spin 1s linear infinite', marginRight: '10px' }} />
-                    {t.loading}
+                <div className="product-grid-section" dir={direction}>
+                    <div className="vip-hero-premium skeleton-item" style={{ height: '60vh', minHeight: '520px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                        <div className="container" style={{ position: 'relative', zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                            <div className="skeleton-item" style={{ width: '120px', height: '35px', borderRadius: '50px', marginBottom: '25px', opacity: 0.2 }}></div>
+                            <div className="skeleton-item" style={{ width: '60%', height: '60px', borderRadius: '12px', marginBottom: '20px', opacity: 0.2 }}></div>
+                            <div className="skeleton-item" style={{ width: '40%', height: '25px', borderRadius: '6px', opacity: 0.2 }}></div>
+                        </div>
+                    </div>
+
+                    <div className="shop-content-wrapper">
+                        <aside className="filter-sidebar skeleton-item" style={{ height: '600px', borderRadius: '24px', opacity: 0.1 }}></aside>
+
+                        <div className="product-grid-main">
+                            <div className="skeleton-grid">
+                                {[1, 2, 3, 4, 5, 6].map((i) => (
+                                    <div key={i} className="skeleton-card">
+                                        <div className="skeleton-image skeleton-item"></div>
+                                        <div className="skeleton-content">
+                                            <div className="skeleton-title skeleton-item"></div>
+                                            <div className="skeleton-row">
+                                                <div className="skeleton-price skeleton-item"></div>
+                                                <div className="skeleton-btn skeleton-item"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </>
-
         );
     }
 
@@ -1027,28 +1053,35 @@ export default function ProductGrid() {
 
             <section className="product-grid-section" dir={direction}>
 
-                <div className="grid-header" style={{ textAlign: 'center', marginBottom: '60px', position: 'relative' }}>
-                    <EditBtn field="hero" style={{ position: 'absolute', top: '0', right: '20px' }} />
-                    <h2 className="grid-main-title">
-                        <span>{getT('colTitle', t.collectionTitle)}</span>
-                        <span className="vip-accent-text">{getT('colAccent', t.collectionAccent)}</span>
-                    </h2>
-                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginTop: '15px' }}>
-                        <p className="grid-sub-text" style={{ margin: 0 }}>
-                            {getT('colSub', t.collectionSubtitle)}
-                        </p>
-                    </div>
-                    {isAdmin && (
-                        <div style={{ marginTop: '25px' }}>
-                            <button
-                                onClick={handleOpenAddProduct}
-                                className="hero-edit-title-btn hero-edit-title-btn-add"
-                            >
-                                <FaPlusCircle size={20} /> {appLanguage === 'ar' ? 'إضافة منتج' : 'Nouveau Produit'}
-                            </button>
+                <header
+                    className="vip-hero-premium"
+                    style={{
+                        backgroundImage: `linear-gradient(rgba(15, 23, 42, 0.6), rgba(15, 23, 42, 0.4)), url(${getT('heroImage', 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=2670&auto=format&fit=crop')})`
+                    }}
+                >
+                    <div className="vip-hero-overlay"></div>
+
+                    <div className="container shop_cont" style={{ position: 'relative', zIndex: 10 }}>
+                        <div className="vip-badge-premium">{getT('badge', appLanguage === 'ar' ? 'تخفيضات' : 'Collection')} </div>
+                        <h1 className="vip-main-title-premium">
+                            {appLanguage === 'en' ? getT('colAccent', t.collectionAccent) : getT('colTitle', t.collectionTitle)}
+                            <span className="accent-text"> {appLanguage === 'en' ? getT('colTitle', t.collectionTitle) : getT('colAccent', t.collectionAccent)}</span>
+                        </h1>
+
+                        <div style={{ marginTop: '25px', display: 'flex', justifyContent: 'center', gap: '20px', position: 'relative', zIndex: 20, flexWrap: 'wrap' }}>
+                            <EditBtn field="hero" />
+                            <EditBtn field="heroImage" />
+                            {isAdmin && (
+                                <button
+                                    onClick={handleOpenAddProduct}
+                                    className="edit-btn-minimal-lux"
+                                >
+                                    <FaPlusCircle size={14} /> {appLanguage === 'ar' ? 'إضافة منتج' : 'Nouveau'}
+                                </button>
+                            )}
                         </div>
-                    )}
-                </div>
+                    </div>
+                </header>
 
                 <div className="shop-content-wrapper">
 
@@ -1066,7 +1099,7 @@ export default function ProductGrid() {
 
 
                     {/* 2. Barre latérale des filtres */}
-                    <aside className={`filter-sidebar ${isFilterOpen ? 'is-open' : ''} ${appLanguage === 'ar' ? 'rtl-sidebar' : ''}`} style={{ position: 'relative' }}>
+                    <aside className={`filter-sidebar ${isFilterOpen ? 'is-open' : ''} ${appLanguage === 'ar' ? 'rtl-sidebar' : ''}`}>
                         <EditBtn field="filters" style={{ position: 'absolute', top: '20px', right: '20px', zIndex: 10 }} />
                         <div style={{ display: 'flex', alignItems: 'center', marginBottom: '15px' }}>
                             <h3 className="sidebar-title" style={{ margin: 0 }}>{getT('sidebar', t.sidebarTitle)}</h3>
@@ -1110,9 +1143,6 @@ export default function ProductGrid() {
                             </ul>
                         </div>
 
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '20px' }}>
-                            <button className="reset-filters-button" onClick={resetFilters}>{getT('reset', t.resetFilters)}</button>
-                        </div>
 
                     </aside>
 
@@ -1285,11 +1315,20 @@ export default function ProductGrid() {
                                                     />
                                                 </div>
                                                 <div className="premium-form-group">
-                                                    <label>Sous-titre</label>
-                                                    <textarea
-                                                        value={editShopContent[lang.code]?.colSub || ''}
-                                                        onChange={e => setEditShopContent({ ...editShopContent, [lang.code]: { ...editShopContent[lang.code], colSub: e.target.value } })}
-                                                        rows="3"
+                                                    <label>Badge (Vip Style)</label>
+                                                    <input
+                                                        type="text"
+                                                        value={editShopContent[lang.code]?.badge || ''}
+                                                        onChange={e => setEditShopContent({ ...editShopContent, [lang.code]: { ...editShopContent[lang.code], badge: e.target.value } })}
+                                                    />
+                                                </div>
+                                                <div className="premium-form-group">
+                                                    <label>URL Image de Fond (Hero)</label>
+                                                    <input
+                                                        type="text"
+                                                        value={editShopContent[lang.code]?.heroImage || ''}
+                                                        onChange={e => setEditShopContent({ ...editShopContent, [lang.code]: { ...editShopContent[lang.code], heroImage: e.target.value } })}
+                                                        placeholder="https://..."
                                                     />
                                                 </div>
                                             </>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaPlayCircle, FaCheckCircle } from 'react-icons/fa';
+import { FaPlayCircle, FaCheckCircle, FaImage, FaTimes } from 'react-icons/fa';
 import Navbar from '../comp/navbar';
 import Footer from '../comp/Footer';
 import { Link, useParams } from 'react-router-dom';
@@ -13,9 +13,31 @@ export default function Leçons_Manches_coursage() {
     const [groups, setGroups] = useState([]); // تحتوي على كل المجموعات (object واحد يحتوي على courses[])
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [heroBg, setHeroBg] = useState("");
+    const [isAdmin, setIsAdmin] = useState(false);
+    const [showHeroBgModal, setShowHeroBgModal] = useState(false);
+    const [appLanguage, setAppLanguage] = useState('fr');
     useEffect(() => {
+        const lang = localStorage.getItem('appLanguage') || 'fr';
+        setAppLanguage(lang);
+
+        const email =
+            localStorage.getItem('loggedInUserEmail') ||
+            localStorage.getItem('currentUserEmail') ||
+            null;
+
+        const checkAdmin = async () => {
+            if (email) {
+                try {
+                    const response = await fetch(`${BASE_URL}/api/users/${email}`);
+                    const data = await response.json();
+                    if (data && data.statut === 'admin') setIsAdmin(true);
+                } catch (e) { }
+            }
+        }
+        checkAdmin();
         fetchCourses();
-    }, []);
+    }, [actualTitle]);
 
     const fetchCourses = async () => {
         try {
@@ -23,12 +45,26 @@ export default function Leçons_Manches_coursage() {
                 params: { category: actualTitle } // تمرير اسم الفئة
             });
             setGroups(res.data);
+            if (res.data.length > 0) {
+                setHeroBg(res.data[0].hero_bg || "");
+            }
             setLoading(false);
         } catch (err) {
             console.error(err);
             setError("Erreur lors du chargement des cours.");
             setLoading(false);
         }
+    };
+
+    const handleHeroBgUpdate = async () => {
+        if (groups.length === 0) return;
+        try {
+            await axios.put(`${BASE_URL}/api/specialized-courses/${groups[0]._id}`, {
+                hero_bg: heroBg
+            });
+            fetchCourses();
+            setShowHeroBgModal(false);
+        } catch (e) { console.error(e); }
     };
 
     if (loading) return <div style={{ textAlign: 'center', marginTop: '100px' }}>Chargement...</div>;
@@ -41,20 +77,34 @@ export default function Leçons_Manches_coursage() {
     const videoUrl = groups.length > 0 && groups[0].video_link ? groups[0].video_link : null;
 
     return (
-        <>
+        <div className="courses-premium-page">
             <Navbar />
-            <br /><br /><br />
-            <section className="vip-section">
 
-                {/* 1. Entête de la page */}
-                <div className="vip-header">
-                    <h1 className="vip-main-title">
+            {/* 1. Entête de la page - Premium Hero */}
+            <header
+                className="course-hero-premium"
+                style={{
+                    backgroundImage: `linear-gradient(rgba(15, 23, 42, 0.6), rgba(15, 23, 42, 0.4)), url('${heroBg || 'https://images.unsplash.com/photo-1512436991641-6745cdb1723f?q=80&w=2670&auto=format&fit=crop'}')`
+                }}
+            >
+                {isAdmin && (
+                    <div style={{ position: 'absolute', top: '25px', right: '35px', zIndex: 100 }}>
+                        <button className="admin-edit-master-btn" onClick={() => setShowHeroBgModal(true)}>
+                            <FaImage /> {appLanguage === 'ar' ? 'تغيير الخلفية' : 'Changer Fond'}
+                        </button>
+                    </div>
+                )}
+                <div className="course-hero-overlay"></div>
+
+                <div className="container" style={{ position: 'relative', zIndex: 10 }}>
+                    <div className="course-category-tag">2C Patron Studio</div>
+                    <h1 className="course-main-title-premium">
                         <span style={{ color: "#d4af37" }}>{actualTitle}</span>
                     </h1>
-                    <p className="vip-sub-text">
-                        Maîtrisez la conception et la réalisation de Corsage avec professionnalisme, des classiques aux modèles les plus complexes.
-                    </p>
                 </div>
+            </header>
+
+            <section className="vip-section" style={{ marginTop: '50px' }}>
 
                 {/* ⚡️ Bloc Vidéo Introduction - يظهر فقط إذا كان الفيديو موجود */}
 
@@ -109,6 +159,38 @@ export default function Leçons_Manches_coursage() {
                 </div>
             </section>
             <Footer />
-        </>
+
+            {
+                showHeroBgModal && (
+                    <div className="premium-modal-backdrop" onClick={() => setShowHeroBgModal(false)}>
+                        <div className="premium-modal-content" onClick={(e) => e.stopPropagation()}>
+                            <button className="premium-modal-close-icon" onClick={() => setShowHeroBgModal(false)}><FaTimes /></button>
+                            <h2 className="premium-modal-title">{appLanguage === 'ar' ? 'تغيير خلفية الواجهة' : 'Changer Fond Hero'}</h2>
+
+                            <div className="premium-form-grid-single">
+                                <div className="premium-form-group">
+                                    <label>URL de l'Image</label>
+                                    <input
+                                        type="text"
+                                        placeholder="https://images.unsplash.com/..."
+                                        value={heroBg}
+                                        onChange={(e) => setHeroBg(e.target.value)}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="premium-btn-group">
+                                <button className="premium-btn-cta secondary" onClick={() => setShowHeroBgModal(false)}>
+                                    Annuler
+                                </button>
+                                <button className="premium-btn-cta gold" onClick={handleHeroBgUpdate}>
+                                    Enregistrer
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
+        </div >
     );
 }

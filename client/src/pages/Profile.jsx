@@ -44,6 +44,10 @@ export default function Profile() {
     const handleLogout = () => {
         localStorage.removeItem('login');
         localStorage.removeItem('currentUserEmail');
+        localStorage.removeItem('loggedInUserEmail');
+        localStorage.removeItem('userRole');
+        localStorage.removeItem('isAdmin');
+        localStorage.removeItem('role');
         window.location.href = '/';
     };
 

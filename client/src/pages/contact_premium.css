@@ -22,27 +22,32 @@
 
 /* --- CINEMATIC HERO --- */
 .contact-premium-hero {
-    height: 70vh;
-    min-height: 600px;
-    padding: 80px 20px 0;
+    height: 60vh;
+    min-height: 520px;
     position: relative;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     text-align: center;
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-    overflow: hidden;
+    background-attachment: fixed;
+    clip-path: polygon(0 0, 100% 0, 100% 90%, 0 100%);
+    overflow: visible;
     color: #fff;
+    margin-bottom: 20px;
+    padding-top: 150px;
 }
 
 .contact-hero-overlay {
     position: absolute;
     inset: 0;
-    background: rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(2px);
+    background: linear-gradient(rgba(15, 23, 42, 0.6), rgba(15, 23, 42, 0.4));
+    backdrop-filter: none;
     z-index: 1;
+    pointer-events: none;
 }
 
 .contact-hero-content {
@@ -54,41 +59,40 @@
 }
 
 .contact-hero-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    background: rgba(212, 175, 55, 0.1);
-    color: var(--gold);
-    padding: 8px 24px;
+    display: inline-block;
+    padding: 8px 16px;
+    background: rgba(212, 175, 55, 0.2);
+    border: 1px solid rgba(212, 175, 55, 0.4);
     border-radius: 50px;
-    border: 1px solid rgba(212, 175, 55, 0.3);
-    backdrop-filter: blur(10px);
-    font-size: 0.8rem;
+    color: var(--gold);
+    font-size: 0.85rem;
     font-weight: 800;
     letter-spacing: 2px;
-    text-transform: uppercase;
     margin-bottom: 25px;
+    text-transform: uppercase;
+    backdrop-filter: none;
+    animation: fadeInDown 0.8s ease;
 }
 
 .contact-glam-title {
     font-family: 'Playfair Display', serif;
-    font-size: 5rem;
-    font-weight: 700;
-    margin-bottom: 15px;
-    color: #fff;
+    font-size: 4rem;
+    line-height: 1.1;
+    margin-bottom: 20px;
+    animation: fadeInUp 1s ease;
 }
 
 .contact-glam-title span {
-    color: var(--gold);
+    font-family: 'Playfair Display', serif;
     font-style: italic;
+    font-weight: 400;
+    padding: 0 10px;
+    background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 50%, var(--gold) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
 }
 
-.contact-hero-desc {
-    font-size: 1.2rem;
-    color: rgba(255, 255, 255, 0.9);
-    font-weight: 400;
-    line-height: 1.8;
-}
 
 /* --- MAIN CONTENT GRID --- */
 .contact-main-grid-container {
@@ -138,7 +142,8 @@
 .contact-form-premium-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 25px;
+    gap: 0px;
+    margin-bottom: -50px;
 }
 
 .premium-form-group {
@@ -266,7 +271,7 @@
     color: #fff;
     padding: 40px;
     text-align: center;
-    backdrop-filter: blur(8px);
+    backdrop-filter: none;
 }
 
 .map-placeholder-overlay .pin-icon {
@@ -350,8 +355,39 @@
     }
 
     .contact-premium-hero {
-        height: 50vh;
+        height: 60vh;
         min-height: 400px;
+    }
+
+    .form-block-header h2 {
+        font-size: 2rem;
+        margin-bottom: 15px;
+        font-weight: 700;
+    }
+
+    .form-block-header p {
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 425px) {
+    .contact-premium-form-card {
+        padding: 20px 15px;
+    }
+
+    .form-block-header h2 {
+        font-size: 1.5rem;
+    }
+
+    .form-block-header p {
+        font-size: 0.8rem;
+    }
+
+    .premium-btn-cta-lux {
+        padding: 5px 20px;
+        font-weight: 800;
+        font-size: 0.8rem;
+        gap: 1px;
     }
 }
 

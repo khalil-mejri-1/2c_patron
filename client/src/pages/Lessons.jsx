@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { FaSpinner, FaPlay, FaCertificate, FaWhatsapp, FaPlayCircle } from 'react-icons/fa';
+import { FaSpinner, FaPlay, FaCertificate, FaWhatsapp, FaPlayCircle, FaEdit, FaSave, FaTimes, FaImage } from 'react-icons/fa';
 import Navbar from '../comp/navbar';
 import Footer from '../comp/Footer';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import BASE_URL from '../apiConfig';
-import './leçons_premium.css';
+import './lessons_premium.css';
 
 // 🌐 كائن الترجمة
 const translations = {
@@ -14,7 +14,7 @@ const translations = {
         errorTitle: "تعذر تحميل الدروس",
         errorMsg: "حدث خطأ أثناء استخراج الفيديوهات. يرجى التأكد من استقرار الخادم.",
         lessonsTitle: (title) => `دروس ${title}`,
-        lessonsSubtitle: "انغمس في عالم الخياطة الراقية واختر مهاراتك التالية لتطويرها.",
+        lessonsTitle: (title) => `دروس ${title}`,
         listTitle: "المنهج التعليمي",
         noVideos: (title) => `لا تتوفر فيديوهات حالياً لهذه الفئة: "${title}".`,
         certificateTitle: "احصل على شهادتك المعتمدة",
@@ -30,7 +30,7 @@ const translations = {
         errorTitle: "Échec du chargement.",
         errorMsg: "Impossible de récupérer les vidéos. Veuillez vérifier votre connexion.",
         lessonsTitle: (title) => `Leçons de ${title}`,
-        lessonsSubtitle: "Plongez dans l'art de la couture et sélectionnez votre prochaine compétence à maîtriser.",
+        lessonsTitle: (title) => `Leçons de ${title}`,
         listTitle: "Programme des cours",
         noVideos: (title) => `Aucune vidéo disponible pour la catégorie "${title}" pour le moment.`,
         certificateTitle: "Obtenez votre Certificat",
@@ -46,7 +46,7 @@ const translations = {
         errorTitle: "Loading failed.",
         errorMsg: "Failed to retrieve videos. Please check server connection.",
         lessonsTitle: (title) => `${title} Lessons`,
-        lessonsSubtitle: "Dive into the art of sewing and choose your next skill to master.",
+        lessonsTitle: (title) => `${title} Lessons`,
         listTitle: "Lesson Curriculum",
         noVideos: (title) => `No videos available for category "${title}" at the moment.`,
         certificateTitle: "Get Your Certification",
@@ -109,12 +109,16 @@ const LessonCard = ({ video, isActive, onSelect, lang }) => {
     );
 };
 
-export default function Leçons() {
+export default function Lessons() {
     const [appLanguage, setAppLanguage] = useState('fr');
     const [videos, setVideos] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [currentVideo, setCurrentVideo] = useState(null);
+    const [isAdmin, setIsAdmin] = useState(false);
+    const [isEditingBg, setIsEditingBg] = useState(false);
+    const [bgImage, setBgImage] = useState('https://images.unsplash.com/photo-1556905055-8f358a7a4bb4?q=80&w=2070&auto=format&fit=crop');
+    const [newBgUrl, setNewBgUrl] = useState('');
     const topRef = useRef(null);
 
     const { leconTitle } = useParams();
@@ -123,7 +127,42 @@ export default function Leçons() {
     useEffect(() => {
         const lang = localStorage.getItem('appLanguage') || 'fr';
         setAppLanguage(lang);
-    }, []);
+
+        // Check Admin
+        const email = localStorage.getItem('loggedInUserEmail') || localStorage.getItem('currentUserEmail') || null;
+        if (email) {
+            if (email === 'admin@admin.com') {
+                setIsAdmin(true);
+            } else {
+                fetch(`${BASE_URL}/api/users/${email}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data && data.statut === 'admin') setIsAdmin(true);
+                    })
+                    .catch(() => { });
+            }
+        }
+
+        // Load Background
+        fetch(`${BASE_URL}/api/settings/lecons-page-bg`)
+            .then(res => res.ok ? res.json() : null)
+            .then(data => {
+                if (data) setBgImage(data);
+            })
+            .catch(() => { });
+    }, [actualTitle]);
+
+    const handleSaveBg = async () => {
+        setBgImage(newBgUrl);
+        setIsEditingBg(false);
+        try {
+            await fetch(`${BASE_URL}/api/settings/lecons-page-bg`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ value: newBgUrl })
+            });
+        } catch (err) { }
+    };
 
     const t = translations[appLanguage] || translations.fr;
     const direction = appLanguage === 'ar' ? 'rtl' : 'ltr';
@@ -171,14 +210,51 @@ export default function Leçons() {
     );
 
     return (
-        <div className="lessons-premium-wrapper" dir={direction}>
+        <div className="lessons-premium-wrapper" dir={direction} style={{
+            background: `linear-gradient(rgba(252, 252, 253, 0.96), rgba(252, 252, 253, 0.98)), url('${bgImage}') center/cover fixed`
+        }}>
             <Navbar />
 
-            {/* --- HERO --- */}
-            <header className="lessons-hero-header">
-                <div className="lesson-badge-glam">{t.badge}</div>
-                <h1 className="lessons-main-title-premium">{t.lessonsTitle(actualTitle)}</h1>
-                <p className="lessons-sub-description">{t.lessonsSubtitle}</p>
+
+            <header
+                className="lessons-hero-header"
+                style={{
+                    backgroundImage: `linear-gradient(rgba(15, 23, 42, 0.6), rgba(15, 23, 42, 0.4)), url('${bgImage}')`
+                }}
+            >
+                <div className="lessons-hero-overlay"></div>
+                {isAdmin && (
+                    <button
+                        className="edit-btn-minimal-lux"
+                        style={{
+                            position: 'absolute',
+                            top: '120px',
+                            right: '40px',
+                            zIndex: 200,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px'
+                        }}
+                        onClick={() => { setIsEditingBg(true); setNewBgUrl(bgImage); }}
+                    >
+                        <FaImage /> {appLanguage === 'ar' ? 'تغيير الخلفية' : 'Changer Fond'}
+                    </button>
+
+
+                )}
+
+                <div className="container" style={{ position: 'relative', zIndex: 10 }}>
+                    <div className="lesson-badge-glam">{t.badge}</div>
+                    <h1 className="lessons-main-title-premium">
+                        {appLanguage === 'ar' ? (
+                            <>دروس <span>{actualTitle}</span></>
+                        ) : appLanguage === 'en' ? (
+                            <><span>{actualTitle}</span> Lessons</>
+                        ) : (
+                            <>Leçons de <span>{actualTitle}</span></>
+                        )}
+                    </h1>
+                </div>
             </header>
 
             <main className="lessons-explorer-container">
@@ -200,13 +276,13 @@ export default function Leçons() {
                                 />
                             );
                         })()}
-                        <div className="video-focus-overlay"></div>
                     </div>
                 )}
 
                 {/* --- LESSONS LIST --- */}
-                <div className="lessons-list-header" style={{ textAlign: 'center', marginBottom: '40px' }}>
-                    <h2 className="lessons-main-title-premium" style={{ fontSize: '2.5rem' }}>{t.listTitle}</h2>
+                <div className="curriculum-section-header">
+                    <h2>{t.listTitle}</h2>
+                    <div className="curriculum-line"></div>
                 </div>
 
                 <div className="lessons-selection-grid">
@@ -232,6 +308,28 @@ export default function Leçons() {
                     </a>
                 </section>
             </main>
+
+            {isEditingBg && (
+                <div className="premium-modal-backdrop" onClick={() => setIsEditingBg(false)}>
+                    <div className="premium-modal-content" onClick={(e) => e.stopPropagation()}>
+                        <button className="premium-modal-close-icon" onClick={() => setIsEditingBg(false)}><FaTimes /></button>
+                        <h2 className="premium-modal-title">Changer l'image de fond</h2>
+                        <div className="premium-form-group" style={{ marginBottom: '20px' }}>
+                            <label>URL de l'image</label>
+                            <input
+                                type="text"
+                                value={newBgUrl}
+                                onChange={(e) => setNewBgUrl(e.target.value)}
+                                placeholder="https://..."
+                            />
+                        </div>
+                        <div className="premium-btn-group">
+                            <button className="premium-btn-cta secondary" onClick={() => setIsEditingBg(false)}>Annuler</button>
+                            <button className="premium-btn-cta gold" onClick={handleSaveBg}><FaSave /> Enregistrer</button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <Footer />
         </div>

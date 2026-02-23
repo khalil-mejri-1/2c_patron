@@ -29,6 +29,7 @@ export default function Navbar({ initialCartCount = 0 }) {
     const [newLangData, setNewLangData] = useState({ label: '', code: '', emoji: '', icon: '' });
 
     const dropdownRef = useRef(null);
+    const navbarRef = useRef(null);
     const location = useLocation();
     const navigate = useNavigate();
 
@@ -108,19 +109,33 @@ export default function Navbar({ initialCartCount = 0 }) {
     };
 
     const confirmLogout = () => {
+        // 1. Close modal immediately
         setShowConfirmModal(false);
-        if (userEmail && window.google && window.google.accounts && window.google.accounts.id) {
-            window.google.accounts.id.revoke(userEmail, (done) => {
-                console.log('Consent revoked for:', userEmail, done);
-                updateAuthStatus(false, null);
-                renderGoogleSignInButton();
-                window.location.reload();
-            });
-        } else {
-            updateAuthStatus(false, null);
-            renderGoogleSignInButton();
-            window.location.reload();
+
+        // 2. Clear local storage items for all possible keys
+        const emailToRevoke = userEmail; // Keep a reference
+        updateAuthStatus(false, null);
+
+        // Clean up remaining bits
+        localStorage.removeItem('userRole');
+        localStorage.removeItem('isAdmin');
+        localStorage.removeItem('role');
+        localStorage.removeItem('login'); // Just in case
+
+        // 3. Clear Google Session if exists (Async but non-blocking)
+        if (emailToRevoke && window.google?.accounts?.id) {
+            try {
+                window.google.accounts.id.revoke(emailToRevoke, (done) => {
+                    console.log('Consent revoked for:', emailToRevoke, done);
+                });
+            } catch (err) {
+                console.error("Google revoke error:", err);
+            }
         }
+
+        // 4. Reset & Redirect immediately
+        // window.location.href = '/' is usually faster/cleaner than reload() for a fresh start
+        window.location.href = '/';
     };
 
     const cancelLogout = () => {
@@ -178,8 +193,14 @@ export default function Navbar({ initialCartCount = 0 }) {
         }
 
         const handleClickOutside = (event) => {
+            // Close Profile Dropdown if clicking outside its wrapper
             if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
                 setIsDropdownOpen(false);
+            }
+
+            // Close Mobile Menu if clicking outside the entire navbar
+            if (isOpen && navbarRef.current && !navbarRef.current.contains(event.target)) {
+                setIsOpen(false);
             }
         };
 
@@ -264,7 +285,7 @@ export default function Navbar({ initialCartCount = 0 }) {
                 </button>
             )}
 
-            <nav className={`navbar-couture ${isScrolled ? 'scrolled-nav' : ''}`}>
+            <nav className={`navbar-couture ${isScrolled ? 'scrolled-nav' : ''}`} ref={navbarRef}>
                 <div className="navbar-logo">
                     <Link to="/">
                         <img src={logo} className='logo' alt="Logo Atelier Couture" />
@@ -289,32 +310,28 @@ export default function Navbar({ initialCartCount = 0 }) {
                         </li>
                     ))}
 
-                    {/* --- Affichage des drapeaux sur mobile (dans le menu burger) --- */}
                     <li className="mobile-language-menu">
-                        <span className="nav-link-item">Langue :</span>
                         <div className="language-selector-mobile">
-                            {languages.map(({ code, emoji, label }) => (
+                            {languages.map(({ code, label, icon }) => (
                                 <button
                                     key={code}
                                     className={`flag-btn ${appLanguage === code ? 'active-flag' : ''}`}
                                     onClick={() => handleLanguageChange(code)}
-                                    aria-label={`Changer la langue en ${label}`}
                                 >
-                                    {emoji}
+                                    <img src={icon} alt={label} className="flag-icon" />
                                 </button>
                             ))}
                             {(isAdmin || userEmail?.includes('admin') || userEmail === '2cparton0011@gmail.com') && (
                                 <button
                                     className="flag-btn add-language-btn-mobile"
                                     onClick={() => setIsAddLanguageModalOpen(true)}
-                                    style={{ background: 'none', border: '1px solid #D4AF37', borderRadius: '50%', padding: '5px', color: '#D4AF37', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                                 >
                                     <FaPlus size={16} />
                                 </button>
                             )}
                         </div>
                     </li>
-                    {/* ------------------------------------------------------------- */}
+
 
 
                     {/* Liens Mobile pour l'Authentification */}
@@ -332,12 +349,7 @@ export default function Navbar({ initialCartCount = 0 }) {
                             </li>
                         </>
                     ) : (
-                        // Lien VIP Mobile si l'utilisateur est connecté
-                        <li className="mobile-auth-link vip-button">
-                            <NavLink to="/Abonnement-VIP" className="nav-link-item mobile-vip-btn">
-                                <FaCrown /> Accès VIP
-                            </NavLink>
-                        </li>
+                        <></>
                     )}
                 </ul>
 

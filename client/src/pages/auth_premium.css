@@ -8,11 +8,11 @@
 }
 
 .auth-section-premium {
-    padding: 100px 20px 60px;
+    padding: 150px 0px 0px;
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: 100vh;
+    min-height: 0vh;
 }
 
 .auth-main-container {
@@ -20,7 +20,7 @@
     width: 100%;
     background: #ffffff;
     display: flex;
-    min-height: 650px;
+    min-height: 600px;
     border-radius: 30px;
     overflow: hidden;
     box-shadow: 0 40px 100px rgba(0, 0, 0, 0.05);

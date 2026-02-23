@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaPlayCircle, FaCheckCircle, FaSpinner, FaChevronRight, FaEdit, FaPlus, FaTrash, FaTimes, FaVideo } from 'react-icons/fa';
+import { FaPlayCircle, FaCheckCircle, FaSpinner, FaChevronRight, FaEdit, FaPlus, FaTrash, FaTimes, FaVideo, FaImage } from 'react-icons/fa';
 import Navbar from '../comp/navbar';
 import Footer from '../comp/Footer';
 import { Link, useParams } from 'react-router-dom';
@@ -13,7 +13,6 @@ const translations = {
     ar: {
         loading: "جاري تحميل الدورات المتخصصة...",
         error: "حدث خطأ أثناء تحميل الدورات. يرجى المحاولة لاحقاً.",
-        headerSubtitle: "أتقن فن التصميم الاحترافي مع دروس معمقة تجمع بين التقنيات الكلاسيكية والإبداع المعاصر.",
         videoTag: "مقدمة الدورة",
         videoTitle: (title) => `فن تصميم ${title}`,
         videoSubtitle: "ابدأ رحلتك التعليمية بمشاهدة هذا العرض المرئي الذي يلخص أهم المهارات التي ستكتسبها في هذا البرنامج.",
@@ -42,7 +41,6 @@ const translations = {
     fr: {
         loading: "Chargement des formations...",
         error: "Erreur lors du chargement des cours.",
-        headerSubtitle: "Maîtrisez la conception et la réalisation avec professionnalisme, des classiques aux modèles les plus complexes.",
         videoTag: "INTRODUCTION",
         videoTitle: (title) => `L'Art du ${title}`,
         videoSubtitle: "Commencez votre voyage par une vue d'ensemble des techniques avancées que vous découvrirez dans ce module.",
@@ -71,7 +69,6 @@ const translations = {
     en: {
         loading: "Loading specialized courses...",
         error: "Error loading courses. Please try again.",
-        headerSubtitle: "Master design and realization with professionalism, from classics to the most complex models.",
         videoTag: "VIDEO INTRO",
         videoTitle: (title) => `The Art of ${title}`,
         videoSubtitle: "Start your journey with an overview of the advanced techniques you'll discover in this module.",
@@ -147,7 +144,6 @@ export default function Cours() {
     const [isAdmin, setIsAdmin] = useState(false);
 
     // Hero Customization (Optional per course)
-    const [heroSubtitle, setHeroSubtitle] = useState("");
     const [isEditingHero, setIsEditingHero] = useState(false);
 
     // Lesson Management State
@@ -159,6 +155,10 @@ export default function Cours() {
     // Video Intro Management State
     const [showVideoModal, setShowVideoModal] = useState(false);
     const [newVideoUrl, setNewVideoUrl] = useState("");
+
+    // Hero Background State
+    const [heroBg, setHeroBg] = useState("");
+    const [showHeroBgModal, setShowHeroBgModal] = useState(false);
 
     useEffect(() => {
         const lang = localStorage.getItem('appLanguage') || 'fr';
@@ -176,6 +176,7 @@ export default function Cours() {
             setGroups(res.data);
             if (res.data.length > 0) {
                 setNewVideoUrl(res.data[0].video_link || "");
+                setHeroBg(res.data[0].hero_bg || "");
             }
             setLoading(false);
         } catch (err) {
@@ -270,6 +271,21 @@ export default function Cours() {
         } catch (e) { showAlert('error', 'Error', 'Failed to update video'); }
     };
 
+    const handleHeroBgUpdate = async () => {
+        if (groups.length === 0) {
+            showAlert('error', 'Note', 'Add at least one lesson first to create the category group.');
+            return;
+        }
+        try {
+            await axios.put(`${BASE_URL}/api/specialized-courses/${groups[0]._id}`, {
+                hero_bg: heroBg
+            });
+            showAlert('success', 'Updated', 'Hero background updated');
+            fetchCourses();
+            setShowHeroBgModal(false);
+        } catch (e) { showAlert('error', 'Error', 'Failed to update background'); }
+    };
+
     if (loading) {
         return (
             <div className="courses-premium-page" dir={direction}>
@@ -301,15 +317,19 @@ export default function Cours() {
             <Navbar />
 
             {/* --- ✨ HERO SECTION ✨ --- */}
-            <header className="course-hero-premium">
+            <header
+                className="course-hero-premium"
+                style={heroBg ? { backgroundImage: `linear-gradient(rgba(15, 23, 42, 0.6), rgba(15, 23, 42, 0.4)), url('${heroBg}')` } : {}}
+            >
                 {isAdmin && (
-                    <button className="admin-edit-hero-btn admin-edit-master-btn" onClick={() => showAlert('info', 'Note', 'Feature coming soon: Dynamic Hero content')}>
-                        <FaEdit /> {t.editHero}
-                    </button>
+                    <div style={{ position: 'absolute', top: '25px', right: '35px', zIndex: 100, display: 'flex', gap: '10px' }}>
+                        <button className="admin-edit-master-btn" onClick={() => setShowHeroBgModal(true)}>
+                            <FaImage /> {appLanguage === 'ar' ? 'تغيير الخلفية' : 'Changer Fond'}
+                        </button>
+                    </div>
                 )}
                 <div className="course-category-tag">{t.categoryTag}</div>
                 <h1 className="course-main-title-premium">{actualTitle}</h1>
-                <p className="course-sub-text-premium">{heroSubtitle || t.headerSubtitle}</p>
             </header>
 
             {/* --- 📹 VIDEO INTRO --- */}
@@ -466,6 +486,37 @@ export default function Cours() {
                                 {t.cancel}
                             </button>
                             <button className="premium-btn-cta gold" onClick={handleVideoUpdate}>
+                                {t.save}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* --- 📝 MANAGE HERO BG MODAL 📝 --- */}
+            {showHeroBgModal && (
+                <div className="premium-modal-backdrop" onClick={() => setShowHeroBgModal(false)}>
+                    <div className="premium-modal-content" onClick={(e) => e.stopPropagation()}>
+                        <button className="premium-modal-close-icon" onClick={() => setShowHeroBgModal(false)}><FaTimes /></button>
+                        <h2 className="premium-modal-title">{appLanguage === 'ar' ? 'تغيير خلفية الواجهة' : 'Changer Fond Hero'}</h2>
+
+                        <div className="premium-form-grid-single">
+                            <div className="premium-form-group">
+                                <label>URL de l'Image</label>
+                                <input
+                                    type="text"
+                                    placeholder="https://images.unsplash.com/..."
+                                    value={heroBg}
+                                    onChange={(e) => setHeroBg(e.target.value)}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="premium-btn-group">
+                            <button className="premium-btn-cta secondary" onClick={() => setShowHeroBgModal(false)}>
+                                {t.cancel}
+                            </button>
+                            <button className="premium-btn-cta gold" onClick={handleHeroBgUpdate}>
                                 {t.save}
                             </button>
                         </div>

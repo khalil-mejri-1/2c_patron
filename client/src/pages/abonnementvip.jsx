@@ -1,82 +1,12 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import Navbar from '../comp/navbar';
 import Footer from '../comp/Footer';
 import BASE_URL from '../apiConfig';
 import {
     FaCheck, FaCrown, FaMobileAlt, FaUniversity, FaEnvelopeOpenText,
-    FaTimes, FaCloudUploadAlt, FaRocket, FaRegGem, FaAward
+    FaTimes, FaCloudUploadAlt, FaRocket, FaGem, FaShieldAlt, FaEdit, FaSave
 } from 'react-icons/fa';
-
-const PaymentMethodCard = ({ icon, name, details, onVerifyClick }) => (
-    <div className="payment-method-premium-card">
-        <div className="method-icon-wrapper">{icon}</div>
-        <h3 className="method-name-title">{name}</h3>
-        <div className="method-details-text">{details}</div>
-        <button className="verify-proof-button" onClick={onVerifyClick}>
-            <FaCloudUploadAlt style={{ marginRight: '8px' }} /> Envoyer la preuve
-        </button>
-    </div>
-);
-
-const FileUploadField = ({ file, onChange, hasError }) => {
-    const fileInputRef = useRef(null);
-    const [isDragging, setIsDragging] = useState(false);
-
-    const handleDragEnter = (e) => {
-        e.preventDefault();
-        setIsDragging(true);
-    };
-
-    const handleDragLeave = (e) => {
-        e.preventDefault();
-        setIsDragging(false);
-    };
-
-    const handleDrop = (e) => {
-        e.preventDefault();
-        setIsDragging(false);
-        const files = e.dataTransfer.files;
-        if (files.length) {
-            onChange({ target: { name: 'file', files: files } });
-        }
-    };
-
-    const handleClick = () => {
-        fileInputRef.current.click();
-    };
-
-    return (
-        <div
-            className={`premium-dropzone ${isDragging ? 'is-dragging' : ''} ${hasError ? 'has-error' : ''}`}
-            onDragEnter={handleDragEnter}
-            onDragOver={handleDragEnter}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-            onClick={handleClick}
-        >
-            <input
-                type="file"
-                name="file"
-                accept="image/*"
-                onChange={onChange}
-                ref={fileInputRef}
-                style={{ display: 'none' }}
-            />
-            {file ? (
-                <div className="file-selected-status">
-                    <span className="file-icon-check">✅</span>
-                    <p className="file-name-text"><strong>Fichier :</strong> {file.name}</p>
-                </div>
-            ) : (
-                <div className="dropzone-empty-prompt">
-                    <FaCloudUploadAlt className="upload-icon-pulse" />
-                    <p className="main-prompt"><strong>Cliquez ici</strong> ou glissez votre preuve</p>
-                    <p className="sub-prompt">Image JPG/PNG (Max 5MB)</p>
-                </div>
-            )}
-        </div>
-    );
-};
+import './abonnement_vip.css';
 
 export default function Abonnementvip() {
     const paymentSectionRef = useRef(null);
@@ -86,22 +16,52 @@ export default function Abonnementvip() {
     const [isLoading, setIsLoading] = useState(false);
     const [formData, setFormData] = useState({ file: null });
 
+    const [isAdmin, setIsAdmin] = useState(false);
+    const [isEditingBg, setIsEditingBg] = useState(false);
+    const [bgImage, setBgImage] = useState('https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=2070&auto=format&fit=crop');
+    const [newBgUrl, setNewBgUrl] = useState('');
+
+    React.useEffect(() => {
+        // Check Admin
+        const email = localStorage.getItem('currentUserEmail') || localStorage.getItem('loggedInUserEmail');
+        if (email && email.includes('admin')) setIsAdmin(true);
+
+        // Load Background
+        fetch(`${BASE_URL}/api/settings/vip-page-bg`)
+            .then(res => res.ok ? res.json() : null)
+            .then(data => data && setBgImage(data.value))
+            .catch(() => { });
+    }, []);
+
+    const handleSaveBg = async () => {
+        setBgImage(newBgUrl);
+        setIsEditingBg(false);
+        try {
+            await fetch(`${BASE_URL}/api/settings/vip-page-bg`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ value: newBgUrl })
+            });
+        } catch (err) { }
+    };
+
     const vipPlan = {
-        name: 'Abonnement VIP Gold',
+        name: 'Abonnement VIP Elite',
         price: '99',
         currency: 'DT',
         period: '/ mois',
         features: [
-            'Accès illimité à tout le contenu exclusif',
-            'Support technique prioritaire 24/7',
-            'Téléchargement illimité du contenu',
-            'Qualité de visionnage Ultra HD (4K)',
-            'Certification de complétion Master Atelier',
+            'Accès illimité aux cours exclusifs',
+            'Support prioritaire 24/7',
+            'Téléchargement des ressources',
+            'Qualité Ultra HD (4K)',
+            'Certificat Master Atelier',
+            'Accès aux nouveaux patrons'
         ],
     };
 
     const scrollToPayment = () => {
-        paymentSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        paymentSectionRef.current.scrollIntoView({ behavior: 'smooth' });
     };
 
     const handleVerification = () => {
@@ -205,141 +165,177 @@ export default function Abonnementvip() {
     };
 
     return (
-        <div className="vip-page-wrapper">
+        <div className="vip-premium-container" style={{
+            background: `linear-gradient(rgba(252, 252, 253, 0.95), rgba(252, 252, 253, 0.97)), url(${bgImage}) center/cover fixed`
+        }}>
             <Navbar />
 
-            {/* --- HERO SECTION --- */}
-            <div className="vip-hero-header">
-                <div className="vip-hero-bg-overlay"></div>
-                <div className="vip-hero-content-reveal">
-                    <div className="vip-badge-float">
-                        <FaCrown />
-                    </div>
-                    <h1 className="vip-main-glow-title">
-                        DEVENIR <span className="gold-accent-text">VIP GOLD</span>
-                    </h1>
-                    <p className="vip-hero-subtitle">
-                        Rejoignez l'élite de la couture et accédez à tout l'univers Master Atelier.
-                    </p>
+            {isAdmin && (
+                <div style={{ position: 'fixed', top: '100px', right: '20px', zIndex: 1000 }}>
+                    <button className="edit-btn-minimal-lux" onClick={() => { setIsEditingBg(true); setNewBgUrl(bgImage); }}>
+                        <FaEdit /> Background
+                    </button>
                 </div>
-            </div>
+            )}
 
-            <div className="vip-main-content-container">
+            {/* --- HERO --- */}
+            <header className="vip-hero-section">
+                <div className="vip-hero-badge">
+                    <FaCrown /> <span>Édition Limitée</span>
+                </div>
+                <h1 className="vip-title-reveal">
+                    L'EXCELLENCE DE LA <span>COUTURE VIP</span>
+                </h1>
+                <p className="vip-subtitle-elegant">
+                    Élevez votre savoir-faire avec notre programme exclusif Master Atelier.
+                    L'élégance et la précision au service de votre passion.
+                </p>
+            </header>
 
-                {/* --- PRICING CARD --- */}
-                <div className="vip-premium-pricing-card">
-                    <div className="vip-card-header-accent">
-                        <FaRegGem /> <span>PREMIUM ACCESS</span>
-                    </div>
-                    <h2 className="vip-plan-name-label">{vipPlan.name}</h2>
-
-                    <div className="vip-price-tag-wrapper">
+            {/* --- PRICING --- */}
+            <section className="vip-pricing-grid-luxury">
+                <div className="luxury-card">
+                    <h2 className="luxury-card-title">{vipPlan.name}</h2>
+                    <div className="luxury-price-box">
                         <span className="currency">{vipPlan.currency}</span>
                         <span className="amount">{vipPlan.price}</span>
                         <span className="period">{vipPlan.period}</span>
                     </div>
 
-                    <div className="vip-features-grid-list">
-                        {vipPlan.features.map((f, i) => (
-                            <div key={i} className="vip-feature-row-item">
-                                <div className="feature-check-circle"><FaCheck /></div>
-                                <span className="feature-text-label">{f}</span>
-                            </div>
+                    <ul className="luxury-features-list">
+                        {vipPlan.features.map((feature, index) => (
+                            <li key={index} className="luxury-feature-item">
+                                <FaCheck />
+                                <span>{feature}</span>
+                            </li>
                         ))}
-                    </div>
+                    </ul>
 
-                    <button className="vip-cta-gold-button" onClick={scrollToPayment}>
-                        <FaRocket style={{ marginRight: '10px' }} /> Souscrire maintenant
+                    <button className="luxury-cta-btn" onClick={scrollToPayment}>
+                        <FaRocket /> Obtenir l'Accès Élite
                     </button>
 
-                    <p className="secure-payment-hint">🛡️ Paiement sécurisé & Vérification garantie</p>
-                </div>
-
-                {/* --- PAYMENT METHODS --- */}
-                <div className="vip-payment-methods-section" ref={paymentSectionRef}>
-                    <div className="section-divider-header">
-                        <div className="line"></div>
-                        <h2 className="methods-title-label">Modes de Paiement</h2>
-                        <div className="line"></div>
-                    </div>
-
-                    <div className="payment-grid-layout">
-                        <PaymentMethodCard
-                            icon={<FaMobileAlt />}
-                            name="Applications Mobiles (D17 & Flouci)"
-                            onVerifyClick={handleVerification}
-                            details={
-                                <>
-                                    Transférez <strong>{vipPlan.price} {vipPlan.currency}</strong> au numéro suivant via
-                                    <strong> D17 </strong> ou <strong> Flouci </strong>:
-                                    <div className="payment-id-highlight">+216 ** *** ***</div>
-                                </>
-                            }
-                        />
-
-                        <PaymentMethodCard
-                            icon={<FaUniversity />}
-                            name="Virement Bancaire (RIB)"
-                            onVerifyClick={handleVerification}
-                            details={
-                                <>
-                                    RIB: <strong>08 000 000 0000 0000 00 00</strong>
-                                    <p className="beneficiary-label">Titulaire : L'Atelier Sfax</p>
-                                </>
-                            }
-                        />
-
-                        <PaymentMethodCard
-                            icon={<FaEnvelopeOpenText />}
-                            name="Mandat Postal Classique"
-                            onVerifyClick={handleVerification}
-                            details={
-                                <>
-                                    À l'ordre de : <strong>Nom Prénom Complet</strong>
-                                    <p className="postal-address-label">Adresse : Rue Farhat Hached, Sfax</p>
-                                </>
-                            }
-                        />
+                    <div style={{ marginTop: '25px', color: '#94a3b8', fontSize: '0.9rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                        <FaShieldAlt /> Paiement 100% Sécurisé
                     </div>
                 </div>
-            </div>
+            </section>
 
-            {/* --- UPLOAD MODAL --- */}
-            {showModal && (
-                <div className="premium-modal-backdrop" onClick={() => setShowModal(false)}>
-                    <div className="premium-modal-content" onClick={(e) => e.stopPropagation()}>
-                        <button className="premium-modal-close-icon" onClick={() => setShowModal(false)} disabled={isLoading}>
-                            <FaTimes />
+            {/* --- METHODS --- */}
+            <section className="vip-methods-section-premium" ref={paymentSectionRef}>
+                <h2 className="section-title-elegant">Modes de Règlement</h2>
+
+                <div className="luxury-methods-grid">
+                    {/* D17 / Flouci */}
+                    <div className="method-luxury-card">
+                        <div className="method-header-box">
+                            <div className="method-icon-circle"><FaMobileAlt /></div>
+                            <h3 className="method-name-label">Apps Mobiles (D17 & Flouci)</h3>
+                        </div>
+                        <div className="method-details-box">
+                            Veuillez transférer <strong>{vipPlan.price} {vipPlan.currency}</strong> vers notre identifiant sécurisé.
+                            <div className="highlight-id-luxury">+216 ** *** ***</div>
+                        </div>
+                        <button className="verify-luxury-btn" onClick={handleVerification}>
+                            <FaCloudUploadAlt /> Envoyer la preuve
                         </button>
+                    </div>
 
-                        <div className="premium-modal-header">
-                            <div className="vip-cert-icon-wrapper" style={{ margin: '0 auto 15px', background: 'rgba(212, 175, 55, 0.1)', color: '#d4af37' }}>
-                                <FaAward />
+                    {/* RIB */}
+                    <div className="method-luxury-card">
+                        <div className="method-header-box">
+                            <div className="method-icon-circle"><FaUniversity /></div>
+                            <h3 className="method-name-label">Virement Bancaire (RIB)</h3>
+                        </div>
+                        <div className="method-details-box">
+                            Utilisez les coordonnées ci-dessous pour votre virement bancaire.
+                            <div className="highlight-id-luxury">RIB: 08 000 000...</div>
+                            <p style={{ marginTop: '10px' }}><strong>Bénéficiaire :</strong> L'Atelier Sfax</p>
+                        </div>
+                        <button className="verify-luxury-btn" onClick={handleVerification}>
+                            <FaCloudUploadAlt /> Envoyer la preuve
+                        </button>
+                    </div>
+
+                    {/* Mandat */}
+                    <div className="method-luxury-card">
+                        <div className="method-header-box">
+                            <div className="method-icon-circle"><FaEnvelopeOpenText /></div>
+                            <h3 className="method-name-label">Mandat Postal</h3>
+                        </div>
+                        <div className="method-details-box">
+                            Libellez votre mandat à l'ordre suivant et présentez-vous au bureau de poste.
+                            <div className="highlight-id-luxury">Nom & Prénom Complet</div>
+                            <p style={{ marginTop: '10px' }}><strong>Adresse :</strong> Rue Farhat Hached, Sfax</p>
+                        </div>
+                        <button className="verify-luxury-btn" onClick={handleVerification}>
+                            <FaCloudUploadAlt /> Envoyer la preuve
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            {/* SUCCESS SLIDE */}
+            {showSuccess && (
+                <div style={{
+                    position: 'fixed', bottom: '40px', right: '40px',
+                    background: '#10b981', color: '#fff', padding: '25px 40px',
+                    borderRadius: '25px', boxShadow: '0 20px 40px rgba(16, 185, 129, 0.3)',
+                    zIndex: 10000, animation: 'luxuryModalIn 0.5s ease-out'
+                }}>
+                    <strong style={{ fontSize: '1.2rem', display: 'block' }}>Félicitations !</strong>
+                    <span>Votre demande a été envoyée. Activation sous 2h.</span>
+                </div>
+            )}
+
+            {/* MODAL */}
+            {showModal && (
+                <div className="modal-overlay" style={{ backdropFilter: 'blur(10px)', transition: 'all 0.4s' }}>
+                    <div className="luxury-modal-content">
+                        <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+                            <div className="method-icon-circle" style={{ margin: '0 auto 20px', background: 'rgba(197, 160, 40, 0.1)' }}>
+                                <FaGem />
                             </div>
-                            <h2 className="premium-modal-title">Preuve de Paiement</h2>
+                            <h2 className="luxury-card-title" style={{ margin: 0 }}>Vérification VIP</h2>
+                            <p style={{ color: '#64748b', marginTop: '10px' }}>Glissez votre preuve de paiement ci-dessous</p>
                         </div>
 
-                        <form onSubmit={handleSubmit} className="premium-form-grid" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                            <div style={{ textAlign: 'center', color: '#64748b', fontSize: '1rem', lineHeight: '1.6' }}>
-                                Veuillez nous envoyer une photo ou capture d'écran claire de votre transaction.
-                            </div>
+                        <form onSubmit={handleSubmit}>
+                            {errorMsg && (
+                                <div style={{ background: '#fef2f2', color: '#b91c1c', padding: '15px', borderRadius: '15px', marginBottom: '20px', textAlign: 'center', border: '1px solid #fee2e2' }}>
+                                    {errorMsg}
+                                </div>
+                            )}
 
-                            {errorMsg && <div className="premium-error-alert" style={{ background: '#fef2f2', color: '#b91c1c', padding: '12px', borderRadius: '12px', textAlign: 'center', fontSize: '0.9rem', border: '1px solid #fee2e2' }}>⚠️ {errorMsg}</div>}
-
-                            <div className="premium-form-group">
-                                <FileUploadField
-                                    file={formData.file}
+                            <label style={{
+                                display: 'flex', flexDirection: 'column', alignItems: 'center',
+                                gap: '15px', padding: '40px', border: '2px dashed #e2e8f0',
+                                borderRadius: '25px', cursor: 'pointer', transition: 'all 0.3s',
+                                background: '#f8fafc'
+                            }}
+                                onMouseEnter={(e) => e.currentTarget.style.borderColor = '#c5a028'}
+                                onMouseLeave={(e) => e.currentTarget.style.borderColor = '#e2e8f0'}
+                            >
+                                <FaCloudUploadAlt style={{ fontSize: '3rem', color: '#94a3b8' }} />
+                                <span style={{ fontWeight: '600', color: '#475569' }}>
+                                    {formData.file ? formData.file.name : "Cliquez pour sélectionner un fichier"}
+                                </span>
+                                <input
+                                    type="file"
+                                    name="file"
+                                    accept="image/*"
                                     onChange={handleChange}
-                                    hasError={!!errorMsg}
+                                    style={{ display: 'none' }}
+                                    required
                                 />
-                            </div>
+                            </label>
 
-                            <div className="premium-btn-group">
-                                <button type="button" onClick={() => setShowModal(false)} className="premium-btn-cta secondary" disabled={isLoading}>
-                                    Annuler
+                            <div style={{ display: 'flex', gap: '15px', marginTop: '40px' }}>
+                                <button type="button" className="verify-luxury-btn" onClick={() => setShowModal(false)} disabled={isLoading}>
+                                    Fermer
                                 </button>
-                                <button type="submit" className="premium-btn-cta gold" disabled={isLoading || !formData.file}>
-                                    {isLoading ? 'Envoi en cours...' : 'Confirmer l\'Abonnement'}
+                                <button type="submit" className="luxury-cta-btn" style={{ padding: '15px' }} disabled={isLoading}>
+                                    {isLoading ? 'Envoi...' : 'Confirmer'}
                                 </button>
                             </div>
                         </form>
@@ -347,14 +343,23 @@ export default function Abonnementvip() {
                 </div>
             )}
 
-            {/* --- SUCCESS MODAL --- */}
-            {showSuccess && (
-                <div className="vip-success-toast-overlay">
-                    <div className="vip-success-toast-box">
-                        <div className="toast-icon-check"><FaCheck /></div>
-                        <div className="toast-content-text">
-                            <h3>Demande Envoyée !</h3>
-                            <p>Votre preuve est en cours de vérification. Activation prévue sous 1 à 2 heures.</p>
+            {isEditingBg && (
+                <div className="premium-modal-backdrop" onClick={() => setIsEditingBg(false)}>
+                    <div className="premium-modal-content" onClick={(e) => e.stopPropagation()}>
+                        <button className="premium-modal-close-icon" onClick={() => setIsEditingBg(false)}><FaTimes /></button>
+                        <h2 className="premium-modal-title">Changer l'image de fond</h2>
+                        <div className="premium-form-group" style={{ marginBottom: '20px' }}>
+                            <label>URL de l'image</label>
+                            <input
+                                type="text"
+                                value={newBgUrl}
+                                onChange={(e) => setNewBgUrl(e.target.value)}
+                                placeholder="https://..."
+                            />
+                        </div>
+                        <div className="premium-btn-group">
+                            <button className="premium-btn-cta secondary" onClick={() => setIsEditingBg(false)}>Annuler</button>
+                            <button className="premium-btn-cta gold" onClick={handleSaveBg}><FaSave /> Enregistrer</button>
                         </div>
                     </div>
                 </div>

@@ -17,7 +17,6 @@ const translations = {
         badge: "دخول حصري",
         title: "الوصول لـ",
         accent: "الورشة الماستر VIP",
-        subtitle: "افتح دورات حصرية وحوّل شغفك إلى خبرة تحت إشراف خبراء الخياطة.",
         loading: "جاري تحميل المجموعات المتميزة...",
         error: "فشل في تحميل البيانات. الرجاء المحاولة لاحقًا.",
         button: "ابدأ الدورة الآن",
@@ -43,7 +42,6 @@ const translations = {
         badge: "ACCÈS EXCLUSIF",
         title: "ACCÈS",
         accent: "MASTER ATELIER VIP",
-        subtitle: "Débloquez des cours exclusifs et transformez votre passion en expertise professionnelle.",
         loading: "Chargement des collections premium...",
         error: "Échec du chargement. Veuillez réessayer plus tard.",
         button: "Commencer le cours",
@@ -69,7 +67,6 @@ const translations = {
         badge: "EXCLUSIVE ACCESS",
         title: "VIP",
         accent: "MASTER ATELIER ACCESS",
-        subtitle: "Unlock exclusive courses and transform your passion into professional expertise.",
         loading: "Loading premium collections...",
         error: "Failed to load data. Please try again later.",
         button: "Start Course Now",
@@ -102,9 +99,9 @@ export default function Vipaccess() {
     const { showAlert } = useAlert();
 
     const [vipHeroSettings, setVipHeroSettings] = useState({
-        fr: { badge: "ACCÈS EXCLUSIF", title: "ACCÈS", accent: "MASTER ATELIER VIP", subtitle: "Débloquez des cours exclusifs et transformez votre passion en expertise professionnelle." },
-        ar: { badge: "دخول حصري", title: "الوصول لـ", accent: "الورشة الماستر VIP", subtitle: "افتح دورات حصرية وحوّل شغفك إلى خبرة تحت إشراف خبراء الخياطة." },
-        en: { badge: "EXCLUSIVE ACCESS", title: "VIP", accent: "MASTER ATELIER ACCESS", subtitle: "Unlock exclusive courses and transform your passion into professional expertise." }
+        fr: { badge: "ACCÈS EXCLUSIF", title: "ACCÈS", accent: "MASTER ATELIER VIP", heroImage: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=2070&auto=format&fit=crop' },
+        ar: { badge: "دخول حصري", title: "الوصول لـ", accent: "الورشة الماستر VIP", heroImage: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=2070&auto=format&fit=crop' },
+        en: { badge: "EXCLUSIVE ACCESS", title: "VIP", accent: "MASTER ATELIER ACCESS", heroImage: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=2070&auto=format&fit=crop' }
     });
 
     const [isEditingVipHero, setIsEditingVipHero] = useState(false);
@@ -253,17 +250,28 @@ export default function Vipaccess() {
             <Navbar />
 
             {/* --- 🌟 HERO SECTION 🌟 --- */}
-            <header className="vip-hero-premium">
-                {isAdmin && (
-                    <button className="admin-edit-hero-btn admin-edit-master-btn" onClick={() => setIsEditingVipHero(true)}>
-                        <FaEdit /> {appLanguage === 'ar' ? 'تعديل الواجهة' : 'Modifier Hero'}
-                    </button>
-                )}
-                <div className="vip-badge-premium">{currentHero.badge}</div>
-                <h1 className="vip-main-title-premium">
-                    {appLanguage === 'en' ? currentHero.accent : currentHero.title} <span className="accent-text">{appLanguage === 'en' ? currentHero.title : currentHero.accent}</span>
-                </h1>
-                <p className="vip-sub-text-premium">{currentHero.subtitle}</p>
+            <header
+                className="vip-hero-premium"
+                style={{
+                    backgroundImage: `linear-gradient(rgba(15, 23, 42, 0.6), rgba(15, 23, 42, 0.4)), url(${currentHero.heroImage || 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=2070&auto=format&fit=crop'})`
+                }}
+            >
+                <div className="vip-hero-overlay"></div>
+
+                <div className="container" style={{ position: 'relative', zIndex: 10 }}>
+                    <div className="vip-badge-premium">{currentHero.badge}</div>
+                    <h1 className="vip-main-title-premium">
+                        {appLanguage === 'en' ? currentHero.accent : currentHero.title} <span className="accent-text">{appLanguage === 'en' ? currentHero.title : currentHero.accent}</span>
+                    </h1>
+
+                    <div style={{ marginTop: '25px', display: 'flex', justifyContent: 'center', gap: '20px', position: 'relative', zIndex: 20, flexWrap: 'wrap' }}>
+                        {isAdmin && (
+                            <button className="edit-btn-minimal-lux" onClick={() => setIsEditingVipHero(true)}>
+                                <FaEdit size={14} /> {appLanguage === 'ar' ? 'تعديل الواجهة' : 'Modifier'}
+                            </button>
+                        )}
+                    </div>
+                </div>
             </header>
 
             {/* --- 🏛️ CATEGORIES GRID 🏛️ --- */}
@@ -454,10 +462,12 @@ export default function Vipaccess() {
                                         />
                                     </div>
                                     <div className="premium-form-group">
-                                        <label>Subtitle</label>
-                                        <textarea
-                                            value={editVipHeroData[lang].subtitle}
-                                            onChange={(e) => setEditVipHeroData({ ...editVipHeroData, [lang]: { ...editVipHeroData[lang], subtitle: e.target.value } })}
+                                        <label>URL Image de Fond</label>
+                                        <input
+                                            type="text"
+                                            value={editVipHeroData[lang].heroImage || ''}
+                                            onChange={(e) => setEditVipHeroData({ ...editVipHeroData, [lang]: { ...editVipHeroData[lang], heroImage: e.target.value } })}
+                                            placeholder="https://..."
                                         />
                                     </div>
                                 </div>

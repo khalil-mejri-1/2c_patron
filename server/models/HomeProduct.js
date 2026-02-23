@@ -5,7 +5,7 @@ const homeProductSchema = new mongoose.Schema(
     nom: { type: String, required: true },
     image: { type: String, required: true },
     prix: { type: Number, required: true },
-    categorie: { type: String, required: true },
+    categorie: { type: String, default: 'General' },
     isFeatured: { type: Boolean, default: false },
     description: { type: String, default: "" }
   },

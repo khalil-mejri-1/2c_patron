@@ -3,19 +3,37 @@
 /* ========================================= */
 
 .courses-premium-page {
-    background-color: #ededed;
+    background-color: #e0e0e0;
     min-height: 100vh;
 }
 
 /* --- ✨ HERO SECTION ✨ --- */
 .course-hero-premium {
-    padding: 180px 20px 120px;
-    background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)),
-        url('https://images.unsplash.com/photo-1512436991641-6745cdb1723f?q=80&w=2670&auto=format&fit=crop') center/cover no-repeat;
-    text-align: center;
-    color: #fff;
+    height: 60vh;
+    min-height: 500px;
     position: relative;
-    margin-bottom: 80px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    clip-path: polygon(0 0, 100% 0, 100% 90%, 0 100%);
+    color: #fff;
+    overflow: visible;
+    margin-bottom: 0;
+}
+
+.course-hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(rgba(15, 23, 42, 0.6), rgba(15, 23, 42, 0.4));
+    backdrop-filter: none;
+    z-index: 1;
+    pointer-events: none;
 }
 
 .course-hero-premium::after {
@@ -25,7 +43,6 @@
     left: 0;
     right: 0;
     height: 120px;
-    background: linear-gradient(to top, #fdfbf7, transparent);
     z-index: 2;
 }
 
@@ -41,7 +58,7 @@
     letter-spacing: 3px;
     margin-bottom: 25px;
     text-transform: uppercase;
-    backdrop-filter: blur(10px);
+    backdrop-filter: none;
 }
 
 .course-main-title-premium {
@@ -52,13 +69,6 @@
     font-weight: 700;
 }
 
-.course-sub-text-premium {
-    font-size: 1.25rem;
-    color: rgba(255, 255, 255, 0.9);
-    max-width: 800px;
-    margin: 0 auto;
-    line-height: 1.7;
-}
 
 /* --- 📹 VIDEO INTRODUCTION PREMIUM 📹 --- */
 .premium-video-intro-box {
@@ -392,5 +402,27 @@
         flex-direction: column;
         gap: 20px;
         text-align: center;
+    }
+}
+
+@media (max-width: 768px) {
+    .premium-video-title {
+        font-size: 1.5rem;
+    }
+
+    .premium-video-desc {
+        font-size: 0.9rem;
+    }
+
+    .lessons-section-title {
+        font-size: 2rem;
+    }
+
+    .premium-lessons-grid {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    }
+
+    .l-card-body {
+        padding: 20px;
     }
 }

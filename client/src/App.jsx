@@ -7,7 +7,7 @@ import './global.css'
 import ProductGrid from "./pages/shop.jsx";
 import Vipaccess from "./pages/Vip-access.jsx";
 import Cours from "./pages/cours.jsx";
-import Leçons from "./pages/Leçons.jsx";
+import Lessons from "./pages/Lessons.jsx";
 import Login from "./pages/Login.jsx";
 import Register from "./pages/Register.jsx";
 import About from "./pages/About.jsx";
@@ -95,7 +95,7 @@ function AppContent() {
             <Route path="/Vip-access" element={<Vipaccess />} />
             <Route path="/vip-access" element={<Vipaccess />} />
             <Route path="/cours_Manches/:courseTitle" element={<Cours />} />
-            <Route path="/Leçons/:leconTitle" element={<Leçons />} />
+            <Route path="/Leçons/:leconTitle" element={<Lessons />} />
             <Route path="/register" element={<Register />} />
             <Route path="/Login" element={<Login />} />
             <Route path="/about" element={<About />} />

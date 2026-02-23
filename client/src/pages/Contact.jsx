@@ -11,7 +11,6 @@ const translations = {
     ar: {
         headerTitle: () => `تواصل مع   2C Patron`,
         headerAccent: "الورشة",
-        headerSubtitle: "نحن هنا للإجابة على جميع أسئلتكم المتعلقة بدوراتنا، باتروناتنا، وخدماتنا.",
 
         formTitle: "أرسل لنا رسالة",
         namePlaceholder: "اسمك الكامل",
@@ -38,7 +37,6 @@ const translations = {
     fr: {
         headerTitle: () => `Contactez 2C Patron`,
         headerAccent: "l'Atelier",
-        headerSubtitle: "Nous sommes là pour répondre à toutes vos questions concernant nos cours, patrons et services.",
 
         formTitle: "Envoyez-nous un Message",
         namePlaceholder: "Votre Nom Complet",
@@ -65,7 +63,6 @@ const translations = {
     en: {
         headerTitle: () => `Contact 2C Patron`,
         headerAccent: "the Workshop",
-        headerSubtitle: "We are here to answer all your questions about our courses, patterns, and services.",
 
         formTitle: "Send Us a Message",
         namePlaceholder: "Your Full Name",
@@ -99,7 +96,7 @@ export default function Contact() {
     const [isEditingField, setIsEditingField] = useState(null);
     // Default structure for content
     const defaultStructure = {
-        headerTitle: '', headerAccent: '', headerSubtitle: '', heroImage: '',
+        headerTitle: '', headerAccent: '', heroImage: '',
         formTitle: '', submitBtn: '',
         infoTitle: '', addressValue: '', phoneValue: '', emailValue: '', hoursValue: ''
     };
@@ -245,23 +242,23 @@ export default function Contact() {
                 className="contact-premium-hero"
                 dir={direction}
                 style={{
-                    backgroundImage: `url(${getT('heroImage', 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=2670&auto=format&fit=crop')})`
+                    backgroundImage: `linear-gradient(rgba(15, 23, 42, 0.6), rgba(15, 23, 42, 0.4)), url(${getT('heroImage', 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=2670&auto=format&fit=crop')})`
                 }}
             >
                 <div className="contact-hero-overlay"></div>
-                <EditBtn field="heroImage" style={{ position: 'absolute', top: '20px', right: '20px', zIndex: 10 }} />
 
-                <div className="contact-hero-content">
+                <div className="container" style={{ position: 'relative', zIndex: 10 }}>
                     <div className="contact-hero-badge">
-                        <FaEnvelope /> 2C Patron Studio
+                        {appLanguage === 'ar' ? '2C Patron Studio' : '2C Patron Studio'}
                     </div>
                     <h1 className="contact-glam-title">
-                        {getT('headerTitle', t.headerTitle(''))} <span>{getT('headerAccent', t.headerAccent)}</span>
-                        <EditBtn field="hero" style={{ marginLeft: '15px' }} />
+                        {appLanguage === 'en' ? getT('headerAccent', t.headerAccent) : getT('headerTitle', t.headerTitle(''))}
+                        <span> {appLanguage === 'en' ? getT('headerTitle', t.headerTitle('')) : getT('headerAccent', t.headerAccent)}</span>
                     </h1>
-                    <p className="contact-hero-desc">
-                        {getT('headerSubtitle', t.headerSubtitle)}
-                    </p>
+                    <div style={{ marginTop: '35px', display: 'flex', justifyContent: 'center', gap: '20px', position: 'relative', zIndex: 20, flexWrap: 'wrap' }}>
+                        <EditBtn field="hero" />
+                        <EditBtn field="heroImage" />
+                    </div>
                 </div>
             </header>
 
@@ -462,14 +459,6 @@ export default function Contact() {
                                                     type="text"
                                                     value={editContactContent[lang.code]?.headerAccent || ''}
                                                     onChange={e => setEditContactContent({ ...editContactContent, [lang.code]: { ...editContactContent[lang.code], headerAccent: e.target.value } })}
-                                                />
-                                            </div>
-                                            <div className="premium-form-group">
-                                                <label>Sous-Titre</label>
-                                                <textarea
-                                                    value={editContactContent[lang.code]?.headerSubtitle || ''}
-                                                    onChange={e => setEditContactContent({ ...editContactContent, [lang.code]: { ...editContactContent[lang.code], headerSubtitle: e.target.value } })}
-                                                    style={{ minHeight: '80px' }}
                                                 />
                                             </div>
                                         </>
