@@ -16,9 +16,9 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-// const path = require('path'); // ❌ تم إلغاؤه
-// const fs = require('fs'); // ❌ تم إلغاؤه
-// const multer = require('multer'); // ❌ تم إلغاؤه
+const path = require('path');
+const fs = require('fs');
+const multer = require('multer');
 
 const Command = require('./models/command.js');
 // استيراد النماذج
@@ -47,13 +47,23 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true })); // ✅ ضروري لقراءة form-data
 
 
-// ❌ تم حذف جميع إعدادات Multer (storage, upload, imageStorage, uploadImage)
+// -------------------- Multer Configuration --------------------
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        const dir = './uploads/specialized-videos';
+        if (!fs.existsSync(dir)) {
+            fs.mkdirSync(dir, { recursive: true });
+        }
+        cb(null, dir);
+    },
+    filename: (req, file, cb) => {
+        cb(null, Date.now() + '-' + file.originalname);
+    }
+});
+const upload = multer({ storage });
 
-// ❌ تم حذف مسار الملفات الثابتة /uploads لأنه لم يعد هناك رفع محلي
-// app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
-
-// -------------------- نهاية إعداد Multer --------------------
+// Serve uploads directory
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 
 // --- B. MONGODB CONNECTION SETUP ---
@@ -1157,11 +1167,13 @@ app.get('/api/specialized-courses', async (req, res) => {
     try {
         const query = {};
 
-        // إذا تم تمرير اسم الفئة كـ query parameter
         if (req.query.category) {
             const categoryName = req.query.category;
-            // جلب فقط المجموعات التي تحتوي على courses بنفس الاسم
-            query['courses.vip_category'] = categoryName;
+            // التحقق في المستوى العلوي أو داخل مصفوفة الكورسات (للتوافق مع البيانات القديمة)
+            query.$or = [
+                { vip_category: categoryName },
+                { 'courses.vip_category': categoryName }
+            ];
         }
 
         const courses = await SpecializedCourse.find(query).sort({ createdAt: -1 });
@@ -1173,19 +1185,44 @@ app.get('/api/specialized-courses', async (req, res) => {
     }
 });
 
+// 2. GET by ID
+app.get('/api/specialized-courses/:id', async (req, res) => {
+    try {
+        const course = await SpecializedCourse.findById(req.params.id);
+        if (!course) return res.status(404).json({ message: 'Cours non trouvé' });
+        res.json(course);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
 
 
 // 3. PUT (Mettre à jour un cours)
 app.put('/api/specialized-courses/:id', async (req, res) => {
     try {
+        const dataToUpdate = { ...req.body };
+
+        // إذا تم تحديث الاسم الرئيسي، نقوم بتحديثه أيضاً داخل مصفوفة الكورسات لضمان التزامن
+        if (dataToUpdate.vip_category) {
+            const group = await SpecializedCourse.findById(req.params.id);
+            if (group && group.courses) {
+                group.courses.forEach(c => {
+                    c.vip_category = dataToUpdate.vip_category;
+                });
+                dataToUpdate.courses = group.courses;
+            }
+        }
+
         const updatedCourse = await SpecializedCourse.findByIdAndUpdate(
             req.params.id,
-            req.body,
+            dataToUpdate,
             { new: true, runValidators: true }
         );
         if (!updatedCourse) return res.status(404).json({ message: 'Cours non trouvé' });
         res.json(updatedCourse);
     } catch (err) {
+        console.error("Error in PUT /api/specialized-courses:", err);
         res.status(400).json({ message: err.message });
     }
 });
@@ -1215,17 +1252,21 @@ app.post('/api/specialized-courses/group', async (req, res) => {
         // نأخذ اسم الفئة من أول كورس
         const vipCategoryName = courses[0].vip_category;
 
-        // البحث عن مجموعة موجودة بنفس الاسم
-        let existingGroup = await SpecializedCourse.findOne({ 'courses.vip_category': vipCategoryName });
+        // البحث عن مجموعة موجودة بنفس الاسم (تحقق من المستوى العلوي أو المصفوفة)
+        let existingGroup = await SpecializedCourse.findOne({
+            $or: [
+                { vip_category: vipCategoryName },
+                { 'courses.vip_category': vipCategoryName }
+            ]
+        });
 
         if (existingGroup) {
-            // إضافة الكورسات الجديدة
             existingGroup.courses.push(...courses);
-
-            // تحديث الفيديو إذا تم إدخاله
             if (video_link && video_link.trim() !== '') {
                 existingGroup.video_link = video_link;
             }
+            // ضمان وجود الاسم في المستوى العلوي أيضاً
+            existingGroup.vip_category = vipCategoryName;
 
             await existingGroup.save();
             return res.status(200).json({ message: 'Cours ajoutés à la catégorie existante.', data: existingGroup });
@@ -1235,10 +1276,10 @@ app.post('/api/specialized-courses/group', async (req, res) => {
         const newGroup = new SpecializedCourse({
             video_link,
             courses,
+            vip_category: vipCategoryName
         });
 
         await newGroup.save();
-
         res.status(201).json({ message: 'Nouvelle catégorie créée avec succès.', data: newGroup });
 
     } catch (error) {
@@ -1257,40 +1298,61 @@ app.post('/api/specialized-courses/group', async (req, res) => {
 
 
 
-app.post('/api/specialized-videos/', async (req, res) => {
-
-    // 1. Désormais, pas de gestion de fichier uploadé
-    const { title, description, category, videoUrl } = req.body; // 💡 videoUrl est le nouveau champ
-
-    // 2. Vérification des données (y compris la nouvelle URL)
-    if (!videoUrl || !title || !category) {
-        // Le message d'erreur est mis à jour
-        return res.status(400).json({ message: "Le titre, la catégorie et l'URL de la vidéo sont obligatoires." });
-    }
-
+app.post('/api/specialized-videos', upload.fields([
+    { name: 'video_fr', maxCount: 1 },
+    { name: 'video_ar', maxCount: 1 },
+    { name: 'video_en', maxCount: 1 },
+    { name: 'video', maxCount: 1 }
+]), async (req, res) => {
     try {
-        // 3. Sauvegarder les métadonnées dans MongoDB
-        // Le champ 'url' dans le modèle va maintenant stocker l'URL du lien.
-        const newVideo = new SpecializedVideo({ // Renommé 'SpecializedVideo' ici pour correspondre à votre usage dans la route
-            url: videoUrl, // 💡 Stocke l'URL externe fournie par l'utilisateur
+        const { title, description, category, videoUrl, title_lang, status_lang, url_lang } = req.body;
+
+        // 1. Handle Main URL
+        let finalUrl = videoUrl;
+        if (req.files['video']) {
+            finalUrl = `/uploads/specialized-videos/${req.files['video'][0].filename}`;
+        }
+
+        // 2. Handle Multi-lang URLs
+        let finalUrlLang = typeof url_lang === 'string' ? JSON.parse(url_lang) : (url_lang || {});
+        ['fr', 'ar', 'en'].forEach(lang => {
+            if (req.files[`video_${lang}`]) {
+                finalUrlLang[lang] = `/uploads/specialized-videos/${req.files[`video_${lang}`][0].filename}`;
+            }
+        });
+
+        if (!finalUrl && !finalUrlLang.fr && !finalUrlLang.ar && !finalUrlLang.en && !title && !category) {
+            return res.status(400).json({ message: "Les données sont incomplètes." });
+        }
+
+        const newVideo = new SpecializedVideo({
+            url: finalUrl || finalUrlLang.fr || finalUrlLang.ar || finalUrlLang.en || "",
+            url_lang: finalUrlLang,
             title,
             description,
-            category
+            category,
+            title_lang: typeof title_lang === 'string' ? JSON.parse(title_lang) : title_lang,
+            status_lang: typeof status_lang === 'string' ? JSON.parse(status_lang) : status_lang
         });
 
         await newVideo.save();
-
-        res.status(201).json({
-            message: "Vidéo ajoutée avec succès via lien URL.",
-            data: newVideo
-        });
-    } catch (dbErr) {
-        console.error(dbErr);
-        // Plus besoin de fs.unlink car aucun fichier local n'est uploadé
-        res.status(500).json({ message: "Erreur serveur lors de la sauvegarde des données." });
+        res.status(201).json({ message: "Vidéo ajoutée avec succès.", data: newVideo });
+    } catch (err) {
+        console.error("Erreur lors de l'ajout de la vidéo :", err);
+        res.status(500).json({ message: "Erreur serveur." });
     }
 });
 
+// Optional: A dedicated upload route if needed, but the above POST handles it.
+app.post('/api/specialized-videos/upload', upload.single('video'), (req, res) => {
+    if (!req.file) {
+        return res.status(400).json({ message: "Aucun fichier n'a été téléchargé." });
+    }
+    res.status(200).json({
+        message: "Fichier téléchargé avec succès.",
+        filePath: `/uploads/specialized-videos/${req.file.filename}`
+    });
+});
 
 
 // 📋 Récupérer toutes les vidéos ou filtrer par catégorie
@@ -1310,37 +1372,45 @@ app.get('/api/specialized-videos', async (req, res) => {
     }
 });
 
-// ✅ Mettre à jour une vidéo spécialisée par ID (تم تعديل المسار لإزالة معالجة Multer)
-app.put('/api/specialized-videos/:id', async (req, res) => {
+// ✅ Mettre à jour une vidéo spécialisée par ID
+app.put('/api/specialized-videos/:id', upload.fields([
+    { name: 'video_fr', maxCount: 1 },
+    { name: 'video_ar', maxCount: 1 },
+    { name: 'video_en', maxCount: 1 },
+    { name: 'video', maxCount: 1 }
+]), async (req, res) => {
     try {
-        const { title, description, category, videoUrl } = req.body; // 💡 videoUrl هو الحقل الجديد
-
-        if (!title || !category) {
-            return res.status(400).json({ message: "Les champs 'title' et 'category' sont requis." });
-        }
+        const { title, description, category, videoUrl, title_lang, status_lang, url_lang } = req.body;
 
         const videoId = req.params.id;
-
-        // 🔍 تحقق من أن الـ ID صالح
         if (!videoId.match(/^[0-9a-fA-F]{24}$/)) {
             return res.status(400).json({ message: "ID de vidéo invalide." });
         }
 
-        // 🔄 إعداد البيانات لتحديثها
         const updateData = {
-            title: title.trim(),
+            title: title?.trim(),
             description: description?.trim() || '',
-            category: category.trim(),
+            category: category?.trim(),
+            title_lang: typeof title_lang === 'string' ? JSON.parse(title_lang) : title_lang,
+            status_lang: typeof status_lang === 'string' ? JSON.parse(status_lang) : status_lang
         };
 
-        // 💡 إضافة/تحديث حقل الرابط الجديد
-        if (videoUrl) {
+        // Handle Main URL
+        if (req.files['video']) {
+            updateData.url = `/uploads/specialized-videos/${req.files['video'][0].filename}`;
+        } else if (videoUrl) {
             updateData.url = videoUrl;
         }
 
-        // ❌ تم حذف محاولة حذف الملف القديم (fs.unlinkSync)
+        // Handle Multi-lang URLs
+        let finalUrlLang = typeof url_lang === 'string' ? JSON.parse(url_lang) : (url_lang || {});
+        ['fr', 'ar', 'en'].forEach(lang => {
+            if (req.files[`video_${lang}`]) {
+                finalUrlLang[lang] = `/uploads/specialized-videos/${req.files[`video_${lang}`][0].filename}`;
+            }
+        });
+        updateData.url_lang = finalUrlLang;
 
-        // 🧩 تحديث الفيديو في قاعدة البيانات
         const updatedVideo = await SpecializedVideo.findByIdAndUpdate(
             videoId,
             updateData,
@@ -1352,10 +1422,9 @@ app.put('/api/specialized-videos/:id', async (req, res) => {
         }
 
         res.json({ message: "✅ Vidéo mise à jour avec succès.", data: updatedVideo });
-
     } catch (error) {
         console.error("Erreur lors de la mise à jour :", error);
-        res.status(500).json({ message: "Erreur serveur lors de la mise à jour de la vidéo." });
+        res.status(500).json({ message: "Erreur serveur." });
     }
 });
 

@@ -142,15 +142,83 @@
 .contact-form-premium-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 0px;
-    margin-bottom: -50px;
+    gap: 25px;
 }
 
 .premium-form-group {
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    position: relative;
+    gap: 12px;
+}
+
+.premium-form-group label {
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-muted);
+    padding-left: 5px;
+}
+
+[dir="rtl"] .premium-form-group label {
+    padding-left: 0;
+    padding-right: 5px;
+}
+
+.premium-form-group input,
+.premium-form-group textarea {
+    width: 100%;
+    padding: 16px 20px 16px 50px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    font-size: 1rem;
+    color: var(--text-main);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    outline: none;
+    font-family: inherit;
+}
+
+[dir="rtl"] .premium-form-group input,
+[dir="rtl"] .premium-form-group textarea {
+    padding: 16px 50px 16px 20px;
+}
+
+.premium-form-group textarea {
+    padding-left: 20px;
+    resize: none;
+}
+
+[dir="rtl"] .premium-form-group textarea {
+    padding-right: 20px;
+}
+
+.premium-form-group input:focus,
+.premium-form-group textarea:focus {
+    background: #fff;
+    border-color: var(--gold);
+    box-shadow: 0 10px 25px -5px rgba(212, 175, 55, 0.15);
+    transform: translateY(-2px);
+}
+
+.field-icon-lux {
+    position: absolute;
+    left: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.1rem;
+    color: #94a3b8;
+    pointer-events: none;
+    transition: color 0.3s;
+}
+
+[dir="rtl"] .field-icon-lux {
+    left: auto;
+    right: 20px;
+}
+
+.premium-form-group:focus-within .field-icon-lux {
+    color: var(--gold);
 }
 
 
@@ -384,7 +452,8 @@
     }
 
     .premium-btn-cta-lux {
-        padding: 5px 20px;
+        padding: 20px 20px;
+        margin: auto;
         font-weight: 800;
         font-size: 0.8rem;
         gap: 1px;

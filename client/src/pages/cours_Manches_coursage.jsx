@@ -5,6 +5,8 @@ import Footer from '../comp/Footer';
 import { Link, useParams } from 'react-router-dom';
 import axios from 'axios';
 import BASE_URL from '../apiConfig';
+import '../comp/PremiumSkeleton.css';
+import './vip_premium.css';
 
 export default function Leçons_Manches_coursage() {
     const { leconTitle } = useParams();
@@ -67,7 +69,23 @@ export default function Leçons_Manches_coursage() {
         } catch (e) { console.error(e); }
     };
 
-    if (loading) return <div style={{ textAlign: 'center', marginTop: '100px' }}>Chargement...</div>;
+    if (loading) return (
+        <div className="courses-premium-page">
+            <Navbar />
+            <div className="skeleton-hero dark-skeleton-shimmer"></div>
+            <div className="container-skeleton">
+                <div className="skeleton-text-title skeleton-shimmer" style={{ marginTop: '-80px', position: 'relative', zIndex: 11, width: '40%' }}></div>
+
+                <div className="skeleton-text-title skeleton-shimmer" style={{ width: '30%', height: '50px', marginTop: '100px' }}></div>
+
+                <div className="skeleton-grid">
+                    {[1, 2, 3, 4, 5, 6].map(i => (
+                        <div key={i} className="skeleton-card skeleton-shimmer"></div>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
     if (error) return <div style={{ color: 'red', textAlign: 'center' }}>{error}</div>;
 
     // 🔍 كل مجموعة تحتوي على video_link وداخلها courses[]

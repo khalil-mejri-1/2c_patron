@@ -102,9 +102,6 @@ export default function Admin() {
             <p style={{ color: '#64748b', marginTop: '10px', fontSize: '1.1rem' }}>Bienvenue dans votre espace d'administration premium.</p>
           </div>
           <div style={{ display: 'flex', gap: '15px' }}>
-            <Link to="/admin_products" className="premium-btn-cta gold" style={{ padding: '12px 25px', textDecoration: 'none' }}>
-              <FaPlus /> Nouveau Produit
-            </Link>
           </div>
         </div>
 
@@ -122,13 +119,6 @@ export default function Admin() {
                 count={stats.clients}
                 link="/admin_clients"
                 color="#3b82f6"
-              />
-              <StatCard
-                icon={FaBoxOpen}
-                title="Catalogue Produits"
-                count={stats.products}
-                link="/admin_products"
-                color="#8b5cf6"
               />
               <StatCard
                 icon={FaShoppingCart}
@@ -153,14 +143,6 @@ export default function Admin() {
                 color="#10b981"
                 label={stats.comments > 0 ? "En attente" : ""}
               />
-              <StatCard
-                icon={FaCrown}
-                title="Demandes VIP"
-                count={stats.vipRequests}
-                link="/admin_abonnement"
-                color="#f59e0b"
-                label={stats.vipRequests > 0 ? "À traiter" : ""}
-              />
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '30px' }}>
@@ -170,9 +152,7 @@ export default function Admin() {
                 </h3>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
                   {[
-                    { title: 'Gérer Boutique', desc: 'Produits & Patrons', link: '/admin_products', icon: <FaBoxOpen /> },
                     { title: 'Commandes Client', desc: 'Gestion & Expédition', link: '/admin_command', icon: <FaShoppingCart /> },
-                    { title: 'Espace VIP', desc: 'Contenu & Formations', link: '/admin_espace_vip', icon: <FaCrown /> },
                     { title: 'Commentaires', desc: 'Modération Avis', link: '/admin_commentaire', icon: <FaComments /> }
                   ].map((action, idx) => (
                     <Link key={idx} to={action.link} style={{

@@ -6,6 +6,7 @@ import { NavLink } from 'react-router-dom';
 import axios from 'axios';
 import BASE_URL from '../apiConfig';
 import { useAlert } from '../context/AlertContext';
+import { useLanguage } from '../context/LanguageContext';
 import './vip_premium.css';
 
 // Clé de localStorage pour mémoriser l'état
@@ -91,7 +92,7 @@ const translations = {
 };
 
 export default function Vipaccess() {
-    const [appLanguage, setAppLanguage] = useState('fr');
+    const { appLanguage } = useLanguage();
     const [vipCategories, setVipCategories] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -118,11 +119,6 @@ export default function Vipaccess() {
         duration: ''
     });
 
-    // 1. ⚙️ جلب اللغة من LocalStorage
-    useEffect(() => {
-        const lang = localStorage.getItem('appLanguage') || 'fr';
-        setAppLanguage(lang);
-    }, []);
 
     const t = translations[appLanguage] || translations.fr;
     const direction = appLanguage === 'ar' ? 'rtl' : 'ltr';
@@ -475,10 +471,10 @@ export default function Vipaccess() {
                         </div>
 
                         <div className="premium-btn-group">
-                            <button className="premium-btn-cta secondary" onClick={() => setIsEditingVipHero(false)}>
+                            <button type="button" className="premium-btn-cta secondary" onClick={() => setIsEditingVipHero(false)}>
                                 {appLanguage === 'ar' ? 'إلغاء' : 'Annuler'}
                             </button>
-                            <button className="premium-btn-cta gold" onClick={handleSaveVipHero}>
+                            <button type="button" className="premium-btn-cta gold" onClick={handleSaveVipHero}>
                                 {appLanguage === 'ar' ? 'حفظ التغييرات' : 'Enregistrer'}
                             </button>
                         </div>

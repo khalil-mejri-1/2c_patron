@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import ReactDOM from 'react-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { useAlert } from '../context/AlertContext';
 import {
@@ -1029,7 +1030,7 @@ export default function HeroSection({ isLoggedIn = false, currentUserEmail = '' 
                 </div>
             </section>
 
-            {isOrderModalOpen && selectedProduct && (
+            {isOrderModalOpen && selectedProduct && ReactDOM.createPortal(
                 <OrderModalComponent
                     selectedProduct={selectedProduct}
                     quantity={quantity}
@@ -1040,28 +1041,31 @@ export default function HeroSection({ isLoggedIn = false, currentUserEmail = '' 
                     onOrderSuccess={handleOrderSuccess}
                     onCustomerDataUpdate={handleCustomerDataUpdate}
                     appLanguage={currentLanguage}
-                />
+                />,
+                document.body
             )}
 
-            {isSuccessModalOpen && lastOrderId && (
+            {isSuccessModalOpen && lastOrderId && ReactDOM.createPortal(
                 <SuccessModalComponent
                     lastCommandRef={lastOrderId}
                     closeSuccessModal={closeSuccessModal}
                     handleFeedbackClick={handleFeedbackClick}
                     appLanguage={currentLanguage}
-                />
+                />,
+                document.body
             )}
 
-            {isCommentModalOpen && selectedProduct && (
+            {isCommentModalOpen && selectedProduct && ReactDOM.createPortal(
                 <CommentModalComponent
                     selectedProduct={selectedProduct}
                     closeCommentModal={closeCommentModal}
                     appLanguage={currentLanguage}
                     customerData={customerData}
-                />
+                />,
+                document.body
             )}
             {/* 🛑 Unified Hero Edit Modal */}
-            {isEditingHero && (
+            {isEditingHero && ReactDOM.createPortal(
                 <div className="premium-modal-backdrop" onClick={() => setIsEditingHero(false)}>
                     <div className="premium-modal-content large" onClick={(e) => e.stopPropagation()}>
                         <button className="premium-modal-close-icon" onClick={() => setIsEditingHero(false)}><FaTimes /></button>
@@ -1121,10 +1125,11 @@ export default function HeroSection({ isLoggedIn = false, currentUserEmail = '' 
                             </button>
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
             {/* 🛑 Stylish Add Product Modal */}
-            {isAddingProduct && (
+            {isAddingProduct && ReactDOM.createPortal(
                 <div className="premium-modal-backdrop" onClick={() => setIsAddingProduct(false)}>
                     <div className="premium-modal-content" onClick={(e) => e.stopPropagation()}>
                         <button className="premium-modal-close-icon" onClick={() => setIsAddingProduct(false)}><FaTimes /></button>
@@ -1168,7 +1173,8 @@ export default function HeroSection({ isLoggedIn = false, currentUserEmail = '' 
                             </button>
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </>
     );

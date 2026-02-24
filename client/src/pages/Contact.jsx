@@ -148,18 +148,41 @@ export default function Contact() {
         return (contactContent[appLanguage] && contactContent[appLanguage][key]) || defaultVal;
     };
 
-    const EditBtn = ({ field, style = {} }) => (
-        isAdmin && (
-            <button
-                onClick={() => { setEditContactContent(initializeAllLanguages(contactContent)); setIsEditingField(field); }}
-                className="edit-btn-minimal-lux"
-                title="Modifier"
-                style={style}
-            >
-                <FaEdit size={14} />
-            </button>
-        )
-    );
+    const EditBtn = ({ field, style = {} }) => {
+        const getLabel = () => {
+            if (field === 'hero') return appLanguage === 'ar' ? 'تعديل العنوان' : 'Modifier En-tête';
+            if (field === 'heroImage') return appLanguage === 'ar' ? 'تعديل الصورة' : 'Modifier Image';
+            if (field === 'form') return appLanguage === 'ar' ? 'تعديل النموذج' : 'Modifier Formulaire';
+            if (field === 'info') return appLanguage === 'ar' ? 'تعديل المعلومات' : 'Modifier Infos';
+            return appLanguage === 'ar' ? 'تعديل' : 'Modifier';
+        };
+
+        return (
+            isAdmin && (
+                <button
+                    onClick={() => { setEditContactContent(initializeAllLanguages(contactContent)); setIsEditingField(field); }}
+                    className="edit-btn-minimal-lux"
+                    style={{
+                        ...style,
+                        width: 'auto',
+                        height: 'auto',
+                        borderRadius: '12px',
+                        padding: '10px 18px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px',
+                        fontSize: '0.85rem',
+                        fontWeight: '700',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px'
+                    }}
+                >
+                    <FaEdit size={14} />
+                    <span>{getLabel()}</span>
+                </button>
+            )
+        );
+    };
 
     const t = translations[appLanguage] || translations.fr;
     const direction = appLanguage === 'ar' ? 'rtl' : 'ltr';
@@ -280,7 +303,7 @@ export default function Contact() {
                             <div className="premium-form-group">
                                 <label>{t.namePlaceholder}</label>
                                 <div style={{ position: 'relative' }}>
-                                    <FaUser className="field-icon-lux" style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+                                    <FaUser className="field-icon-lux" />
                                     <input
                                         type="text"
                                         placeholder={t.namePlaceholder}
@@ -295,7 +318,7 @@ export default function Contact() {
                             <div className="premium-form-group">
                                 <label>{t.emailPlaceholder}</label>
                                 <div style={{ position: 'relative' }}>
-                                    <FaEnvelope className="field-icon-lux" style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+                                    <FaEnvelope className="field-icon-lux" />
                                     <input
                                         type="email"
                                         placeholder={t.emailPlaceholder}
@@ -307,20 +330,20 @@ export default function Contact() {
                                     />
                                 </div>
                             </div>
+                        </div>
 
-                            <div className="premium-form-group">
-                                <label>{t.subjectPlaceholder}</label>
-                                <div style={{ position: 'relative' }}>
-                                    <FaEdit className="field-icon-lux" style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
-                                    <input
-                                        type="text"
-                                        placeholder={t.subjectPlaceholder}
-                                        value={subject}
-                                        onChange={(e) => setSubject(e.target.value)}
-                                        required
-                                        disabled={status === 'loading'}
-                                    />
-                                </div>
+                        <div className="premium-form-group" style={{ marginTop: '25px' }}>
+                            <label>{t.subjectPlaceholder}</label>
+                            <div style={{ position: 'relative' }}>
+                                <FaEdit className="field-icon-lux" />
+                                <input
+                                    type="text"
+                                    placeholder={t.subjectPlaceholder}
+                                    value={subject}
+                                    onChange={(e) => setSubject(e.target.value)}
+                                    required
+                                    disabled={status === 'loading'}
+                                />
                             </div>
                         </div>
 

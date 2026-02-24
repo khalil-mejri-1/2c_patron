@@ -143,6 +143,52 @@
     box-shadow: 0 4px 12px rgba(212, 175, 55, 0.1);
 }
 
+/* --- 💎 Premium Modal Buttons --- */
+.premium-btn-cancel {
+    background: #f1f5f9;
+    color: #64748b;
+    border: none;
+    padding: 12px 28px;
+    border-radius: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.premium-btn-cancel:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+    transform: translateY(-1px);
+}
+
+.premium-btn-save {
+    background: linear-gradient(135deg, #D4AF37 0%, #B8860B 100%);
+    color: #fff;
+    border: none;
+    padding: 12px 28px;
+    border-radius: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 10px 20px -5px rgba(212, 175, 55, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-size: 0.95rem;
+}
+
+.premium-btn-save:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 15px 30px -8px rgba(212, 175, 55, 0.4);
+    filter: brightness(1.1);
+}
+
 
 /* ========================================= */
 /* 🔎 Filter Sidebar - Professional & Clean */
@@ -2210,22 +2256,7 @@ form {
 }
 
 
-.product-visual-block {
-    flex: 1.2;
-    border-radius: 40px;
-    overflow: hidden;
-    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.15);
-    position: relative;
-}
 
-.product-visual-block::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 40px;
-    pointer-events: none;
-}
 
 .product-content-block {
     flex: 0.8;
@@ -2239,6 +2270,17 @@ form {
     text-transform: uppercase;
     margin-bottom: 20px;
     display: block;
+}
+
+@media (max-width: 425px) {
+    .product-tag {
+        position: relative;
+        top: 20px;
+    }
+
+    .product-main-title {
+        font-size: 1.5rem;
+    }
 }
 
 .product-main-title {
@@ -2345,6 +2387,31 @@ form {
     }
 }
 
+@media (max-width: 425px) {
+    .product-main-title {
+        font-size: 2rem !important;
+        position: relative;
+        top: 20px;
+
+    }
+
+    .product-main-title span {
+        font-size: 1.4rem !important;
+
+    }
+
+    .product-cta-button {
+        font-size: 0.8rem !important;
+        margin: auto;
+    }
+
+
+}
+
+.premium-modal-title-shop {
+    font-size: 1.5rem !important;
+}
+
 /* ========================================= */
 /* 💀 SKELETON LOADER ANIMATION 💀 */
 /* ========================================= */
@@ -2413,4 +2480,36 @@ form {
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 30px;
     width: 100%;
+}
+
+/* ========================================= */
+/* 🛠️ ADMIN BUTTONS OVERRIDES (TEXT LABELS) */
+/* ========================================= */
+.product-grid-section .edit-btn-minimal-lux {
+    width: auto !important;
+    height: auto !important;
+    border-radius: 50px !important;
+    padding: 10px 20px !important;
+    font-size: 0.85rem !important;
+    font-weight: 700 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.product-grid-section .edit-btn-minimal-lux:hover {
+    transform: translateY(-3px) scale(1.02) !important;
+    background: #d4af37 !important;
+}
+
+/* Fix for sidebar edit button position */
+.filter-sidebar .edit-btn-minimal-lux {
+    top: 15px !important;
+    right: 15px !important;
+}
+
+[dir="rtl"] .filter-sidebar .edit-btn-minimal-lux {
+    right: auto !important;
+    left: 15px !important;
 }

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import { useLanguage } from '../context/LanguageContext';
-import { FaPlay, FaLongArrowAltRight, FaEdit, FaSave, FaTimes } from 'react-icons/fa';
+import { FaPlay, FaLongArrowAltRight, FaEdit, FaSave, FaTimes, FaVideo, FaSpinner } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import BASE_URL from '../apiConfig';
 
@@ -47,13 +48,22 @@ export default function FeaturedProduct() {
     const isRTL = currentLang === 'ar';
 
     const [isAdmin, setIsAdmin] = useState(false);
-    const [featuredData, setFeaturedData] = useState({});
+    const [featuredData, setFeaturedData] = useState({
+        fr: { tag: '', title: '', subtitle: '', description: '', cta: '' },
+        ar: { tag: '', title: '', subtitle: '', description: '', cta: '' },
+        en: { tag: '', title: '', subtitle: '', description: '', cta: '' },
+        videoUrl: "https://streamable.com/e/4k6x0z?",
+        videoType: 'iframe'
+    });
     const [isEditing, setIsEditing] = useState(false);
     const [editData, setEditData] = useState({
         fr: { tag: '', title: '', subtitle: '', description: '', cta: '' },
         ar: { tag: '', title: '', subtitle: '', description: '', cta: '' },
-        en: { tag: '', title: '', subtitle: '', description: '', cta: '' }
+        en: { tag: '', title: '', subtitle: '', description: '', cta: '' },
+        videoUrl: '',
+        videoType: 'iframe'
     });
+    const [isUploading, setIsUploading] = useState(false);
 
     useEffect(() => {
         // Check Admin
@@ -63,12 +73,13 @@ export default function FeaturedProduct() {
         if (currentUser?.statut === 'admin') setIsAdmin(true);
 
         // Fetch Data
-        const localBackup = localStorage.getItem('featured_product_backup');
-        if (localBackup) setFeaturedData(JSON.parse(localBackup));
-
         fetch(`${BASE_URL}/api/settings/featured-product`)
             .then(res => res.ok ? res.json() : null)
-            .then(data => data && setFeaturedData(data))
+            .then(data => {
+                if (data) {
+                    setFeaturedData(prev => ({ ...prev, ...data }));
+                }
+            })
             .catch(() => { });
     }, []);
 
@@ -99,37 +110,60 @@ export default function FeaturedProduct() {
         >
 
             {/* 1. Bloc Visuel : فيديو المنتج المميز */}
-            <div className="product-visual-block">
-
-                {/* حاوية استجابة (responsive) للفيديو المضمن */}
-                <div
-                    style={{
-                        position: 'relative',
-                        width: '100%',
-                        height: 0,
-                        paddingBottom: '56.250%' // نسبة 16:9
-                    }}
-                >
-                    <iframe
-                        allow="fullscreen"
-                        allowFullScreen
-                        height="100%"
-                        src="https://streamable.com/e/4k6x0z?"
-                        width="100%"
-                        style={{
-                            border: 'none',
-                            width: '100%',
-                            height: '100%',
-                            position: 'absolute',
-                            left: 0,
-                            top: 0,
-                            overflow: 'hidden'
+            <div className="product-visual-block" style={{ position: 'relative' }}>
+                {isAdmin && (
+                    <button
+                        onClick={() => {
+                            setEditData({
+                                ...featuredData,
+                                fr: { ...translations.fr, ...featuredData.fr },
+                                ar: { ...translations.ar, ...featuredData.ar },
+                                en: { ...translations.en, ...featuredData.en }
+                            });
+                            setIsEditing(true);
                         }}
-                        // استخدام الترجمة كعنوان iframe
-                        title={t('imageAlt') || "Featured Product Video"}
-                    />
-                </div>
+                        className="hero-video-edit-btn"
+                        style={{
+                            position: 'absolute',
+                            top: '20px',
+                            right: '20px',
+                            zIndex: 10
+                        }}
+                    >
+                        <FaVideo /> {currentLang === 'ar' ? 'تغيير الفيديو' : 'Changer Vidéo'}
+                    </button>
+                )}
 
+                <div className="video-container-responsive">
+                    {featuredData.videoType === 'local' ? (
+                        <video
+                            src={featuredData.videoUrl.startsWith('http') ? featuredData.videoUrl : `${BASE_URL}${featuredData.videoUrl}`}
+                            controls
+                            autoPlay
+                            muted
+                            loop
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        />
+                    ) : (
+                        <iframe
+                            allow="fullscreen"
+                            allowFullScreen
+                            height="100%"
+                            src={featuredData.videoUrl || "https://streamable.com/e/4k6x0z?"}
+                            width="100%"
+                            style={{
+                                border: 'none',
+                                width: '100%',
+                                height: '100%',
+                                position: 'absolute',
+                                left: 0,
+                                top: 0,
+                                overflow: 'hidden'
+                            }}
+                            title={t('imageAlt') || "Featured Product Video"}
+                        />
+                    )}
+                </div>
             </div>
 
             {/* 2. Bloc de Contenu : العناوين و CTA (محدث باللغات) */}
@@ -160,7 +194,7 @@ export default function FeaturedProduct() {
                     {t('tag')}
                 </span>
 
-                <h2 className="product-main-title">
+                <h2 className="product-main-title home_titre">
                     {t('title')} <br />
                     <span className='product-subtitle'>{t('subtitle')}</span>
                 </h2>
@@ -179,7 +213,7 @@ export default function FeaturedProduct() {
             </div>
 
             {/* 🛑 Stylish Edit Modal */}
-            {isEditing && (
+            {isEditing && ReactDOM.createPortal(
                 <div className="premium-modal-backdrop" onClick={() => setIsEditing(false)}>
                     <div className="premium-modal-content large" onClick={(e) => e.stopPropagation()}>
                         <button className="premium-modal-close-icon" onClick={() => setIsEditing(false)}><FaTimes /></button>
@@ -188,6 +222,68 @@ export default function FeaturedProduct() {
                         </h2>
 
                         <div className="premium-form-grid">
+                            {/* Visual Setting Section */}
+                            <div className="premium-lang-section" style={{ gridColumn: 'span 3', background: 'rgba(212, 175, 55, 0.05)', padding: '20px', borderRadius: '20px' }}>
+                                <h4 className="lang-indicator" style={{ color: '#d4af37' }}>PROPRIÉTÉS VISUELLES (VIDÉO)</h4>
+                                <div className="premium-form-group">
+                                    <label>Type de Source</label>
+                                    <select
+                                        value={editData.videoType}
+                                        onChange={e => setEditData({ ...editData, videoType: e.target.value })}
+                                    >
+                                        <option value="iframe">Lien Externe (Iframe/Streamable/YouTube)</option>
+                                        <option value="local">Télécharger une vidéo (Fichier MP4/Local)</option>
+                                    </select>
+                                </div>
+
+                                {editData.videoType === 'iframe' ? (
+                                    <div className="premium-form-group">
+                                        <label>Lien du Lecteur (URL Iframe)</label>
+                                        <input
+                                            type="text"
+                                            placeholder="https://streamable.com/e/..."
+                                            value={editData.videoUrl}
+                                            onChange={e => setEditData({ ...editData, videoUrl: e.target.value })}
+                                        />
+                                    </div>
+                                ) : (
+                                    <div className="premium-form-group">
+                                        <label>Télécharger depuis l'ordinateur</label>
+                                        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                                            <input
+                                                type="file"
+                                                accept="video/*"
+                                                onChange={async (e) => {
+                                                    const file = e.target.files[0];
+                                                    if (!file) return;
+                                                    setIsUploading(true);
+                                                    const formData = new FormData();
+                                                    formData.append('video', file);
+                                                    try {
+                                                        const res = await fetch(`${BASE_URL}/api/specialized-videos/upload`, {
+                                                            method: 'POST',
+                                                            body: formData
+                                                        });
+                                                        const data = await res.json();
+                                                        if (res.ok) {
+                                                            setEditData({ ...editData, videoUrl: data.filePath });
+                                                        }
+                                                    } catch (err) {
+                                                        console.error("Upload failed", err);
+                                                    } finally {
+                                                        setIsUploading(false);
+                                                    }
+                                                }}
+                                            />
+                                            {isUploading && <FaSpinner className="spinner" />}
+                                        </div>
+                                        {editData.videoUrl && editData.videoType === 'local' && (
+                                            <p style={{ fontSize: '0.7rem', color: '#10b981', marginTop: '5px' }}>Vidéo prête: {editData.videoUrl}</p>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+
                             {languages.map(lang => (
                                 <div key={lang.code} className="premium-lang-section">
                                     <h4 className="lang-indicator">{lang.label}</h4>
@@ -249,7 +345,8 @@ export default function FeaturedProduct() {
                             </button>
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
 
         </section>

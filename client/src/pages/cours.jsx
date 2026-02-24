@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { FaPlayCircle, FaCheckCircle, FaSpinner, FaChevronRight, FaEdit, FaPlus, FaTrash, FaTimes, FaVideo, FaImage } from 'react-icons/fa';
 import Navbar from '../comp/navbar';
 import Footer from '../comp/Footer';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import BASE_URL from '../apiConfig';
 import { useAlert } from '../context/AlertContext';
+import { useLanguage } from '../context/LanguageContext';
 import './cours_premium.css';
 
 // 🌐 كائن الترجمة
@@ -22,7 +23,7 @@ const translations = {
         coursesTitle: "الدروس",
         coursesAccent: "المتاحة",
         button: "ابدأ التعلم الآن",
-        noCourses: "لا توجد دروس متاحة حالياً في هذه الفئة.",
+        noCourses: "لا توجد دروس متاحة حالياً في هذه فئة.",
         duration: "عرض كامل",
         categoryTag: "برنامج تعليمي",
         editHero: "تعديل الواجهة",
@@ -101,6 +102,20 @@ const VideoIntroduction = ({ videoUrl, title, appLanguage, isAdmin, onEdit }) =>
     const t = translations[appLanguage] || translations.fr;
     const direction = appLanguage === 'ar' ? 'rtl' : 'ltr';
 
+    const getEmbedUrl = (url) => {
+        if (!url) return "";
+        if (url.includes('youtube.com/embed/')) return url;
+
+        let videoId = "";
+        if (url.includes('youtube.com/watch?v=')) {
+            videoId = url.split('v=')[1].split('&')[0];
+        } else if (url.includes('youtu.be/')) {
+            videoId = url.split('youtu.be/')[1].split('?')[0];
+        }
+
+        return videoId ? `https://www.youtube.com/embed/${videoId}` : url;
+    };
+
     return (
         <div className="premium-video-intro-box" dir={direction}>
             {isAdmin && (
@@ -122,7 +137,7 @@ const VideoIntroduction = ({ videoUrl, title, appLanguage, isAdmin, onEdit }) =>
             <div className="premium-video-player-side">
                 <iframe
                     className="p-video-iframe"
-                    src={videoUrl}
+                    src={getEmbedUrl(videoUrl)}
                     title={`Introduction - ${actualTitle}`}
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     allowFullScreen
@@ -132,12 +147,19 @@ const VideoIntroduction = ({ videoUrl, title, appLanguage, isAdmin, onEdit }) =>
     );
 };
 
+const languages = [
+    { code: 'fr', label: 'FR' },
+    { code: 'ar', label: 'AR' },
+    { code: 'en', label: 'EN' }
+];
+
 export default function Cours() {
     const { courseTitle } = useParams();
     const actualTitle = decodeURIComponent(courseTitle);
     const { showAlert } = useAlert();
+    const navigate = useNavigate();
+    const { appLanguage } = useLanguage();
 
-    const [appLanguage, setAppLanguage] = useState('fr');
     const [groups, setGroups] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -158,12 +180,8 @@ export default function Cours() {
 
     // Hero Background State
     const [heroBg, setHeroBg] = useState("");
-    const [showHeroBgModal, setShowHeroBgModal] = useState(false);
-
-    useEffect(() => {
-        const lang = localStorage.getItem('appLanguage') || 'fr';
-        setAppLanguage(lang);
-    }, []);
+    const [heroContent, setHeroContent] = useState({});
+    const [editHeroContent, setEditHeroContent] = useState({});
 
     const t = translations[appLanguage] || translations.fr;
     const direction = appLanguage === 'ar' ? 'rtl' : 'ltr';
@@ -177,6 +195,7 @@ export default function Cours() {
             if (res.data.length > 0) {
                 setNewVideoUrl(res.data[0].video_link || "");
                 setHeroBg(res.data[0].hero_bg || "");
+                setHeroContent(res.data[0].hero_content || {});
             }
             setLoading(false);
         } catch (err) {
@@ -271,19 +290,36 @@ export default function Cours() {
         } catch (e) { showAlert('error', 'Error', 'Failed to update video'); }
     };
 
-    const handleHeroBgUpdate = async () => {
+    const handleHeroUpdate = async () => {
         if (groups.length === 0) {
             showAlert('error', 'Note', 'Add at least one lesson first to create the category group.');
             return;
         }
+
+        const newMasterTitle = editHeroContent[appLanguage]?.title || actualTitle;
+
         try {
             await axios.put(`${BASE_URL}/api/specialized-courses/${groups[0]._id}`, {
-                hero_bg: heroBg
+                hero_bg: editHeroContent[appLanguage]?.bg || heroBg,
+                hero_content: editHeroContent,
+                vip_category: newMasterTitle
             });
-            showAlert('success', 'Updated', 'Hero background updated');
-            fetchCourses();
-            setShowHeroBgModal(false);
-        } catch (e) { showAlert('error', 'Error', 'Failed to update background'); }
+
+            // Update local state immediately for SPA feel
+            setHeroContent(editHeroContent);
+            setHeroBg(editHeroContent[appLanguage]?.bg || heroBg);
+
+            showAlert('success', 'Updated', 'Hero content updated');
+
+            if (newMasterTitle !== actualTitle) {
+                // If title changed, navigate to new URL using SPA router
+                navigate(`/cours_Manches/${encodeURIComponent(newMasterTitle)}`);
+            } else {
+                // Otherwise just refresh data and close modal
+                fetchCourses();
+                setIsEditingHero(false);
+            }
+        } catch (e) { showAlert('error', 'Error', 'Failed to update hero'); }
     };
 
     if (loading) {
@@ -316,23 +352,39 @@ export default function Cours() {
         <div className="courses-premium-page" dir={direction}>
             <Navbar />
 
-            {/* --- ✨ HERO SECTION ✨ --- */}
             <header
                 className="course-hero-premium"
                 style={heroBg ? { backgroundImage: `linear-gradient(rgba(15, 23, 42, 0.6), rgba(15, 23, 42, 0.4)), url('${heroBg}')` } : {}}
             >
                 {isAdmin && (
-                    <div style={{ position: 'absolute', top: '25px', right: '35px', zIndex: 100, display: 'flex', gap: '10px' }}>
-                        <button className="admin-edit-master-btn" onClick={() => setShowHeroBgModal(true)}>
-                            <FaImage /> {appLanguage === 'ar' ? 'تغيير الخلفية' : 'Changer Fond'}
+                    <div style={{ position: 'absolute', top: '130px', right: '35px', zIndex: 100, display: 'flex', gap: '10px' }}>
+                        <button className="admin-edit-master-btn" onClick={() => {
+                            const init = {};
+                            languages.forEach(l => {
+                                init[l.code] = {
+                                    badge: heroContent[l.code]?.badge || t.categoryTag || "",
+                                    title: heroContent[l.code]?.title || actualTitle || "",
+                                    accent: heroContent[l.code]?.accent || "",
+                                    bg: heroContent[l.code]?.bg || heroBg || ""
+                                };
+                            });
+                            setEditHeroContent(init);
+                            setIsEditingHero(true);
+                        }}>
+                            <FaEdit /> {t.editHero}
+
                         </button>
                     </div>
                 )}
-                <div className="course-category-tag">{t.categoryTag}</div>
-                <h1 className="course-main-title-premium">{actualTitle}</h1>
+                <div className="course-category-tag">{heroContent[appLanguage]?.badge || t.categoryTag}</div>
+                <h1 className="course-main-title-premium">
+                    {heroContent[appLanguage]?.title || actualTitle}
+                    {heroContent[appLanguage]?.accent && (
+                        <span className="accent-text"> {heroContent[appLanguage].accent}</span>
+                    )}
+                </h1>
             </header>
 
-            {/* --- 📹 VIDEO INTRO --- */}
             <div className="lessons-grid-section">
                 {videoUrl || isAdmin ? (
                     <VideoIntroduction
@@ -409,7 +461,6 @@ export default function Cours() {
 
             <Footer />
 
-            {/* --- 📝 MANAGE LESSON MODAL 📝 --- */}
             {showLessonModal && (
                 <div className="premium-modal-backdrop" onClick={() => setShowLessonModal(false)}>
                     <div className="premium-modal-content" onClick={(e) => e.stopPropagation()}>
@@ -448,10 +499,10 @@ export default function Cours() {
                         </div>
 
                         <div className="premium-btn-group">
-                            <button className="premium-btn-cta secondary" onClick={() => setShowLessonModal(false)}>
+                            <button type="button" className="premium-btn-cta secondary" onClick={() => setShowLessonModal(false)}>
                                 {t.cancel}
                             </button>
-                            <button className="premium-btn-cta gold" onClick={handleLessonSubmit}>
+                            <button type="button" className="premium-btn-cta gold" onClick={handleLessonSubmit}>
                                 {t.save}
                             </button>
                         </div>
@@ -459,7 +510,6 @@ export default function Cours() {
                 </div>
             )}
 
-            {/* --- 📝 MANAGE VIDEO MODAL 📝 --- */}
             {showVideoModal && (
                 <div className="premium-modal-backdrop" onClick={() => setShowVideoModal(false)}>
                     <div className="premium-modal-content" onClick={(e) => e.stopPropagation()}>
@@ -482,10 +532,10 @@ export default function Cours() {
                         </div>
 
                         <div className="premium-btn-group">
-                            <button className="premium-btn-cta secondary" onClick={() => setShowVideoModal(false)}>
+                            <button type="button" className="premium-btn-cta secondary" onClick={() => setShowVideoModal(false)}>
                                 {t.cancel}
                             </button>
-                            <button className="premium-btn-cta gold" onClick={handleVideoUpdate}>
+                            <button type="button" className="premium-btn-cta gold" onClick={handleVideoUpdate}>
                                 {t.save}
                             </button>
                         </div>
@@ -493,30 +543,76 @@ export default function Cours() {
                 </div>
             )}
 
-            {/* --- 📝 MANAGE HERO BG MODAL 📝 --- */}
-            {showHeroBgModal && (
-                <div className="premium-modal-backdrop" onClick={() => setShowHeroBgModal(false)}>
-                    <div className="premium-modal-content" onClick={(e) => e.stopPropagation()}>
-                        <button className="premium-modal-close-icon" onClick={() => setShowHeroBgModal(false)}><FaTimes /></button>
-                        <h2 className="premium-modal-title">{appLanguage === 'ar' ? 'تغيير خلفية الواجهة' : 'Changer Fond Hero'}</h2>
+            {isEditingHero && (
+                <div className="premium-modal-backdrop" onClick={() => setIsEditingHero(false)}>
+                    <div className="premium-modal-content large" onClick={(e) => e.stopPropagation()}>
+                        <button className="premium-modal-close-icon" onClick={() => setIsEditingHero(false)}><FaTimes /></button>
+                        <h2 className="premium-modal-title" style={{ textAlign: 'center', marginBottom: '30px' }}>Modifier le Hero</h2>
 
-                        <div className="premium-form-grid-single">
-                            <div className="premium-form-group">
-                                <label>URL de l'Image</label>
-                                <input
-                                    type="text"
-                                    placeholder="https://images.unsplash.com/..."
-                                    value={heroBg}
-                                    onChange={(e) => setHeroBg(e.target.value)}
-                                />
-                            </div>
+                        <div className="premium-form-grid">
+                            {languages.map(lang => (
+                                <div key={lang.code} className="premium-lang-section">
+                                    <h4 className="lang-indicator">{lang.label}</h4>
+
+                                    <div className="premium-form-group">
+                                        <label>{lang.code === 'ar' ? 'Badge' : 'BADGE'}</label>
+                                        <input
+                                            type="text"
+                                            value={editHeroContent[lang.code]?.badge || ''}
+                                            onChange={e => setEditHeroContent({
+                                                ...editHeroContent,
+                                                [lang.code]: { ...editHeroContent[lang.code], badge: e.target.value }
+                                            })}
+                                        />
+                                    </div>
+
+                                    <div className="premium-form-group">
+                                        <label>{lang.code === 'en' ? 'ACCENT TEXT' : (lang.code === 'ar' ? 'Title' : 'TITLE')}</label>
+                                        <input
+                                            type="text"
+                                            value={editHeroContent[lang.code]?.title || ''}
+                                            onChange={e => setEditHeroContent({
+                                                ...editHeroContent,
+                                                [lang.code]: { ...editHeroContent[lang.code], title: e.target.value }
+                                            })}
+                                        />
+                                    </div>
+
+                                    <div className="premium-form-group">
+                                        <label>{lang.code === 'en' ? 'MAIN TITLE' : (lang.code === 'ar' ? 'Accent Text' : 'ACCENT TEXT')}</label>
+                                        <input
+                                            type="text"
+                                            value={editHeroContent[lang.code]?.accent || ''}
+                                            onChange={e => setEditHeroContent({
+                                                ...editHeroContent,
+                                                [lang.code]: { ...editHeroContent[lang.code], accent: e.target.value }
+                                            })}
+                                        />
+                                    </div>
+
+                                    <div className="premium-form-group">
+                                        <label>{lang.code === 'ar' ? 'رابط الخلفية' : 'URL IMAGE DE FOND'}</label>
+                                        <input
+                                            type="text"
+                                            placeholder="https://..."
+                                            value={editHeroContent[lang.code]?.bg || ''}
+                                            onChange={e => {
+                                                const val = e.target.value;
+                                                const updated = { ...editHeroContent };
+                                                updated[lang.code].bg = val;
+                                                setEditHeroContent(updated);
+                                            }}
+                                        />
+                                    </div>
+                                </div>
+                            ))}
                         </div>
 
-                        <div className="premium-btn-group">
-                            <button className="premium-btn-cta secondary" onClick={() => setShowHeroBgModal(false)}>
+                        <div className="premium-btn-group" style={{ justifyContent: 'center', marginTop: '30px' }}>
+                            <button type="button" className="premium-btn-cta secondary" onClick={() => setIsEditingHero(false)} style={{ width: '200px' }}>
                                 {t.cancel}
                             </button>
-                            <button className="premium-btn-cta gold" onClick={handleHeroBgUpdate}>
+                            <button type="button" className="premium-btn-cta gold" onClick={handleHeroUpdate} style={{ width: '200px' }}>
                                 {t.save}
                             </button>
                         </div>

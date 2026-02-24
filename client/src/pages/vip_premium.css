@@ -373,7 +373,7 @@
 .vip-modal-title,
 .premium-modal-title {
     font-family: 'Playfair Display', serif;
-    font-size: 2.6rem;
+    font-size: 2rem;
     color: #fff;
     margin-bottom: 20px;
     font-weight: 700;
@@ -556,7 +556,7 @@
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 16px;
     font-size: 1rem;
-    color: #fff;
+    color: #ffffff;
     transition: all 0.3s;
     outline: none;
 }

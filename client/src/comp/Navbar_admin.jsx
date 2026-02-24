@@ -13,10 +13,7 @@ export default function NavbarAdmin() {
     const navLinks = [
         { to: "/admin", label: "Dashboard", icon: <FaChartBar /> },
         { to: "/admin_clients", label: "Clients", icon: <FaUsers /> },
-        { to: "/admin_products", label: "Produits", icon: <FaBoxOpen /> },
         { to: "/admin_command", label: "Commandes", icon: <FaShoppingCart /> },
-        { to: "/admin_videos", label: "Vidéos", icon: <FaVideo /> },
-        { to: "/admin_espace_vip", label: "Espace VIP", icon: <FaCrown /> },
         { to: "/admin_message", label: "Messages", icon: <FaEnvelope /> },
         { to: "/admin_commentaire", label: "Avis", icon: <FaComments /> },
         { to: "/admin_settings", label: "Réglages", icon: <FaCog /> },

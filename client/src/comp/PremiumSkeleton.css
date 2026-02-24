@@ -1,0 +1,77 @@
+/* PremiumSkeleton.css */
+.skeleton-shimmer {
+    background: #e2e8f0;
+    background: linear-gradient(90deg,
+            #f1f5f9 25%,
+            #e2e8f0 50%,
+            #f1f5f9 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite linear;
+    border-radius: 8px;
+}
+
+.dark-skeleton-shimmer {
+    background: #1e293b;
+    background: linear-gradient(90deg,
+            #0f172a 25%,
+            #1e293b 50%,
+            #0f172a 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite linear;
+    border-radius: 8px;
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: -200% 0;
+    }
+
+    100% {
+        background-position: 200% 0;
+    }
+}
+
+/* Specific Skeletone Layouts */
+.skeleton-hero {
+    height: 480px;
+    width: 100%;
+    margin-bottom: -150px;
+    clip-path: polygon(0 0, 100% 0, 100% 85%, 0 100%);
+}
+
+.skeleton-video {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border-radius: 32px;
+    margin-bottom: 80px;
+}
+
+.skeleton-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 30px;
+    margin-top: 50px;
+}
+
+.skeleton-card {
+    height: 350px;
+    border-radius: 24px;
+}
+
+.skeleton-text-title {
+    height: 40px;
+    width: 60%;
+    margin: 20px auto;
+}
+
+.skeleton-text-body {
+    height: 20px;
+    width: 80%;
+    margin: 10px auto;
+}
+
+.container-skeleton {
+    max-width: 1300px;
+    margin: 0 auto;
+    padding: 0 20px;
+}

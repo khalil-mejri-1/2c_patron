@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { FaShoppingCart, FaSearch, FaChevronDown, FaTimes, FaUser, FaMapMarkerAlt, FaPhoneAlt, FaMinusCircle, FaPlusCircle, FaSpinner, FaCheckCircle, FaCommentAlt, FaStar, FaRegStar, FaChevronLeft, FaChevronRight, FaEdit, FaSave, FaTrash, FaPlus } from 'react-icons/fa';
 import Navbar from '../comp/navbar';
@@ -391,10 +392,11 @@ const OrderModalComponent = ({ selectedProduct, quantity, handleQuantityChange, 
                 </div>
 
                 {/* 🆕 المكان الجديد للكاروسيل المتحرك */}
-                {/* 💡 تم التعديل هنا: استخدام selectedProduct.secondaryImages */}
-                {selectedProduct.secondaryImages && selectedProduct.secondaryImages.length > 0 && (
-                    <ImageCarousel images={selectedProduct.secondaryImages} direction={direction} />
-                )}
+                {/* 💡 تم التعديل هنا: دمج الصورة الرئيسية مع الصور الثانوية في الكاروسيل */}
+                <ImageCarousel
+                    images={[selectedProduct.url, ...(selectedProduct.secondaryImages || [])].filter(Boolean)}
+                    direction={direction}
+                />
                 {/* 🔚 نهاية الكاروسيل */}
 
                 <div className="quantity-control-group">
@@ -578,18 +580,34 @@ export default function ProductGrid() {
         return (shopContent[appLanguage] && shopContent[appLanguage][key]) || defaultVal;
     };
 
-    const EditBtn = ({ field, style = {} }) => (
-        isAdmin && (
-            <button
-                onClick={() => { setEditShopContent(initializeAllLanguages(shopContent)); setIsEditingField(field); }}
-                className="edit-btn-minimal-lux"
-                title="Modifier"
-                style={style}
-            >
-                <FaEdit size={14} />
-            </button>
-        )
-    );
+    const EditBtn = ({ field, label, style = {} }) => {
+        const getLabel = () => {
+            if (label) return label;
+            if (field === 'hero') return appLanguage === 'ar' ? 'تعديل العنوان' : 'Modifier En-tête';
+            if (field === 'heroImage') return appLanguage === 'ar' ? 'تعديل الصورة' : 'Modifier Image';
+            if (field === 'filters') return appLanguage === 'ar' ? 'تعديل الفلترة' : 'Modifier Filtres';
+            if (field === 'productsInfo') return appLanguage === 'ar' ? 'تعديل المعلومات' : 'Modifier Infos';
+            return appLanguage === 'ar' ? 'تعديل' : 'Modifier';
+        };
+
+        return (
+            isAdmin && (
+                <button
+                    onClick={() => { setEditShopContent(initializeAllLanguages(shopContent)); setIsEditingField(field); }}
+                    className="edit-btn-minimal-lux"
+                    style={style}
+                >
+                    <FaEdit size={14} />
+                    <span style={{
+                        marginLeft: appLanguage === 'ar' ? '0' : '8px',
+                        marginRight: appLanguage === 'ar' ? '8px' : '0'
+                    }}>
+                        {getLabel()}
+                    </span>
+                </button>
+            )
+        );
+    };
 
     // 📦 Product Management State
     const [isManagingProduct, setIsManagingProduct] = useState(false); // false or 'add' or 'edit'
@@ -1070,7 +1088,6 @@ export default function ProductGrid() {
 
                         <div style={{ marginTop: '25px', display: 'flex', justifyContent: 'center', gap: '20px', position: 'relative', zIndex: 20, flexWrap: 'wrap' }}>
                             <EditBtn field="hero" />
-                            <EditBtn field="heroImage" />
                             {isAdmin && (
                                 <button
                                     onClick={handleOpenAddProduct}
@@ -1187,33 +1204,47 @@ export default function ProductGrid() {
                                                         onClick={() => handleOpenEditProduct(product)}
                                                         className="hero-edit-title-btn"
                                                         style={{
-                                                            width: '35px',
-                                                            height: '35px',
-                                                            borderRadius: '50%',
+                                                            width: 'auto',
+                                                            height: 'auto',
+                                                            padding: '8px 15px',
+                                                            borderRadius: '50px',
                                                             background: 'rgba(255,255,255,0.9)',
                                                             backdropFilter: 'blur(5px)',
                                                             color: '#007bff',
-                                                            boxShadow: '0 4px 10px rgba(0,0,0,0.1)'
+                                                            boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            gap: '8px',
+                                                            fontWeight: '700',
+                                                            fontSize: '0.8rem'
                                                         }}
                                                         title="Modifier"
                                                     >
-                                                        <FaEdit size={14} />
+                                                        <FaEdit size={12} />
+                                                        {appLanguage === 'ar' ? 'تعديل' : 'Modifier'}
                                                     </button>
                                                     <button
                                                         onClick={() => handleDeleteProduct(product.id)}
                                                         className="hero-edit-title-btn"
                                                         style={{
-                                                            width: '35px',
-                                                            height: '35px',
-                                                            borderRadius: '50%',
+                                                            width: 'auto',
+                                                            height: 'auto',
+                                                            padding: '8px 15px',
+                                                            borderRadius: '50px',
                                                             background: 'rgba(255,255,255,0.9)',
                                                             backdropFilter: 'blur(5px)',
                                                             color: '#dc3545',
-                                                            boxShadow: '0 4px 10px rgba(0,0,0,0.1)'
+                                                            boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            gap: '8px',
+                                                            fontWeight: '700',
+                                                            fontSize: '0.8rem'
                                                         }}
                                                         title="Supprimer"
                                                     >
-                                                        <FaTrash size={14} />
+                                                        <FaTrash size={12} />
+                                                        {appLanguage === 'ar' ? 'حذف' : 'Supprimer'}
                                                     </button>
                                                 </div>
                                             )}
@@ -1255,7 +1286,7 @@ export default function ProductGrid() {
 
             {/* 4. Rendu du modal de commande */}
             {
-                showOrderModal && selectedProduct && (
+                showOrderModal && selectedProduct && ReactDOM.createPortal(
                     <OrderModalComponent
                         selectedProduct={selectedProduct}
                         quantity={quantity}
@@ -1266,23 +1297,24 @@ export default function ProductGrid() {
                         onOrderSuccess={handleOrderSuccessCallback}
                         onCustomerDataUpdate={handleCustomerDataUpdate}
                         appLanguage={appLanguage}
-                    />
+                    />,
+                    document.body
                 )
             }
 
             {/* 5. Rendu du modal de succès */}
-            {showSuccessModal && <OrderSuccessModal />}
+            {showSuccessModal && ReactDOM.createPortal(<OrderSuccessModal />, document.body)}
 
             {/* 6. Rendu du modal de commentaire */}
-            {showFeedbackModal && <FeedbackModal />}
+            {showFeedbackModal && ReactDOM.createPortal(<FeedbackModal />, document.body)}
 
             {/* 🛑 Admin Editing Modal */}
             {
-                isEditingField && (
+                isEditingField && ReactDOM.createPortal(
                     <div className="premium-modal-backdrop" onClick={() => setIsEditingField(null)}>
                         <div className="premium-modal-content large" onClick={(e) => e.stopPropagation()}>
                             <button className="premium-modal-close-icon" onClick={() => setIsEditingField(null)}><FaTimes /></button>
-                            <h2 className="premium-modal-title">
+                            <h2 className="premium-modal-title premium-modal-title-shop">
                                 Modifier: {
                                     isEditingField === 'hero' ? 'En-tête (Hero)' :
                                         isEditingField === 'filters' ? 'Filtres & Sidebar' :
@@ -1396,60 +1428,27 @@ export default function ProductGrid() {
                                 ))}
                             </div>
 
-                            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '20px' }}>
-                                <button onClick={() => setIsEditingField(null)} className="premium-modal-close-icon" style={{ position: 'static' }}>
-                                    Annuler
+                            <div style={{ display: 'flex', gap: '15px', justifyContent: 'flex-end', marginTop: '30px' }}>
+                                <button onClick={() => setIsEditingField(null)} className="premium-btn-cancel">
+                                    {appLanguage === 'ar' ? 'إلغاء' : 'Annuler'}
                                 </button>
-                                <button onClick={handleSaveShopContent} className="premium-save-btn">
-                                    <FaSave /> Enregistrer
+                                <button onClick={handleSaveShopContent} className="premium-btn-save">
+                                    <FaSave /> {appLanguage === 'ar' ? 'حفظ' : 'Enregistrer'}
                                 </button>
                             </div>
                         </div>
-                    </div>
+                    </div>,
+                    document.body
                 )
             }
 
             {/* 🛑 Product Management Modal (Add/Edit) */}
-            {isManagingProduct && (
-                <div className="modal-overlay" style={{
-                    zIndex: 3000,
-                    backdropFilter: 'blur(12px)',
-                    background: 'rgba(15, 23, 42, 0.4)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: '20px'
-                }}>
-                    <div className="modal-content" style={{
-                        background: '#ffffff',
-                        padding: '40px',
-                        borderRadius: '28px',
-                        width: '100%',
-                        maxWidth: '600px',
-                        maxHeight: '90vh',
-                        overflowY: 'auto',
-                        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(212, 175, 55, 0.1)',
-                        position: 'relative',
-                        animation: 'modalSlideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1)'
-                    }}>
+            {isManagingProduct && ReactDOM.createPortal(
+                <div className="premium-modal-backdrop" onClick={() => setIsManagingProduct(false)}>
+                    <div className="premium-modal-content" onClick={(e) => e.stopPropagation()} style={{ textAlign: 'left' }}>
                         <button
+                            className="premium-modal-close-icon"
                             onClick={() => setIsManagingProduct(false)}
-                            style={{
-                                position: 'absolute',
-                                top: '24px',
-                                right: '24px',
-                                background: 'rgba(0,0,0,0.05)',
-                                border: 'none',
-                                width: '36px',
-                                height: '36px',
-                                borderRadius: '50%',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                cursor: 'pointer',
-                                color: '#64748b',
-                                transition: 'all 0.2s'
-                            }}
                         >
                             <FaTimes size={18} />
                         </button>
@@ -1560,46 +1559,92 @@ export default function ProductGrid() {
                                 </div>
                             </div>
 
+                            <div className="input-field-group">
+                                <label style={{ display: 'block', marginBottom: '10px', fontSize: '0.75rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                                    {appLanguage === 'ar' ? 'الصور الثانوية (روابط)' : 'Images Secondaires (URLs)'}
+                                </label>
+                                <div style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
+                                    <input
+                                        type="text"
+                                        id="newSecondaryImage"
+                                        placeholder="https://images.unsplash.com/..."
+                                        style={{
+                                            flex: 1,
+                                            padding: '12px 15px',
+                                            borderRadius: '12px',
+                                            border: '1px solid #f1f5f9',
+                                            fontSize: '0.9rem',
+                                            outline: 'none',
+                                            background: '#f8fafc'
+                                        }}
+                                    />
+                                    <button
+                                        onClick={() => {
+                                            const val = document.getElementById('newSecondaryImage').value.trim();
+                                            if (val) {
+                                                setProductForm({ ...productForm, secondaryImages: [...productForm.secondaryImages, val] });
+                                                document.getElementById('newSecondaryImage').value = '';
+                                            }
+                                        }}
+                                        className="premium-btn-save"
+                                        style={{ padding: '10px 20px' }}
+                                    >
+                                        <FaPlus />
+                                    </button>
+                                </div>
+
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))', gap: '15px' }}>
+                                    {productForm.secondaryImages.map((img, idx) => (
+                                        <div key={idx} style={{ position: 'relative', height: '80px', borderRadius: '12px', overflow: 'hidden', border: '1px solid #e2e8f0' }}>
+                                            <img src={img} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                            <button
+                                                onClick={() => {
+                                                    const updated = [...productForm.secondaryImages];
+                                                    updated.splice(idx, 1);
+                                                    setProductForm({ ...productForm, secondaryImages: updated });
+                                                }}
+                                                style={{
+                                                    position: 'absolute',
+                                                    top: '5px',
+                                                    right: '5px',
+                                                    background: 'rgba(239, 68, 68, 0.9)',
+                                                    color: '#fff',
+                                                    border: 'none',
+                                                    width: '20px',
+                                                    height: '20px',
+                                                    borderRadius: '50%',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    cursor: 'pointer',
+                                                    fontSize: '10px'
+                                                }}
+                                            >
+                                                <FaTimes />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: '15px', marginTop: '10px' }}>
                                 <button
                                     onClick={() => setIsManagingProduct(false)}
-                                    style={{
-                                        padding: '18px',
-                                        background: '#fff',
-                                        color: '#64748b',
-                                        border: '2px solid #f1f5f9',
-                                        borderRadius: '18px',
-                                        fontWeight: '700',
-                                        cursor: 'pointer',
-                                        fontSize: '1rem'
-                                    }}
+                                    className="premium-btn-cancel"
                                 >
                                     {appLanguage === 'ar' ? 'إلغاء' : 'Annuler'}
                                 </button>
                                 <button
                                     onClick={handleSaveProduct}
-                                    style={{
-                                        padding: '18px',
-                                        background: 'linear-gradient(135deg, #D4AF37 0%, #B8860B 100%)',
-                                        color: '#fff',
-                                        border: 'none',
-                                        borderRadius: '18px',
-                                        fontWeight: '700',
-                                        cursor: 'pointer',
-                                        boxShadow: '0 10px 15px -3px rgba(184, 134, 11, 0.3)',
-                                        fontSize: '1rem',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        gap: '10px'
-                                    }}
+                                    className="premium-btn-save"
                                 >
                                     <FaSave /> {appLanguage === 'ar' ? 'حفظ البيانات' : 'Confirmer les Modifications'}
                                 </button>
                             </div>
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
 
             <Footer />
