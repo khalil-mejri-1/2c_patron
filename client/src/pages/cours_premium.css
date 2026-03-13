@@ -139,7 +139,19 @@
     flex: 1.2;
     background: #000;
     position: relative;
+}
 
+/* Shield to block Google Drive's pop-out button */
+.video-player-shield {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 80px;
+    height: 80px;
+    z-index: 100;
+    background: transparent;
+    cursor: default;
+    pointer-events: auto;
 }
 
 .p-video-iframe {

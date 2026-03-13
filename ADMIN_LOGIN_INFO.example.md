@@ -17,7 +17,7 @@ Project ID: YOUR_PROJECT_ID_HERE
 ---
 
 ## 🔑 كيفية الدخول كمسؤول (Admin)
-
+ 
 ### الطريقة 1: حساب Admin المدمج (Hardcoded)
 يمكنك تسجيل الدخول مباشرة باستخدام:
 - **البريد الإلكتروني:** `admin@admin.com`

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FaPlayCircle, FaCheckCircle, FaSpinner, FaChevronRight, FaEdit, FaPlus, FaTrash, FaTimes, FaVideo, FaImage } from 'react-icons/fa';
 import Navbar from '../comp/navbar';
 import Footer from '../comp/Footer';
+import UniversalVideoPlayer from '../comp/UniversalVideoPlayer';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import BASE_URL from '../apiConfig';
@@ -102,19 +103,7 @@ const VideoIntroduction = ({ videoUrl, title, appLanguage, isAdmin, onEdit }) =>
     const t = translations[appLanguage] || translations.fr;
     const direction = appLanguage === 'ar' ? 'rtl' : 'ltr';
 
-    const getEmbedUrl = (url) => {
-        if (!url) return "";
-        if (url.includes('youtube.com/embed/')) return url;
 
-        let videoId = "";
-        if (url.includes('youtube.com/watch?v=')) {
-            videoId = url.split('v=')[1].split('&')[0];
-        } else if (url.includes('youtu.be/')) {
-            videoId = url.split('youtu.be/')[1].split('?')[0];
-        }
-
-        return videoId ? `https://www.youtube.com/embed/${videoId}` : url;
-    };
 
     return (
         <div className="premium-video-intro-box" dir={direction}>
@@ -135,13 +124,11 @@ const VideoIntroduction = ({ videoUrl, title, appLanguage, isAdmin, onEdit }) =>
             </div>
 
             <div className="premium-video-player-side">
-                <iframe
-                    className="p-video-iframe"
-                    src={getEmbedUrl(videoUrl)}
+                <UniversalVideoPlayer 
+                    url={videoUrl} 
                     title={`Introduction - ${actualTitle}`}
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                ></iframe>
+                    autoPlay={false}
+                />
             </div>
         </div>
     );

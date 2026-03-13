@@ -6,6 +6,29 @@ import BASE_URL from '../../apiConfig';
 const VIDEOS_API_URL = `${BASE_URL}/api/specialized-videos`;
 const COURSES_API_URL = `${BASE_URL}/api/specialized-courses`;
 
+const getVideoSource = (url) => {
+    if (!url) return { type: 'video', src: '' };
+    const fullUrl = url.startsWith('http') ? url : `${BASE_URL}${url}`;
+
+    const streamableRegex = /streamable\.com\/([a-zA-Z0-9]+)/;
+    const matchStreamable = url.match(streamableRegex);
+    if (matchStreamable) return { type: 'iframe', src: `https://streamable.com/e/${matchStreamable[1]}` };
+
+    const youtubeRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+    const matchYoutube = url.match(youtubeRegex);
+    if (matchYoutube) return { type: 'iframe', src: `https://www.youtube.com/embed/${matchYoutube[1]}` };
+
+    const driveRegex = /drive\.google\.com\/file\/d\/([^\/\?]+)/;
+    const matchDrive = url.match(driveRegex);
+    if (matchDrive) return { type: 'iframe', src: `https://drive.google.com/file/d/${matchDrive[1]}/preview` };
+
+    if (url.endsWith(".mp4") || url.endsWith(".webm") || url.endsWith(".ogg") || url.startsWith("/uploads") || url.includes("res.cloudinary.com")) {
+        return { type: 'video', src: fullUrl };
+    }
+
+    return { type: 'iframe', src: fullUrl };
+};
+
 // ----------------------------------------------------------------
 // --- 1. مكون VideoFormModal ---
 // ----------------------------------------------------------------
@@ -235,13 +258,30 @@ export default function GestionVedioSpecialises({ onClose }) {
                         return (
                             <div key={video._id} className="premium-list-item" style={{ background: '#fff', padding: '15px', borderRadius: '12px', border: '1px solid #e2e8f0', display: 'flex', gap: '20px', alignItems: 'flex-start' }}>
                                 <div style={{ width: '200px', flexShrink: 0 }}>
-                                    <video
-                                        controls
-                                        src={videoSrc}
-                                        style={{ width: '100%', borderRadius: '8px', background: '#000', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}
-                                        controlsList="nodownload"
-                                        muted
-                                    />
+                                    {(() => {
+                                        const config = getVideoSource(video.url);
+                                        if (config.type === 'video') {
+                                            return (
+                                                <video
+                                                    controls
+                                                    src={config.src}
+                                                    style={{ width: '100%', borderRadius: '8px', background: '#000', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}
+                                                    controlsList="nodownload"
+                                                    muted
+                                                />
+                                            );
+                                        }
+                                        return (
+                                            <div style={{ position: 'relative', paddingTop: '56.25%', background: '#000', borderRadius: '8px', overflow: 'hidden' }}>
+                                                <iframe
+                                                    src={config.src}
+                                                    style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 0 }}
+                                                    title={video.title}
+                                                    allowFullScreen
+                                                />
+                                            </div>
+                                        );
+                                    })()}
                                 </div>
 
                                 <div style={{ flex: 1 }}>

@@ -533,46 +533,8 @@
     text-align: right;
 }
 
-.premium-form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
 
-.premium-form-group label {
-    font-size: 0.85rem;
-    font-weight: 800;
-    color: #94a3b8;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
 
-.premium-form-group input,
-.premium-form-group select,
-.premium-form-group textarea {
-    width: 100%;
-    padding: 16px 22px;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 16px;
-    font-size: 1rem;
-    color: #ffffff;
-    transition: all 0.3s;
-    outline: none;
-}
-
-.premium-form-group input:focus,
-.premium-form-group textarea:focus {
-    outline: none;
-    border-color: #d4af37;
-    background: rgba(255, 255, 255, 0.07);
-    box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.05);
-}
-
-.premium-form-group textarea {
-    height: 120px;
-    resize: vertical;
-}
 
 .premium-btn-group {
     display: flex;

@@ -20,6 +20,14 @@ select {
 body {
   font-family: "Stack Sans Text", sans-serif;
   background-color: #ededed;
+  margin: 0;
+  display: block;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
 }
 
 .logo {
@@ -11654,7 +11662,7 @@ body {
 .premium-form-group label {
   display: block;
   font-size: 0.85rem;
-  color: #64748b;
+  color: var(--white-color);
   margin-bottom: 8px;
   font-weight: 700;
   text-transform: uppercase;
@@ -11671,7 +11679,7 @@ body {
   font-size: 1rem;
   transition: all 0.3s;
   background: black;
-  color: #fff;
+  color: white !important;
 }
 
 .premium-form-group textarea {
@@ -11683,7 +11691,7 @@ body {
 .premium-form-group select:focus,
 .premium-form-group textarea:focus {
   border-color: #d4af37;
-  background: #fff;
+  background: black;
   box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.1);
   outline: none;
 }

@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { FaPlay, FaPlayCircle, FaCheckCircle, FaEdit, FaImage, FaTimes, FaWhatsapp, FaCertificate, FaArrowRight, FaLock, FaSpinner } from 'react-icons/fa';
+import { FaPlay, FaPlayCircle, FaCheckCircle, FaEdit, FaImage, FaTimes, FaWhatsapp, FaCertificate, FaArrowRight, FaLock, FaSpinner, FaTrash } from 'react-icons/fa';
 import '../pages/lessons_premium.css';
 import '../comp/PremiumSkeleton.css';
 import Navbar from '../comp/navbar';
 import Footer from '../comp/Footer';
+import UniversalVideoPlayer from '../comp/UniversalVideoPlayer';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import BASE_URL from '../apiConfig';
@@ -69,39 +70,21 @@ const translations = {
     }
 };
 
-const getVideoSource = (url) => {
-    if (!url) return { type: 'direct-video', src: '' };
 
-    // Normalize relative paths to absolute backend URLs
-    const fullUrl = url.startsWith('http') ? url : `${BASE_URL}${url}`;
-
-    const streamableRegex = /streamable\.com\/([a-zA-Z0-9]+)/;
-    const matchStreamable = url.match(streamableRegex);
-    if (matchStreamable) {
-        return { type: 'iframe', src: `https://streamable.com/e/${matchStreamable[1]}` };
-    }
-
-    const youtubeRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
-    const matchYoutube = url.match(youtubeRegex);
-    if (matchYoutube) {
-        return { type: 'iframe', src: `https://www.youtube.com/embed/${matchYoutube[1]}` };
-    }
-
-    if (url.endsWith(".mp4") || url.endsWith(".webm") || url.endsWith(".ogg") || url.startsWith("/uploads")) {
-        return { type: 'direct-video', src: fullUrl };
-    }
-
-    return { type: 'iframe', src: fullUrl };
-};
 
 const getThumbnailUrl = (url, fallbackTitle) => {
     const youtubeRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
     const matchYoutube = url?.match(youtubeRegex);
     if (matchYoutube) return `https://img.youtube.com/vi/${matchYoutube[1]}/hqdefault.jpg`;
+
+    const driveRegex = /drive\.google\.com\/file\/d\/([^\/\?]+)/;
+    const matchDrive = url?.match(driveRegex);
+    if (matchDrive) return `https://drive.google.com/thumbnail?id=${matchDrive[1]}&sz=w1000`;
+
     return `https://images.unsplash.com/photo-1558769132-cb1aea458c5e?q=80&w=2574&auto=format&fit=crop`;
 };
 
-const LessonCard = ({ video, isActive, onSelect, lang, isAdmin, onEdit, appLanguage }) => {
+const LessonCard = ({ video, isActive, onSelect, lang, isAdmin, onEdit, onDelete, appLanguage }) => {
     return (
         <div
             className={`lesson-card-item-premium ${isActive ? 'is-active' : ''}`}
@@ -109,13 +92,22 @@ const LessonCard = ({ video, isActive, onSelect, lang, isAdmin, onEdit, appLangu
             style={{ position: 'relative' }}
         >
             {isAdmin && (
-                <button
-                    className="edit-btn-minimal-lux"
-                    style={{ position: 'absolute', top: '10px', right: '10px', zIndex: 5, padding: '5px' }}
-                    onClick={(e) => { e.stopPropagation(); onEdit(video); }}
-                >
-                    <FaEdit size={12} />
-                </button>
+                <div style={{ position: 'absolute', top: '10px', right: '10px', zIndex: 5, display: 'flex', gap: '5px' }}>
+                    <button
+                        className="edit-btn-minimal-lux"
+                        style={{ padding: '5px' }}
+                        onClick={(e) => { e.stopPropagation(); onEdit(video); }}
+                    >
+                        <FaEdit size={12} />
+                    </button>
+                    <button
+                        className="edit-btn-minimal-lux delete"
+                        style={{ padding: '5px', backgroundColor: 'rgba(239, 68, 68, 0.8)', color: '#fff' }}
+                        onClick={(e) => { e.stopPropagation(); onDelete(video); }}
+                    >
+                        <FaTrash size={12} />
+                    </button>
+                </div>
             )}
             <div className="l-card-preview-box">
                 <img src={video.thumbnail} alt={video.title_lang?.[appLanguage] || video.title} className="l-card-preview-img" />
@@ -130,7 +122,7 @@ const LessonCard = ({ video, isActive, onSelect, lang, isAdmin, onEdit, appLangu
                 <div className="l-card-meta-bar">
                     {(isActive || video.status_lang?.[appLanguage] || video.isVip) && (
                         <span className="l-meta-tag">
-                            {isActive ? lang.playing : (video.status_lang?.[appLanguage] || (video.isVip ? 'VIP' : ''))}
+                            {isActive ? (video.playing_text || lang.playing) : (video.status_lang?.[appLanguage] || (video.isVip ? 'VIP' : ''))}
                         </span>
                     )}
                     <span className="l-meta-duration"><FaPlayCircle size={14} style={{ marginRight: '5px' }} /> 24/7 Access</span>
@@ -408,6 +400,18 @@ export default function Lessons() {
     const t = translations[appLanguage] || translations.fr;
     const direction = appLanguage === 'ar' ? 'rtl' : 'ltr';
 
+    const handleDeleteVideo = async (video) => {
+        if (!window.confirm(appLanguage === 'ar' ? 'هل أنت متأكد من حذف هذا الدرس؟' : 'Voulez-vous vraiment supprimer cette leçon ?')) return;
+
+        try {
+            await axios.delete(`${BASE_URL}/api/specialized-videos/${video._id}`);
+            showAlert('success', 'Success', appLanguage === 'ar' ? 'تم الحذف بنجاح' : 'Leçon supprimée');
+            fetchVideos();
+        } catch (e) {
+            showAlert('error', 'Error', 'Failed to delete lesson');
+        }
+    };
+
     const fetchVideos = useCallback(async () => {
         setLoading(true);
         try {
@@ -531,24 +535,11 @@ export default function Lessons() {
                 {/* --- ACTIVE FOCUS PLAYER --- */}
                 {currentVideo && (
                     <div className="active-focus-cinema" ref={topRef}>
-                        {(() => {
-                            // Use language-specific URL if available, otherwise fallback
-                            const finalUrl = currentVideo.url_lang?.[appLanguage] || currentVideo.url;
-                            const config = getVideoSource(finalUrl);
-
-                            if (config.type === 'direct-video') {
-                                return <video controls autoPlay src={config.src} key={currentVideo._id + appLanguage} controlsList="nodownload" />;
-                            }
-                            return (
-                                <iframe
-                                    src={`${config.src}?autoplay=1`}
-                                    title={currentVideo.title}
-                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                    allowFullScreen
-                                    key={currentVideo._id + appLanguage}
-                                />
-                            );
-                        })()}
+                        <UniversalVideoPlayer 
+                            url={currentVideo.url_lang?.[appLanguage] || currentVideo.url} 
+                            title={currentVideo.title}
+                            autoPlay={true}
+                        />
                     </div>
                 )}
 
@@ -568,7 +559,10 @@ export default function Lessons() {
                                 onClick={() => {
                                     const init = {};
                                     languages.forEach(l => {
-                                        init[l.code] = { title: curriculumInfo[l.code]?.title || t.listTitle || "" };
+                                        init[l.code] = { 
+                                            title: curriculumInfo[l.code]?.title || translations[l.code]?.listTitle || "",
+                                            playing: curriculumInfo[l.code]?.playing || translations[l.code]?.playing || ""
+                                        };
                                     });
                                     setEditCurriculumData(init);
                                     setIsEditingCurriculum(true);
@@ -586,12 +580,13 @@ export default function Lessons() {
                     {videos.map(video => (
                         <LessonCard
                             key={video._id}
-                            video={video}
+                            video={{...video, playing_text: curriculumInfo[appLanguage]?.playing}}
                             isActive={currentVideo?._id === video._id}
                             onSelect={handleSelectVideo}
                             lang={t}
                             isAdmin={isAdmin}
                             onEdit={handleEditVideo}
+                            onDelete={handleDeleteVideo}
                             appLanguage={appLanguage}
                         />
                     ))}
@@ -718,13 +713,24 @@ export default function Lessons() {
                                 <div key={lang.code} className="premium-lang-section">
                                     <h4 className="lang-indicator">{lang.label}</h4>
                                     <div className="premium-form-group">
-                                        <label>Titre de la section</label>
+                                        <label>{lang.code === 'ar' ? 'عنوان القائمة' : 'Titre de la section'}</label>
                                         <input
                                             type="text"
                                             value={editCurriculumData[lang.code]?.title || ''}
                                             onChange={e => setEditCurriculumData({
                                                 ...editCurriculumData,
-                                                [lang.code]: { title: e.target.value }
+                                                [lang.code]: { ...editCurriculumData[lang.code], title: e.target.value }
+                                            })}
+                                        />
+                                    </div>
+                                    <div className="premium-form-group">
+                                        <label>{lang.code === 'ar' ? 'نص قيد المشاهدة' : 'Texte "Lecture en cours"'}</label>
+                                        <input
+                                            type="text"
+                                            value={editCurriculumData[lang.code]?.playing || ''}
+                                            onChange={e => setEditCurriculumData({
+                                                ...editCurriculumData,
+                                                [lang.code]: { ...editCurriculumData[lang.code], playing: e.target.value }
                                             })}
                                         />
                                     </div>
@@ -846,41 +852,6 @@ export default function Lessons() {
                                             })}
                                         />
                                     </div>
-                                    <div className="premium-form-group">
-                                        <label>Statut (ex: Free, VIP, مجاني)</label>
-                                        <input
-                                            type="text"
-                                            value={editVideoContent[lang.code]?.status || ''}
-                                            onChange={e => setEditVideoContent({
-                                                ...editVideoContent,
-                                                [lang.code]: { ...editVideoContent[lang.code], status: e.target.value }
-                                            })}
-                                        />
-                                    </div>
-                                    <div className="premium-form-group">
-                                        <label>URL Vidéo spécifique ({lang.label})</label>
-                                        <input
-                                            type="text"
-                                            value={editVideoContent[lang.code]?.url || ''}
-                                            onChange={e => setEditVideoContent({
-                                                ...editVideoContent,
-                                                [lang.code]: { ...editVideoContent[lang.code], url: e.target.value }
-                                            })}
-                                            placeholder="YouTube/Streamable Link..."
-                                        />
-                                    </div>
-                                    <div className="premium-form-group">
-                                        <label>Ou Fichier Vidéo ({lang.label})</label>
-                                        <input
-                                            type="file"
-                                            accept="video/*"
-                                            onChange={e => setEditSelectedLangFiles({
-                                                ...editSelectedLangFiles,
-                                                [lang.code]: e.target.files[0]
-                                            })}
-                                        />
-                                        {editSelectedLangFiles[lang.code] && <p style={{ fontSize: '11px', color: '#d4af37' }}>{editSelectedLangFiles[lang.code].name}</p>}
-                                    </div>
                                 </div>
                             ))}
                         </div>
@@ -944,42 +915,6 @@ export default function Lessons() {
                                                 setNewVideoData({ ...newVideoData, title_lang: updated });
                                             }}
                                         />
-                                    </div>
-                                    <div className="premium-form-group">
-                                        <label>Status (Free/VIP)</label>
-                                        <input
-                                            type="text"
-                                            value={newVideoData.status_lang?.[lang.code] || ''}
-                                            onChange={e => {
-                                                const updated = { ...newVideoData.status_lang, [lang.code]: e.target.value };
-                                                setNewVideoData({ ...newVideoData, status_lang: updated });
-                                            }}
-                                            placeholder="Ex: VIP"
-                                        />
-                                    </div>
-                                    <div className="premium-form-group">
-                                        <label>Video URL for {lang.label}</label>
-                                        <input
-                                            type="text"
-                                            value={newVideoData.url_lang?.[lang.code] || ''}
-                                            onChange={e => {
-                                                const updated = { ...newVideoData.url_lang, [lang.code]: e.target.value };
-                                                setNewVideoData({ ...newVideoData, url_lang: updated });
-                                            }}
-                                            placeholder="YouTube/Streamable Link..."
-                                        />
-                                    </div>
-                                    <div className="premium-form-group">
-                                        <label>Or Video File for {lang.label}</label>
-                                        <input
-                                            type="file"
-                                            accept="video/*"
-                                            onChange={e => setSelectedLangFiles({
-                                                ...selectedLangFiles,
-                                                [lang.code]: e.target.files[0]
-                                            })}
-                                        />
-                                        {selectedLangFiles[lang.code] && <p style={{ fontSize: '11px', color: '#d4af37' }}>{selectedLangFiles[lang.code].name}</p>}
                                     </div>
                                 </div>
                             ))}

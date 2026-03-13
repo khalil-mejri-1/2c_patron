@@ -257,24 +257,24 @@ export default function Contact() {
     };
 
     return (
-        <div className="contact-page-wrapper">
+        <div className="atelier-contact-page">
             <Navbar />
 
             {/* --- CINEMATIC HERO --- */}
             <header
-                className="contact-premium-hero"
+                className="atelier-contact-hero"
                 dir={direction}
                 style={{
                     backgroundImage: `linear-gradient(rgba(15, 23, 42, 0.6), rgba(15, 23, 42, 0.4)), url(${getT('heroImage', 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=2670&auto=format&fit=crop')})`
                 }}
             >
-                <div className="contact-hero-overlay"></div>
+                <div className="atelier-contact-hero-overlay"></div>
 
                 <div className="container" style={{ position: 'relative', zIndex: 10 }}>
-                    <div className="contact-hero-badge">
+                    <div className="atelier-contact-badge">
                         {appLanguage === 'ar' ? '2C Patron Studio' : '2C Patron Studio'}
                     </div>
-                    <h1 className="contact-glam-title">
+                    <h1 className="atelier-contact-title">
                         {appLanguage === 'en' ? getT('headerAccent', t.headerAccent) : getT('headerTitle', t.headerTitle(''))}
                         <span> {appLanguage === 'en' ? getT('headerTitle', t.headerTitle('')) : getT('headerAccent', t.headerAccent)}</span>
                     </h1>
@@ -286,24 +286,24 @@ export default function Contact() {
             </header>
 
             {/* --- MAIN CONTENT GRID --- */}
-            <main className="contact-main-grid-container" dir={direction}>
+            <main className="atelier-contact-grid" dir={direction}>
 
                 {/* A. PREMIUM FORM BLOCK */}
-                <div className="contact-premium-form-card" style={{ position: 'relative' }}>
+                <div className="atelier-contact-card" style={{ position: 'relative' }}>
                     <EditBtn field="form" style={{ position: 'absolute', top: '20px', right: '20px' }} />
-                    <div className="form-block-header">
+                    <div className="atelier-contact-form-header">
                         <h2>
                             {getT('formTitle', t.formTitle)}
                         </h2>
                         <p>Laissez-nous un mot, nous vous répondrons dans les plus brefs délais.</p>
                     </div>
 
-                    <form onSubmit={handleSubmit} className="contact-glam-form">
-                        <div className="contact-form-premium-grid">
-                            <div className="premium-form-group">
+                    <form onSubmit={handleSubmit} className="atelier-contact-form">
+                        <div className="atelier-contact-inputs-grid">
+                            <div className="atelier-contact-field">
                                 <label>{t.namePlaceholder}</label>
                                 <div style={{ position: 'relative' }}>
-                                    <FaUser className="field-icon-lux" />
+                                    <FaUser className="atelier-contact-field-icon" />
                                     <input
                                         type="text"
                                         placeholder={t.namePlaceholder}
@@ -315,10 +315,10 @@ export default function Contact() {
                                 </div>
                             </div>
 
-                            <div className="premium-form-group">
+                            <div className="atelier-contact-field">
                                 <label>{t.emailPlaceholder}</label>
                                 <div style={{ position: 'relative' }}>
-                                    <FaEnvelope className="field-icon-lux" />
+                                    <FaEnvelope className="atelier-contact-field-icon" />
                                     <input
                                         type="email"
                                         placeholder={t.emailPlaceholder}
@@ -332,10 +332,10 @@ export default function Contact() {
                             </div>
                         </div>
 
-                        <div className="premium-form-group" style={{ marginTop: '25px' }}>
+                        <div className="atelier-contact-field" style={{ marginTop: '25px' }}>
                             <label>{t.subjectPlaceholder}</label>
                             <div style={{ position: 'relative' }}>
-                                <FaEdit className="field-icon-lux" />
+                                <FaEdit className="atelier-contact-field-icon" />
                                 <input
                                     type="text"
                                     placeholder={t.subjectPlaceholder}
@@ -347,7 +347,7 @@ export default function Contact() {
                             </div>
                         </div>
 
-                        <div className="premium-form-group" style={{ marginTop: '20px' }}>
+                        <div className="atelier-contact-field" style={{ marginTop: '20px' }}>
                             <label>{t.messagePlaceholder}</label>
                             <textarea
                                 placeholder={t.messagePlaceholder}
@@ -360,7 +360,7 @@ export default function Contact() {
                         </div>
 
                         <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginTop: '30px' }}>
-                            <button type="submit" className="premium-btn-cta-lux" disabled={status === 'loading'}>
+                            <button type="submit" className="atelier-contact-submit-btn" disabled={status === 'loading'}>
                                 {status === 'loading' ? (
                                     <> {t.sending} <FaEdit className="spinner" style={{ animation: 'spin 1s linear infinite' }} /> </>
                                 ) : (
@@ -372,43 +372,43 @@ export default function Contact() {
                 </div>
 
                 {/* B. LUXURY INFO SIDEBAR */}
-                <div className="contact-sidebar-info" style={{ position: 'relative' }}>
+                <div className="atelier-contact-sidebar" style={{ position: 'relative' }}>
                     <EditBtn field="info" style={{ position: 'absolute', top: '0', right: '0' }} />
 
-                    <div className="info-detail-luxury-card">
-                        <div className="luxury-icon-box"><FaMapMarkerAlt /></div>
-                        <div className="luxury-info-content">
+                    <div className="atelier-contact-info-card">
+                        <div className="atelier-contact-info-icon"><FaMapMarkerAlt /></div>
+                        <div className="atelier-contact-info-text">
                             <h4>{t.addressLabel}</h4>
                             <p>{getT('addressValue', t.addressValue)}</p>
                         </div>
                     </div>
 
-                    <div className="info-detail-luxury-card">
-                        <div className="luxury-icon-box"><FaPhone /></div>
-                        <div className="luxury-info-content">
+                    <div className="atelier-contact-info-card">
+                        <div className="atelier-contact-info-icon"><FaPhone /></div>
+                        <div className="atelier-contact-info-text">
                             <h4>{t.phoneLabel}</h4>
                             <p dir="ltr">{getT('phoneValue', t.phoneValue)}</p>
                         </div>
                     </div>
 
-                    <div className="info-detail-luxury-card">
-                        <div className="luxury-icon-box"><FaEnvelope /></div>
-                        <div className="luxury-info-content">
+                    <div className="atelier-contact-info-card">
+                        <div className="atelier-contact-info-icon"><FaEnvelope /></div>
+                        <div className="atelier-contact-info-text">
                             <h4>{t.emailLabel}</h4>
                             <p dir="ltr">{getT('emailValue', t.emailValue)}</p>
                         </div>
                     </div>
 
-                    <div className="info-detail-luxury-card">
-                        <div className="luxury-icon-box"><FaClock /></div>
-                        <div className="luxury-info-content">
+                    <div className="atelier-contact-info-card">
+                        <div className="atelier-contact-info-icon"><FaClock /></div>
+                        <div className="atelier-contact-info-text">
                             <h4>{t.hoursLabel}</h4>
                             <p>{getT('hoursValue', t.hoursValue)}</p>
                         </div>
                     </div>
 
-                    <div className="contact-map-art-box">
-                        <div className="map-placeholder-overlay">
+                    <div className="atelier-contact-map">
+                        <div className="atelier-contact-map-overlay">
                             <FaMapMarkerAlt className="pin-icon" />
                             <h3>Atelier Couture</h3>
                             <p>Vous êtes toujours les bienvenus dans notre espace de création.</p>
@@ -419,8 +419,8 @@ export default function Contact() {
 
             {/* --- STATUS TOAST NOTIFICATION --- */}
             {status && (
-                <div className="contact-status-toast">
-                    <div className={`status - alert - box ${status} `}>
+                <div className="atelier-contact-status-toast">
+                    <div className={`atelier-contact-status-alert ${status} `}>
                         {status === 'loading' && <FaEdit className="spinner" style={{ animation: 'spin 1s linear infinite' }} />}
                         {status === 'success' && <FaPaperPlane />}
                         {status === 'error' && <FaTimes />}
@@ -436,10 +436,10 @@ export default function Contact() {
 
             {/* Admin Editing Modal (Unchanged) */}
             {isEditingField && (
-                <div className="premium-modal-backdrop" onClick={() => setIsEditingField(null)}>
-                    <div className="premium-modal-content large" onClick={(e) => e.stopPropagation()}>
-                        <button className="premium-modal-close-icon" onClick={() => setIsEditingField(null)}><FaTimes /></button>
-                        <h2 className="premium-modal-title">
+                <div className="atelier-contact-modal-backdrop" onClick={() => setIsEditingField(null)}>
+                    <div className="atelier-contact-modal-content large" onClick={(e) => e.stopPropagation()}>
+                        <button className="atelier-contact-modal-close-icon" onClick={() => setIsEditingField(null)}><FaTimes /></button>
+                        <h2 className="atelier-contact-modal-title">
                             Modifier: {
                                 isEditingField === 'hero' ? 'En-tête (Hero)' :
                                     isEditingField === 'heroImage' ? 'Image de Fond (Hero)' :
@@ -449,13 +449,13 @@ export default function Contact() {
                             }
                         </h2>
 
-                        <div className="premium-form-grid">
+                        <div className="atelier-contact-modal-form-grid">
                             {languages.map(lang => (
-                                <div key={lang.code} className="premium-lang-section">
-                                    <h4 className="lang-indicator">{lang.label}</h4>
+                                <div key={lang.code} className="atelier-contact-modal-lang-section">
+                                    <h4 className="atelier-contact-modal-lang-indicator">{lang.label}</h4>
 
                                     {isEditingField === 'heroImage' && (
-                                        <div className="premium-form-group">
+                                        <div className="atelier-contact-modal-field">
                                             <label>URL Image de Fond (Hero)</label>
                                             <input
                                                 type="text"
@@ -468,7 +468,7 @@ export default function Contact() {
 
                                     {isEditingField === 'hero' && (
                                         <>
-                                            <div className="premium-form-group">
+                                            <div className="atelier-contact-modal-field">
                                                 <label>Titre Principal</label>
                                                 <input
                                                     type="text"
@@ -476,7 +476,7 @@ export default function Contact() {
                                                     onChange={e => setEditContactContent({ ...editContactContent, [lang.code]: { ...editContactContent[lang.code], headerTitle: e.target.value } })}
                                                 />
                                             </div>
-                                            <div className="premium-form-group">
+                                            <div className="atelier-contact-modal-field">
                                                 <label>Accent</label>
                                                 <input
                                                     type="text"
@@ -489,7 +489,7 @@ export default function Contact() {
 
                                     {isEditingField === 'form' && (
                                         <>
-                                            <div className="premium-form-group">
+                                            <div className="atelier-contact-modal-field">
                                                 <label>Titre du Formulaire</label>
                                                 <input
                                                     type="text"
@@ -497,7 +497,7 @@ export default function Contact() {
                                                     onChange={e => setEditContactContent({ ...editContactContent, [lang.code]: { ...editContactContent[lang.code], formTitle: e.target.value } })}
                                                 />
                                             </div>
-                                            <div className="premium-form-group">
+                                            <div className="atelier-contact-modal-field">
                                                 <label>Texte du Bouton</label>
                                                 <input
                                                     type="text"
@@ -510,7 +510,7 @@ export default function Contact() {
 
                                     {isEditingField === 'info' && (
                                         <>
-                                            <div className="premium-form-group">
+                                            <div className="atelier-contact-modal-field">
                                                 <label>Adresse</label>
                                                 <input
                                                     type="text"
@@ -518,7 +518,7 @@ export default function Contact() {
                                                     onChange={e => setEditContactContent({ ...editContactContent, [lang.code]: { ...editContactContent[lang.code], addressValue: e.target.value } })}
                                                 />
                                             </div>
-                                            <div className="premium-form-group">
+                                            <div className="atelier-contact-modal-field">
                                                 <label>Téléphone</label>
                                                 <input
                                                     type="text"
@@ -526,7 +526,7 @@ export default function Contact() {
                                                     onChange={e => setEditContactContent({ ...editContactContent, [lang.code]: { ...editContactContent[lang.code], phoneValue: e.target.value } })}
                                                 />
                                             </div>
-                                            <div className="premium-form-group">
+                                            <div className="atelier-contact-modal-field">
                                                 <label>E-mail</label>
                                                 <input
                                                     type="text"
@@ -534,7 +534,7 @@ export default function Contact() {
                                                     onChange={e => setEditContactContent({ ...editContactContent, [lang.code]: { ...editContactContent[lang.code], emailValue: e.target.value } })}
                                                 />
                                             </div>
-                                            <div className="premium-form-group">
+                                            <div className="atelier-contact-modal-field">
                                                 <label>Heures d'Ouverture</label>
                                                 <input
                                                     type="text"
@@ -548,11 +548,11 @@ export default function Contact() {
                             ))}
                         </div>
 
-                        <div className="premium-btn-group">
-                            <button className="premium-btn-cta secondary" onClick={() => setIsEditingField(null)}>
+                        <div className="atelier-contact-modal-btn-group">
+                            <button className="atelier-contact-modal-btn secondary" onClick={() => setIsEditingField(null)}>
                                 Annuler
                             </button>
-                            <button className="premium-btn-cta gold" onClick={handleSaveContactContent}>
+                            <button className="atelier-contact-modal-btn gold" onClick={handleSaveContactContent}>
                                 <FaSave /> Enregistrer
                             </button>
                         </div>
