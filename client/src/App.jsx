@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState } from 'react';
 import BASE_URL from './apiConfig';
+import ScrollToTop from './comp/ScrollToTop';
 
 import Home from "./pages/Home.jsx";
 import './global.css'
@@ -126,8 +127,8 @@ function AppContent() {
 function App() {
     return (
         <BrowserRouter>
+            <ScrollToTop />
             <AppContent />
-
         </BrowserRouter>
     );
 }

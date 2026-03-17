@@ -51,10 +51,12 @@ export default function Leçons_Manches_coursage() {
                 setHeroBg(res.data[0].hero_bg || "");
             }
             setLoading(false);
+            window.scrollTo({ top: 0, behavior: 'instant' });
         } catch (err) {
             console.error(err);
             setError("Erreur lors du chargement des cours.");
             setLoading(false);
+            window.scrollTo({ top: 0, behavior: 'instant' });
         }
     };
 
@@ -138,10 +140,10 @@ export default function Leçons_Manches_coursage() {
                     {allCourses.length > 0 ? (
                         allCourses.map((course, index) => {
                             // 💡 تحديد المسار شرطيًا بناءً على actualTitle
-                            const courseTitle = typeof course.title === 'object' ? (course.title.fr || course.title[appLanguage]) : course.title;
+                            const courseTitleStr = typeof course.title === 'object' ? (course.title.fr || course.title[Object.keys(course.title)[0]]) : course.title;
                             const lessonPath = actualTitle === "Les corsages"
-                                ? `/Leçons_coursage/${encodeURIComponent(courseTitle)}`
-                                : `/Leçons/${encodeURIComponent(courseTitle)}`;
+                                ? `/Leçons_coursage/${encodeURIComponent(courseTitleStr)}`
+                                : `/Leçons/${encodeURIComponent(courseTitleStr)}`;
 
                             return (
                                 <div key={index} className="course-card">

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { useLanguage } from '../context/LanguageContext';
-import { FaShoppingCart, FaSearch, FaChevronDown, FaTimes, FaUser, FaMapMarkerAlt, FaPhoneAlt, FaMinusCircle, FaPlusCircle, FaSpinner, FaCheckCircle, FaCommentAlt, FaStar, FaRegStar, FaChevronLeft, FaChevronRight, FaEdit, FaSave, FaTrash, FaPlus } from 'react-icons/fa';
+import { FaShoppingCart, FaSearch, FaChevronDown, FaTimes, FaUser, FaMapMarkerAlt, FaPhoneAlt, FaMinusCircle, FaPlusCircle, FaSpinner, FaCheckCircle, FaCommentAlt, FaStar, FaRegStar, FaChevronLeft, FaChevronRight, FaEdit, FaSave, FaTrash, FaPlus, FaWhatsapp, FaFacebookMessenger } from 'react-icons/fa';
 import Navbar from '../comp/navbar';
 import Footer from '../comp/Footer';
 import './shop_redesign.css';
@@ -600,6 +600,11 @@ export default function ProductGrid() {
     const [shopContent, setShopContent] = useState({});
     const [editShopContent, setEditShopContent] = useState({});
 
+    // 📱 Contact Buttons Setting
+    const [contactSettings, setContactSettings] = useState({ whatsapp: '', messenger: '' });
+    const [isEditingContact, setIsEditingContact] = useState(false);
+    const [editContactForm, setEditContactForm] = useState({ whatsapp: '', messenger: '' });
+
     useEffect(() => {
         // Check Admin
         const users = JSON.parse(localStorage.getItem('users') || '[]');
@@ -745,6 +750,20 @@ export default function ProductGrid() {
         // 🌟 LOGIQUE DE RÉCUPÉRATION DES PRODUجTS DEPUIS L'API
         // ProductGrid.js
 
+        // Contact Settings Fetch
+        const fetchContactSettings = async () => {
+            try {
+                const res = await fetch(`${BASE_URL}/api/settings/shop-contacts`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data) {
+                        setContactSettings(data.value || data);
+                    }
+                }
+            } catch (err) {}
+        };
+        fetchContactSettings();
+
         const fetchProducts = async () => {
             setLoading(true);
             setError(null);
@@ -775,6 +794,7 @@ export default function ProductGrid() {
                 setError("Impossible de charger les produits. Veuillez vérifier الـ API.");
             } finally {
                 setLoading(false);
+                window.scrollTo({ top: 0, behavior: 'instant' });
             }
         };
 
@@ -1751,6 +1771,75 @@ export default function ProductGrid() {
                                     <FaSave /> {appLanguage === 'ar' ? 'حفظ البيانات' : 'Confirmer les Modifications'}
                                 </button>
                             </div>
+                        </div>
+                    </div>
+                </div>,
+                document.body
+            )}
+
+            {/* 📱 Contact Floating Buttons */}
+            <div className="contact-floating-container" style={{ position: 'fixed', bottom: '30px', left: '30px', zIndex: 1000, display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                {contactSettings.whatsapp && (
+                    <a href={`https://wa.me/${contactSettings.whatsapp.replace(/\+/g, '')}`} target="_blank" rel="noopener noreferrer" style={{ background: '#25D366', color: 'white', width: '50px', height: '50px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', boxShadow: '0 4px 10px rgba(0,0,0,0.3)', transition: 'transform 0.3s' }} onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.1)'} onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>
+                        <FaWhatsapp />
+                    </a>
+                )}
+                {contactSettings.messenger && (
+                    <a href={contactSettings.messenger} target="_blank" rel="noopener noreferrer" style={{ background: '#0084FF', color: 'white', width: '50px', height: '50px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', boxShadow: '0 4px 10px rgba(0,0,0,0.3)', transition: 'transform 0.3s' }} onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.1)'} onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>
+                        <FaFacebookMessenger />
+                    </a>
+                )}
+                {isAdmin && (
+                    <button onClick={() => { setEditContactForm(contactSettings); setIsEditingContact(true); }} style={{ background: '#333', color: 'white', width: '40px', height: '40px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', border: 'none', cursor: 'pointer', boxShadow: '0 4px 10px rgba(0,0,0,0.3)' }}>
+                        <FaEdit />
+                    </button>
+                )}
+            </div>
+
+            {/* Admin Edit Contact Modal */}
+            {isEditingContact && ReactDOM.createPortal(
+                <div className="premium-modal-backdrop" onClick={() => setIsEditingContact(false)}>
+                    <div className="premium-modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '400px', textAlign: 'left' }}>
+                        <button className="premium-modal-close-icon" onClick={() => setIsEditingContact(false)}><FaTimes size={18} /></button>
+                        <h3 style={{ fontSize: '1.5rem', marginBottom: '20px' }}>
+                            {appLanguage === 'ar' ? 'أزرار التواصل' : 'Boutons de Contact'}
+                        </h3>
+                        <div className="input-field-group" style={{ marginBottom: '15px' }}>
+                            <label style={{ display: 'block', marginBottom: '5px' }}>WhatsApp (e.g. 216...)</label>
+                            <input
+                                type="text"
+                                value={editContactForm.whatsapp}
+                                onChange={e => setEditContactForm({ ...editContactForm, whatsapp: e.target.value })}
+                                style={{ width: '100%', padding: '10px', borderRadius: '10px', border: '1px solid #ddd' }}
+                            />
+                        </div>
+                        <div className="input-field-group" style={{ marginBottom: '20px' }}>
+                            <label style={{ display: 'block', marginBottom: '5px' }}>Messenger Link</label>
+                            <input
+                                type="text"
+                                placeholder="https://m.me/..."
+                                value={editContactForm.messenger}
+                                onChange={e => setEditContactForm({ ...editContactForm, messenger: e.target.value })}
+                                style={{ width: '100%', padding: '10px', borderRadius: '10px', border: '1px solid #ddd' }}
+                            />
+                        </div>
+                        <div style={{ display: 'flex', gap: '10px' }}>
+                            <button onClick={() => setIsEditingContact(false)} className="premium-btn-cancel" style={{ flex: 1 }}>Annuler</button>
+                            <button onClick={async () => {
+                                try {
+                                    const res = await fetch(`${BASE_URL}/api/settings/shop-contacts`, {
+                                        method: 'PUT',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ value: editContactForm })
+                                    });
+                                    if(res.ok) {
+                                        setContactSettings(editContactForm);
+                                        setIsEditingContact(false);
+                                    }
+                                } catch(err){
+                                    console.error("Failed to save contact settings:", err);
+                                }
+                            }} className="premium-btn-save" style={{ flex: 1 }}><FaSave /> Enregistrer</button>
                         </div>
                     </div>
                 </div>,

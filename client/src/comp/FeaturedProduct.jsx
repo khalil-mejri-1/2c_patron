@@ -48,6 +48,7 @@ export default function FeaturedProduct() {
     const isRTL = currentLang === 'ar';
 
     const [isAdmin, setIsAdmin] = useState(false);
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [featuredData, setFeaturedData] = useState({
         videoUrl: "https://streamable.com/e/4k6x0z?",
         videoType: 'iframe'
@@ -65,6 +66,9 @@ export default function FeaturedProduct() {
         const email = localStorage.getItem('currentUserEmail') || localStorage.getItem('loggedInUserEmail');
         const currentUser = users.find(u => u.email === email);
         if (currentUser?.statut === 'admin') setIsAdmin(true);
+        // Check login status
+        const loginStatus = localStorage.getItem('login') === 'true';
+        setIsLoggedIn(loginStatus);
 
         // Fetch Data
         fetch(`${BASE_URL}/api/settings/featured-product`)
@@ -228,7 +232,10 @@ export default function FeaturedProduct() {
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <Link to="/Vip-access" className="product-cta-button">
-                        {t('cta')}
+                        {isLoggedIn
+                            ? (currentLang === 'ar' ? 'ابدأ الآن' : currentLang === 'en' ? 'Start Now' : 'Commencer')
+                            : t('cta')
+                        }
                         {/* عكس اتجاه الأيقونة لـ RTL */}
                         {isRTL ? <FaLongArrowAltRight style={{ transform: 'scaleX(-1)' }} /> : <FaLongArrowAltRight />}
                     </Link>

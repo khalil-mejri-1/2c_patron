@@ -133,6 +133,7 @@ export default function Vipaccess() {
             const response = await axios.get(`${BASE_URL}/api/vip-categories`);
             setVipCategories(response.data);
             setLoading(false);
+            window.scrollTo({ top: 0, behavior: 'instant' });
         } catch (err) {
             console.error("Erreur API:", err);
             setError(t.error);
@@ -365,7 +366,7 @@ export default function Vipaccess() {
                                                 {typeof course.duration === 'object' ? (course.duration[appLanguage] || course.duration.fr) : (course.duration || 'Access 24/7')}
                                             </span>
                                         </div>
-                                        <NavLink to={`/cours_Manches/${encodeURIComponent(typeof course.title === 'object' ? (course.title.fr || course.title[appLanguage]) : course.title)}`}>
+                                        <NavLink to={`/cours_Manches/${encodeURIComponent(typeof course.title === 'object' ? (course.title.fr || course.title[Object.keys(course.title)[0]]) : course.title)}`}>
                                             <button className="vip-access-btn">
                                                 <span>{t.button}</span>
                                                 <FaChevronRight className="btn-arrow" />

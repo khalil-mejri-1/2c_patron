@@ -225,8 +225,9 @@ export default function Lessons() {
 
             for (const group of res.data) {
                 const item = group.courses.find(c => {
-                    const titleToCheck = typeof c.title === 'object' ? c.title.fr : c.title;
-                    return titleToCheck === actualTitle;
+                    const t_fr = typeof c.title === 'object' ? c.title.fr : c.title;
+                    const match = t_fr?.toString().trim() === actualTitle.trim();
+                    return match;
                 });
                 if (item) {
                     foundCourse = item;
@@ -272,9 +273,11 @@ export default function Lessons() {
         fetchCourseInfo();
         fetchSiteSettings();
     }, [actualTitle, fetchCourseInfo, fetchSiteSettings]);
-
     const handleSaveHero = async () => {
-        if (!groupId || !courseInfo) return;
+        if (!groupId || !courseInfo) {
+            showAlert('error', 'Error', 'Could not identify the course to update.');
+            return;
+        }
 
         try {
             // Fetch latest group data to ensure consistency
@@ -282,8 +285,7 @@ export default function Lessons() {
             const groupData = groupRes.data;
 
             const updatedCourses = groupData.courses.map(c => {
-                const titleToCheck = typeof c.title === 'object' ? c.title.fr : c.title;
-                if (titleToCheck === actualTitle) {
+                if (c._id === courseInfo?._id || (typeof c.title === 'object' ? c.title.fr : c.title)?.toString().trim() === actualTitle.trim()) {
                     return {
                         ...c,
                         hero_content: editHeroContent,
@@ -467,6 +469,7 @@ export default function Lessons() {
             setError(t.errorMsg);
         } finally {
             setLoading(false);
+            window.scrollTo({ top: 0, behavior: 'instant' });
         }
     }, [actualTitle, t.errorMsg, appLanguage]);
 
@@ -542,11 +545,11 @@ export default function Lessons() {
                     <h1 className="lessons-main-title-premium">
                         {heroContent[appLanguage]?.title || (
                             appLanguage === 'ar' ? (
-                                <>دروس <span>{actualTitle}</span></>
+                                <>دروس <span>{typeof courseInfo?.title === 'object' ? (courseInfo.title[appLanguage] || courseInfo.title.fr) : actualTitle}</span></>
                             ) : appLanguage === 'en' ? (
-                                <><span>{actualTitle}</span> Lessons</>
+                                <><span>{typeof courseInfo?.title === 'object' ? (courseInfo.title[appLanguage] || courseInfo.title.fr) : actualTitle}</span> Lessons</>
                             ) : (
-                                <>Leçons de <span>{actualTitle}</span></>
+                                <>Leçons de <span>{typeof courseInfo?.title === 'object' ? (courseInfo.title[appLanguage] || courseInfo.title.fr) : actualTitle}</span></>
                             )
                         )}
                         {heroContent[appLanguage]?.accent && (

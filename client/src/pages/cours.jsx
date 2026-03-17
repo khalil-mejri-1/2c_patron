@@ -199,10 +199,12 @@ export default function Cours() {
                 setEditHeroContent(init);
             }
             setLoading(false);
+            window.scrollTo({ top: 0, behavior: 'instant' });
         } catch (err) {
             console.error(err);
             setError(t.error);
             setLoading(false);
+            window.scrollTo({ top: 0, behavior: 'instant' });
         }
     };
 
@@ -433,9 +435,10 @@ export default function Cours() {
                 <div className="premium-lessons-grid">
                     {allCourses.length > 0 ? (
                         allCourses.map((course, index) => {
+                            const courseTitleStr = typeof course.title === 'object' ? (course.title.fr || course.title[Object.keys(course.title)[0]]) : course.title;
                             const lessonPath = actualTitle === "Les corsages"
-                                ? `/Leçons_coursage/${encodeURIComponent(course.title)}`
-                                : `/Leçons/${encodeURIComponent(course.title)}`;
+                                ? `/Leçons_coursage/${encodeURIComponent(courseTitleStr)}`
+                                : `/Leçons/${encodeURIComponent(courseTitleStr)}`;
 
                             return (
                                 <article key={index} className="lesson-card-premium" style={{ animationDelay: `${index * 0.1}s` }}>
