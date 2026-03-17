@@ -134,18 +134,14 @@ const VideoIntroduction = ({ videoUrl, title, appLanguage, isAdmin, onEdit }) =>
     );
 };
 
-const languages = [
-    { code: 'fr', label: 'FR' },
-    { code: 'ar', label: 'AR' },
-    { code: 'en', label: 'EN' }
-];
+
 
 export default function Cours() {
     const { courseTitle } = useParams();
     const actualTitle = decodeURIComponent(courseTitle);
     const { showAlert } = useAlert();
     const navigate = useNavigate();
-    const { appLanguage } = useLanguage();
+    const { appLanguage, languages } = useLanguage();
 
     const [groups, setGroups] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -159,11 +155,11 @@ export default function Cours() {
     const [showLessonModal, setShowLessonModal] = useState(false);
     const [lessonMode, setLessonMode] = useState('add');
     const [selectedLessonIndex, setSelectedLessonIndex] = useState(null);
-    const [lessonData, setLessonData] = useState({ title: '', image: '', duration: '' });
+    const [lessonData, setLessonData] = useState({ title: {}, image: '', duration: {} });
 
     // Video Intro Management State
     const [showVideoModal, setShowVideoModal] = useState(false);
-    const [newVideoUrl, setNewVideoUrl] = useState("");
+    const [newVideoUrl, setNewVideoUrl] = useState({});
 
     // Hero Background State
     const [heroBg, setHeroBg] = useState("");
@@ -180,9 +176,27 @@ export default function Cours() {
             });
             setGroups(res.data);
             if (res.data.length > 0) {
-                setNewVideoUrl(res.data[0].video_link || "");
-                setHeroBg(res.data[0].hero_bg || "");
-                setHeroContent(res.data[0].hero_content || {});
+                const group = res.data[0];
+                
+                // Normalize Video Link
+                const vl = typeof group.video_link === 'object' ? { ...group.video_link } : { fr: group.video_link || '' };
+                languages.forEach(l => { if (!vl[l.code]) vl[l.code] = vl.fr || ''; });
+                setNewVideoUrl(vl);
+                setHeroBg(group.hero_bg || "");
+                const hc = group.hero_content || {};
+                setHeroContent(hc);
+                
+                // Pre-initialize edit content with fallbacks
+                const init = {};
+                languages.forEach(l => {
+                    init[l.code] = {
+                        badge: hc[l.code]?.badge || translations[l.code]?.categoryTag || translations.fr.categoryTag || "",
+                        title: hc[l.code]?.title || actualTitle || "",
+                        accent: hc[l.code]?.accent || "",
+                        bg: hc[l.code]?.bg || group.hero_bg || ""
+                    };
+                });
+                setEditHeroContent(init);
             }
             setLoading(false);
         } catch (err) {
@@ -277,6 +291,37 @@ export default function Cours() {
         } catch (e) { showAlert('error', 'Error', 'Failed to update video'); }
     };
 
+    const handleOpenEditLesson = (course, index) => {
+        setLessonMode('edit');
+        setSelectedLessonIndex(index);
+        
+        const title = typeof course.title === 'object' ? { ...course.title } : { fr: course.title || '' };
+        const duration = typeof course.duration === 'object' ? { ...course.duration } : { fr: course.duration || '' };
+        
+        languages.forEach(l => {
+            if (!title[l.code]) title[l.code] = title.fr || '';
+            if (!duration[l.code]) duration[l.code] = duration.fr || '';
+        });
+
+        setLessonData({ 
+            title, 
+            image: course.image, 
+            duration 
+        });
+        setShowLessonModal(true);
+    };
+
+    const handleOpenAddLesson = () => {
+        setLessonMode('add');
+        const emptyData = { title: {}, image: '', duration: {} };
+        languages.forEach(l => {
+            emptyData.title[l.code] = '';
+            emptyData.duration[l.code] = '';
+        });
+        setLessonData(emptyData);
+        setShowLessonModal(true);
+    };
+
     const handleHeroUpdate = async () => {
         if (groups.length === 0) {
             showAlert('error', 'Note', 'Add at least one lesson first to create the category group.');
@@ -333,7 +378,7 @@ export default function Cours() {
     }
 
     const allCourses = groups.flatMap(group => group.courses);
-    const videoUrl = groups.length > 0 && groups[0].video_link ? groups[0].video_link : null;
+    const videoUrl = groups.length > 0 && groups[0].video_link ? (typeof groups[0].video_link === 'object' ? (groups[0].video_link[appLanguage] || groups[0].video_link.fr) : groups[0].video_link) : null;
 
     return (
         <div className="courses-premium-page" dir={direction}>
@@ -346,16 +391,6 @@ export default function Cours() {
                 {isAdmin && (
                     <div style={{ position: 'absolute', top: '130px', right: '35px', zIndex: 100, display: 'flex', gap: '10px' }}>
                         <button className="admin-edit-master-btn" onClick={() => {
-                            const init = {};
-                            languages.forEach(l => {
-                                init[l.code] = {
-                                    badge: heroContent[l.code]?.badge || t.categoryTag || "",
-                                    title: heroContent[l.code]?.title || actualTitle || "",
-                                    accent: heroContent[l.code]?.accent || "",
-                                    bg: heroContent[l.code]?.bg || heroBg || ""
-                                };
-                            });
-                            setEditHeroContent(init);
                             setIsEditingHero(true);
                         }}>
                             <FaEdit /> {t.editHero}
@@ -389,7 +424,7 @@ export default function Cours() {
                         <span>{appLanguage === 'en' ? t.coursesTitle : t.coursesAccent}</span>
                     </h2>
                     {isAdmin && (
-                        <button className="premium-btn-add" onClick={() => { setLessonMode('add'); setLessonData({ title: '', image: '', duration: '' }); setShowLessonModal(true); }}>
+                        <button className="premium-btn-add" onClick={handleOpenAddLesson}>
                             <FaPlus /> {t.addLesson}
                         </button>
                     )}
@@ -408,24 +443,22 @@ export default function Cours() {
                                         <img src={course.image} alt={course.title} className="l-card-img" />
                                         {isAdmin && (
                                             <div className="admin-card-controls">
-                                                <button className="control-btn edit" onClick={() => {
-                                                    setLessonMode('edit');
-                                                    setSelectedLessonIndex(index);
-                                                    setLessonData({ title: course.title, image: course.image, duration: course.duration || '' });
-                                                    setShowLessonModal(true);
-                                                }}><FaEdit /></button>
+                                                <button className="control-btn edit" onClick={() => handleOpenEditLesson(course, index)}><FaEdit /></button>
                                                 <button className="control-btn delete" onClick={() => handleDeleteLesson(index)}><FaTrash /></button>
                                             </div>
                                         )}
                                     </div>
 
                                     <div className="l-card-body">
-                                        <h3 className="l-card-title">{course.title}</h3>
-
+                                        <h3 className="l-card-title">
+                                            {typeof course.title === 'object' ? (course.title[appLanguage] || course.title.fr) : course.title}
+                                        </h3>
                                         <div className="l-card-footer">
                                             <div className="l-meta-duration">
                                                 <FaPlayCircle />
-                                                <span>{course.duration || t.duration}</span>
+                                                <span>
+                                                    {typeof course.duration === 'object' ? (course.duration[appLanguage] || course.duration.fr) : (course.duration || t.duration)}
+                                                </span>
                                             </div>
                                             <Link to={lessonPath} className="l-nav-link">
                                                 <button className="l-action-btn">
@@ -456,15 +489,37 @@ export default function Cours() {
                             {lessonMode === 'add' ? t.addLesson : t.editLesson}
                         </h2>
 
-                        <div className="premium-form-grid-single">
-                            <div className="premium-form-group">
-                                <label>{t.lessonTitle}</label>
-                                <input
-                                    type="text"
-                                    value={lessonData.title}
-                                    onChange={(e) => setLessonData({ ...lessonData, title: e.target.value })}
-                                />
-                            </div>
+                        <div className="premium-form-grid" style={{ gridTemplateColumns: '1fr' }}>
+                            {languages.filter(l => l.code === appLanguage).map(lang => (
+                                <div key={lang.code} className="premium-lang-section" style={{ border: '1px solid #e2e8f0', borderRadius: '12px', padding: '15px', marginBottom: '15px' }}>
+                                    <h4 className="lang-indicator" style={{ background: '#d4af37', display: 'inline-block', marginBottom: '10px' }}>{lang.label}</h4>
+                                    <div className="premium-form-group">
+                                        <label>{t.lessonTitle}</label>
+                                        <input
+                                            type="text"
+                                            value={lessonData.title[lang.code] || ''}
+                                            onChange={(e) => {
+                                                const newTitle = { ...lessonData.title, [lang.code]: e.target.value };
+                                                setLessonData({ ...lessonData, title: newTitle });
+                                            }}
+                                            dir={lang.code === 'ar' ? 'rtl' : 'ltr'}
+                                        />
+                                    </div>
+                                    <div className="premium-form-group">
+                                        <label>{t.lessonDur}</label>
+                                        <input
+                                            type="text"
+                                            value={lessonData.duration[lang.code] || ''}
+                                            onChange={(e) => {
+                                                const newDur = { ...lessonData.duration, [lang.code]: e.target.value };
+                                                setLessonData({ ...lessonData, duration: newDur });
+                                            }}
+                                            dir={lang.code === 'ar' ? 'rtl' : 'ltr'}
+                                        />
+                                    </div>
+                                </div>
+                            ))}
+
                             <div className="premium-form-group">
                                 <label>{t.lessonImg}</label>
                                 <input
@@ -472,15 +527,6 @@ export default function Cours() {
                                     placeholder="https://..."
                                     value={lessonData.image}
                                     onChange={(e) => setLessonData({ ...lessonData, image: e.target.value })}
-                                />
-                            </div>
-                            <div className="premium-form-group">
-                                <label>{t.lessonDur}</label>
-                                <input
-                                    type="text"
-                                    placeholder="ex: 15 min"
-                                    value={lessonData.duration}
-                                    onChange={(e) => setLessonData({ ...lessonData, duration: e.target.value })}
                                 />
                             </div>
                         </div>
@@ -503,19 +549,28 @@ export default function Cours() {
                         <button className="premium-modal-close-icon" onClick={() => setShowVideoModal(false)}><FaTimes /></button>
                         <h2 className="premium-modal-title">{t.editIntro}</h2>
 
-                        <div className="premium-form-grid-single">
-                            <div className="premium-form-group">
-                                <label>{t.videoUrl}</label>
-                                <input
-                                    type="text"
-                                    placeholder="https://www.youtube.com/embed/..."
-                                    value={newVideoUrl}
-                                    onChange={(e) => setNewVideoUrl(e.target.value)}
-                                />
-                                <p style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '5px' }}>
-                                    Utilisez le lien d'intégration (embed).
-                                </p>
-                            </div>
+                        <div className="premium-form-grid" style={{ gridTemplateColumns: '1fr' }}>
+                            {languages.filter(l => l.code === appLanguage).map(lang => (
+                                <div key={lang.code} className="premium-lang-section" style={{ border: '1px solid #e2e8f0', borderRadius: '12px', padding: '15px', marginBottom: '15px' }}>
+                                    <h4 className="lang-indicator" style={{ background: '#d4af37', display: 'inline-block', marginBottom: '10px' }}>{lang.label}</h4>
+                                    <div className="premium-form-group">
+                                        <label>{t.videoUrl}</label>
+                                        <input
+                                            type="text"
+                                            placeholder="https://www.youtube.com/embed/..."
+                                            value={newVideoUrl[lang.code] || ''}
+                                            onChange={(e) => {
+                                                const newV = { ...newVideoUrl, [lang.code]: e.target.value };
+                                                setNewVideoUrl(newV);
+                                            }}
+                                            dir={lang.code === 'ar' ? 'rtl' : 'ltr'}
+                                        />
+                                    </div>
+                                </div>
+                            ))}
+                            <p style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '-10px', marginBottom: '15px' }}>
+                                {appLanguage === 'ar' ? 'استخدم رابط التضمين (embed).' : "Utilisez le lien d'intégration (embed)."}
+                            </p>
                         </div>
 
                         <div className="premium-btn-group">
@@ -537,9 +592,9 @@ export default function Cours() {
                         <h2 className="premium-modal-title" style={{ textAlign: 'center', marginBottom: '30px' }}>Modifier le Hero</h2>
 
                         <div className="premium-form-grid">
-                            {languages.map(lang => (
-                                <div key={lang.code} className="premium-lang-section">
-                                    <h4 className="lang-indicator">{lang.label}</h4>
+                            {languages.filter(l => l.code === appLanguage).map(lang => (
+                                <div key={lang.code} className="premium-lang-section" style={{ border: 'none', background: 'none' }}>
+                                    <h4 className="lang-indicator" style={{ background: '#d4af37' }}>{lang.label}</h4>
 
                                     <div className="premium-form-group">
                                         <label>{lang.code === 'ar' ? 'Badge' : 'BADGE'}</label>

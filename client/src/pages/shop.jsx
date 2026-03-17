@@ -207,82 +207,147 @@ const translations = {
 // مُكوِّن شريحة الصور (Image Carousel Component)
 // ====================================================================
 
-const ImageCarousel = ({ images, direction }) => {
+const ImageCarousel = ({ images, direction, height = '320px' }) => {
     // يجب التحقق من أن images هي مصفوفة وتحتوي على عناصر
     if (!images || images.length === 0) return null;
 
     const [currentIndex, setCurrentIndex] = useState(0);
+    const [isHovered, setIsHovered] = useState(false);
 
-    const goToPrevious = () => {
+    const goToPrevious = (e) => {
+        e.stopPropagation();
         const isFirstSlide = currentIndex === 0;
         const newIndex = isFirstSlide ? images.length - 1 : currentIndex - 1;
         setCurrentIndex(newIndex);
     };
 
-    const goToNext = () => {
+    const goToNext = (e) => {
+        if (e) e.stopPropagation();
         const isLastSlide = currentIndex === images.length - 1;
         const newIndex = isLastSlide ? 0 : currentIndex + 1;
         setCurrentIndex(newIndex);
     };
 
-    // تأثير للانتقال التلقائي كل 5 ثوانٍ
+    // تأثير للانتقال التلقائي كل 4 ثوانٍ
     useEffect(() => {
+        if (isHovered) return; // Pause on hover
+
         const interval = setInterval(() => {
             goToNext();
-        }, 5000); // 5 ثوانٍ
+        }, 4000); 
         return () => clearInterval(interval);
-    }, [currentIndex]);
+    }, [currentIndex, images.length, isHovered]);
+
+    const directionClass = direction === 'ar' ? 'rtl' : 'ltr';
 
     return (
-        <div className="image-carousel-container">
+        <div 
+            className="image-carousel-container" 
+            style={{ height, width: '100%', position: 'relative', overflow: 'hidden' }}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+        >
             <div
                 className="carousel-inner"
                 style={{
                     display: 'flex',
-                    transition: 'transform 0.5s ease-in-out',
+                    transition: 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
                     transform: `translateX(-${currentIndex * 100}%)`,
+                    height: '100%',
+                    width: '100%'
                 }}
             >
                 {images.map((url, index) => (
-                    <div key={index} className="carousel-item" style={{}}>
+                    <div key={index} className="carousel-item" style={{ width: '100%', height: '100%', flexShrink: 0 }}>
                         <img
                             src={url}
                             alt={`Slide ${index + 1}`}
-                            className='image_carrouse_chop'
+                            className='product-grid-image'
+                            style={{ 
+                                width: '100%', 
+                                height: '100%', 
+                                objectFit: 'cover',
+                                display: 'block'
+                            }}
                         />
                     </div>
                 ))}
             </div>
 
-            {/* أزرار التحكم في الكاروسيل */}
+            {/* أزرار التحكم في الكاروسيل - تظهر فقط إذا كان هناك أكثر من صورة */}
             {images.length > 1 && (
                 <>
-                    <button onClick={goToPrevious} className="carousel-control prev" style={{ position: 'absolute', top: '50%', transform: 'translateY(-50%)', left: direction === 'rtl' ? '5px' : '5px', right: direction === 'rtl' ? 'auto' : 'auto', background: 'rgba(0,0,0,0.5)', border: 'none', color: 'white', padding: '10px', cursor: 'pointer', zIndex: 10, borderRadius: '50%' }}>
-                        {direction === 'rtl' ? <FaChevronRight /> : <FaChevronLeft />}
+                    <button 
+                        onClick={goToPrevious} 
+                        className="carousel-control-btn prev" 
+                        style={{ 
+                            position: 'absolute', 
+                            top: '50%', 
+                            transform: 'translateY(-50%)', 
+                            left: '10px', 
+                            background: 'rgba(255,255,255,0.8)', 
+                            border: 'none', 
+                            color: '#1a1a1a', 
+                            width: '32px',
+                            height: '32px',
+                            cursor: 'pointer', 
+                            zIndex: 15, 
+                            borderRadius: '50%', 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'center',
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                            transition: 'all 0.3s'
+                        }}
+                    >
+                        {direction === 'ar' ? <FaChevronRight size={14} /> : <FaChevronLeft size={14} />}
                     </button>
-                    <button onClick={goToNext} className="carousel-control next" style={{ position: 'absolute', top: '50%', transform: 'translateY(-50%)', right: direction === 'rtl' ? '5px' : '5px', left: direction === 'rtl' ? 'auto' : 'auto', background: 'rgba(0,0,0,0.5)', border: 'none', color: 'white', padding: '10px', cursor: 'pointer', zIndex: 10, borderRadius: '50%' }}>
-                        {direction === 'rtl' ? <FaChevronLeft /> : <FaChevronRight />}
+                    <button 
+                        onClick={(e) => goToNext(e)} 
+                        className="carousel-control-btn next" 
+                        style={{ 
+                            position: 'absolute', 
+                            top: '50%', 
+                            transform: 'translateY(-50%)', 
+                            right: '10px', 
+                            background: 'rgba(255,255,255,0.8)', 
+                            border: 'none', 
+                            color: '#1a1a1a', 
+                            width: '32px',
+                            height: '32px',
+                            cursor: 'pointer', 
+                            zIndex: 15, 
+                            borderRadius: '50%', 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'center',
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                            transition: 'all 0.3s'
+                        }}
+                    >
+                        {direction === 'ar' ? <FaChevronLeft size={14} /> : <FaChevronRight size={14} />}
                     </button>
+                    
+                    <div className="carousel-dots-indicators" style={{ position: 'absolute', bottom: '15px', width: '100%', textAlign: 'center', display: 'flex', justifyContent: 'center', gap: '6px', zIndex: 15 }}>
+                        {images.map((_, index) => (
+                            <span
+                                key={index}
+                                style={{
+                                    display: 'inline-block',
+                                    width: index === currentIndex ? '12px' : '6px',
+                                    height: '6px',
+                                    borderRadius: '10px',
+                                    backgroundColor: index === currentIndex ? '#D4AF37' : 'rgba(255,255,255,0.6)',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.3s',
+                                    boxShadow: '0 1px 3px rgba(0,0,0,0.2)'
+                                }}
+                                onClick={(e) => { e.stopPropagation(); setCurrentIndex(index); }}
+                            ></span>
+                        ))}
+                    </div>
                 </>
             )}
-
-            <div className="carousel-indicators" style={{ position: 'absolute', bottom: '10px', width: '100%', textAlign: 'center' }}>
-                {images.map((_, index) => (
-                    <span
-                        key={index}
-                        style={{
-                            display: 'inline-block',
-                            width: '8px',
-                            height: '8px',
-                            margin: '0 4px',
-                            borderRadius: '50%',
-                            backgroundColor: index === currentIndex ? '#fff' : 'rgba(255,255,255,0.5)',
-                            cursor: 'pointer',
-                        }}
-                        onClick={() => setCurrentIndex(index)}
-                    ></span>
-                ))}
-            </div>
         </div>
     );
 };
@@ -396,6 +461,7 @@ const OrderModalComponent = ({ selectedProduct, quantity, handleQuantityChange, 
                 <ImageCarousel
                     images={[selectedProduct.url, ...(selectedProduct.secondaryImages || [])].filter(Boolean)}
                     direction={direction}
+                    height="400px"
                 />
                 {/* 🔚 نهاية الكاروسيل */}
 
@@ -542,14 +608,16 @@ export default function ProductGrid() {
         if (currentUser?.statut === 'admin') setIsAdmin(true);
 
         // Load content
-        const backup = localStorage.getItem('shop_content_backup');
-        if (backup) setShopContent(JSON.parse(backup));
-
         fetch(`${BASE_URL}/api/settings/shop-content`)
             .then(res => res.ok ? res.json() : null)
-            .then(data => data && setShopContent(data))
+            .then(data => {
+                if (data) {
+                    setShopContent(data);
+                    setEditShopContent(initializeAllLanguages(data));
+                }
+            })
             .catch(() => { });
-    }, []);
+    }, [languages]);
 
     const handleSaveShopContent = async () => {
         localStorage.setItem('shop_content_backup', JSON.stringify(editShopContent));
@@ -593,7 +661,7 @@ export default function ProductGrid() {
         return (
             isAdmin && (
                 <button
-                    onClick={() => { setEditShopContent(initializeAllLanguages(shopContent)); setIsEditingField(field); }}
+                    onClick={() => { setIsEditingField(field); }}
                     className="edit-btn-minimal-lux"
                     style={style}
                 >
@@ -625,14 +693,20 @@ export default function ProductGrid() {
 
     const handleOpenAddProduct = () => {
         const cat = selectedCategoryKey === 'Tous' ? 'Homme' : selectedCategoryKey;
-        setProductForm({ id: '', nom: '', prix: '', categorie: cat, mainImage: '', secondaryImages: [] });
+        const nom = {};
+        languages.forEach(l => nom[l.code] = '');
+        setProductForm({ id: '', nom, prix: '', categorie: cat, mainImage: '', secondaryImages: [] });
         setIsManagingProduct('add');
     };
 
     const handleOpenEditProduct = (p) => {
+        const nom = typeof p.fullNom === 'object' ? { ...p.fullNom } : { fr: p.name || '' };
+        languages.forEach(l => {
+            if (!nom[l.code]) nom[l.code] = nom.fr || '';
+        });
         setProductForm({
             id: p.id,
-            nom: p.name,
+            nom,
             prix: p.price,
             categorie: p.category,
             mainImage: p.url,
@@ -683,13 +757,14 @@ export default function ProductGrid() {
 
                 const mappedProducts = data.map(p => ({
                     id: p._id,
-                    name: p.nom,
+                    name: typeof p.nom === 'object' ? (p.nom[appLanguage] || p.nom.fr) : p.nom,
+                    fullNom: p.nom,
                     price: p.prix,
                     currency: 'DT',
                     // ✅ التصحيح الأساسي: يختار mainImage (الجديد) أو image (القديم) كصورة رئيسية.
                     url: p.mainImage || p.image,
                     secondaryImages: p.secondaryImages || [],
-                    alt: p.nom,
+                    alt: typeof p.nom === 'object' ? (p.nom[appLanguage] || p.nom.fr) : p.nom,
                     category: p.categorie
                 }));
 
@@ -1185,10 +1260,10 @@ export default function ProductGrid() {
                                 filteredProducts.map((product) => (
                                     <div key={product.id} className="product-card">
                                         <div className="product-image-wrapper">
-                                            <img
-                                                className='product-grid-image'
-                                                src={product.url}
-                                                alt={product.alt}
+                                            <ImageCarousel
+                                                images={[product.url, ...(product.secondaryImages || [])].filter(Boolean)}
+                                                direction={direction}
+                                                height="100%"
                                             />
                                             {isAdmin && (
                                                 <div className="admin-product-actions" style={{
@@ -1201,49 +1276,78 @@ export default function ProductGrid() {
                                                     zIndex: 10
                                                 }}>
                                                     <button
-                                                        onClick={() => handleOpenEditProduct(product)}
-                                                        className="hero-edit-title-btn"
+                                                        onClick={(e) => { e.stopPropagation(); handleOpenEditProduct(product); }}
+                                                        className="hero-edit-title-btn-premium"
                                                         style={{
                                                             width: 'auto',
                                                             height: 'auto',
-                                                            padding: '8px 15px',
-                                                            borderRadius: '50px',
-                                                            background: 'rgba(255,255,255,0.9)',
-                                                            backdropFilter: 'blur(5px)',
+                                                            padding: '10px 18px',
+                                                            borderRadius: '12px',
+                                                            background: '#ffffff',
                                                             color: '#007bff',
-                                                            boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
+                                                            boxShadow: '0 8px 25px rgba(0,0,0,0.1)',
                                                             display: 'flex',
                                                             alignItems: 'center',
-                                                            gap: '8px',
+                                                            gap: '10px',
                                                             fontWeight: '700',
-                                                            fontSize: '0.8rem'
+                                                            fontSize: '0.85rem',
+                                                            border: 'none',
+                                                            cursor: 'pointer',
+                                                            transition: 'all 0.3s'
                                                         }}
                                                         title="Modifier"
                                                     >
-                                                        <FaEdit size={12} />
+                                                        <FaEdit size={14} />
                                                         {appLanguage === 'ar' ? 'تعديل' : 'Modifier'}
                                                     </button>
                                                     <button
-                                                        onClick={() => handleDeleteProduct(product.id)}
-                                                        className="hero-edit-title-btn"
+                                                        onClick={(e) => { e.stopPropagation(); handleOpenEditProduct(product); }}
+                                                        className="hero-edit-title-btn-premium"
                                                         style={{
                                                             width: 'auto',
                                                             height: 'auto',
-                                                            padding: '8px 15px',
-                                                            borderRadius: '50px',
-                                                            background: 'rgba(255,255,255,0.9)',
-                                                            backdropFilter: 'blur(5px)',
-                                                            color: '#dc3545',
-                                                            boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
+                                                            padding: '10px 18px',
+                                                            borderRadius: '12px',
+                                                            background: '#ffffff',
+                                                            color: '#D4AF37',
+                                                            boxShadow: '0 8px 25px rgba(0,0,0,0.1)',
                                                             display: 'flex',
                                                             alignItems: 'center',
-                                                            gap: '8px',
+                                                            gap: '10px',
                                                             fontWeight: '700',
-                                                            fontSize: '0.8rem'
+                                                            fontSize: '0.85rem',
+                                                            border: 'none',
+                                                            cursor: 'pointer',
+                                                            transition: 'all 0.3s'
+                                                        }}
+                                                        title="Ajouter Images"
+                                                    >
+                                                        <FaPlusCircle size={14} />
+                                                        {appLanguage === 'ar' ? 'إضافة صور الكاروسيل' : 'Images Carousel'}
+                                                    </button>
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); handleDeleteProduct(product.id); }}
+                                                        className="hero-edit-title-btn-premium"
+                                                        style={{
+                                                            width: 'auto',
+                                                            height: 'auto',
+                                                            padding: '10px 18px',
+                                                            borderRadius: '12px',
+                                                            background: '#ffffff',
+                                                            color: '#dc3545',
+                                                            boxShadow: '0 8px 25px rgba(0,0,0,0.1)',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            gap: '10px',
+                                                            fontWeight: '700',
+                                                            fontSize: '0.85rem',
+                                                            border: 'none',
+                                                            cursor: 'pointer',
+                                                            transition: 'all 0.3s'
                                                         }}
                                                         title="Supprimer"
                                                     >
-                                                        <FaTrash size={12} />
+                                                        <FaTrash size={14} />
                                                         {appLanguage === 'ar' ? 'حذف' : 'Supprimer'}
                                                     </button>
                                                 </div>
@@ -1324,9 +1428,9 @@ export default function ProductGrid() {
                             </h2>
 
                             <div className="premium-form-grid">
-                                {languages.map(lang => (
-                                    <div key={lang.code} className="premium-lang-section">
-                                        <h4 className="lang-indicator">{lang.label}</h4>
+                                {languages.filter(l => l.code === appLanguage).map(lang => (
+                                    <div key={lang.code} className="premium-lang-section" style={{ border: 'none', background: 'none' }}>
+                                        <h4 className="lang-indicator" style={{ background: '#d4af37' }}>{lang.label}</h4>
 
                                         {isEditingField === 'hero' && (
                                             <>
@@ -1463,27 +1567,33 @@ export default function ProductGrid() {
                         </div>
 
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                            <div className="input-field-group">
-                                <label style={{ display: 'block', marginBottom: '10px', fontSize: '0.75rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-                                    {appLanguage === 'ar' ? 'اسم المنتج' : 'Nom du Produit'}
-                                </label>
-                                <input
-                                    type="text"
-                                    placeholder="Ex: Kaftan Silk Or"
-                                    value={productForm.nom}
-                                    onChange={e => setProductForm({ ...productForm, nom: e.target.value })}
-                                    style={{
-                                        width: '100%',
-                                        padding: '16px 20px',
-                                        borderRadius: '16px',
-                                        border: '2px solid #f1f5f9',
-                                        fontSize: '1rem',
-                                        transition: 'all 0.3s',
-                                        outline: 'none',
-                                        background: '#f8fafc'
-                                    }}
-                                />
-                            </div>
+                            {languages.filter(l => l.code === appLanguage).map(lang => (
+                                <div key={lang.code} className="input-field-group">
+                                    <label style={{ display: 'block', marginBottom: '10px', fontSize: '0.75rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                                        {appLanguage === 'ar' ? 'اسم المنتج' : 'Nom du Produit'} ({lang.label})
+                                    </label>
+                                    <input
+                                        type="text"
+                                        placeholder="Ex: Kaftan Silk Or"
+                                        value={productForm.nom[lang.code] || ''}
+                                        onChange={e => {
+                                            const newNom = { ...productForm.nom, [lang.code]: e.target.value };
+                                            setProductForm({ ...productForm, nom: newNom });
+                                        }}
+                                        style={{
+                                            width: '100%',
+                                            padding: '16px 20px',
+                                            borderRadius: '16px',
+                                            border: '2px solid #f1f5f9',
+                                            fontSize: '1rem',
+                                            transition: 'all 0.3s',
+                                            outline: 'none',
+                                            background: '#f8fafc'
+                                        }}
+                                        dir={lang.code === 'ar' ? 'rtl' : 'ltr'}
+                                    />
+                                </div>
+                            ))}
 
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
                                 <div className="input-field-group">

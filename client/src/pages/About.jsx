@@ -128,16 +128,9 @@ export default function About() {
         pageBgImage: ''
     };
 
-    const [aboutContent, setAboutContent] = useState({
-        fr: { ...defaultStructure },
-        ar: { ...defaultStructure },
-        en: { ...defaultStructure }
-    });
-    const [editAboutContent, setEditAboutContent] = useState({
-        fr: { ...defaultStructure },
-        ar: { ...defaultStructure },
-        en: { ...defaultStructure }
-    });
+    const [aboutContent, setAboutContent] = useState({});
+    const [editAboutContent, setEditAboutContent] = useState({});
+    const [isInitialized, setIsInitialized] = useState(false);
 
     // 1. ⚙️ جلب التحقق من المسؤول
     useEffect(() => {
@@ -158,13 +151,21 @@ export default function About() {
         ) {
             setIsAdmin(true);
         }
+    }, []);
 
-        // Load Content
+    // Load Content
+    useEffect(() => {
         fetch(`${BASE_URL}/api/settings/about-content`)
             .then(res => res.ok ? res.json() : null)
-            .then(data => data && setAboutContent(data))
+            .then(data => {
+                if (data) {
+                    setAboutContent(data);
+                    // Pre-initialize edit state with loaded data
+                    setEditAboutContent(initializeAllLanguages(data));
+                }
+            })
             .catch(() => { });
-    }, []);
+    }, [languages]); // Re-init if languages change
 
     const handleSaveAboutContent = async () => {
         setAboutContent(editAboutContent);
@@ -182,8 +183,30 @@ export default function About() {
     const initializeAllLanguages = (currentValues) => {
         const initialized = {};
         languages.forEach(lang => {
+            const fallback = aboutTranslations[lang.code] || aboutTranslations.fr;
             initialized[lang.code] = {
                 ...defaultStructure,
+                // Prefill with hardcoded translations if data is empty
+                heroTitle: (currentValues[lang.code]?.heroTitle) || (typeof fallback.heroTitle === 'function' ? fallback.heroTitle('') : fallback.heroTitle),
+                heroAccent: currentValues[lang.code]?.heroAccent || fallback.heroAccent,
+                storyTitle: currentValues[lang.code]?.storyTitle || fallback.storyTitle,
+                storyPara1: currentValues[lang.code]?.storyPara1 || fallback.storyPara1,
+                storyPara2: currentValues[lang.code]?.storyPara2 || fallback.storyPara2,
+                contactBtn: currentValues[lang.code]?.contactBtn || fallback.contactBtn,
+                valuesTitle: currentValues[lang.code]?.valuesTitle || fallback.valuesTitle,
+                vt1: currentValues[lang.code]?.vt1 || (fallback.values?.[0]?.title),
+                vd1: currentValues[lang.code]?.vd1 || (fallback.values?.[0]?.description),
+                vt2: currentValues[lang.code]?.vt2 || (fallback.values?.[1]?.title),
+                vd2: currentValues[lang.code]?.vd2 || (fallback.values?.[1]?.description),
+                vt3: currentValues[lang.code]?.vt3 || (fallback.values?.[2]?.title),
+                vd3: currentValues[lang.code]?.vd3 || (fallback.values?.[2]?.description),
+                vt4: currentValues[lang.code]?.vt4 || (fallback.values?.[3]?.title),
+                vd4: currentValues[lang.code]?.vd4 || (fallback.values?.[3]?.description),
+                // Keep image URLs if they exist, else leave empty for default
+                heroImage: currentValues[lang.code]?.heroImage || currentValues.fr?.heroImage || '',
+                storyImage: currentValues[lang.code]?.storyImage || currentValues.fr?.storyImage || '',
+                pageBgImage: currentValues[lang.code]?.pageBgImage || currentValues.fr?.pageBgImage || '',
+                // Overwrite with any existing data
                 ...(currentValues[lang.code] || {})
             };
         });
@@ -197,7 +220,7 @@ export default function About() {
     const EditBtn = ({ field, style = {}, children }) => (
         isAdmin && (
             <button
-                onClick={() => { setEditAboutContent(initializeAllLanguages(aboutContent)); setIsEditingField(field); }}
+                onClick={() => { setIsEditingField(field); }}
                 className="edit-btn-minimal-lux"
                 title="Modifier"
                 style={style}
@@ -323,9 +346,9 @@ export default function About() {
                                 </h2>
 
                                 <div className="premium-form-grid">
-                                    {languages.map(lang => (
-                                        <div key={lang.code} className="premium-lang-section">
-                                            <h4 className="lang-indicator">{lang.label}</h4>
+                                    {languages.filter(l => l.code === appLanguage).map(lang => (
+                                        <div key={lang.code} className="premium-lang-section" style={{ border: 'none', background: 'none' }}>
+                                            <h4 className="lang-indicator" style={{ background: '#d4af37' }}>{lang.label}</h4>
 
                                             {isEditingField === 'heroImage' && (
                                                 <div className="premium-form-group">

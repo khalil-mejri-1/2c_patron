@@ -138,26 +138,29 @@ export default function Leçons_Manches_coursage() {
                     {allCourses.length > 0 ? (
                         allCourses.map((course, index) => {
                             // 💡 تحديد المسار شرطيًا بناءً على actualTitle
+                            const courseTitle = typeof course.title === 'object' ? (course.title.fr || course.title[appLanguage]) : course.title;
                             const lessonPath = actualTitle === "Les corsages"
-                                ? `/Leçons_coursage/${encodeURIComponent(course.title)}`
-                                : `/Leçons/${encodeURIComponent(course.title)}`;
+                                ? `/Leçons_coursage/${encodeURIComponent(courseTitle)}`
+                                : `/Leçons/${encodeURIComponent(courseTitle)}`;
 
                             return (
                                 <div key={index} className="course-card">
                                     <div className="course-image-wrapper">
                                         <img
                                             src={course.image}
-                                            alt={course.title}
+                                            alt={typeof course.title === 'object' ? (course.title[appLanguage] || course.title.fr) : course.title}
                                             className="course-image"
                                         />
                                     </div>
 
                                     <div className="course-content">
-                                        <h3 className="course-title">{course.title}</h3>
+                                        <h3 className="course-title">
+                                            {typeof course.title === 'object' ? (course.title[appLanguage] || course.title.fr) : course.title}
+                                        </h3>
 
                                         <div className="course-meta">
                                             <span className="course-duration">
-                                                <FaPlayCircle /> {course.duration || "Durée non spécifiée"}
+                                                <FaPlayCircle /> {typeof course.duration === 'object' ? (course.duration[appLanguage] || course.duration.fr) : (course.duration || "Durée non spécifiée")}
                                             </span>
                                         </div>
 

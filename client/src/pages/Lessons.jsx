@@ -133,7 +133,7 @@ const LessonCard = ({ video, isActive, onSelect, lang, isAdmin, onEdit, onDelete
 };
 
 export default function Lessons() {
-    const { appLanguage } = useLanguage();
+    const { appLanguage, languages } = useLanguage();
     const { showAlert } = useAlert();
     const [videos, setVideos] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -182,19 +182,37 @@ export default function Lessons() {
     const { leconTitle } = useParams();
     const actualTitle = decodeURIComponent(leconTitle);
 
-    const languages = [
-        { code: 'fr', label: 'FR' },
-        { code: 'ar', label: 'AR' },
-        { code: 'en', label: 'EN' }
-    ];
+
 
     const fetchSiteSettings = useCallback(async () => {
         try {
             const currRes = await axios.get(`${BASE_URL}/api/settings/curriculum-info`);
-            if (currRes.data) setCurriculumInfo(currRes.data);
+            if (currRes.data) {
+                setCurriculumInfo(currRes.data);
+                const initCurr = {};
+                languages.forEach(l => {
+                    initCurr[l.code] = { 
+                        title: currRes.data[l.code]?.title || translations[l.code]?.listTitle || "",
+                        playing: currRes.data[l.code]?.playing || translations[l.code]?.playing || ""
+                    };
+                });
+                setEditCurriculumData(initCurr);
+            }
 
             const certRes = await axios.get(`${BASE_URL}/api/settings/certificate-info`);
-            if (certRes.data) setCertInfo(certRes.data);
+            if (certRes.data) {
+                setCertInfo(certRes.data);
+                const initCert = {};
+                languages.forEach(l => {
+                    initCert[l.code] = {
+                        title: certRes.data[l.code]?.title || translations[l.code]?.certificateTitle || "",
+                        desc: certRes.data[l.code]?.desc || translations[l.code]?.certificateText || "",
+                        whatsapp: certRes.data[l.code]?.whatsapp || translations[l.code]?.whatsappNum || "",
+                        btn: certRes.data[l.code]?.btn || translations[l.code]?.whatsappBtn || ""
+                    };
+                });
+                setEditCertData(initCert);
+            }
         } catch (e) { console.error("Error fetching site settings", e); }
     }, []);
 
@@ -206,7 +224,10 @@ export default function Lessons() {
             let foundGroupId = null;
 
             for (const group of res.data) {
-                const item = group.courses.find(c => c.title === actualTitle);
+                const item = group.courses.find(c => {
+                    const titleToCheck = typeof c.title === 'object' ? c.title.fr : c.title;
+                    return titleToCheck === actualTitle;
+                });
                 if (item) {
                     foundCourse = item;
                     foundGroupId = group._id;
@@ -217,11 +238,24 @@ export default function Lessons() {
             if (foundCourse) {
                 setCourseInfo(foundCourse);
                 setGroupId(foundGroupId);
-                setHeroContent(foundCourse.hero_content || {});
+                const hc = foundCourse.hero_content || {};
+                setHeroContent(hc);
                 setHeroBg(foundCourse.hero_bg || foundCourse.image || "");
+
+                // Pre-initialize hero edit state
+                const initHero = {};
+                languages.forEach(l => {
+                    initHero[l.code] = {
+                        badge: hc[l.code]?.badge || translations[l.code]?.badge || "",
+                        title: hc[l.code]?.title || actualTitle || "",
+                        accent: hc[l.code]?.accent || "",
+                        bg: hc[l.code]?.bg || foundCourse.hero_bg || foundCourse.image || ""
+                    };
+                });
+                setEditHeroContent(initHero);
             }
         } catch (e) { console.error("Error fetching course info", e); }
-    }, [actualTitle]);
+    }, [actualTitle, languages]);
 
     useEffect(() => {
         // Check Admin
@@ -248,7 +282,8 @@ export default function Lessons() {
             const groupData = groupRes.data;
 
             const updatedCourses = groupData.courses.map(c => {
-                if (c.title === actualTitle) {
+                const titleToCheck = typeof c.title === 'object' ? c.title.fr : c.title;
+                if (titleToCheck === actualTitle) {
                     return {
                         ...c,
                         hero_content: editHeroContent,
@@ -313,26 +348,18 @@ export default function Lessons() {
             formData.append('title', editVideoContent.fr?.title || editingVideo.title);
             formData.append('category', editingVideo.category);
             formData.append('videoUrl', editVideoUrl);
-            formData.append('title_lang', JSON.stringify({
-                fr: editVideoContent.fr?.title,
-                ar: editVideoContent.ar?.title,
-                en: editVideoContent.en?.title
-            }));
-            formData.append('status_lang', JSON.stringify({
-                fr: editVideoContent.fr?.status,
-                ar: editVideoContent.ar?.status,
-                en: editVideoContent.en?.status
-            }));
-            formData.append('status_lang', JSON.stringify({
-                fr: editVideoContent.fr?.status,
-                ar: editVideoContent.ar?.status,
-                en: editVideoContent.en?.status
-            }));
-            formData.append('url_lang', JSON.stringify({
-                fr: editVideoContent.fr?.url,
-                ar: editVideoContent.ar?.url,
-                en: editVideoContent.en?.url
-            }));
+            const title_lang = {};
+            const status_lang = {};
+            const url_lang = {};
+            languages.forEach(l => {
+                title_lang[l.code] = editVideoContent[l.code]?.title || editingVideo.title_lang?.[l.code] || editingVideo.title || "";
+                status_lang[l.code] = editVideoContent[l.code]?.status || editingVideo.status_lang?.[l.code] || (editingVideo.isVip ? "VIP" : "FREE");
+                url_lang[l.code] = editVideoContent[l.code]?.url || editingVideo.url_lang?.[l.code] || "";
+            });
+
+            formData.append('title_lang', JSON.stringify(title_lang));
+            formData.append('status_lang', JSON.stringify(status_lang));
+            formData.append('url_lang', JSON.stringify(url_lang));
 
             if (editSelectedFile) formData.append('video', editSelectedFile);
 
@@ -357,8 +384,9 @@ export default function Lessons() {
             showAlert('error', 'Error', 'Title is required');
             return;
         }
-        if (!newVideoData.url && !selectedFile) {
-            showAlert('error', 'Error', 'Please provide a URL or select a video file');
+        const hasAnyLangVideo = ['fr', 'ar', 'en'].some(lang => newVideoData.url_lang[lang] || selectedLangFiles[lang]);
+        if (!hasAnyLangVideo) {
+            showAlert('error', 'Error', 'Please provide at least one localized video URL or file');
             return;
         }
 
@@ -367,9 +395,18 @@ export default function Lessons() {
             formData.append('title', newVideoData.title);
             formData.append('category', actualTitle);
             formData.append('videoUrl', newVideoData.url);
-            formData.append('title_lang', JSON.stringify(newVideoData.title_lang));
-            formData.append('status_lang', JSON.stringify(newVideoData.status_lang));
-            formData.append('url_lang', JSON.stringify(newVideoData.url_lang));
+            const title_lang = {};
+            const status_lang = {};
+            const url_lang = {};
+            languages.forEach(l => {
+                title_lang[l.code] = newVideoData.title_lang?.[l.code] || newVideoData.title || "";
+                status_lang[l.code] = newVideoData.status_lang?.[l.code] || "FREE";
+                url_lang[l.code] = newVideoData.url_lang?.[l.code] || "";
+            });
+
+            formData.append('title_lang', JSON.stringify(title_lang));
+            formData.append('status_lang', JSON.stringify(status_lang));
+            formData.append('url_lang', JSON.stringify(url_lang));
 
             if (selectedFile) formData.append('video', selectedFile);
 
@@ -491,16 +528,6 @@ export default function Lessons() {
                             gap: '8px'
                         }}
                         onClick={() => {
-                            const init = {};
-                            languages.forEach(l => {
-                                init[l.code] = {
-                                    badge: heroContent[l.code]?.badge || t.badge || "",
-                                    title: heroContent[l.code]?.title || actualTitle || "",
-                                    accent: heroContent[l.code]?.accent || "",
-                                    bg: heroContent[l.code]?.bg || heroBg || ""
-                                };
-                            });
-                            setEditHeroContent(init);
                             setIsEditingHero(true);
                         }}
                     >
@@ -557,14 +584,6 @@ export default function Lessons() {
                             <button
                                 className="edit-btn-minimal-lux"
                                 onClick={() => {
-                                    const init = {};
-                                    languages.forEach(l => {
-                                        init[l.code] = { 
-                                            title: curriculumInfo[l.code]?.title || translations[l.code]?.listTitle || "",
-                                            playing: curriculumInfo[l.code]?.playing || translations[l.code]?.playing || ""
-                                        };
-                                    });
-                                    setEditCurriculumData(init);
                                     setIsEditingCurriculum(true);
                                 }}
                             >
@@ -599,16 +618,6 @@ export default function Lessons() {
                             className="edit-btn-minimal-lux"
                             style={{ position: 'absolute', top: '20px', right: '20px', zIndex: 10 }}
                             onClick={() => {
-                                const init = {};
-                                languages.forEach(l => {
-                                    init[l.code] = {
-                                        title: certInfo[l.code]?.title || t.certificateTitle || "",
-                                        desc: certInfo[l.code]?.desc || t.certificateText || "",
-                                        whatsapp: certInfo[l.code]?.whatsapp || t.whatsappNum || "",
-                                        btn: certInfo[l.code]?.btn || t.whatsappBtn || ""
-                                    };
-                                });
-                                setEditCertData(init);
                                 setIsEditingCert(true);
                             }}
                         >
@@ -632,9 +641,9 @@ export default function Lessons() {
                         <h2 className="premium-modal-title" style={{ textAlign: 'center', marginBottom: '30px' }}>Modifier le Hero (Cours)</h2>
 
                         <div className="premium-form-grid">
-                            {languages.map(lang => (
-                                <div key={lang.code} className="premium-lang-section">
-                                    <h4 className="lang-indicator">{lang.label}</h4>
+                            {languages.filter(l => l.code === appLanguage).map(lang => (
+                                <div key={lang.code} className="premium-lang-section" style={{ border: 'none', background: 'none' }}>
+                                    <h4 className="lang-indicator" style={{ background: '#d4af37' }}>{lang.label}</h4>
 
                                     <div className="premium-form-group">
                                         <label>{lang.code === 'ar' ? 'Badge' : 'BADGE'}</label>
@@ -681,7 +690,7 @@ export default function Lessons() {
                                             onChange={e => {
                                                 const val = e.target.value;
                                                 const updated = { ...editHeroContent };
-                                                updated[lang.code].bg = val;
+                                                updated[lang.code] = { ...(updated[lang.code] || {}), bg: val };
                                                 setEditHeroContent(updated);
                                             }}
                                         />
@@ -709,9 +718,9 @@ export default function Lessons() {
                         <button className="premium-modal-close-icon" onClick={() => setIsEditingCurriculum(false)}><FaTimes /></button>
                         <h2 className="premium-modal-title">Modifier le Titre du Programme</h2>
                         <div className="premium-form-grid">
-                            {languages.map(lang => (
-                                <div key={lang.code} className="premium-lang-section">
-                                    <h4 className="lang-indicator">{lang.label}</h4>
+                            {languages.filter(l => l.code === appLanguage).map(lang => (
+                                <div key={lang.code} className="premium-lang-section" style={{ border: 'none', background: 'none' }}>
+                                    <h4 className="lang-indicator" style={{ background: '#d4af37' }}>{lang.label}</h4>
                                     <div className="premium-form-group">
                                         <label>{lang.code === 'ar' ? 'عنوان القائمة' : 'Titre de la section'}</label>
                                         <input
@@ -752,9 +761,9 @@ export default function Lessons() {
                         <button className="premium-modal-close-icon" onClick={() => setIsEditingCert(false)}><FaTimes /></button>
                         <h2 className="premium-modal-title">Modifier la Section Certificat</h2>
                         <div className="premium-form-grid">
-                            {languages.map(lang => (
-                                <div key={lang.code} className="premium-lang-section">
-                                    <h4 className="lang-indicator">{lang.label}</h4>
+                            {languages.filter(l => l.code === appLanguage).map(lang => (
+                                <div key={lang.code} className="premium-lang-section" style={{ border: 'none', background: 'none' }}>
+                                    <h4 className="lang-indicator" style={{ background: '#d4af37' }}>{lang.label}</h4>
                                     <div className="premium-form-group">
                                         <label>Titre</label>
                                         <input
@@ -816,31 +825,10 @@ export default function Lessons() {
                         <button className="premium-modal-close-icon" onClick={() => setIsEditingVideo(false)}><FaTimes /></button>
                         <h2 className="premium-modal-title" style={{ textAlign: 'center' }}>Modifier la Leçon (Langues)</h2>
 
-                        <div className="premium-form-group" style={{ marginBottom: '20px' }}>
-                            <label>URL de la vidéo (Optionnel si fichier choisi)</label>
-                            <input
-                                type="text"
-                                value={editVideoUrl}
-                                onChange={e => setEditVideoUrl(e.target.value)}
-                                placeholder="https://..."
-                            />
-                        </div>
-
-                        <div className="premium-form-group" style={{ marginBottom: '20px' }}>
-                            <label>Ou Charger la vidéo depuis votre ordinateur</label>
-                            <input
-                                type="file"
-                                accept="video/*"
-                                onChange={e => setEditSelectedFile(e.target.files[0])}
-                                className="premium-file-input"
-                            />
-                            {editSelectedFile && <p style={{ fontSize: '12px', color: '#d4af37' }}>Fichier sélectionné: {editSelectedFile.name}</p>}
-                        </div>
-
                         <div className="premium-form-grid">
-                            {languages.map(lang => (
-                                <div key={lang.code} className="premium-lang-section">
-                                    <h4 className="lang-indicator">{lang.label}</h4>
+                            {languages.filter(l => l.code === appLanguage).map(lang => (
+                                <div key={lang.code} className="premium-lang-section" style={{ border: 'none', background: 'none' }}>
+                                    <h4 className="lang-indicator" style={{ background: '#d4af37' }}>{lang.label}</h4>
                                     <div className="premium-form-group">
                                         <label>Titre de la leçon</label>
                                         <input
@@ -851,6 +839,31 @@ export default function Lessons() {
                                                 [lang.code]: { ...editVideoContent[lang.code], title: e.target.value }
                                             })}
                                         />
+                                    </div>
+                                    <div className="premium-form-group">
+                                        <label>URL Vidéo</label>
+                                        <input
+                                            type="text"
+                                            value={editVideoContent[lang.code]?.url || ''}
+                                            onChange={e => setEditVideoContent({
+                                                ...editVideoContent,
+                                                [lang.code]: { ...editVideoContent[lang.code], url: e.target.value }
+                                            })}
+                                            placeholder="https://..."
+                                        />
+                                    </div>
+                                    <div className="premium-form-group">
+                                        <label>Ou Fichier Vidéo</label>
+                                        <input
+                                            type="file"
+                                            accept="video/*"
+                                            onChange={e => setEditSelectedLangFiles({
+                                                ...editSelectedLangFiles,
+                                                [lang.code]: e.target.files[0]
+                                            })}
+                                            className="premium-file-input"
+                                        />
+                                        {editSelectedLangFiles[lang.code] && <p style={{ fontSize: '12px', color: '#d4af37' }}>Fichier: {editSelectedLangFiles[lang.code].name}</p>}
                                     </div>
                                 </div>
                             ))}
@@ -880,31 +893,10 @@ export default function Lessons() {
                             />
                         </div>
 
-                        <div className="premium-form-group" style={{ marginBottom: '20px' }}>
-                            <label>Video URL (YouTube/Direct) - Optionnel si fichier choisi</label>
-                            <input
-                                type="text"
-                                value={newVideoData.url}
-                                onChange={e => setNewVideoData({ ...newVideoData, url: e.target.value })}
-                                placeholder="https://..."
-                            />
-                        </div>
-
-                        <div className="premium-form-group" style={{ marginBottom: '20px' }}>
-                            <label>Ou Charger la vidéo depuis votre ordinateur</label>
-                            <input
-                                type="file"
-                                accept="video/*"
-                                onChange={e => setSelectedFile(e.target.files[0])}
-                                className="premium-file-input"
-                            />
-                            {selectedFile && <p style={{ fontSize: '12px', color: '#d4af37' }}>Fichier sélectionné: {selectedFile.name}</p>}
-                        </div>
-
                         <div className="premium-form-grid">
-                            {languages.map(lang => (
-                                <div key={lang.code} className="premium-lang-section">
-                                    <h4 className="lang-indicator">{lang.label}</h4>
+                            {languages.filter(l => l.code === appLanguage).map(lang => (
+                                <div key={lang.code} className="premium-lang-section" style={{ border: 'none', background: 'none' }}>
+                                    <h4 className="lang-indicator" style={{ background: '#d4af37' }}>{lang.label}</h4>
                                     <div className="premium-form-group">
                                         <label>Localized Title</label>
                                         <input
@@ -915,6 +907,31 @@ export default function Lessons() {
                                                 setNewVideoData({ ...newVideoData, title_lang: updated });
                                             }}
                                         />
+                                    </div>
+                                    <div className="premium-form-group">
+                                        <label>URL Vidéo</label>
+                                        <input
+                                            type="text"
+                                            value={newVideoData.url_lang?.[lang.code] || ''}
+                                            onChange={e => {
+                                                const updated = { ...newVideoData.url_lang, [lang.code]: e.target.value };
+                                                setNewVideoData({ ...newVideoData, url_lang: updated });
+                                            }}
+                                            placeholder="https://..."
+                                        />
+                                    </div>
+                                    <div className="premium-form-group">
+                                        <label>Ou Fichier Vidéo</label>
+                                        <input
+                                            type="file"
+                                            accept="video/*"
+                                            onChange={e => setSelectedLangFiles({
+                                                ...selectedLangFiles,
+                                                [lang.code]: e.target.files[0]
+                                            })}
+                                            className="premium-file-input"
+                                        />
+                                        {selectedLangFiles[lang.code] && <p style={{ fontSize: '12px', color: '#d4af37' }}>Fichier: {selectedLangFiles[lang.code].name}</p>}
                                     </div>
                                 </div>
                             ))}

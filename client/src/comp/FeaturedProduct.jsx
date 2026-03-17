@@ -49,17 +49,11 @@ export default function FeaturedProduct() {
 
     const [isAdmin, setIsAdmin] = useState(false);
     const [featuredData, setFeaturedData] = useState({
-        fr: { tag: '', title: '', subtitle: '', description: '', cta: '' },
-        ar: { tag: '', title: '', subtitle: '', description: '', cta: '' },
-        en: { tag: '', title: '', subtitle: '', description: '', cta: '' },
         videoUrl: "https://streamable.com/e/4k6x0z?",
         videoType: 'iframe'
     });
     const [isEditing, setIsEditing] = useState(false);
     const [editData, setEditData] = useState({
-        fr: { tag: '', title: '', subtitle: '', description: '', cta: '' },
-        ar: { tag: '', title: '', subtitle: '', description: '', cta: '' },
-        en: { tag: '', title: '', subtitle: '', description: '', cta: '' },
         videoUrl: '',
         videoType: 'iframe'
     });
@@ -77,11 +71,26 @@ export default function FeaturedProduct() {
             .then(res => res.ok ? res.json() : null)
             .then(data => {
                 if (data) {
-                    setFeaturedData(prev => ({ ...prev, ...data }));
+                    const merged = { ...data };
+                    // Pre-initialize edit state with fallbacks
+                    const initialized = { ...merged };
+                    languages.forEach(lang => {
+                        if (!initialized[lang.code]) {
+                            initialized[lang.code] = { 
+                                tag: translations[lang.code]?.tag || translations.fr.tag, 
+                                title: translations[lang.code]?.title || translations.fr.title, 
+                                subtitle: translations[lang.code]?.subtitle || translations.fr.subtitle, 
+                                description: translations[lang.code]?.description || translations.fr.description, 
+                                cta: translations[lang.code]?.cta || translations.fr.cta 
+                            };
+                        }
+                    });
+                    setFeaturedData(initialized);
+                    setEditData(initialized);
                 }
             })
             .catch(() => { });
-    }, []);
+    }, [languages]);
 
     const handleSave = async () => {
         localStorage.setItem('featured_product_backup', JSON.stringify(editData));
@@ -114,12 +123,19 @@ export default function FeaturedProduct() {
                 {isAdmin && (
                     <button
                         onClick={() => {
-                            setEditData({
-                                ...featuredData,
-                                fr: { ...translations.fr, ...featuredData.fr },
-                                ar: { ...translations.ar, ...featuredData.ar },
-                                en: { ...translations.en, ...featuredData.en }
+                            const initialized = { ...featuredData };
+                            languages.forEach(lang => {
+                                if (!initialized[lang.code]) {
+                                    initialized[lang.code] = { 
+                                        tag: translations[lang.code]?.tag || translations.fr.tag, 
+                                        title: translations[lang.code]?.title || translations.fr.title, 
+                                        subtitle: translations[lang.code]?.subtitle || translations.fr.subtitle, 
+                                        description: translations[lang.code]?.description || translations.fr.description, 
+                                        cta: translations[lang.code]?.cta || translations.fr.cta 
+                                    };
+                                }
                             });
+                            setEditData(initialized);
                             setIsEditing(true);
                         }}
                         className="hero-video-edit-btn"
@@ -172,14 +188,21 @@ export default function FeaturedProduct() {
                 {isAdmin && (
                     <button
                         onClick={() => {
-                            const initialEditData = {
-                                fr: { ...translations.fr, ...featuredData.fr },
-                                ar: { ...translations.ar, ...featuredData.ar },
-                                en: { ...translations.en, ...featuredData.en }
+                    const initialized = { ...featuredData };
+                    languages.forEach(lang => {
+                        if (!initialized[lang.code]) {
+                            initialized[lang.code] = { 
+                                tag: translations[lang.code]?.tag || translations.fr.tag, 
+                                title: translations[lang.code]?.title || translations.fr.title, 
+                                subtitle: translations[lang.code]?.subtitle || translations.fr.subtitle, 
+                                description: translations[lang.code]?.description || translations.fr.description, 
+                                cta: translations[lang.code]?.cta || translations.fr.cta 
                             };
-                            setEditData(initialEditData);
-                            setIsEditing(true);
-                        }}
+                        }
+                    });
+                    setEditData(initialized);
+                    setIsEditing(true);
+                }}
                         className="admin-edit-master-btn"
                         style={{
                             marginBottom: '25px',
@@ -284,9 +307,9 @@ export default function FeaturedProduct() {
                                 )}
                             </div>
 
-                            {languages.map(lang => (
-                                <div key={lang.code} className="premium-lang-section">
-                                    <h4 className="lang-indicator">{lang.label}</h4>
+                            {languages.filter(l => l.code === currentLang).map(lang => (
+                                <div key={lang.code} className="premium-lang-section" style={{ border: 'none', background: 'none' }}>
+                                    <h4 className="lang-indicator" style={{ background: '#d4af37' }}>{lang.label}</h4>
                                     <div className="premium-form-group">
                                         <label>Tag (Badge)</label>
                                         <input

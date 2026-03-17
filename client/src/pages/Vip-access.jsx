@@ -92,21 +92,16 @@ const translations = {
 };
 
 export default function Vipaccess() {
-    const { appLanguage } = useLanguage();
+    const { appLanguage, languages } = useLanguage();
     const [vipCategories, setVipCategories] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [isAdmin, setIsAdmin] = useState(false);
     const { showAlert } = useAlert();
 
-    const [vipHeroSettings, setVipHeroSettings] = useState({
-        fr: { badge: "ACCÈS EXCLUSIF", title: "ACCÈS", accent: "MASTER ATELIER VIP", heroImage: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=2070&auto=format&fit=crop' },
-        ar: { badge: "دخول حصري", title: "الوصول لـ", accent: "الورشة الماستر VIP", heroImage: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=2070&auto=format&fit=crop' },
-        en: { badge: "EXCLUSIVE ACCESS", title: "VIP", accent: "MASTER ATELIER ACCESS", heroImage: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=2070&auto=format&fit=crop' }
-    });
-
+    const [vipHeroSettings, setVipHeroSettings] = useState({});
     const [isEditingVipHero, setIsEditingVipHero] = useState(false);
-    const [editVipHeroData, setEditVipHeroData] = useState(vipHeroSettings);
+    const [editVipHeroData, setEditVipHeroData] = useState({});
 
     // Categories Management State
     const [showCategoryModal, setShowCategoryModal] = useState(false);
@@ -167,15 +162,24 @@ export default function Vipaccess() {
         fetch(`${BASE_URL}/api/settings/vip-hero`)
             .then(res => res.ok ? res.json() : null)
             .then(data => {
-                if (data) {
-                    setVipHeroSettings(data);
-                    setEditVipHeroData(data);
-                }
+                const initialized = data || {};
+                languages.forEach(lang => {
+                    if (!initialized[lang.code]) {
+                        initialized[lang.code] = { 
+                            badge: translations[lang.code]?.badge || translations.fr.badge,
+                            title: translations[lang.code]?.title || translations.fr.title,
+                            accent: translations[lang.code]?.accent || translations.fr.accent,
+                            heroImage: initialized.fr?.heroImage || 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=2070&auto=format&fit=crop'
+                        };
+                    }
+                });
+                setVipHeroSettings(initialized);
+                setEditVipHeroData(initialized);
             })
             .catch(() => { });
 
         fetchCategories();
-    }, [t.error]);
+    }, [t.error, languages]);
 
     const handleSaveVipHero = async () => {
         setVipHeroSettings(editVipHeroData);
@@ -192,22 +196,36 @@ export default function Vipaccess() {
         }
     };
 
+    const initializeCategoryData = (data = {}) => {
+        const title = typeof data.title === 'object' ? { ...data.title } : { fr: data.title || '' };
+        const description = typeof data.description === 'object' ? { ...data.description } : { fr: data.description || '' };
+        const duration = typeof data.duration === 'object' ? { ...data.duration } : { fr: data.duration || '' };
+        
+        languages.forEach(lang => {
+            if (!title[lang.code]) title[lang.code] = title.fr || '';
+            if (!description[lang.code]) description[lang.code] = description.fr || '';
+            if (!duration[lang.code]) duration[lang.code] = duration.fr || '';
+        });
+
+        return {
+            title,
+            description,
+            image: data.image || '',
+            duration: duration
+        };
+    };
+
     // Management Functions
     const handleOpenAdd = () => {
         setCategoryMode('add');
-        setCategoryFormData({ title: '', description: '', image: '', duration: '' });
+        setCategoryFormData(initializeCategoryData());
         setShowCategoryModal(true);
     };
 
     const handleOpenEdit = (cat) => {
         setCategoryMode('edit');
         setSelectedCategoryId(cat._id);
-        setCategoryFormData({
-            title: cat.title,
-            description: cat.description,
-            image: cat.image,
-            duration: cat.duration || ''
-        });
+        setCategoryFormData(initializeCategoryData(cat));
         setShowCategoryModal(true);
     };
 
@@ -239,7 +257,7 @@ export default function Vipaccess() {
         }
     };
 
-    const currentHero = vipHeroSettings[appLanguage] || vipHeroSettings.fr;
+    const currentHero = (vipHeroSettings && (vipHeroSettings[appLanguage] || vipHeroSettings.fr)) || {};
 
     return (
         <div className="vip-premium-page" dir={direction}>
@@ -262,7 +280,21 @@ export default function Vipaccess() {
 
                     <div style={{ marginTop: '25px', display: 'flex', justifyContent: 'center', gap: '20px', position: 'relative', zIndex: 20, flexWrap: 'wrap' }}>
                         {isAdmin && (
-                            <button className="edit-btn-minimal-lux" onClick={() => setIsEditingVipHero(true)}>
+                            <button className="edit-btn-minimal-lux" onClick={() => {
+                                const initialized = { ...vipHeroSettings };
+                                languages.forEach(lang => {
+                                    if (!initialized[lang.code]) {
+                                        initialized[lang.code] = { 
+                                            badge: translations[lang.code]?.badge || translations.fr.badge,
+                                            title: translations[lang.code]?.title || translations.fr.title,
+                                            accent: translations[lang.code]?.accent || translations.fr.accent,
+                                            heroImage: initialized.fr?.heroImage || 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=2070&auto=format&fit=crop'
+                                        };
+                                    }
+                                });
+                                setEditVipHeroData(initialized);
+                                setIsEditingVipHero(true);
+                            }}>
                                 <FaEdit size={14} /> {appLanguage === 'ar' ? 'تعديل الواجهة' : 'Modifier'}
                             </button>
                         )}
@@ -319,15 +351,21 @@ export default function Vipaccess() {
                                     </div>
                                 </div>
                                 <div className="vip-card-body">
-                                    <h3 className="vip-card-title">{course.title}</h3>
-                                    <p className="vip-card-desc">{course.description}</p>
+                                    <h3 className="vip-card-title">
+                                        {typeof course.title === 'object' ? (course.title[appLanguage] || course.title.fr) : course.title}
+                                    </h3>
+                                    <p className="vip-card-desc">
+                                        {typeof course.description === 'object' ? (course.description[appLanguage] || course.description.fr) : course.description}
+                                    </p>
 
                                     <div className="vip-card-footer">
                                         <div className="vip-meta-item">
                                             <FaPlayCircle />
-                                            <span>{course.duration || 'Access 24/7'}</span>
+                                            <span>
+                                                {typeof course.duration === 'object' ? (course.duration[appLanguage] || course.duration.fr) : (course.duration || 'Access 24/7')}
+                                            </span>
                                         </div>
-                                        <NavLink to={`/cours_Manches/${encodeURIComponent(course.title)}`}>
+                                        <NavLink to={`/cours_Manches/${encodeURIComponent(typeof course.title === 'object' ? (course.title.fr || course.title[appLanguage]) : course.title)}`}>
                                             <button className="vip-access-btn">
                                                 <span>{t.button}</span>
                                                 <FaChevronRight className="btn-arrow" />
@@ -375,22 +413,48 @@ export default function Vipaccess() {
                             {categoryMode === 'add' ? t.addCategory : t.editCategory}
                         </h2>
 
-                        <div className="premium-form-grid-single">
-                            <div className="premium-form-group">
-                                <label>{t.categoryTitle}</label>
-                                <input
-                                    type="text"
-                                    value={categoryFormData.title}
-                                    onChange={(e) => setCategoryFormData({ ...categoryFormData, title: e.target.value })}
-                                />
-                            </div>
-                            <div className="premium-form-group">
-                                <label>{t.categoryDesc}</label>
-                                <textarea
-                                    value={categoryFormData.description}
-                                    onChange={(e) => setCategoryFormData({ ...categoryFormData, description: e.target.value })}
-                                />
-                            </div>
+                        <div className="premium-form-grid" style={{ gridTemplateColumns: '1fr' }}>
+                            {languages.filter(l => l.code === appLanguage).map(lang => (
+                                <div key={lang.code} className="premium-lang-section" style={{ border: '1px solid #e2e8f0', borderRadius: '12px', padding: '15px', marginBottom: '15px' }}>
+                                    <h4 className="lang-indicator" style={{ background: '#d4af37', display: 'inline-block', marginBottom: '10px' }}>{lang.label}</h4>
+                                    <div className="premium-form-group">
+                                        <label>{t.categoryTitle}</label>
+                                        <input
+                                            type="text"
+                                            value={categoryFormData.title[lang.code] || ''}
+                                            onChange={(e) => {
+                                                const newTitle = { ...categoryFormData.title, [lang.code]: e.target.value };
+                                                setCategoryFormData({ ...categoryFormData, title: newTitle });
+                                            }}
+                                            dir={lang.code === 'ar' ? 'rtl' : 'ltr'}
+                                        />
+                                    </div>
+                                    <div className="premium-form-group">
+                                        <label>{t.categoryDesc}</label>
+                                        <textarea
+                                            value={categoryFormData.description[lang.code] || ''}
+                                            onChange={(e) => {
+                                                const newDesc = { ...categoryFormData.description, [lang.code]: e.target.value };
+                                                setCategoryFormData({ ...categoryFormData, description: newDesc });
+                                            }}
+                                            dir={lang.code === 'ar' ? 'rtl' : 'ltr'}
+                                        />
+                                    </div>
+                                    <div className="premium-form-group">
+                                        <label>{t.categoryDuration}</label>
+                                        <input
+                                            type="text"
+                                            value={categoryFormData.duration[lang.code] || ''}
+                                            onChange={(e) => {
+                                                const newDur = { ...categoryFormData.duration, [lang.code]: e.target.value };
+                                                setCategoryFormData({ ...categoryFormData, duration: newDur });
+                                            }}
+                                            dir={lang.code === 'ar' ? 'rtl' : 'ltr'}
+                                        />
+                                    </div>
+                                </div>
+                            ))}
+
                             <div className="premium-form-group">
                                 <label>{t.categoryImg}</label>
                                 <input
@@ -398,14 +462,6 @@ export default function Vipaccess() {
                                     placeholder="https://..."
                                     value={categoryFormData.image}
                                     onChange={(e) => setCategoryFormData({ ...categoryFormData, image: e.target.value })}
-                                />
-                            </div>
-                            <div className="premium-form-group">
-                                <label>{t.categoryDuration}</label>
-                                <input
-                                    type="text"
-                                    value={categoryFormData.duration}
-                                    onChange={(e) => setCategoryFormData({ ...categoryFormData, duration: e.target.value })}
                                 />
                             </div>
                         </div>
@@ -430,39 +486,39 @@ export default function Vipaccess() {
                         <h2 className="premium-modal-title">{appLanguage === 'ar' ? 'تعديل الواجهة' : 'Modifier le Hero'}</h2>
 
                         <div className="premium-form-grid">
-                            {['fr', 'ar', 'en'].map(lang => (
-                                <div key={lang} className="premium-lang-section">
-                                    <h4 className="lang-indicator">{lang.toUpperCase()}</h4>
+                            {languages.filter(l => l.code === appLanguage).map(lang => (
+                                <div key={lang.code} className="premium-lang-section" style={{ border: 'none', background: 'none' }}>
+                                    <h4 className="lang-indicator" style={{ background: '#d4af37' }}>{lang.label}</h4>
                                     <div className="premium-form-group">
                                         <label>Badge</label>
                                         <input
                                             type="text"
-                                            value={editVipHeroData[lang].badge}
-                                            onChange={(e) => setEditVipHeroData({ ...editVipHeroData, [lang]: { ...editVipHeroData[lang], badge: e.target.value } })}
+                                            value={editVipHeroData[lang.code]?.badge || ''}
+                                            onChange={(e) => setEditVipHeroData({ ...editVipHeroData, [lang.code]: { ...editVipHeroData[lang.code], badge: e.target.value } })}
                                         />
                                     </div>
                                     <div className="premium-form-group">
-                                        <label>{lang === 'en' ? 'Accent Text' : 'Title'}</label>
+                                        <label>{lang.code === 'en' ? 'Accent Text' : 'Title'}</label>
                                         <input
                                             type="text"
-                                            value={editVipHeroData[lang].title}
-                                            onChange={(e) => setEditVipHeroData({ ...editVipHeroData, [lang]: { ...editVipHeroData[lang], title: e.target.value } })}
+                                            value={editVipHeroData[lang.code]?.title || ''}
+                                            onChange={(e) => setEditVipHeroData({ ...editVipHeroData, [lang.code]: { ...editVipHeroData[lang.code], title: e.target.value } })}
                                         />
                                     </div>
                                     <div className="premium-form-group">
-                                        <label>{lang === 'en' ? 'Main Title' : 'Accent Text'}</label>
+                                        <label>{lang.code === 'en' ? 'Main Title' : 'Accent Text'}</label>
                                         <input
                                             type="text"
-                                            value={editVipHeroData[lang].accent}
-                                            onChange={(e) => setEditVipHeroData({ ...editVipHeroData, [lang]: { ...editVipHeroData[lang], accent: e.target.value } })}
+                                            value={editVipHeroData[lang.code]?.accent || ''}
+                                            onChange={(e) => setEditVipHeroData({ ...editVipHeroData, [lang.code]: { ...editVipHeroData[lang.code], accent: e.target.value } })}
                                         />
                                     </div>
                                     <div className="premium-form-group">
                                         <label>URL Image de Fond</label>
                                         <input
                                             type="text"
-                                            value={editVipHeroData[lang].heroImage || ''}
-                                            onChange={(e) => setEditVipHeroData({ ...editVipHeroData, [lang]: { ...editVipHeroData[lang], heroImage: e.target.value } })}
+                                            value={editVipHeroData[lang.code]?.heroImage || ''}
+                                            onChange={(e) => setEditVipHeroData({ ...editVipHeroData, [lang.code]: { ...editVipHeroData[lang.code], heroImage: e.target.value } })}
                                             placeholder="https://..."
                                         />
                                     </div>

@@ -5,20 +5,20 @@ const mongoose = require('mongoose');
 const VipCategorySchema = new mongoose.Schema({
     // Name of the category (e.g., "Les Corsage")
     title: {
-        type: String,
+        type: Object,
         required: [true, "Le titre est obligatoire."],
-        trim: true,
-        unique: true
+        default: {}
     },
     // Brief description of the category
     description: {
-        type: String,
-        required: [true, "La description est obligatoire."]
+        type: Object,
+        required: [true, "La description est obligatoire."],
+        default: {}
     },
     // Course duration (e.g., "10 Leçons")
     duration: {
-        type: String,
-        default: "Non spécifiée"
+        type: Object,
+        default: {}
     },
     // URL of the category image
     image: {

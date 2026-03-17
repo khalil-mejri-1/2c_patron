@@ -4,10 +4,9 @@ const mongoose = require('mongoose');
 
 const productSchema = new mongoose.Schema({
     nom: {
-        type: String,
+        type: Object,
         required: [true, 'Le nom du produit est requis'],
-        trim: true,
-        maxlength: [100, 'Le nom ne peut pas dépasser 100 caractères']
+        default: {}
     },
     
     // 💡 1. الحقل الجديد للصورة الرئيسية (إلزامي وسلسلة نصية واحدة)

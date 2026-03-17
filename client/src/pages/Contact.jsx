@@ -104,9 +104,31 @@ export default function Contact() {
     const [contactContent, setContactContent] = useState({});
     const [editContactContent, setEditContactContent] = useState({});
 
+    // 🔧 دالة مساعدة لتهيئة جميع اللغات المتاحة
+    const initializeAllLanguages = (currentValues) => {
+        const initialized = {};
+        languages.forEach(lang => {
+            const fallback = translations[lang.code] || translations.fr;
+            initialized[lang.code] = {
+                ...defaultStructure,
+                headerTitle: currentValues[lang.code]?.headerTitle || (typeof fallback.headerTitle === 'function' ? fallback.headerTitle('') : fallback.headerTitle),
+                headerAccent: currentValues[lang.code]?.headerAccent || fallback.headerAccent,
+                formTitle: currentValues[lang.code]?.formTitle || fallback.formTitle,
+                submitBtn: currentValues[lang.code]?.submitBtn || fallback.submitBtn,
+                infoTitle: currentValues[lang.code]?.infoTitle || fallback.infoTitle,
+                addressValue: currentValues[lang.code]?.addressValue || fallback.addressValue,
+                phoneValue: currentValues[lang.code]?.phoneValue || fallback.phoneValue,
+                emailValue: currentValues[lang.code]?.emailValue || fallback.emailValue,
+                hoursValue: currentValues[lang.code]?.hoursValue || fallback.hoursValue,
+                heroImage: currentValues[lang.code]?.heroImage || currentValues.fr?.heroImage || '',
+                ...(currentValues[lang.code] || {})
+            };
+        });
+        return initialized;
+    };
+
     // 1. ⚙️ جلب التحقق من المسؤول
     useEffect(() => {
-
         // Check Admin
         const users = JSON.parse(localStorage.getItem('users') || '[]');
         const email = localStorage.getItem('currentUserEmail') || localStorage.getItem('loggedInUserEmail');
@@ -114,34 +136,27 @@ export default function Contact() {
         if (currentUser?.statut === 'admin') setIsAdmin(true);
 
         // Load Content
-        fetch(`${BASE_URL} /api/settings / contact - content`)
+        fetch(`${BASE_URL}/api/settings/contact-content`)
             .then(res => res.ok ? res.json() : null)
-            .then(data => data && setContactContent(data))
+            .then(data => {
+                if (data) {
+                    setContactContent(data);
+                    setEditContactContent(initializeAllLanguages(data));
+                }
+            })
             .catch(() => { });
-    }, []);
+    }, [languages]);
 
     const handleSaveContactContent = async () => {
         setContactContent(editContactContent);
         setIsEditingField(null);
         try {
-            await fetch(`${BASE_URL} /api/settings / contact - content`, {
+            await fetch(`${BASE_URL}/api/settings/contact-content`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ value: editContactContent })
             });
         } catch (err) { }
-    };
-
-    // 🔧 دالة مساعدة لتهيئة جميع اللغات المتاحة
-    const initializeAllLanguages = (currentValues) => {
-        const initialized = {};
-        languages.forEach(lang => {
-            initialized[lang.code] = {
-                ...defaultStructure,
-                ...(currentValues[lang.code] || {})
-            };
-        });
-        return initialized;
     };
 
     const getT = (key, defaultVal) => {
@@ -160,7 +175,7 @@ export default function Contact() {
         return (
             isAdmin && (
                 <button
-                    onClick={() => { setEditContactContent(initializeAllLanguages(contactContent)); setIsEditingField(field); }}
+                    onClick={() => { setIsEditingField(field); }}
                     className="edit-btn-minimal-lux"
                     style={{
                         ...style,
@@ -450,9 +465,9 @@ export default function Contact() {
                         </h2>
 
                         <div className="atelier-contact-modal-form-grid">
-                            {languages.map(lang => (
-                                <div key={lang.code} className="atelier-contact-modal-lang-section">
-                                    <h4 className="atelier-contact-modal-lang-indicator">{lang.label}</h4>
+                            {languages.filter(l => l.code === appLanguage).map(lang => (
+                                <div key={lang.code} className="atelier-contact-modal-lang-section" style={{ border: 'none', background: 'none' }}>
+                                    <h4 className="atelier-contact-modal-lang-indicator" style={{ background: '#d4af37' }}>{lang.label}</h4>
 
                                     {isEditingField === 'heroImage' && (
                                         <div className="atelier-contact-modal-field">

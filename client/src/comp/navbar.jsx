@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { FaBars, FaTimes, FaSearch, FaShoppingBag, FaUser, FaSignOutAlt, FaSignInAlt, FaUserPlus, FaCrown, FaTachometerAlt, FaPlus, FaSave, FaArrowLeft } from 'react-icons/fa';
+import { FaBars, FaTimes, FaSearch, FaShoppingBag, FaUser, FaSignOutAlt, FaSignInAlt, FaUserPlus, FaCrown, FaTachometerAlt, FaPlus, FaSave, FaArrowLeft, FaEdit } from 'react-icons/fa';
 import logo from "../img/logo.png";
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
@@ -10,6 +10,81 @@ import eg from "../img/eg.png";
 import BASE_URL from '../apiConfig';
 
 const GOOGLE_CLIENT_ID = "435113772089-sa576v0m6hq96rg9369icj3g66pnkh9r.apps.googleusercontent.com";
+
+const translations = {
+    ar: {
+        home: "الرئيسية",
+        about: "من نحن",
+        courses: "الأكاديمية",
+        shop: "الباترونات / القوالب",
+        contact: "اتصل بنا",
+        vip: "ماستر أتيليه (VIP)",
+        login: "تسجيل الدخول",
+        register: "إنشاء حساب",
+        dashboard: "لوحة التحكم",
+        myAccount: "حسابي",
+        manageSub: "إدارة الاشتراك",
+        logout: "تسجيل الخروج",
+        confirmLogout: "هل أنت متأكد من رغبتك في تسجيل الخروج؟",
+        yes: "نعم، خروج",
+        cancel: "إلغاء",
+        limitedAccess: "دخول محدود",
+        vipMessage: "دخول 'Master Atelier (VIP)' هو تجربة حصرية مخصصة لأعضائنا المميزين.",
+        vipBenefits: "✦ اكتشف الباترونات السرية والدروس المتقدمة",
+        later: "لاحقاً",
+        becomeVip: "اصبح عضواً VIP",
+        admin: "مسؤول",
+        back: "رجوع"
+    },
+    fr: {
+        home: "Accueil",
+        about: "À Propos",
+        courses: "L'Académie",
+        shop: "Patrons / Gabarits",
+        contact: "Contact",
+        vip: "Master Atelier (VIP)",
+        login: "Se connecter",
+        register: "S'inscrire",
+        dashboard: "Tableau de bord",
+        myAccount: "Mon Compte",
+        manageSub: "Gérer Abonnement",
+        logout: "Déconnexion",
+        confirmLogout: "Êtes-vous sûr(e) de vouloir vous déconnecter ?",
+        yes: "Oui, Déconnexion",
+        cancel: "Annuler",
+        limitedAccess: "Accès Limité",
+        vipMessage: "L'accès Master Atelier (VIP) est une expérience exclusive réservée à nos membres premium.",
+        vipBenefits: "✦ Débloquez des patrons secrets & tutoriels d'experts",
+        later: "Plus tard",
+        becomeVip: "Devenir Membre VIP",
+        admin: "Administrateur",
+        back: "Retour"
+    },
+    en: {
+        home: "Home",
+        about: "About",
+        courses: "Academy",
+        shop: "Patterns / Templates",
+        contact: "Contact",
+        vip: "Master Atelier (VIP)",
+        login: "Login",
+        register: "Register",
+        dashboard: "Dashboard",
+        myAccount: "My Account",
+        manageSub: "Manage Subscription",
+        logout: "Logout",
+        confirmLogout: "Are you sure you want to log out?",
+        yes: "Yes, Logout",
+        cancel: "Cancel",
+        limitedAccess: "Limited Access",
+        vipMessage: "Master Atelier (VIP) access is an exclusive experience reserved for our premium members.",
+        vipBenefits: "✦ Unlock secret patterns & expert tutorials",
+        later: "Later",
+        becomeVip: "Become a VIP Member",
+        admin: "Administrator",
+        back: "Back"
+    }
+};
 
 export default function Navbar({ initialCartCount = 0 }) {
     const [isOpen, setIsOpen] = useState(false);
@@ -24,9 +99,12 @@ export default function Navbar({ initialCartCount = 0 }) {
     const [isAdmin, setIsAdmin] = useState(false);
     const [showVipModal, setShowVipModal] = useState(false);
 
-    const { appLanguage, changeLanguage, languages, addLanguage } = useLanguage();
+    const { appLanguage, changeLanguage, languages, addLanguage, deleteLanguage, updateLanguage } = useLanguage();
+    const t = translations[appLanguage] || translations.fr;
     const [isAddLanguageModalOpen, setIsAddLanguageModalOpen] = useState(false);
+    const [isEditLanguageModalOpen, setIsEditLanguageModalOpen] = useState(false);
     const [newLangData, setNewLangData] = useState({ label: '', code: '', emoji: '', icon: '' });
+    const [editingLang, setEditingLang] = useState(null);
 
     const dropdownRef = useRef(null);
     const navbarRef = useRef(null);
@@ -241,16 +319,16 @@ export default function Navbar({ initialCartCount = 0 }) {
 
     // --- Liens de navigation ---
     const navItems = [
-        { name: 'Accueil', link: '/' },
-        { name: 'Patrons / Gabarits', link: '/magasin' },
+        { name: t.home, link: '/' },
+        { name: t.shop, link: '/magasin' },
         {
-            name: 'Master Atelier (VIP)',
+            name: t.vip,
             link: '/Vip-access',
             className: !isVip ? 'disabled-vip-link' : '',
             onClick: handleVipClick
         },
-        { name: 'À Propos', link: '/about' },
-        { name: 'Contact', link: '/contact' },
+        { name: t.about, link: '/about' },
+        { name: t.contact, link: '/contact' },
     ];
 
     // Vérifie si l'utilisateur est sur la page d'accueil
@@ -279,9 +357,9 @@ export default function Navbar({ initialCartCount = 0 }) {
         <>
             {/* Bouton de Retour Conditionnel */}
             {!isHomePage && (
-                <button className='button_retour' onClick={handleGoBack} aria-label="Retour">
+                <button className='button_retour' onClick={handleGoBack} aria-label={t.back}>
                     <FaArrowLeft />
-                    <span className="back-btn-label">Retour</span>
+                    <span className="back-btn-label">{t.back}</span>
                 </button>
             )}
 
@@ -312,14 +390,66 @@ export default function Navbar({ initialCartCount = 0 }) {
 
                     <li className="mobile-language-menu">
                         <div className="language-selector-mobile">
-                            {languages.map(({ code, label, icon }) => (
-                                <button
-                                    key={code}
-                                    className={`flag-btn ${appLanguage === code ? 'active-flag' : ''}`}
-                                    onClick={() => handleLanguageChange(code)}
-                                >
-                                    <img src={icon} alt={label} className="flag-icon" />
-                                </button>
+                            {languages.map(({ code, label, icon, emoji }) => (
+                                <div key={code} style={{ position: 'relative' }}>
+                                    <button
+                                        className={`flag-btn ${appLanguage === code ? 'active-flag' : ''}`}
+                                        onClick={() => handleLanguageChange(code)}
+                                    >
+                                        <img src={icon} alt={label} className="flag-icon" />
+                                    </button>
+                                    {(isAdmin || userEmail?.includes('admin') || userEmail === '2cparton0011@gmail.com') && (
+                                        <div style={{ position: 'absolute', top: '-10px', right: '-15px', display: 'flex', gap: '2px', zIndex: 10 }}>
+                                            <button
+                                                className="edit-lang-btn-small"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setEditingLang({ code, label, icon, emoji });
+                                                    setIsEditLanguageModalOpen(true);
+                                                }}
+                                                style={{
+                                                    background: '#D4AF37',
+                                                    color: '#fff',
+                                                    border: 'none',
+                                                    borderRadius: '50%',
+                                                    width: '18px',
+                                                    height: '18px',
+                                                    fontSize: '10px',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    cursor: 'pointer'
+                                                }}
+                                            >
+                                                <FaEdit size={10} />
+                                            </button>
+                                            <button
+                                                className="delete-lang-btn-small"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    if (window.confirm(`Supprimer la langue ${label} ?`)) {
+                                                        deleteLanguage(code);
+                                                    }
+                                                }}
+                                                style={{
+                                                    background: '#ef4444',
+                                                    color: '#fff',
+                                                    border: 'none',
+                                                    borderRadius: '50%',
+                                                    width: '18px',
+                                                    height: '18px',
+                                                    fontSize: '10px',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    cursor: 'pointer'
+                                                }}
+                                            >
+                                                <FaTimes size={10} />
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
                             ))}
                             {(isAdmin || userEmail?.includes('admin') || userEmail === '2cparton0011@gmail.com') && (
                                 <button
@@ -356,10 +486,11 @@ export default function Navbar({ initialCartCount = 0 }) {
                 <div className="navbar-icons">
                     {/* --- Sélecteur de langue sur Desktop/Tablette --- */}
                     <div className="language-selector-desktop">
-                        {languages.map(({ code, label, icon }) => (
+                        {languages.map(({ code, label, icon, emoji }) => (
                             <div
                                 key={code}
                                 className={`bloc_language-selector-desktop ${appLanguage === code ? 'active-bloc' : ''}`}
+                                style={{ position: 'relative' }}
                             >
                                 <button
                                     className={`flag-btn ${appLanguage === code ? 'active-flag' : ''}`}
@@ -372,6 +503,57 @@ export default function Navbar({ initialCartCount = 0 }) {
                                         className="flag-icon"
                                     />
                                 </button>
+                                {(isAdmin || userEmail?.includes('admin') || userEmail === '2cparton0011@gmail.com') && (
+                                    <div style={{ position: 'absolute', top: '-8px', right: '-12px', display: 'flex', gap: '3px', zIndex: 10 }}>
+                                        <button
+                                            className="edit-lang-btn-small"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setEditingLang({ code, label, icon, emoji });
+                                                setIsEditLanguageModalOpen(true);
+                                            }}
+                                            style={{
+                                                background: '#D4AF37',
+                                                color: '#fff',
+                                                border: 'none',
+                                                borderRadius: '50%',
+                                                width: '18px',
+                                                height: '18px',
+                                                fontSize: '10px',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                cursor: 'pointer'
+                                            }}
+                                        >
+                                            <FaEdit size={10} />
+                                        </button>
+                                        <button
+                                            className="delete-lang-btn-small"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                if (window.confirm(`Supprimer la langue ${label} ?`)) {
+                                                    deleteLanguage(code);
+                                                }
+                                            }}
+                                            style={{
+                                                background: '#ef4444',
+                                                color: '#fff',
+                                                border: 'none',
+                                                borderRadius: '50%',
+                                                width: '18px',
+                                                height: '18px',
+                                                fontSize: '10px',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                cursor: 'pointer'
+                                            }}
+                                        >
+                                            <FaTimes size={10} />
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         ))}
 
@@ -415,18 +597,18 @@ export default function Navbar({ initialCartCount = 0 }) {
                                         {/* 🛡️ Lien Tableau de Bord */}
                                         {(isAdmin || userEmail === 'admin@admin.com') && (
                                             <Link to="/admin" className="dropdown-item admin-dashboard-link" onClick={() => setIsDropdownOpen(false)}>
-                                                <FaTachometerAlt /> Tableau de bord
+                                                <FaTachometerAlt /> {t.dashboard}
                                             </Link>
                                         )}
 
                                         <Link to="/profile" className="dropdown-item" onClick={() => setIsDropdownOpen(false)}>
-                                            <FaUser /> Mon Compte
+                                            <FaUser /> {t.myAccount}
                                         </Link>
                                         <Link to="/Abonnement-VIP" className="dropdown-item vip-link" onClick={() => setIsDropdownOpen(false)}>
-                                            <FaCrown /> Gérer Abonnement
+                                            <FaCrown /> {t.manageSub}
                                         </Link>
                                         <button onClick={handleLogout} className="dropdown-item logout-item">
-                                            <FaSignOutAlt /> Déconnexion
+                                            <FaSignOutAlt /> {t.logout}
                                         </button>
                                     </div>
                                 )}
@@ -434,8 +616,8 @@ export default function Navbar({ initialCartCount = 0 }) {
                         </div>
                     ) : (
                         <div className="auth-buttons-desktop">
-                            <Link to="/login" className="auth-btn login-btn">Se connecter</Link>
-                            <Link to="/register" className="auth-btn register-btn">S'inscrire</Link>
+                            <Link to="/login" className="auth-btn login-btn">{t.login}</Link>
+                            <Link to="/register" className="auth-btn register-btn">{t.register}</Link>
                         </div>
                     )}
 
@@ -450,13 +632,13 @@ export default function Navbar({ initialCartCount = 0 }) {
                 <div className="premium-modal-backdrop" onClick={cancelLogout}>
                     <div className="premium-modal-content" onClick={e => e.stopPropagation()}>
                         <button className="premium-modal-close-icon" onClick={cancelLogout}><FaTimes /></button>
-                        <h2 className="premium-modal-title">Déconnexion</h2>
+                        <h2 className="premium-modal-title">{t.logout}</h2>
                         <p style={{ textAlign: 'center', color: '#4b5563', marginBottom: '30px', fontSize: '1.1rem' }}>
-                            Êtes-vous sûr(e) de vouloir vous déconnecter ?
+                            {t.confirmLogout}
                         </p>
                         <div className="premium-btn-group">
-                            <button onClick={cancelLogout} className="premium-btn-cta secondary">Annuler</button>
-                            <button onClick={confirmLogout} className="premium-btn-cta gold">Oui, Déconnexion</button>
+                            <button onClick={cancelLogout} className="premium-btn-cta secondary">{t.cancel}</button>
+                            <button onClick={confirmLogout} className="premium-btn-cta gold">{t.yes}</button>
                         </div>
                     </div>
                 </div>
@@ -471,24 +653,24 @@ export default function Navbar({ initialCartCount = 0 }) {
                             <div className="vip-cert-icon-wrapper" style={{ margin: '0 auto 15px', background: 'rgba(212, 175, 55, 0.1)', color: '#d4af37' }}>
                                 <FaCrown />
                             </div>
-                            <h2 className="premium-modal-title">Accès Limité</h2>
+                            <h2 className="premium-modal-title">{t.limitedAccess}</h2>
                         </div>
 
                         <div style={{ padding: '0 20px 30px', textAlign: 'center' }}>
                             <p style={{ color: '#64748b', fontSize: '1.05rem', lineHeight: '1.6', margin: '0 0 20px' }}>
-                                L'accès <strong>Master Atelier (VIP)</strong> est une expérience exclusive réservée à nos membres premium.
+                                {t.vipMessage}
                             </p>
                             <div style={{ background: '#fef3c7', color: '#92400e', padding: '12px 20px', borderRadius: '12px', fontSize: '0.9rem', fontWeight: '700', display: 'inline-block' }}>
-                                ✦ Débloquez des patrons secrets & tutoriels d'experts
+                                {t.vipBenefits}
                             </div>
                         </div>
 
                         <div className="premium-btn-group">
                             <button onClick={() => setShowVipModal(false)} className="premium-btn-cta secondary">
-                                Plus tard
+                                {t.later}
                             </button>
                             <Link to="/Abonnement-VIP" onClick={() => setShowVipModal(false)} className="premium-btn-cta gold" style={{ textDecoration: 'none', display: 'flex', justifyContent: 'center' }}>
-                                Devenir Membre VIP
+                                {t.becomeVip}
                             </Link>
                         </div>
                     </div>
@@ -556,6 +738,72 @@ export default function Navbar({ initialCartCount = 0 }) {
                                 className="premium-btn-cta gold"
                             >
                                 <FaSave /> Ajouter
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* 🛑 Modal Modifier une Langue */}
+            {isEditLanguageModalOpen && editingLang && (
+                <div className="premium-modal-backdrop" onClick={() => setIsEditLanguageModalOpen(false)}>
+                    <div className="premium-modal-content" onClick={(e) => e.stopPropagation()}>
+                        <button className="premium-modal-close-icon" onClick={() => setIsEditLanguageModalOpen(false)}><FaTimes /></button>
+                        <h2 className="premium-modal-title">Modifier la Langue</h2>
+
+                        <div className="premium-form-grid" style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                            <div className="premium-form-group">
+                                <label>Nom (ex: Italiano)</label>
+                                <input
+                                    type="text"
+                                    value={editingLang.label}
+                                    onChange={e => setEditingLang({ ...editingLang, label: e.target.value })}
+                                    placeholder="Nom de la langue..."
+                                />
+                            </div>
+                            <div className="premium-form-group">
+                                <label>Code (ex: it) - Non modifiable</label>
+                                <input
+                                    type="text"
+                                    value={editingLang.code}
+                                    disabled
+                                    style={{ background: '#f3f4f6', cursor: 'not-allowed' }}
+                                />
+                            </div>
+                            <div className="premium-form-group">
+                                <label>Emoji (ex: 🇮🇹)</label>
+                                <input
+                                    type="text"
+                                    value={editingLang.emoji}
+                                    onChange={e => setEditingLang({ ...editingLang, emoji: e.target.value })}
+                                    placeholder="🇮🇹"
+                                />
+                            </div>
+                            <div className="premium-form-group">
+                                <label>URL de l'icône (Image)</label>
+                                <input
+                                    type="text"
+                                    value={editingLang.icon}
+                                    onChange={e => setEditingLang({ ...editingLang, icon: e.target.value })}
+                                    placeholder="https://.../flag.png"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="premium-btn-group" style={{ marginTop: '25px' }}>
+                            <button onClick={() => setIsEditLanguageModalOpen(false)} className="premium-btn-cta secondary">
+                                Annuler
+                            </button>
+                            <button
+                                onClick={() => {
+                                    if (editingLang.label) {
+                                        updateLanguage(editingLang);
+                                        setIsEditLanguageModalOpen(false);
+                                        setEditingLang(null);
+                                    }
+                                }}
+                                className="premium-btn-cta gold"
+                            >
+                                <FaSave /> Enregistrer
                             </button>
                         </div>
                     </div>

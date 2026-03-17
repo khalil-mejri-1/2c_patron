@@ -55,8 +55,48 @@ export const LanguageProvider = ({ children }) => {
         }
     };
 
+    const deleteLanguage = async (code) => {
+        try {
+            const updatedLanguages = languages.filter(l => l.code !== code);
+            setLanguages(updatedLanguages);
+            localStorage.setItem('appLanguages', JSON.stringify(updatedLanguages));
+
+            // If deleted language was active, switch to first available or 'fr'
+            if (appLanguage === code) {
+                const nextLang = updatedLanguages.length > 0 ? updatedLanguages[0].code : 'fr';
+                changeLanguage(nextLang);
+            }
+
+            // Persist to backend
+            await fetch(`${BASE_URL}/api/settings/languages`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ value: updatedLanguages })
+            });
+        } catch (err) {
+            console.error("Failed to delete language from backend:", err);
+        }
+    };
+
+    const updateLanguage = async (updatedLang) => {
+        try {
+            const updatedLanguages = languages.map(l => l.code === updatedLang.code ? updatedLang : l);
+            setLanguages(updatedLanguages);
+            localStorage.setItem('appLanguages', JSON.stringify(updatedLanguages));
+
+            // Persist to backend
+            await fetch(`${BASE_URL}/api/settings/languages`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ value: updatedLanguages })
+            });
+        } catch (err) {
+            console.error("Failed to update language in backend:", err);
+        }
+    };
+
     return (
-        <LanguageContext.Provider value={{ appLanguage, changeLanguage, languages, addLanguage }}>
+        <LanguageContext.Provider value={{ appLanguage, changeLanguage, languages, addLanguage, deleteLanguage, updateLanguage }}>
             {children}
         </LanguageContext.Provider>
     );

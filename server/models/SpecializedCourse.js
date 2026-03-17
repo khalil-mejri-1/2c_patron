@@ -1,8 +1,8 @@
 const mongoose = require('mongoose');
 
 const courseItemSchema = new mongoose.Schema({
-    title: { type: String, required: true, trim: true },
-    duration: { type: String, required: false },
+    title: { type: Object, required: true, default: {} },
+    duration: { type: Object, required: false, default: {} },
     image: { type: String, required: true },
     vip_category: { type: String, required: true },
     hero_content: { type: Object, default: {} }, // Multi-language object
@@ -10,7 +10,7 @@ const courseItemSchema = new mongoose.Schema({
 });
 
 const specializedCourseSchema = new mongoose.Schema({
-    video_link: { type: String, required: false },
+    video_link: { type: Object, required: false, default: {} },
     hero_bg: { type: String, required: false },
     hero_content: { type: Object, default: {} }, // Multi-language object
     vip_category: { type: String, required: false }, // Top-level category name

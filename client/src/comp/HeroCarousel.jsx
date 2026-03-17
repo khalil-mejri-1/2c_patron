@@ -604,16 +604,15 @@ export default function HeroSection({ isLoggedIn = false, currentUserEmail = '' 
 
     const [isEditingHero, setIsEditingHero] = useState(false);
     const [editHeroData, setEditHeroData] = useState({
-        titles: { fr: '', ar: '', en: '' },
-        sublines: { fr: '', ar: '', en: '' },
-        intros: { fr: '', ar: '', en: '' },
-        ctaTexts: { fr: '', ar: '', en: '' }
+        titles: {},
+        sublines: {},
+        intros: {},
+        ctaTexts: {}
     });
 
     const [isAddingProduct, setIsAddingProduct] = useState(false);
-    const [newProduct, setNewProduct] = useState({ nom: '', prix: '', image: '' });
+    const [newProduct, setNewProduct] = useState({ nom: {}, prix: '', image: '' });
 
-    // Fetch Admin Status & Settings
     useEffect(() => {
         // Check Admin
         const users = JSON.parse(localStorage.getItem('users') || '[]');
@@ -621,45 +620,41 @@ export default function HeroSection({ isLoggedIn = false, currentUserEmail = '' 
         const currentUser = users.find(u => u.email === email);
         if (currentUser?.statut === 'admin') setIsAdmin(true);
 
-        // Fetch Titles (Local + Remote)
-        const titleBackup = localStorage.getItem('hero_titles_backup');
-        if (titleBackup) setHeroTitles(JSON.parse(titleBackup));
+        const fetchHeroSettings = async () => {
+            try {
+                const [titles, sublines, intros, cta] = await Promise.all([
+                    fetch(`${BASE_URL}/api/settings/hero-titles`).then(res => res.ok ? res.json() : {}),
+                    fetch(`${BASE_URL}/api/settings/hero-sublines`).then(res => res.ok ? res.json() : {}),
+                    fetch(`${BASE_URL}/api/settings/hero-intros`).then(res => res.ok ? res.json() : {}),
+                    fetch(`${BASE_URL}/api/settings/hero-cta`).then(res => res.ok ? res.json() : {})
+                ]);
+                setHeroTitles(titles || {});
+                setHeroSublines(sublines || {});
+                setHeroIntros(intros || {});
+                setHeroCtaTexts(cta || {});
 
-        const sublineBackup = localStorage.getItem('hero_sublines_backup');
-        if (sublineBackup) setHeroSublines(JSON.parse(sublineBackup));
-
-        const introBackup = localStorage.getItem('hero_intros_backup');
-        if (introBackup) setHeroIntros(JSON.parse(introBackup));
-
-        const ctaBackup = localStorage.getItem('hero_cta_backup');
-        if (ctaBackup) setHeroCtaTexts(JSON.parse(ctaBackup));
-
-        fetch(`${BASE_URL}/api/settings/hero-titles`)
-            .then(res => res.ok ? res.json() : null)
-            .then(data => data && setHeroTitles(data))
-            .catch(() => { });
-
-        fetch(`${BASE_URL}/api/settings/hero-sublines`)
-            .then(res => res.ok ? res.json() : null)
-            .then(data => data && setHeroSublines(data))
-            .catch(() => { });
-
-        fetch(`${BASE_URL}/api/settings/hero-intros`)
-            .then(res => res.ok ? res.json() : null)
-            .then(data => data && setHeroIntros(data))
-            .catch(() => { });
-
-        fetch(`${BASE_URL}/api/settings/hero-cta`)
-            .then(res => res.ok ? res.json() : null)
-            .then(data => data && setHeroCtaTexts(data))
-            .catch(() => { });
-    }, [currentUserEmail]);
+                // Pre-initialize edit data
+                setEditHeroData({
+                    titles: initializeAllLanguages(titles || {}, 'mainTitle1'), 
+                    sublines: initializeAllLanguages(sublines || {}, 'subline'),
+                    intros: initializeAllLanguages(intros || {}, 'introText'),
+                    ctaTexts: initializeAllLanguages(cta || {}, 'ctaButton')
+                });
+            } catch (err) { }
+        };
+        fetchHeroSettings();
+    }, [currentUserEmail, languages]); // languages added to dependency
 
     // 🔧 دالة مساعدة لتهيئة جميع اللغات المتاحة
-    const initializeAllLanguages = (currentValues) => {
+    const initializeAllLanguages = (currentValues, fallbackKey) => {
         const initialized = {};
         languages.forEach(lang => {
-            initialized[lang.code] = currentValues[lang.code] || '';
+            const fallback = translations[lang.code] || translations.fr;
+            let fallbackVal = fallback[fallbackKey] || '';
+            if (fallbackKey === 'mainTitle1' && fallback.mainTitle1 && fallback.mainTitle2) {
+                fallbackVal = `${fallback.mainTitle1} <br/> <span class="accent-text">${fallback.mainTitle2}</span>`;
+            }
+            initialized[lang.code] = currentValues[lang.code] || fallbackVal;
         });
         return initialized;
     };
@@ -706,7 +701,8 @@ export default function HeroSection({ isLoggedIn = false, currentUserEmail = '' 
     };
 
     const handleAddProduct = async () => {
-        if (!newProduct.nom || !newProduct.prix || !newProduct.image) {
+        const hasNom = Object.values(newProduct.nom).some(v => v && v.trim() !== '');
+        if (!hasNom || !newProduct.prix || !newProduct.image) {
             alert(currentLanguage === 'ar' ? "يرجى ملء جميع الحقول" : "Please fill all fields");
             return;
         }
@@ -730,7 +726,7 @@ export default function HeroSection({ isLoggedIn = false, currentUserEmail = '' 
                 };
                 setProducts(prev => [...prev, mappedProduct]);
                 setIsAddingProduct(false);
-                setNewProduct({ nom: '', prix: '', image: '' });
+                setNewProduct({ nom: {}, prix: '', image: '' });
                 showAlert('success', appLanguage === 'ar' ? 'تمت العملية' : 'Succès', appLanguage === 'ar' ? 'تم إضافة المنتج بنجاح' : 'Produit ajouté');
             } else {
                 showAlert('error', 'Error', 'Failed to add product');
@@ -751,9 +747,9 @@ export default function HeroSection({ isLoggedIn = false, currentUserEmail = '' 
                 const mappedProducts = data.map((item) => ({
                     id: item._id,
                     price: item.prix,
-                    name: item.nom,
+                    name: typeof item.nom === 'object' ? (item.nom[currentLanguage] || item.nom.fr) : item.nom,
                     url: item.image,
-                    alt: `${texts.products[0].alt} - ${item.nom}`,
+                    alt: `${texts.products[0].alt} - ${typeof item.nom === 'object' ? (item.nom[currentLanguage] || item.nom.fr) : item.nom}`,
                     currency: 'DT'
                 }));
                 setProducts(mappedProducts);
@@ -883,12 +879,6 @@ export default function HeroSection({ isLoggedIn = false, currentUserEmail = '' 
                     {isAdmin && (
                         <button
                             onClick={() => {
-                                setEditHeroData({
-                                    titles: initializeAllLanguages(heroTitles),
-                                    sublines: initializeAllLanguages(heroSublines),
-                                    intros: initializeAllLanguages(heroIntros),
-                                    ctaTexts: initializeAllLanguages(heroCtaTexts)
-                                });
                                 setIsEditingHero(true);
                             }}
                             className="admin-edit-master-btn"
@@ -1074,9 +1064,9 @@ export default function HeroSection({ isLoggedIn = false, currentUserEmail = '' 
                         </h2>
 
                         <div className="premium-form-grid">
-                            {languages.map(lang => (
-                                <div key={lang.code} className="premium-lang-section">
-                                    <h4 className="lang-indicator">{lang.label}</h4>
+                            {languages.filter(l => l.code === currentLanguage).map(lang => (
+                                <div key={lang.code} className="premium-lang-section" style={{ border: 'none', background: 'none' }}>
+                                    <h4 className="lang-indicator" style={{ background: '#d4af37' }}>{lang.label}</h4>
                                     <div className="premium-form-group">
                                         <label>Titre Principal</label>
                                         <input
@@ -1137,14 +1127,20 @@ export default function HeroSection({ isLoggedIn = false, currentUserEmail = '' 
                             {currentLanguage === 'ar' ? 'إضافة منتج جديد' : 'Nouveau Produit'}
                         </h2>
 
-                        <div className="premium-form-group">
-                            <label>Nom du Produit</label>
-                            <input
-                                type="text"
-                                value={newProduct.nom}
-                                onChange={e => setNewProduct({ ...newProduct, nom: e.target.value })}
-                            />
-                        </div>
+                        {languages.filter(l => l.code === currentLanguage).map(lang => (
+                            <div key={lang.code} className="premium-form-group">
+                                <label>{currentLanguage === 'ar' ? 'اسم المنتج' : 'Nom du Produit'} ({lang.label})</label>
+                                <input
+                                    type="text"
+                                    value={newProduct.nom[lang.code] || ''}
+                                    onChange={e => setNewProduct({
+                                        ...newProduct,
+                                        nom: { ...newProduct.nom, [lang.code]: e.target.value }
+                                    })}
+                                    dir={lang.code === 'ar' ? 'rtl' : 'ltr'}
+                                />
+                            </div>
+                        ))}
 
                         <div className="premium-form-group">
                             <label>Prix de Vente (DT)</label>
