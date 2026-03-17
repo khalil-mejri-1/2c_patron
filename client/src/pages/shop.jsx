@@ -607,10 +607,15 @@ export default function ProductGrid() {
 
     useEffect(() => {
         // Check Admin
-        const users = JSON.parse(localStorage.getItem('users') || '[]');
         const email = localStorage.getItem('currentUserEmail') || localStorage.getItem('loggedInUserEmail');
-        const currentUser = users.find(u => u.email === email);
-        if (currentUser?.statut === 'admin') setIsAdmin(true);
+        if (email) {
+            fetch(`${BASE_URL}/api/users/${email}`)
+                .then(res => res.ok ? res.json() : null)
+                .then(data => {
+                    if (data && data.statut === 'admin') setIsAdmin(true);
+                })
+                .catch(() => {});
+        }
 
         // Load content
         fetch(`${BASE_URL}/api/settings/shop-content`)
