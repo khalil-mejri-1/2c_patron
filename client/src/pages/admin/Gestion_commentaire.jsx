@@ -67,7 +67,7 @@ export default function Gestion_commentaire() {
         <div style={{ background: '#f8fafc', minHeight: '100vh' }}>
             <NavbarAdmin />
 
-            <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '40px 20px' }}>
+            <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '100px 20px' }}>
                 <div style={{ marginBottom: '40px' }}>
                     <h1 style={{ fontSize: '2.2rem', color: '#1e293b', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '15px' }}>
                         <FaComments style={{ color: '#D4AF37' }} /> Modération des Commentaires

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import NavbarAdmin from '../../comp/Navbar_admin';
-import { FaImage, FaSpinner, FaShoppingBag, FaTimes, FaTrash, FaEdit, FaCheckCircle, FaBus, FaClock, FaBan, FaCalendarAlt, FaUser, FaPhoneAlt, FaMapMarkerAlt } from 'react-icons/fa';
+import { FaImage, FaSpinner, FaShoppingBag, FaTimes, FaTrash, FaEdit, FaCheckCircle, FaBus, FaClock, FaBan, FaCalendarAlt, FaUser, FaPhoneAlt, FaMapMarkerAlt, FaSave } from 'react-icons/fa';
 import BASE_URL from '../../apiConfig';
 import { useAlert } from '../../context/AlertContext';
 
@@ -91,7 +91,7 @@ export default function Gestion_de_Command() {
         <div style={{ background: '#f8fafc', minHeight: '100vh' }}>
             <NavbarAdmin />
 
-            <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '40px 20px' }}>
+            <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '100px 20px' }}>
                 <div style={{ marginBottom: '40px' }}>
                     <h1 style={{ fontSize: '2.2rem', color: '#1e293b', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '15px' }}>
                         <FaShoppingBag style={{ color: '#D4AF37' }} /> Gestion des Commandes

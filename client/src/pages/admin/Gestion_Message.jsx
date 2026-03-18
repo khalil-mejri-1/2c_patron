@@ -48,9 +48,13 @@ export default function Gestion_Message() {
         });
     };
 
-    const toggleTreatedStatus = async (id) => {
+    const toggleTreatedStatus = async (id, currentStatus) => {
         try {
-            const response = await fetch(`${API_MESSAGES_ENDPOINT}/${id}/status`, { method: 'PUT' });
+            const response = await fetch(`${API_MESSAGES_ENDPOINT}/${id}/status`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ estTraite: !currentStatus })
+            });
             if (!response.ok) throw new Error("Erreur de statut.");
             const updated = await response.json();
             setMessages(prev => prev.map(msg => msg._id === id ? updated : msg));
@@ -63,7 +67,7 @@ export default function Gestion_Message() {
     const handleOpenMessageModal = (message) => {
         setSelectedMessage(message);
         setIsMessageModalOpen(true);
-        if (!message.estTraite) toggleTreatedStatus(message._id);
+        if (!message.estTraite) toggleTreatedStatus(message._id, message.estTraite);
     };
 
     const formatDate = (dateString) => {
@@ -76,7 +80,7 @@ export default function Gestion_Message() {
         <div style={{ background: '#f8fafc', minHeight: '100vh' }}>
             <NavbarAdmin />
 
-            <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '40px 20px' }}>
+            <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '100px 20px' }}>
                 <div style={{ marginBottom: '40px' }}>
                     <h1 style={{ fontSize: '2.2rem', color: '#1e293b', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '15px' }}>
                         <FaEnvelopeOpenText style={{ color: '#D4AF37' }} /> Messages Clients
@@ -183,7 +187,7 @@ export default function Gestion_Message() {
 
                             <div className="premium-btn-group">
                                 <button
-                                    onClick={() => toggleTreatedStatus(selectedMessage._id)}
+                                    onClick={() => toggleTreatedStatus(selectedMessage._id, selectedMessage.estTraite)}
                                     className="premium-btn-cta secondary"
                                     style={{ flex: 1 }}
                                 >

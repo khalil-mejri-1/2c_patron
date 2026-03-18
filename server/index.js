@@ -759,21 +759,24 @@ app.delete('/api/messages/:id', async (req, res) => {
 app.put('/api/messages/:id/status', async (req, res) => {
     try {
         const messageId = req.params.id;
-        const { estTraite } = req.body; // facultatif : true/false
+        let { estTraite } = req.body;
 
-        // Récupérer le message actuel
         const message = await Message.findById(messageId);
         if (!message) {
             return res.status(404).json({ message: "Message non trouvé." });
         }
 
-        // Si estTraite est fourni et boolean, utiliser la valeur, sinon basculer
-        message.estTraite = typeof estTraite === 'boolean' ? estTraite : !message.estTraite;
+        // If body is empty or estTraite is undefined, just toggle
+        if (estTraite === undefined) {
+            message.estTraite = !message.estTraite;
+        } else {
+            message.estTraite = Boolean(estTraite);
+        }
 
         const updatedMessage = await message.save();
-
         res.status(200).json(updatedMessage);
     } catch (error) {
+        console.error("Error updating message status:", error);
         res.status(500).json({ message: "Erreur lors de la mise à jour du statut.", details: error.message });
     }
 });
