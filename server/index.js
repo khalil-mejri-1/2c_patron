@@ -1104,7 +1104,7 @@ app.post('/api/vip-categories', async (req, res) => {
 // -----------------------------------------------------------------
 app.get('/api/vip-categories', async (req, res) => {
     try {
-        const categories = await VipCategory.find().sort({ createdAt: -1 });
+        const categories = await VipCategory.find().sort({ order: 1, createdAt: -1 });
         res.status(200).json(categories);
     } catch (error) {
         res.status(500).json({ message: "Erreur lors de la récupération des catégories.", error: error.message });

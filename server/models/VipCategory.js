@@ -25,6 +25,11 @@ const VipCategorySchema = new mongoose.Schema({
         type: String,
         required: [true, "L'URL de l'image est obligatoire."]
     },
+    // Order for displaying the category
+    order: {
+        type: Number,
+        default: 0
+    },
     // Automatically adds createdAt and updatedAt fields
     createdAt: {
         type: Date,

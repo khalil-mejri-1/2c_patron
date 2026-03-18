@@ -394,7 +394,7 @@ export default function Navbar({ initialCartCount = 0 }) {
                                 <div key={code} style={{ position: 'relative' }}>
                                     <button
                                         className={`flag-btn ${appLanguage === code ? 'active-flag' : ''}`}
-                                        onClick={() => handleLanguageChange(code)}
+                                        onClick={() => { handleLanguageChange(code); setIsOpen(false); }}
                                     >
                                         <img src={icon} alt={label} className="flag-icon" />
                                     </button>

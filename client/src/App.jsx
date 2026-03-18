@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, useLocation, useNavigate } from "react-ro
 import { useEffect, useState } from 'react';
 import BASE_URL from './apiConfig';
 import ScrollToTop from './comp/ScrollToTop';
+import AIChatbot from './comp/AIChatbot';
 
 import Home from "./pages/Home.jsx";
 import './global.css'
@@ -129,6 +130,7 @@ function App() {
         <BrowserRouter>
             <ScrollToTop />
             <AppContent />
+            <AIChatbot />
         </BrowserRouter>
     );
 }

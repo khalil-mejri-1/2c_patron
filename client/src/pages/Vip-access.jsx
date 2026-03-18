@@ -111,7 +111,8 @@ export default function Vipaccess() {
         title: '',
         description: '',
         image: '',
-        duration: ''
+        duration: '',
+        order: 0
     });
 
 
@@ -212,7 +213,8 @@ export default function Vipaccess() {
             title,
             description,
             image: data.image || '',
-            duration: duration
+            duration: duration,
+            order: data.order || 0
         };
     };
 
@@ -463,6 +465,15 @@ export default function Vipaccess() {
                                     placeholder="https://..."
                                     value={categoryFormData.image}
                                     onChange={(e) => setCategoryFormData({ ...categoryFormData, image: e.target.value })}
+                                />
+                            </div>
+                            <div className="premium-form-group">
+                                <label>{appLanguage === 'ar' ? 'الترتيب' : 'Ordre'}</label>
+                                <input
+                                    type="number"
+                                    placeholder="e.g. 1"
+                                    value={categoryFormData.order}
+                                    onChange={(e) => setCategoryFormData({ ...categoryFormData, order: Number(e.target.value) })}
                                 />
                             </div>
                         </div>
