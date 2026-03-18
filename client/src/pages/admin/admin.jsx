@@ -25,8 +25,8 @@ export default function Admin() {
       try {
         // Fetching counts from existing endpoints
         const [users, products, commands, messages, comments, vips] = await Promise.all([
-          fetch(`${BASE_URL}/api/users`).then(res => res.json()).catch(() => []),
-          fetch(`${BASE_URL}/api/produit`).then(res => res.json()).catch(() => []),
+          fetch(`${BASE_URL}/api/users/clients`).then(res => res.json()).catch(() => []),
+          fetch(`${BASE_URL}/api/products`).then(res => res.json()).catch(() => []),
           fetch(`${BASE_URL}/api/commands`).then(res => res.json()).catch(() => []),
           fetch(`${BASE_URL}/api/messages`).then(res => res.json()).catch(() => []),
           fetch(`${BASE_URL}/api/commentaires`).then(res => res.json()).catch(() => []),
@@ -37,9 +37,12 @@ export default function Admin() {
           clients: users.length,
           products: products.length,
           commands: commands.length,
-          messages: messages.filter(m => !m.estTraite).length, // Only new messages
-          comments: comments.filter(c => c.statut === 'en attente').length, // Pending comments
-          vipRequests: vips.filter(v => v.statut_abonnement === 'en_attente').length // Pending VIP
+          pendingCommands: commands.filter(c => c.status === 'En attente').length,
+          messages: messages.filter(m => !m.estTraite).length,
+          totalMessages: messages.length,
+          comments: comments.filter(c => c.statut === 'En attente').length,
+          totalComments: comments.length,
+          vipRequests: vips.filter(v => v.statut_abonnement === 'en_attente').length
         });
       } catch (err) {
         console.error("Error fetching stats", err);
@@ -149,22 +152,23 @@ export default function Admin() {
                 count={stats.commands}
                 link="/admin_command"
                 color="#D4AF37"
+                label={stats.pendingCommands > 0 ? `${stats.pendingCommands} En attente` : ""}
               />
               <StatCard
                 icon={FaEnvelope}
                 title="Messages"
-                count={stats.messages}
+                count={stats.totalMessages}
                 link="/admin_message"
                 color="#ef4444"
-                label={stats.messages > 0 ? "Non lus" : ""}
+                label={stats.messages > 0 ? `${stats.messages} Non lus` : "Tout traité"}
               />
               <StatCard
                 icon={FaComments}
                 title="Commentaires"
-                count={stats.comments}
+                count={stats.totalComments}
                 link="/admin_commentaire"
                 color="#10b981"
-                label={stats.comments > 0 ? "En attente" : ""}
+                label={stats.comments > 0 ? `${stats.comments} En attente` : "Tous les avis"}
               />
             </div>
 
@@ -175,8 +179,20 @@ export default function Admin() {
                 </h3>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
                   {[
-                    { title: 'Commandes Client', desc: 'Gestion & Expédition', link: '/admin_command', icon: <FaShoppingCart /> },
-                    { title: 'Commentaires', desc: 'Modération Avis', link: '/admin_commentaire', icon: <FaComments /> }
+                    {
+                      title: 'Commandes Client',
+                      desc: 'Gestion & Expédition',
+                      link: '/admin_command',
+                      icon: <FaShoppingCart />,
+                      badge: stats.pendingCommands > 0 ? { count: stats.pendingCommands, color: '#D4AF37' } : null
+                    },
+                    {
+                      title: 'Commentaires',
+                      desc: 'Modération Avis',
+                      link: '/admin_commentaire',
+                      icon: <FaComments />,
+                      badge: stats.comments > 0 ? { count: stats.comments, color: '#10b981' } : null
+                    }
                   ].map((action, idx) => (
                     <Link key={idx} to={action.link} style={{
                       padding: '20px',
@@ -184,8 +200,25 @@ export default function Admin() {
                       borderRadius: '15px',
                       textDecoration: 'none',
                       border: '1px solid #e2e8f0',
-                      transition: 'all 0.2s'
+                      transition: 'all 0.2s',
+                      position: 'relative'
                     }} onMouseOver={e => e.currentTarget.style.borderColor = '#D4AF37'}>
+                      {action.badge && (
+                        <div style={{
+                          position: 'absolute',
+                          top: '15px',
+                          right: '15px',
+                          background: action.badge.color,
+                          color: '#fff',
+                          padding: '4px 10px',
+                          borderRadius: '10px',
+                          fontSize: '0.75rem',
+                          fontWeight: 'bold',
+                          boxShadow: '0 4px 10px rgba(0,0,0,0.1)'
+                        }}>
+                          {action.badge.count} En attente
+                        </div>
+                      )}
                       <div style={{ color: '#D4AF37', fontSize: '1.5rem', marginBottom: '10px' }}>{action.icon}</div>
                       <div style={{ fontWeight: 'bold', color: '#1e293b' }}>{action.title}</div>
                       <div style={{ fontSize: '0.8rem', color: '#64748b' }}>{action.desc}</div>
