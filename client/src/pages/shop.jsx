@@ -234,15 +234,15 @@ const ImageCarousel = ({ images, direction, height = '320px' }) => {
 
         const interval = setInterval(() => {
             goToNext();
-        }, 4000); 
+        }, 4000);
         return () => clearInterval(interval);
     }, [currentIndex, images.length, isHovered]);
 
     const directionClass = direction === 'ar' ? 'rtl' : 'ltr';
 
     return (
-        <div 
-            className="image-carousel-container" 
+        <div
+            className="image-carousel-container"
             style={{ height, width: '100%', position: 'relative', overflow: 'hidden' }}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
@@ -263,9 +263,9 @@ const ImageCarousel = ({ images, direction, height = '320px' }) => {
                             src={url}
                             alt={`Slide ${index + 1}`}
                             className='product-grid-image'
-                            style={{ 
-                                width: '100%', 
-                                height: '100%', 
+                            style={{
+                                width: '100%',
+                                height: '100%',
                                 objectFit: 'cover',
                                 display: 'block'
                             }}
@@ -277,24 +277,24 @@ const ImageCarousel = ({ images, direction, height = '320px' }) => {
             {/* أزرار التحكم في الكاروسيل - تظهر فقط إذا كان هناك أكثر من صورة */}
             {images.length > 1 && (
                 <>
-                    <button 
-                        onClick={goToPrevious} 
-                        className="carousel-control-btn prev" 
-                        style={{ 
-                            position: 'absolute', 
-                            top: '50%', 
-                            transform: 'translateY(-50%)', 
-                            left: '10px', 
-                            background: 'rgba(255,255,255,0.8)', 
-                            border: 'none', 
-                            color: '#1a1a1a', 
+                    <button
+                        onClick={goToPrevious}
+                        className="carousel-control-btn prev"
+                        style={{
+                            position: 'absolute',
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            left: '10px',
+                            background: 'rgba(255,255,255,0.8)',
+                            border: 'none',
+                            color: '#1a1a1a',
                             width: '32px',
                             height: '32px',
-                            cursor: 'pointer', 
-                            zIndex: 15, 
-                            borderRadius: '50%', 
-                            display: 'flex', 
-                            alignItems: 'center', 
+                            cursor: 'pointer',
+                            zIndex: 15,
+                            borderRadius: '50%',
+                            display: 'flex',
+                            alignItems: 'center',
                             justifyContent: 'center',
                             boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
                             transition: 'all 0.3s'
@@ -302,24 +302,24 @@ const ImageCarousel = ({ images, direction, height = '320px' }) => {
                     >
                         {direction === 'ar' ? <FaChevronRight size={14} /> : <FaChevronLeft size={14} />}
                     </button>
-                    <button 
-                        onClick={(e) => goToNext(e)} 
-                        className="carousel-control-btn next" 
-                        style={{ 
-                            position: 'absolute', 
-                            top: '50%', 
-                            transform: 'translateY(-50%)', 
-                            right: '10px', 
-                            background: 'rgba(255,255,255,0.8)', 
-                            border: 'none', 
-                            color: '#1a1a1a', 
+                    <button
+                        onClick={(e) => goToNext(e)}
+                        className="carousel-control-btn next"
+                        style={{
+                            position: 'absolute',
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            right: '10px',
+                            background: 'rgba(255,255,255,0.8)',
+                            border: 'none',
+                            color: '#1a1a1a',
                             width: '32px',
                             height: '32px',
-                            cursor: 'pointer', 
-                            zIndex: 15, 
-                            borderRadius: '50%', 
-                            display: 'flex', 
-                            alignItems: 'center', 
+                            cursor: 'pointer',
+                            zIndex: 15,
+                            borderRadius: '50%',
+                            display: 'flex',
+                            alignItems: 'center',
                             justifyContent: 'center',
                             boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
                             transition: 'all 0.3s'
@@ -327,7 +327,7 @@ const ImageCarousel = ({ images, direction, height = '320px' }) => {
                     >
                         {direction === 'ar' ? <FaChevronLeft size={14} /> : <FaChevronRight size={14} />}
                     </button>
-                    
+
                     <div className="carousel-dots-indicators" style={{ position: 'absolute', bottom: '15px', width: '100%', textAlign: 'center', display: 'flex', justifyContent: 'center', gap: '6px', zIndex: 15 }}>
                         {images.map((_, index) => (
                             <span
@@ -569,7 +569,7 @@ export default function ProductGrid() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    const [selectedCategory, setSelectedCategory] = useState(currentCategories[0]);
+    const [selectedCategory, setSelectedCategory] = useState('Tous');
     const [searchTerm, setSearchTerm] = useState('');
     const [priceRange, setPriceRange] = useState(1000);
     const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -599,6 +599,10 @@ export default function ProductGrid() {
 
     const [shopContent, setShopContent] = useState({});
     const [editShopContent, setEditShopContent] = useState({});
+    const [shopCategories, setShopCategories] = useState([]);
+    const [isManagingCategory, setIsManagingCategory] = useState(false); // false or 'add' or 'edit'
+    const [showAllCatLangs, setShowAllCatLangs] = useState(false);
+    const [categoryForm, setCategoryForm] = useState({ id: '', name: { fr: '', ar: '', en: '' }, key: '', order: 0 });
 
     // 📱 Contact Buttons Setting
     const [contactSettings, setContactSettings] = useState({ whatsapp: '', messenger: '' });
@@ -614,7 +618,7 @@ export default function ProductGrid() {
                 .then(data => {
                     if (data && data.statut === 'admin') setIsAdmin(true);
                 })
-                .catch(() => {});
+                .catch(() => { });
         }
 
         // Load content
@@ -627,7 +631,19 @@ export default function ProductGrid() {
                 }
             })
             .catch(() => { });
+
+        fetchCategories();
     }, [languages]);
+
+    const fetchCategories = async () => {
+        try {
+            const res = await fetch(`${BASE_URL}/api/shop-categories`);
+            if (res.ok) {
+                const data = await res.json();
+                setShopCategories(data);
+            }
+        } catch (err) { }
+    };
 
     const handleSaveShopContent = async () => {
         localStorage.setItem('shop_content_backup', JSON.stringify(editShopContent));
@@ -744,6 +760,70 @@ export default function ProductGrid() {
         } catch (err) { }
     };
 
+    // 🏷️ Category Management Code
+    const handleOpenAddCategory = () => {
+        const name = {};
+        languages.forEach(l => name[l.code] = '');
+        setCategoryForm({ id: '', name, key: '', order: 0 });
+        setShowAllCatLangs(false);
+        setIsManagingCategory('add');
+    };
+
+    const handleOpenEditCategory = (cat) => {
+        setCategoryForm({
+            id: cat._id,
+            name: { ...cat.name },
+            key: cat.key,
+            order: cat.order || 0
+        });
+        setShowAllCatLangs(false);
+        setIsManagingCategory('edit');
+    };
+
+    const handleSaveCategory = async () => {
+        const method = isManagingCategory === 'edit' ? 'PUT' : 'POST';
+        const url = isManagingCategory === 'edit' ? `${BASE_URL}/api/shop-categories/${categoryForm.id}` : `${BASE_URL}/api/shop-categories`;
+
+        // Validation & Auto-fill
+        const currentName = categoryForm.name[appLanguage];
+        if (!currentName) {
+            alert(appLanguage === 'ar' ? 'يرجى إدخال اسم الفئة' : 'Veuillez entrer le nom');
+            return;
+        }
+
+        const finalForm = { ...categoryForm };
+        // If adding, fill other languages with current name if empty
+        if (isManagingCategory === 'add') {
+            languages.forEach(l => {
+                if (!finalForm.name[l.code]) finalForm.name[l.code] = currentName;
+            });
+            // Auto generate key if empty (very basic slugify)
+            if (!finalForm.key) {
+                finalForm.key = currentName.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+            }
+        }
+
+        try {
+            const res = await fetch(url, {
+                method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(finalForm)
+            });
+            if (res.ok) {
+                fetchCategories();
+                setIsManagingCategory(false);
+            }
+        } catch (err) { }
+    };
+
+    const handleDeleteCategory = async (id) => {
+        if (!window.confirm(appLanguage === 'ar' ? 'هل أنت متأكد من حذف هذه الفئة؟' : 'Supprimer cette catégorie ?')) return;
+        try {
+            const res = await fetch(`${BASE_URL}/api/shop-categories/${id}`, { method: 'DELETE' });
+            if (res.ok) fetchCategories();
+        } catch (err) { }
+    };
+
 
     useEffect(() => {
         // Logique d'authentification والبيانات الأساسية
@@ -766,7 +846,7 @@ export default function ProductGrid() {
                         setContactSettings(data.value || data);
                     }
                 }
-            } catch (err) {}
+            } catch (err) { }
         };
         fetchContactSettings();
 
@@ -812,7 +892,7 @@ export default function ProductGrid() {
     }, []);
 
     useEffect(() => {
-        setSelectedCategory(currentCategories[0]);
+        // No longer auto-switching to first category on lang change to avoid jumping to 'الكل' if 'Tous' was active
     }, [appLanguage]);
 
 
@@ -873,7 +953,7 @@ export default function ProductGrid() {
 
     const productsToFilter = fetchedProducts;
     const lowerSearchTerm = searchTerm.toLowerCase();
-    const selectedCategoryKey = categoriesFr[currentCategories.indexOf(selectedCategory)] || 'Tous';
+    const selectedCategoryKey = selectedCategory;
 
     const filteredProducts = productsToFilter
         .filter(product => {
@@ -1242,23 +1322,51 @@ export default function ProductGrid() {
                                 <FaChevronDown className="dropdown-icon" />
                             </h4>
                             <ul className="category-list">
-                                {currentCategories.map((cat, index) => {
-                                    const categoryKey = categoriesFr[index];
-                                    const count = productsToFilter.filter(p => categoryKey === 'Tous' || p.category === categoryKey).length;
+                                <li
+                                    className={`category-item ${selectedCategory === 'Tous' ? 'active' : ''}`}
+                                    onClick={() => setSelectedCategory('Tous')}
+                                >
+                                    {t.categoryMapping['Tous'] || 'Tous'} ({productsToFilter.length})
+                                </li>
+                                {shopCategories.map((cat, index) => {
+                                    const catName = cat.name[appLanguage] || cat.name.fr || cat.key;
+                                    const count = productsToFilter.filter(p => p.category === cat.key).length;
 
                                     return (
                                         <li
-                                            key={index}
-                                            className={`category-item ${cat === selectedCategory ? 'active' : ''}`}
+                                            key={cat._id}
+                                            className={`category-item ${cat.key === selectedCategory ? 'active' : ''}`}
                                             onClick={() => {
-                                                setSelectedCategory(cat);
+                                                setSelectedCategory(cat.key);
                                                 if (window.innerWidth <= 992) setIsFilterOpen(false);
                                             }}
+                                            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
                                         >
-                                            {cat} ({count})
+                                            <span>{catName} ({count})</span>
+                                            {isAdmin && (
+                                                <div className="cat-admin-btns" style={{ display: 'flex', gap: '8px' }}>
+                                                    <FaEdit
+                                                        style={{ cursor: 'pointer', color: '#007bff' }}
+                                                        onClick={(e) => { e.stopPropagation(); handleOpenEditCategory(cat); }}
+                                                    />
+                                                    <FaTrash
+                                                        style={{ cursor: 'pointer', color: '#dc3545' }}
+                                                        onClick={(e) => { e.stopPropagation(); handleDeleteCategory(cat._id); }}
+                                                    />
+                                                </div>
+                                            )}
                                         </li>
                                     );
                                 })}
+                                {isAdmin && (
+                                    <li
+                                        className="category-item add-cat-btn"
+                                        onClick={handleOpenAddCategory}
+                                        style={{ borderTop: '1px dashed #ccc', marginTop: '10px', color: '#10b981', fontWeight: 'bold' }}
+                                    >
+                                        <FaPlus /> {appLanguage === 'ar' ? 'إضافة فئة' : 'Ajouter une catégorie'}
+                                    </li>
+                                )}
                             </ul>
                         </div>
 
@@ -1379,7 +1487,13 @@ export default function ProductGrid() {
                                                     </button>
                                                 </div>
                                             )}
-                                            <div className="category-badge">{t.categoryMapping[product.category] || product.category}</div>
+                                            <div className="category-badge">
+                                                {(() => {
+                                                    const cat = shopCategories.find(c => c.key === product.category);
+                                                    if (cat) return cat.name[appLanguage] || cat.name.fr || cat.key;
+                                                    return t.categoryMapping[product.category] || product.category;
+                                                })()}
+                                            </div>
                                         </div>
 
                                         <div className="product-details-grid">
@@ -1661,8 +1775,9 @@ export default function ProductGrid() {
                                             outline: 'none'
                                         }}
                                     >
-                                        {categoriesFr.filter(c => c !== 'Tous').map(c => (
-                                            <option key={c} value={c}>{c}</option>
+                                        <option value="">Sélectionner</option>
+                                        {shopCategories.map(c => (
+                                            <option key={c.key} value={c.key}>{c.name[appLanguage] || c.name.fr || c.key}</option>
                                         ))}
                                     </select>
                                 </div>
@@ -1859,14 +1974,120 @@ export default function ProductGrid() {
                                         headers: { 'Content-Type': 'application/json' },
                                         body: JSON.stringify({ value: editContactForm })
                                     });
-                                    if(res.ok) {
+                                    if (res.ok) {
                                         setContactSettings(editContactForm);
                                         setIsEditingContact(false);
                                     }
-                                } catch(err){
+                                } catch (err) {
                                     console.error("Failed to save contact settings:", err);
                                 }
                             }} className="premium-btn-save" style={{ flex: 1 }}><FaSave /> Enregistrer</button>
+                        </div>
+                    </div>
+                </div>,
+                document.body
+            )}
+
+            {/* 🏷️ Category Management Modal */}
+            {isManagingCategory && ReactDOM.createPortal(
+                <div className="premium-modal-backdrop" onClick={() => setIsManagingCategory(false)}>
+                    <div className="premium-modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '600px' }}>
+                        <button className="premium-modal-close-icon" onClick={() => setIsManagingCategory(false)}><FaTimes size={18} /></button>
+
+                        <header style={{ marginBottom: '30px', textAlign: 'center' }}>
+                            <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'rgba(212, 175, 55, 0.1)', color: '#D4AF37', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 15px', fontSize: '24px' }}>
+                                <FaPlus />
+                            </div>
+                            <h2 style={{ fontSize: '1.8rem', fontWeight: '800', color: '#fafafaff' }}>
+                                {isManagingCategory === 'edit'
+                                    ? (appLanguage === 'ar' ? 'تعديل الفئة' : 'Modifier la Catégorie')
+                                    : (appLanguage === 'ar' ? 'إضافة فئة جديدة' : 'Ajouter une Fille')}
+                            </h2>
+                        </header>
+
+                        <div className="premium-form-layout" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                            {/* Prioritized Current Language */}
+                            <div className="input-field-group">
+                                <label style={{ display: 'block', marginBottom: '10px', fontSize: '0.8rem', fontWeight: '800', color: '#ffffffff', textTransform: 'uppercase' }}>
+                                    {appLanguage === 'ar' ? `اسم الفئة (${languages.find(l => l.code === appLanguage)?.label || appLanguage})` : `Nom de Catégorie (${languages.find(l => l.code === appLanguage)?.label || appLanguage})`}
+                                </label>
+                                <input
+                                    type="text"
+                                    placeholder="..."
+                                    value={categoryForm.name[appLanguage] || ''}
+                                    onChange={e => {
+                                        const updatedName = { ...categoryForm.name, [appLanguage]: e.target.value };
+                                        setCategoryForm({ ...categoryForm, name: updatedName });
+                                    }}
+                                    style={{ width: '100%', padding: '18px 22px', borderRadius: '18px', border: '2px solid #D4AF37', fontSize: '1.1rem', outline: 'none', background: '#fff', boxShadow: '0 4px 15px rgba(212, 175, 55, 0.05)' }}
+                                    dir={appLanguage === 'ar' ? 'rtl' : 'ltr'}
+                                    autoFocus
+                                />
+                            </div>
+
+                            {/* Show More Button */}
+                            <button
+                                onClick={() => setShowAllCatLangs(!showAllCatLangs)}
+                                style={{ background: 'none', border: 'none', color: '#64748b', fontSize: '0.85rem', cursor: 'pointer', textAlign: 'left', padding: '0 10px', display: 'flex', alignItems: 'center', gap: '5px' }}
+                            >
+                                <FaChevronDown style={{ transform: showAllCatLangs ? 'rotate(180deg)' : 'none', transition: '0.3s' }} />
+                                {appLanguage === 'ar' ? 'ترجمات أخرى' : 'Autres langues (Traductions)'}
+                            </button>
+
+                            {showAllCatLangs && languages.filter(l => l.code !== appLanguage).map(lang => (
+                                <div key={lang.code} className="input-field-group" style={{ background: '#f8fafc', padding: '15px', borderRadius: '15px' }}>
+                                    <label style={{ display: 'block', marginBottom: '10px', fontSize: '0.7rem', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase' }}>
+                                        {lang.label}
+                                    </label>
+                                    <input
+                                        type="text"
+                                        placeholder="..."
+                                        value={categoryForm.name[lang.code] || ''}
+                                        onChange={e => {
+                                            const updatedName = { ...categoryForm.name, [lang.code]: e.target.value };
+                                            setCategoryForm({ ...categoryForm, name: updatedName });
+                                        }}
+                                        style={{ width: '100%', padding: '12px 15px', borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '0.9rem', outline: 'none', background: '#fff' }}
+                                        dir={lang.code === 'ar' ? 'rtl' : 'ltr'}
+                                    />
+                                </div>
+                            ))}
+
+                            <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '20px' }}>
+                                <div className="input-field-group">
+                                    <label style={{ display: 'block', marginBottom: '10px', fontSize: '0.75rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                                        {appLanguage === 'ar' ? 'المفتاح (Key)' : 'Clé (ID unique)'}
+                                    </label>
+                                    <input
+                                        type="text"
+                                        placeholder="ex: homme, enfant..."
+                                        value={categoryForm.key}
+                                        onChange={e => setCategoryForm({ ...categoryForm, key: e.target.value.toLowerCase().trim() })}
+                                        disabled={isManagingCategory === 'edit'}
+                                        style={{ width: '100%', padding: '16px 20px', borderRadius: '16px', border: '2px solid #f1f5f9', fontSize: '1rem', outline: 'none', background: '#f8fafc' }}
+                                    />
+                                </div>
+                                <div className="input-field-group">
+                                    <label style={{ display: 'block', marginBottom: '10px', fontSize: '0.75rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                                        {appLanguage === 'ar' ? 'الترتيب' : 'Ordre'}
+                                    </label>
+                                    <input
+                                        type="number"
+                                        value={categoryForm.order}
+                                        onChange={e => setCategoryForm({ ...categoryForm, order: Number(e.target.value) })}
+                                        style={{ width: '100%', padding: '16px 20px', borderRadius: '16px', border: '2px solid #f1f5f9', fontSize: '1rem', outline: 'none', background: '#f8fafc' }}
+                                    />
+                                </div>
+                            </div>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: '15px', marginTop: '10px' }}>
+                                <button onClick={() => setIsManagingCategory(false)} className="premium-btn-cancel">
+                                    {appLanguage === 'ar' ? 'إلغاء' : 'Annuler'}
+                                </button>
+                                <button onClick={handleSaveCategory} className="premium-btn-save">
+                                    <FaSave /> {appLanguage === 'ar' ? 'حفظ الفئة' : 'Confirmer la Catégorie'}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>,

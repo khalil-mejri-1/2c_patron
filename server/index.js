@@ -34,6 +34,7 @@ const VipCategory = require('./models/VipCategory');
 const SpecializedCourse = require('./models/SpecializedCourse.js');
 const SpecializedVideo = require('./models/SpecializedVideo.js');
 const SiteSetting = require('./models/SiteSetting.js');
+const ShopCategory = require('./models/ShopCategory.js');
 
 // 2. إنشاء تطبيق Express
 const app = express();
@@ -1505,6 +1506,45 @@ app.put("/api/home-products/:id", async (req, res) => {
         res.status(400).json({ message: "Erreur de mise à jour." });
     }
 });
+
+// ------------------------- SHOP CATEGORIES -------------------------
+app.get('/api/shop-categories', async (req, res) => {
+    try {
+        const categories = await ShopCategory.find().sort({ order: 1 });
+        res.json(categories);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/shop-categories', async (req, res) => {
+    try {
+        const newCategory = new ShopCategory(req.body);
+        await newCategory.save();
+        res.status(201).json(newCategory);
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+});
+
+app.put('/api/shop-categories/:id', async (req, res) => {
+    try {
+        const updated = await ShopCategory.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        res.json(updated);
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+});
+
+app.delete('/api/shop-categories/:id', async (req, res) => {
+    try {
+        await ShopCategory.findByIdAndDelete(req.params.id);
+        res.json({ message: 'Category deleted' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 
 // ------------------------- DELETE -------------------------
 app.delete("/api/home-products/:id", async (req, res) => {
