@@ -39,6 +39,11 @@ const productSchema = new mongoose.Schema({
         type: String,
         required: [true, 'La catégorie est requise'],
         default: 'Autres'
+    },
+    // Order for displaying the product
+    order: {
+        type: Number,
+        default: 0
     }
 }, {
     timestamps: true

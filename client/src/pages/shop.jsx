@@ -689,7 +689,7 @@ export default function ProductGrid() {
 
     // 📦 Product Management State
     const [isManagingProduct, setIsManagingProduct] = useState(false); // false or 'add' or 'edit'
-    const [productForm, setProductForm] = useState({ id: '', nom: '', prix: '', categorie: '', mainImage: '', secondaryImages: [] });
+    const [productForm, setProductForm] = useState({ id: '', nom: '', prix: '', categorie: '', mainImage: '', secondaryImages: [], order: 0 });
 
     const handleDeleteProduct = async (id) => {
         if (!window.confirm(appLanguage === 'ar' ? 'هل أنت متأكد من حذف هذا المنتج؟' : 'Supprimer ce produit ?')) return;
@@ -705,7 +705,7 @@ export default function ProductGrid() {
         const cat = selectedCategoryKey === 'Tous' ? 'Homme' : selectedCategoryKey;
         const nom = {};
         languages.forEach(l => nom[l.code] = '');
-        setProductForm({ id: '', nom, prix: '', categorie: cat, mainImage: '', secondaryImages: [] });
+        setProductForm({ id: '', nom, prix: '', categorie: cat, mainImage: '', secondaryImages: [], order: 0 });
         setIsManagingProduct('add');
     };
 
@@ -720,7 +720,8 @@ export default function ProductGrid() {
             prix: p.price,
             categorie: p.category,
             mainImage: p.url,
-            secondaryImages: p.secondaryImages || []
+            secondaryImages: p.secondaryImages || [],
+            order: p.order || 0
         });
         setIsManagingProduct('edit');
     };
@@ -1663,6 +1664,26 @@ export default function ProductGrid() {
                                             <option key={c} value={c}>{c}</option>
                                         ))}
                                     </select>
+                                </div>
+                                <div className="input-field-group">
+                                    <label style={{ display: 'block', marginBottom: '10px', fontSize: '0.75rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                                        {appLanguage === 'ar' ? 'الترتيب' : 'Ordre'}
+                                    </label>
+                                    <input
+                                        type="number"
+                                        placeholder="0"
+                                        value={productForm.order}
+                                        onChange={e => setProductForm({ ...productForm, order: Number(e.target.value) })}
+                                        style={{
+                                            width: '100%',
+                                            padding: '16px 20px',
+                                            borderRadius: '16px',
+                                            border: '2px solid #f1f5f9',
+                                            fontSize: '1rem',
+                                            outline: 'none',
+                                            background: '#f8fafc'
+                                        }}
+                                    />
                                 </div>
                             </div>
 

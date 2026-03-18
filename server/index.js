@@ -395,6 +395,7 @@ app.post('/api/products', async (req, res) => {
             secondaryImages: req.body.secondaryImages || [], // افتراضيًا مصفوفة فارغة
             prix: req.body.prix,
             categorie: req.body.categorie,
+            order: req.body.order || 0
             // تجاهل الحقول القديمة (image, images)
         };
 
@@ -416,7 +417,7 @@ app.post('/api/products', async (req, res) => {
 app.get('/api/products', async (req, res) => {
     try {
         // سيتم جلب الحقول mainImage و secondaryImages كما هي معرفة في المخطط
-        const products = await Product.find();
+        const products = await Product.find().sort({ order: 1, createdAt: -1 });
         res.status(200).json(products);
     } catch (error) {
         console.error('Error in GET /api/products:', error.message);
