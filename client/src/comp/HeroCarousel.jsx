@@ -615,10 +615,16 @@ export default function HeroSection({ isLoggedIn = false, currentUserEmail = '' 
 
     useEffect(() => {
         // Check Admin
-        const users = JSON.parse(localStorage.getItem('users') || '[]');
-        const email = currentUserEmail || localStorage.getItem('currentUserEmail');
-        const currentUser = users.find(u => u.email === email);
-        if (currentUser?.statut === 'admin') setIsAdmin(true);
+        // Check Admin
+        const email = currentUserEmail || localStorage.getItem('currentUserEmail') || localStorage.getItem('loggedInUserEmail');
+        if (email) {
+            fetch(`${BASE_URL}/api/users/${email}`)
+                .then(res => res.ok ? res.json() : null)
+                .then(data => {
+                    if (data && data.statut === 'admin') setIsAdmin(true);
+                })
+                .catch(() => {});
+        }
 
         const fetchHeroSettings = async () => {
             try {

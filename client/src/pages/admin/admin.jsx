@@ -3,7 +3,7 @@ import NavbarAdmin from '../../comp/Navbar_admin';
 import {
   FaUsers, FaBoxOpen, FaShoppingCart, FaEnvelope, FaComments,
   FaCrown, FaChartLine, FaArrowRight, FaPlus, FaCheckCircle,
-  FaClock, FaSpinner
+  FaClock, FaSpinner, FaHome
 } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import BASE_URL from '../../apiConfig';
@@ -102,6 +102,29 @@ export default function Admin() {
             <p style={{ color: '#64748b', marginTop: '10px', fontSize: '1.1rem' }}>Bienvenue dans votre espace d'administration premium.</p>
           </div>
           <div style={{ display: 'flex', gap: '15px' }}>
+            <Link to="/" style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              padding: '12px 20px',
+              background: '#ffffff',
+              color: '#1e293b',
+              borderRadius: '12px',
+              textDecoration: 'none',
+              fontWeight: 'bold',
+              fontSize: '0.9rem',
+              border: '1px solid #e2e8f0',
+              boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)',
+              transition: 'all 0.2s'
+            }} onMouseOver={e => {
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0,0,0,0.1)';
+            }} onMouseOut={e => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0,0,0,0.05)';
+            }}>
+              <FaHome style={{ color: '#D4AF37' }} /> Retour au Site
+            </Link>
           </div>
         </div>
 

@@ -62,10 +62,15 @@ export default function FeaturedProduct() {
 
     useEffect(() => {
         // Check Admin
-        const users = JSON.parse(localStorage.getItem('users') || '[]');
         const email = localStorage.getItem('currentUserEmail') || localStorage.getItem('loggedInUserEmail');
-        const currentUser = users.find(u => u.email === email);
-        if (currentUser?.statut === 'admin') setIsAdmin(true);
+        if (email) {
+            fetch(`${BASE_URL}/api/users/${email}`)
+                .then(res => res.ok ? res.json() : null)
+                .then(data => {
+                    if (data && data.statut === 'admin') setIsAdmin(true);
+                })
+                .catch(() => {});
+        }
         // Check login status
         const loginStatus = localStorage.getItem('login') === 'true';
         setIsLoggedIn(loginStatus);

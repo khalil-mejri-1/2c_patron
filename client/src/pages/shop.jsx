@@ -790,7 +790,8 @@ export default function ProductGrid() {
                     url: p.mainImage || p.image,
                     secondaryImages: p.secondaryImages || [],
                     alt: typeof p.nom === 'object' ? (p.nom[appLanguage] || p.nom.fr) : p.nom,
-                    category: p.categorie
+                    category: p.categorie,
+                    order: p.order || 0
                 }));
 
                 setFetchedProducts(mappedProducts);

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import {
     FaBars, FaTimes, FaUsers, FaBoxOpen, FaShoppingCart,
-    FaEnvelope, FaComments, FaCrown, FaVideo, FaCog, FaChartBar
+    FaEnvelope, FaComments, FaCrown, FaVideo, FaCog, FaChartBar, FaHome
 } from 'react-icons/fa';
 
 export default function NavbarAdmin() {
@@ -17,6 +17,7 @@ export default function NavbarAdmin() {
         { to: "/admin_message", label: "Messages", icon: <FaEnvelope /> },
         { to: "/admin_commentaire", label: "Avis", icon: <FaComments /> },
         { to: "/admin_settings", label: "Réglages", icon: <FaCog /> },
+        { to: "/", label: "Retour au Site", icon: <FaHome /> },
     ];
 
     return (
