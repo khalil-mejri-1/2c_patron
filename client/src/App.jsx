@@ -28,6 +28,7 @@ import Gestion_abonnement from "./pages/admin/Gestion_abonnement.jsx";
 import Gestion_de_espace_vip from "./pages/admin/Gestion de espace vip.jsx";
 import Gestion_Settings from "./pages/admin/Gestion_Settings.jsx";
 import Leçons_Manches_coursage from "./pages/cours_Manches_coursage.jsx";
+import Gestion_Global_Videos from "./pages/admin/Gestion_Global_Videos.jsx";
 
 function AppContent() {
     const navigate = useNavigate();
@@ -113,6 +114,7 @@ function AppContent() {
             <Route path="/admin_clients" element={<Gestion_de_Client />} />
             <Route path="/admin_products" element={<Gestion_de_Produit />} />
             <Route path="/admin_videos" element={<Gestion_de_Vidéo />} />
+            <Route path="/admin_all_videos" element={<Gestion_Global_Videos />} />
             <Route path="/admin_command" element={<Admin_command />} />
             <Route path="/admin_message" element={<Gestion_Message />} />
             <Route path="/admin_commentaire" element={<Gestion_commentaire />} />

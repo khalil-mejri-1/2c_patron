@@ -225,9 +225,11 @@ export default function Lessons() {
 
             for (const group of res.data) {
                 const item = group.courses.find(c => {
-                    const t_fr = typeof c.title === 'object' ? c.title.fr : c.title;
-                    const match = t_fr?.toString().trim() === actualTitle.trim();
-                    return match;
+                    // Try to find match in any language
+                    if (typeof c.title === 'object') {
+                        return Object.values(c.title).some(t => t?.toString().trim() === actualTitle.trim());
+                    }
+                    return c.title?.toString().trim() === actualTitle.trim();
                 });
                 if (item) {
                     foundCourse = item;
@@ -254,9 +256,27 @@ export default function Lessons() {
                     };
                 });
                 setEditHeroContent(initHero);
+
+                // Now fetch videos using all possible titles
+                const titles = [];
+                if (typeof foundCourse.title === 'object') {
+                    Object.values(foundCourse.title).forEach(t => { if (t) titles.push(t); });
+                } else if (foundCourse.title) {
+                    titles.push(foundCourse.title);
+                }
+                // Also add actualTitle just in case
+                if (!titles.includes(actualTitle)) titles.push(actualTitle);
+                
+                fetchVideos(titles);
+            } else {
+                // If course not found in DB yet, fallback to just actualTitle
+                fetchVideos([actualTitle]);
             }
-        } catch (e) { console.error("Error fetching course info", e); }
-    }, [actualTitle, languages]);
+        } catch (e) {
+            console.error("Error fetching course info", e);
+            fetchVideos([actualTitle]);
+        }
+    }, [actualTitle, languages, fetchVideos]);
 
     useEffect(() => {
         // Check Admin
@@ -451,16 +471,19 @@ export default function Lessons() {
         }
     };
 
-    const fetchVideos = useCallback(async () => {
+    const fetchVideos = useCallback(async (allTitles = [actualTitle]) => {
         setLoading(true);
         try {
+            // Convert to array if it is not one
+            const titles = Array.isArray(allTitles) ? allTitles : [allTitles];
+            
             const res = await axios.get(`${BASE_URL}/api/specialized-videos`, {
-                params: { category: actualTitle }
+                params: { category: titles } // Sending array to handle the updated backend logic
             });
             const preparedVideos = res.data.map((v, i) => ({
                 ...v,
                 isVip: i % 3 === 0,
-                thumbnail: getThumbnailUrl(v.url, v.title, appLanguage)
+                thumbnail: getThumbnailUrl(v.url_lang?.[appLanguage] || v.url, v.title, appLanguage)
             }));
             setVideos(preparedVideos);
             if (preparedVideos.length > 0) setCurrentVideo(preparedVideos[0]);
@@ -474,8 +497,9 @@ export default function Lessons() {
     }, [actualTitle, t.errorMsg, appLanguage]);
 
     useEffect(() => {
-        fetchVideos();
-    }, [fetchVideos]);
+        // No longer calling fetchVideos here because it's now called inside fetchCourseInfo
+        // which has the logic for all titles.
+    }, [actualTitle]);
 
     const handleSelectVideo = (video) => {
         setCurrentVideo(video);

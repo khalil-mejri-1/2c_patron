@@ -177,7 +177,11 @@ export default function GestionVedioSpecialises({ onClose }) {
     const fetchCategories = async () => {
         try {
             const res = await axios.get(COURSES_API_URL);
-            const uniqueCategories = Array.from(new Set(res.data.flatMap(g => g.courses.map(c => c.title))));
+            // Extract titles as strings for the dropdown. 
+            // We use the French title (or fallback) as the unique category key for videos.
+            const uniqueCategories = Array.from(new Set(res.data.flatMap(g => g.courses.map(c => 
+                typeof c.title === 'object' ? (c.title.fr || Object.values(c.title)[0]) : c.title
+            ))));
             setCategories(uniqueCategories);
         } catch (err) {
             console.error(err);

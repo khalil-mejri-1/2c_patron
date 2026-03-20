@@ -3,7 +3,7 @@ import NavbarAdmin from '../../comp/Navbar_admin';
 import {
   FaUsers, FaBoxOpen, FaShoppingCart, FaEnvelope, FaComments,
   FaCrown, FaChartLine, FaArrowRight, FaPlus, FaCheckCircle,
-  FaClock, FaSpinner, FaHome
+  FaClock, FaSpinner, FaHome, FaVideo
 } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import BASE_URL from '../../apiConfig';
@@ -192,6 +192,12 @@ export default function Admin() {
                       link: '/admin_commentaire',
                       icon: <FaComments />,
                       badge: stats.comments > 0 ? { count: stats.comments, color: '#10b981' } : null
+                    },
+                    {
+                      title: 'Répertoire Vidéos',
+                      desc: 'Catalogue Spécialisé',
+                      link: '/admin_all_videos',
+                      icon: <FaVideo />,
                     }
                   ].map((action, idx) => (
                     <Link key={idx} to={action.link} style={{

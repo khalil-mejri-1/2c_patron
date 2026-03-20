@@ -88,6 +88,7 @@ export default function NavbarAdmin() {
         { to: "/admin_command", label: "Commandes", icon: <FaShoppingCart />, badge: counts.commands },
         { to: "/admin_message", label: "Messages", icon: <FaEnvelope />, badge: counts.messages },
         { to: "/admin_commentaire", label: "Avis", icon: <FaComments />, badge: counts.comments },
+        { to: "/admin_all_videos", label: "Vidéos", icon: <FaVideo /> },
         { to: "/admin_settings", label: "Réglages", icon: <FaCog /> },
         { to: "/", label: "Retour au Site", icon: <FaHome /> },
     ];

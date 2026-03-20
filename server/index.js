@@ -1174,10 +1174,13 @@ app.get('/api/specialized-courses', async (req, res) => {
 
         if (req.query.category) {
             const categoryName = req.query.category;
-            // التحقق في المستوى العلوي أو داخل مصفوفة الكورسات (للتوافق مع البيانات القديمة)
             query.$or = [
                 { vip_category: categoryName },
-                { 'courses.vip_category': categoryName }
+                { 'courses.vip_category': categoryName },
+                { 'hero_content.fr.title': categoryName },
+                { 'hero_content.ar.title': categoryName },
+                { 'hero_content.en.title': categoryName },
+                { 'hero_content.TN.title': categoryName }
             ];
         }
 
@@ -1367,7 +1370,11 @@ app.get('/api/specialized-videos', async (req, res) => {
     try {
         const query = {};
         if (req.query.category) {
-            query.category = req.query.category;
+            if (Array.isArray(req.query.category)) {
+                query.category = { $in: req.query.category };
+            } else {
+                query.category = req.query.category;
+            }
         }
         const videos = await SpecializedVideo.find(query).sort({ createdAt: -1 });
         res.json(videos);
