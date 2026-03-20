@@ -33,6 +33,30 @@ export default function Gestion_Global_Videos() {
         }
     };
 
+    const handleResetAll = async () => {
+        const confirmFirst = window.confirm("⚠️ ATTENTION: Cette action va supprimer TOUTES les vidéos spécialisées et TOUTES les leçons enregistrées.Êtes-vous sûr ?");
+        if (!confirmFirst) return;
+
+        const confirmSecond = window.confirm("Dernière chance: Voulez-vous vraiment TOUT supprimer ? Cette action est irréversible.");
+        if (!confirmSecond) return;
+
+        try {
+            setLoading(true);
+            // Parallel delete calls
+            await Promise.all([
+                axios.delete(`${BASE_URL}/api/specialized-videos-all/reset-now`),
+                axios.delete(`${BASE_URL}/api/specialized-courses-all/reset-now`)
+            ]);
+            alert("Réinitialisation terminée avec succès.");
+            fetchAllVideos();
+        } catch (error) {
+            console.error("Error during reset:", error);
+            alert("Erreur lors de la réinitialisation.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const filteredVideos = videos.filter(video => {
         const matchesSearch = 
             (video.title?.toLowerCase().includes(searchTerm.toLowerCase())) ||
@@ -140,6 +164,19 @@ export default function Gestion_Global_Videos() {
                         style={{ padding: '12px 25px', minWidth: 'auto' }}
                     >
                         Actualiser
+                    </button>
+
+                    <button 
+                        onClick={handleResetAll}
+                        className="premium-btn-cta"
+                        style={{ 
+                            padding: '12px 25px', 
+                            minWidth: 'auto', 
+                            background: 'linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)',
+                            marginLeft: 'auto' 
+                        }}
+                    >
+                        Réinitialisation Totale
                     </button>
                 </div>
 

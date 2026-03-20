@@ -1591,6 +1591,27 @@ app.put('/api/settings/:key', async (req, res) => {
     }
 });
 
+// ------------------------- BULK RESET (SPECIALIZED) -------------------------
+// Delete all specialized videos
+app.delete('/api/specialized-videos-all/reset-now', async (req, res) => {
+    try {
+        await SpecializedVideo.deleteMany({});
+        res.json({ message: 'Tous les vidéos spécialisées ont été supprimées' });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
+// Delete all specialized courses
+app.delete('/api/specialized-courses-all/reset-now', async (req, res) => {
+    try {
+        await SpecializedCourse.deleteMany({});
+        res.json({ message: 'Tous les cours spécialisés ont été supprimés' });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
 mongoose.connect('mongodb+srv://2cparton0011:nYdiX2GXYnduOmyG@cluster0.07ov0j7.mongodb.net/?appName=Cluster0')
     .then(() => {
         console.log('🎉 Successfully connected to MongoDB!');

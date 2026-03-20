@@ -155,7 +155,8 @@ export default function Cours() {
     const [showLessonModal, setShowLessonModal] = useState(false);
     const [lessonMode, setLessonMode] = useState('add');
     const [selectedLessonIndex, setSelectedLessonIndex] = useState(null);
-    const [lessonData, setLessonData] = useState({ title: {}, image: '', duration: {} });
+    const [selectedGroupId, setSelectedGroupId] = useState(null);
+    const [lessonData, setLessonData] = useState({ technicalName: '', title: {}, image: '', duration: {} });
 
     // Video Intro Management State
     const [showVideoModal, setShowVideoModal] = useState(false);
@@ -245,13 +246,15 @@ export default function Cours() {
             return;
         }
 
-        const group = groups[0];
+        // Use the selected group if editing, otherwise default to the first group for adding
+        const groupId = (lessonMode === 'edit' && selectedGroupId) ? selectedGroupId : groups[0]._id;
+        const group = groups.find(g => g._id === groupId) || groups[0];
         let updatedCourses = [...group.courses];
 
         if (lessonMode === 'add') {
-            updatedCourses.push({ ...lessonData, vip_category: actualTitle });
+            updatedCourses.push({ ...lessonData, vip_category: lessonData.technicalName || actualTitle });
         } else {
-            updatedCourses[selectedLessonIndex] = { ...lessonData, vip_category: actualTitle };
+            updatedCourses[selectedLessonIndex] = { ...lessonData, vip_category: lessonData.technicalName || actualTitle };
         }
 
         try {
@@ -264,12 +267,14 @@ export default function Cours() {
         } catch (e) { showAlert('error', 'Error', 'Failed to update lessons'); }
     };
 
-    const handleDeleteLesson = (index) => {
+    const handleDeleteLesson = (groupId, indexInGroup) => {
         showAlert('confirm', t.deleteConfirm, '', async () => {
-            const group = groups[0];
-            const updatedCourses = group.courses.filter((_, i) => i !== index);
+            const group = groups.find(g => g._id === groupId);
+            if (!group) return;
+
+            const updatedCourses = group.courses.filter((_, i) => i !== indexInGroup);
             try {
-                await axios.put(`${BASE_URL}/api/specialized-courses/${group._id}`, {
+                await axios.put(`${BASE_URL}/api/specialized-courses/${groupId}`, {
                     courses: updatedCourses
                 });
                 showAlert('success', 'Deleted', 'Lesson removed');
@@ -293,9 +298,10 @@ export default function Cours() {
         } catch (e) { showAlert('error', 'Error', 'Failed to update video'); }
     };
 
-    const handleOpenEditLesson = (course, index) => {
+    const handleOpenEditLesson = (groupId, indexInGroup, course) => {
         setLessonMode('edit');
-        setSelectedLessonIndex(index);
+        setSelectedGroupId(groupId);
+        setSelectedLessonIndex(indexInGroup);
         
         const title = typeof course.title === 'object' ? { ...course.title } : { fr: course.title || '' };
         const duration = typeof course.duration === 'object' ? { ...course.duration } : { fr: course.duration || '' };
@@ -306,6 +312,7 @@ export default function Cours() {
         });
 
         setLessonData({ 
+            technicalName: course.technicalName || course.vip_category || '',
             title, 
             image: course.image, 
             duration 
@@ -315,7 +322,7 @@ export default function Cours() {
 
     const handleOpenAddLesson = () => {
         setLessonMode('add');
-        const emptyData = { title: {}, image: '', duration: {} };
+        const emptyData = { technicalName: '', title: {}, image: '', duration: {} };
         languages.forEach(l => {
             emptyData.title[l.code] = '';
             emptyData.duration[l.code] = '';
@@ -433,47 +440,49 @@ export default function Cours() {
                 </div>
 
                 <div className="premium-lessons-grid">
-                    {allCourses.length > 0 ? (
-                        allCourses.map((course, index) => {
-                            const courseTitleStr = typeof course.title === 'object' ? (course.title.fr || course.title[Object.keys(course.title)[0]]) : course.title;
-                            const lessonPath = actualTitle === "Les corsages"
-                                ? `/Leçons_coursage/${encodeURIComponent(courseTitleStr)}`
-                                : `/Leçons/${encodeURIComponent(courseTitleStr)}`;
+                    {groups.some(g => g.courses.length > 0) ? (
+                        groups.map((group) => (
+                            group.courses.map((course, idx) => {
+                                const courseTitleStr = course.technicalName || course.vip_category || (typeof course.title === 'object' ? (course.title.fr || course.title[Object.keys(course.title)[0]]) : course.title);
+                                const lessonPath = actualTitle === "Les corsages"
+                                    ? `/Leçons_coursage/${encodeURIComponent(courseTitleStr)}`
+                                    : `/Leçons/${encodeURIComponent(courseTitleStr)}`;
 
-                            return (
-                                <article key={index} className="lesson-card-premium" style={{ animationDelay: `${index * 0.1}s` }}>
-                                    <div className="l-card-img-wrapper">
-                                        <img src={course.image} alt={course.title} className="l-card-img" />
-                                        {isAdmin && (
-                                            <div className="admin-card-controls">
-                                                <button className="control-btn edit" onClick={() => handleOpenEditLesson(course, index)}><FaEdit /></button>
-                                                <button className="control-btn delete" onClick={() => handleDeleteLesson(index)}><FaTrash /></button>
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    <div className="l-card-body">
-                                        <h3 className="l-card-title">
-                                            {typeof course.title === 'object' ? (course.title[appLanguage] || course.title.fr) : course.title}
-                                        </h3>
-                                        <div className="l-card-footer">
-                                            <div className="l-meta-duration">
-                                                <FaPlayCircle />
-                                                <span>
-                                                    {typeof course.duration === 'object' ? (course.duration[appLanguage] || course.duration.fr) : (course.duration || t.duration)}
-                                                </span>
-                                            </div>
-                                            <Link to={lessonPath} className="l-nav-link">
-                                                <button className="l-action-btn">
-                                                    <span>{t.button}</span>
-                                                    <FaChevronRight size={12} />
-                                                </button>
-                                            </Link>
+                                return (
+                                    <article key={`${group._id}-${idx}`} className="lesson-card-premium">
+                                        <div className="l-card-img-wrapper">
+                                            <img src={course.image} alt={courseTitleStr} className="l-card-img" />
+                                            {isAdmin && (
+                                                <div className="admin-card-controls">
+                                                    <button className="control-btn edit" onClick={() => handleOpenEditLesson(group._id, idx, course)}><FaEdit /></button>
+                                                    <button className="control-btn delete" onClick={() => handleDeleteLesson(group._id, idx)}><FaTrash /></button>
+                                                </div>
+                                            )}
                                         </div>
-                                    </div>
-                                </article>
-                            );
-                        })
+
+                                        <div className="l-card-body">
+                                            <h3 className="l-card-title">
+                                                {typeof course.title === 'object' ? (course.title[appLanguage] || course.title.fr) : course.title}
+                                            </h3>
+                                            <div className="l-card-footer">
+                                                <div className="l-meta-duration">
+                                                    <FaPlayCircle />
+                                                    <span>
+                                                        {typeof course.duration === 'object' ? (course.duration[appLanguage] || course.duration.fr) : (course.duration || t.duration)}
+                                                    </span>
+                                                </div>
+                                                <Link to={lessonPath} className="l-nav-link">
+                                                    <button className="l-action-btn">
+                                                        <span>{t.button}</span>
+                                                        <FaChevronRight size={12} />
+                                                    </button>
+                                                </Link>
+                                            </div>
+                                        </div>
+                                    </article>
+                                );
+                            })
+                        ))
                     ) : (
                         <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '40px' }}>
                             <p style={{ fontSize: '1.2rem', color: '#64748b' }}>{t.noCourses}</p>
@@ -493,6 +502,20 @@ export default function Cours() {
                         </h2>
 
                         <div className="premium-form-grid" style={{ gridTemplateColumns: '1fr' }}>
+                            <div className="premium-form-group" style={{ marginBottom: '20px', padding: '15px', background: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                                <label style={{ color: '#d4af37', fontWeight: 'bold' }}>
+                                    {appLanguage === 'ar' ? 'الاسم التقني (يستخدم في الرابط)' : 'Nom Technique (Utilisé dans le lien)'}
+                                </label>
+                                <input
+                                    type="text"
+                                    placeholder="Ex: manche-ballon"
+                                    value={lessonData.technicalName || ''}
+                                    onChange={(e) => setLessonData({ ...lessonData, technicalName: e.target.value })}
+                                />
+                                <p style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '5px' }}>
+                                    {appLanguage === 'ar' ? 'هذا الاسم مشترك بين جميع اللغات وهو الذي تضعه في خانة category عند اضافة فيديو.' : 'Ce nom est commun à toutes les langues. C\'est ce qu\'il faut mettre dans le champ "category" lors de l\'ajout d\'une vidéo.'}
+                                </p>
+                            </div>
                             {languages.filter(l => l.code === appLanguage).map(lang => (
                                 <div key={lang.code} className="premium-lang-section" style={{ border: '1px solid #e2e8f0', borderRadius: '12px', padding: '15px', marginBottom: '15px' }}>
                                     <h4 className="lang-indicator" style={{ background: '#d4af37', display: 'inline-block', marginBottom: '10px' }}>{lang.label}</h4>
