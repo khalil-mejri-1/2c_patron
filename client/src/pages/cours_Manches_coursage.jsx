@@ -141,9 +141,7 @@ export default function Leçons_Manches_coursage() {
                         allCourses.map((course, index) => {
                             // 💡 تحديد المسار شرطيًا بناءً على actualTitle
                             const courseTitleStr = typeof course.title === 'object' ? (course.title.fr || course.title[Object.keys(course.title)[0]]) : course.title;
-                            const lessonPath = actualTitle === "Les corsages"
-                                ? `/Leçons_coursage/${encodeURIComponent(courseTitleStr)}`
-                                : `/Leçons/${encodeURIComponent(courseTitleStr)}`;
+                            const lessonPath = `/Leçons/${encodeURIComponent(courseTitleStr)}`;
 
                             return (
                                 <div key={index} className="course-card">

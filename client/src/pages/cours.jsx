@@ -251,10 +251,12 @@ export default function Cours() {
         const group = groups.find(g => g._id === groupId) || groups[0];
         let updatedCourses = [...group.courses];
 
+        const lessonIdentifier = lessonData.technicalName || lessonData.title[appLanguage] || lessonData.title?.fr || lessonData.title[Object.keys(lessonData.title)[0]] || actualTitle;
+
         if (lessonMode === 'add') {
-            updatedCourses.push({ ...lessonData, vip_category: lessonData.technicalName || actualTitle });
+            updatedCourses.push({ ...lessonData, vip_category: lessonIdentifier });
         } else {
-            updatedCourses[selectedLessonIndex] = { ...lessonData, vip_category: lessonData.technicalName || actualTitle };
+            updatedCourses[selectedLessonIndex] = { ...lessonData, vip_category: lessonIdentifier };
         }
 
         try {
@@ -444,9 +446,7 @@ export default function Cours() {
                         groups.map((group) => (
                             group.courses.map((course, idx) => {
                                 const courseTitleStr = course.technicalName || course.vip_category || (typeof course.title === 'object' ? (course.title.fr || course.title[Object.keys(course.title)[0]]) : course.title);
-                                const lessonPath = actualTitle === "Les corsages"
-                                    ? `/Leçons_coursage/${encodeURIComponent(courseTitleStr)}`
-                                    : `/Leçons/${encodeURIComponent(courseTitleStr)}`;
+                                const lessonPath = `/Leçons/${encodeURIComponent(courseTitleStr)}`;
 
                                 return (
                                     <article key={`${group._id}-${idx}`} className="lesson-card-premium">

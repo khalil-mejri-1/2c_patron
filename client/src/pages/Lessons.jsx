@@ -191,7 +191,7 @@ export default function Lessons() {
                 setCurriculumInfo(currRes.data);
                 const initCurr = {};
                 languages.forEach(l => {
-                    initCurr[l.code] = { 
+                    initCurr[l.code] = {
                         title: currRes.data[l.code]?.title || translations[l.code]?.listTitle || "",
                         playing: currRes.data[l.code]?.playing || translations[l.code]?.playing || ""
                     };
@@ -216,6 +216,31 @@ export default function Lessons() {
         } catch (e) { console.error("Error fetching site settings", e); }
     }, []);
 
+    const fetchVideos = useCallback(async (allTitles = [actualTitle]) => {
+        setLoading(true);
+        try {
+            // Convert to array if it is not one
+            const titles = Array.isArray(allTitles) ? allTitles : [allTitles];
+
+            const res = await axios.get(`${BASE_URL}/api/specialized-videos`, {
+                params: { category: titles } // Sending array to handle the updated backend logic
+            });
+            const preparedVideos = res.data.map((v, i) => ({
+                ...v,
+                isVip: i % 3 === 0,
+                thumbnail: getThumbnailUrl(v.url_lang?.[appLanguage] || v.url, v.title, appLanguage)
+            }));
+            setVideos(preparedVideos);
+            if (preparedVideos.length > 0) setCurrentVideo(preparedVideos[0]);
+            setError(null);
+        } catch (err) {
+            setError(translations[appLanguage]?.errorMsg || translations.fr.errorMsg);
+        } finally {
+            setLoading(false);
+            window.scrollTo({ top: 0, behavior: 'instant' });
+        }
+    }, [actualTitle, appLanguage]);
+
     const fetchCourseInfo = useCallback(async () => {
         try {
             const res = await axios.get(`${BASE_URL}/api/specialized-courses`);
@@ -225,11 +250,17 @@ export default function Lessons() {
 
             for (const group of res.data) {
                 const item = group.courses.find(c => {
+                    const searchTitle = actualTitle.trim().toLowerCase();
+                    
+                    // Check Technical Name / VIP Category
+                    if (c.technicalName?.toLowerCase() === searchTitle) return true;
+                    if (c.vip_category?.toLowerCase() === searchTitle) return true;
+
                     // Try to find match in any language
                     if (typeof c.title === 'object') {
-                        return Object.values(c.title).some(t => t?.toString().trim() === actualTitle.trim());
+                        return Object.values(c.title).some(t => t?.toString().trim().toLowerCase() === searchTitle);
                     }
-                    return c.title?.toString().trim() === actualTitle.trim();
+                    return c.title?.toString().trim().toLowerCase() === searchTitle;
                 });
                 if (item) {
                     foundCourse = item;
@@ -264,9 +295,14 @@ export default function Lessons() {
                 } else if (foundCourse.title) {
                     titles.push(foundCourse.title);
                 }
+                
+                // Add Technical Names
+                if (foundCourse.technicalName && !titles.includes(foundCourse.technicalName)) titles.push(foundCourse.technicalName);
+                if (foundCourse.vip_category && !titles.includes(foundCourse.vip_category)) titles.push(foundCourse.vip_category);
+
                 // Also add actualTitle just in case
                 if (!titles.includes(actualTitle)) titles.push(actualTitle);
-                
+
                 fetchVideos(titles);
             } else {
                 // If course not found in DB yet, fallback to just actualTitle
@@ -471,30 +507,7 @@ export default function Lessons() {
         }
     };
 
-    const fetchVideos = useCallback(async (allTitles = [actualTitle]) => {
-        setLoading(true);
-        try {
-            // Convert to array if it is not one
-            const titles = Array.isArray(allTitles) ? allTitles : [allTitles];
-            
-            const res = await axios.get(`${BASE_URL}/api/specialized-videos`, {
-                params: { category: titles } // Sending array to handle the updated backend logic
-            });
-            const preparedVideos = res.data.map((v, i) => ({
-                ...v,
-                isVip: i % 3 === 0,
-                thumbnail: getThumbnailUrl(v.url_lang?.[appLanguage] || v.url, v.title, appLanguage)
-            }));
-            setVideos(preparedVideos);
-            if (preparedVideos.length > 0) setCurrentVideo(preparedVideos[0]);
-            setError(null);
-        } catch (err) {
-            setError(t.errorMsg);
-        } finally {
-            setLoading(false);
-            window.scrollTo({ top: 0, behavior: 'instant' });
-        }
-    }, [actualTitle, t.errorMsg, appLanguage]);
+
 
     useEffect(() => {
         // No longer calling fetchVideos here because it's now called inside fetchCourseInfo
@@ -580,8 +593,11 @@ export default function Lessons() {
                             <span className="accent-text" style={{ color: '#d4af37', fontStyle: 'italic', display: 'block', fontSize: '1.5rem', marginTop: '10px' }}>
                                 {heroContent[appLanguage].accent}
                             </span>
+
                         )}
                     </h1>
+                    <div className="curriculum-line"></div>
+
                 </div>
             </header>
 
@@ -589,11 +605,12 @@ export default function Lessons() {
                 {/* --- ACTIVE FOCUS PLAYER --- */}
                 {currentVideo && (
                     <div className="active-focus-cinema" ref={topRef}>
-                        <UniversalVideoPlayer 
-                            url={currentVideo.url_lang?.[appLanguage] || currentVideo.url} 
+                        <UniversalVideoPlayer
+                            url={currentVideo.url_lang?.[appLanguage] || currentVideo.url}
                             title={currentVideo.title}
                             autoPlay={true}
                         />
+
                     </div>
                 )}
 
@@ -616,17 +633,18 @@ export default function Lessons() {
                             >
                                 <FaEdit />
                             </button>
+
                         </div>
+
                     )}
-                    <h2>{curriculumInfo[appLanguage]?.title || t.listTitle}</h2>
-                    <div className="curriculum-line"></div>
+                    {/* <h2>{curriculumInfo[appLanguage]?.title || t.listTitle}</h2> */}
                 </div>
 
                 <div className="lessons-selection-grid">
                     {videos.map(video => (
                         <LessonCard
                             key={video._id}
-                            video={{...video, playing_text: curriculumInfo[appLanguage]?.playing}}
+                            video={{ ...video, playing_text: curriculumInfo[appLanguage]?.playing }}
                             isActive={currentVideo?._id === video._id}
                             onSelect={handleSelectVideo}
                             lang={t}
