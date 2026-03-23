@@ -150,6 +150,7 @@ export default function Cours() {
 
     // Hero Customization (Optional per course)
     const [isEditingHero, setIsEditingHero] = useState(false);
+    const [isEditingSection, setIsEditingSection] = useState(false);
 
     // Lesson Management State
     const [showLessonModal, setShowLessonModal] = useState(false);
@@ -194,7 +195,9 @@ export default function Cours() {
                         badge: hc[l.code]?.badge || translations[l.code]?.categoryTag || translations.fr.categoryTag || "",
                         title: hc[l.code]?.title || actualTitle || "",
                         accent: hc[l.code]?.accent || "",
-                        bg: hc[l.code]?.bg || group.hero_bg || ""
+                        bg: hc[l.code]?.bg || group.hero_bg || "",
+                        sectionTitle: hc[l.code]?.sectionTitle || "",
+                        sectionAccent: hc[l.code]?.sectionAccent || ""
                     };
                 });
                 setEditHeroContent(init);
@@ -251,12 +254,10 @@ export default function Cours() {
         const group = groups.find(g => g._id === groupId) || groups[0];
         let updatedCourses = [...group.courses];
 
-        const lessonIdentifier = lessonData.technicalName || lessonData.title[appLanguage] || lessonData.title?.fr || lessonData.title[Object.keys(lessonData.title)[0]] || actualTitle;
-
         if (lessonMode === 'add') {
-            updatedCourses.push({ ...lessonData, vip_category: lessonIdentifier });
+            updatedCourses.push({ ...lessonData, vip_category: lessonData.technicalName || actualTitle });
         } else {
-            updatedCourses[selectedLessonIndex] = { ...lessonData, vip_category: lessonIdentifier };
+            updatedCourses[selectedLessonIndex] = { ...lessonData, vip_category: lessonData.technicalName || actualTitle };
         }
 
         try {
@@ -274,11 +275,19 @@ export default function Cours() {
             const group = groups.find(g => g._id === groupId);
             if (!group) return;
 
+            const lessonObj = group.courses[indexInGroup];
             const updatedCourses = group.courses.filter((_, i) => i !== indexInGroup);
+            
             try {
-                await axios.put(`${BASE_URL}/api/specialized-courses/${groupId}`, {
-                    courses: updatedCourses
-                });
+                // Determine the category name to delete its associated videos
+                const titleStr = typeof lessonObj.title === 'object' ? (lessonObj.title.fr || lessonObj.title.ar) : lessonObj.title;
+                const categoryToDelete = lessonObj.technicalName || lessonObj.vip_category || titleStr;
+
+                await Promise.all([
+                    axios.put(`${BASE_URL}/api/specialized-courses/${groupId}`, { courses: updatedCourses }),
+                    axios.delete(`${BASE_URL}/api/specialized-videos/by-category`, { params: { category: categoryToDelete } })
+                ]);
+                
                 showAlert('success', 'Deleted', 'Lesson removed');
                 fetchCourses();
             } catch (e) { showAlert('error', 'Error', 'Failed to delete'); }
@@ -361,6 +370,7 @@ export default function Cours() {
                 // Otherwise just refresh data and close modal
                 fetchCourses();
                 setIsEditingHero(false);
+                setIsEditingSection(false);
             }
         } catch (e) { showAlert('error', 'Error', 'Failed to update hero'); }
     };
@@ -431,13 +441,18 @@ export default function Cours() {
 
                 <div className="lessons-section-header">
                     <h2 className="lessons-section-title">
-                        {appLanguage === 'en' ? t.coursesAccent : t.coursesTitle}
-                        <span>{appLanguage === 'en' ? t.coursesTitle : t.coursesAccent}</span>
+                        {heroContent[appLanguage]?.sectionTitle || (appLanguage === 'en' ? t.coursesAccent : t.coursesTitle)} 
+                        <span> {heroContent[appLanguage]?.sectionAccent || (appLanguage === 'en' ? t.coursesTitle : t.coursesAccent)}</span>
                     </h2>
                     {isAdmin && (
-                        <button className="premium-btn-add" onClick={handleOpenAddLesson}>
-                            <FaPlus /> {t.addLesson}
-                        </button>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                            <button className="premium-btn-add" onClick={() => setIsEditingSection(true)} style={{ background: '#e2e8f0', color: '#1e293b' }}>
+                                <FaEdit /> {appLanguage === 'ar' ? 'تعديل العنوان' : 'Modifier le Titre'}
+                            </button>
+                            <button className="premium-btn-add" onClick={handleOpenAddLesson}>
+                                <FaPlus /> {t.addLesson}
+                            </button>
+                        </div>
                     )}
                 </div>
 
@@ -446,7 +461,9 @@ export default function Cours() {
                         groups.map((group) => (
                             group.courses.map((course, idx) => {
                                 const courseTitleStr = course.technicalName || course.vip_category || (typeof course.title === 'object' ? (course.title.fr || course.title[Object.keys(course.title)[0]]) : course.title);
-                                const lessonPath = `/Leçons/${encodeURIComponent(courseTitleStr)}`;
+                                const lessonPath = actualTitle === "Les corsages"
+                                    ? `/Leçons_coursage/${encodeURIComponent(courseTitleStr)}`
+                                    : `/Leçons/${encodeURIComponent(courseTitleStr)}`;
 
                                 return (
                                     <article key={`${group._id}-${idx}`} className="lesson-card-premium">
@@ -678,6 +695,60 @@ export default function Cours() {
 
                         <div className="premium-btn-group" style={{ justifyContent: 'center', marginTop: '30px' }}>
                             <button type="button" className="premium-btn-cta secondary" onClick={() => setIsEditingHero(false)} style={{ width: '200px' }}>
+                                {t.cancel}
+                            </button>
+                            <button type="button" className="premium-btn-cta gold" onClick={handleHeroUpdate} style={{ width: '200px' }}>
+                                {t.save}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {isEditingSection && (
+                <div className="premium-modal-backdrop" onClick={() => setIsEditingSection(false)}>
+                    <div className="premium-modal-content large" onClick={(e) => e.stopPropagation()}>
+                        <button className="premium-modal-close-icon" onClick={() => setIsEditingSection(false)}><FaTimes /></button>
+                        <h2 className="premium-modal-title" style={{ textAlign: 'center', marginBottom: '30px' }}>{appLanguage === 'ar' ? 'تعديل عنوان القسم' : 'Modifier le Titre de la Section'}</h2>
+
+                        <div className="premium-form-grid">
+                            {languages.filter(l => l.code === appLanguage).map(lang => (
+                                <div key={lang.code} className="premium-lang-section" style={{ border: 'none', background: 'none' }}>
+                                    <h4 className="lang-indicator" style={{ background: '#d4af37' }}>{lang.label}</h4>
+
+                                    <div className="premium-form-group">
+                                        <label>{lang.code === 'ar' ? 'الكلمة الأولى (مثل: الدروس)' : 'Premier Mot (ex: Cours)'}</label>
+                                        <input
+                                            type="text"
+                                            value={editHeroContent[lang.code]?.sectionTitle !== undefined ? editHeroContent[lang.code].sectionTitle : ''}
+                                            placeholder={lang.code === 'en' ? (translations[lang.code] || translations.fr).coursesAccent : (translations[lang.code] || translations.fr).coursesTitle}
+                                            onChange={e => setEditHeroContent({
+                                                ...editHeroContent,
+                                                [lang.code]: { ...editHeroContent[lang.code], sectionTitle: e.target.value }
+                                            })}
+                                            dir={lang.code === 'ar' ? 'rtl' : 'ltr'}
+                                        />
+                                    </div>
+
+                                    <div className="premium-form-group">
+                                        <label>{lang.code === 'ar' ? 'الكلمة البارزة (مثل: المتاحة)' : 'Mot Accent (ex: Disponibles)'}</label>
+                                        <input
+                                            type="text"
+                                            value={editHeroContent[lang.code]?.sectionAccent !== undefined ? editHeroContent[lang.code].sectionAccent : ''}
+                                            placeholder={lang.code === 'en' ? (translations[lang.code] || translations.fr).coursesTitle : (translations[lang.code] || translations.fr).coursesAccent}
+                                            onChange={e => setEditHeroContent({
+                                                ...editHeroContent,
+                                                [lang.code]: { ...editHeroContent[lang.code], sectionAccent: e.target.value }
+                                            })}
+                                            dir={lang.code === 'ar' ? 'rtl' : 'ltr'}
+                                        />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="premium-btn-group" style={{ justifyContent: 'center', marginTop: '30px' }}>
+                            <button type="button" className="premium-btn-cta secondary" onClick={() => setIsEditingSection(false)} style={{ width: '200px' }}>
                                 {t.cancel}
                             </button>
                             <button type="button" className="premium-btn-cta gold" onClick={handleHeroUpdate} style={{ width: '200px' }}>

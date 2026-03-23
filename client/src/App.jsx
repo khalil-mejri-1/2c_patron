@@ -27,7 +27,6 @@ import Gestion_commentaire from "./pages/admin/Gestion_commentaire.jsx";
 import Gestion_abonnement from "./pages/admin/Gestion_abonnement.jsx";
 import Gestion_de_espace_vip from "./pages/admin/Gestion de espace vip.jsx";
 import Gestion_Settings from "./pages/admin/Gestion_Settings.jsx";
-import Leçons_Manches_coursage from "./pages/cours_Manches_coursage.jsx";
 import Gestion_Global_Videos from "./pages/admin/Gestion_Global_Videos.jsx";
 
 function AppContent() {
@@ -107,7 +106,7 @@ function AppContent() {
             <Route path="/logintest" element={<Login_test />} />
             <Route path="/Abonnement-VIP" element={<Abonnementvip />} />
 
-            <Route path="/Leçons_coursage/:leconTitle" element={<Leçons_Manches_coursage />} />
+            <Route path="/Leçons_coursage/:leconTitle" element={<Lessons />} />
 
 
             <Route path="/admin" element={<Admin />} />

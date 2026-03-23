@@ -11624,7 +11624,7 @@ body {
 .premium-form-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 40px;
+  gap: 00px;
   /* Increased gap */
   text-align: left;
   margin-bottom: 40px;

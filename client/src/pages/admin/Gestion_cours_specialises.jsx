@@ -3,16 +3,16 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { FaTimes, FaPlusCircle, FaTrash, FaSave, FaVideo, FaLayerGroup, FaExclamationTriangle, FaCog } from 'react-icons/fa';
 import BASE_URL from '../../apiConfig';
+import { useAlert } from '../../context/AlertContext';
 
 const COURS_API_URL = `${BASE_URL}/api/specialized-courses`;
 const CATEGORIES_API_URL = `${BASE_URL}/api/vip-categories`;
 
 export default function GestionCoursSpecialises({ onClose }) {
+    const { showAlert } = useAlert();
     const [videoLink, setVideoLink] = useState('');
     const [categories, setCategories] = useState([]);
     const [courses, setCourses] = useState([{ title: '', duration: '', image: '', vip_category: '' }]);
-    const [error, setError] = useState(null);
-    const [success, setSuccess] = useState('');
     const [loading, setLoading] = useState(true);
     const [existingGroups, setExistingGroups] = useState({});
     const [confirmDialog, setConfirmDialog] = useState(null);
@@ -29,7 +29,7 @@ export default function GestionCoursSpecialises({ onClose }) {
             setCategories(res.data);
             setLoading(false);
         } catch {
-            setError('Erreur lors du chargement des catégories.');
+            showAlert('error', 'Erreur', 'Erreur lors du chargement des catégories.');
             setLoading(false);
         }
     };
@@ -68,8 +68,6 @@ export default function GestionCoursSpecialises({ onClose }) {
         const updated = [...courses];
         updated[index][field] = value;
         setCourses(updated);
-        setError(null);
-        setSuccess('');
     };
 
     const handleSubCategorySelection = (courseIndex, subCategoryTitle) => {
@@ -87,17 +85,17 @@ export default function GestionCoursSpecialises({ onClose }) {
         e.preventDefault();
         const validCourses = courses.filter(c => c.title.trim() && c.vip_category.trim() && c.image.trim());
         if (validCourses.length === 0) {
-            setError("Veuillez remplir les champs obligatoires (*).");
+            showAlert('warning', 'Validation', "Veuillez remplir les champs obligatoires (*).");
             return;
         }
         try {
             await axios.post(`${COURS_API_URL}/group`, { video_link: videoLink.trim() || undefined, courses: validCourses });
-            setSuccess('Sauvegardé avec succès !');
+            showAlert('success', 'Succès', 'Sauvegardé avec succès !');
             setCourses([{ title: '', duration: '', image: '', vip_category: '' }]);
             setVideoLink('');
             fetchGroups();
         } catch {
-            setError('Erreur lors de la sauvegarde.');
+            showAlert('error', 'Erreur', 'Erreur lors de la sauvegarde.');
         }
     };
 
@@ -105,10 +103,10 @@ export default function GestionCoursSpecialises({ onClose }) {
         setConfirmDialog(null);
         try {
             await axios.delete(`${COURS_API_URL}/${groupId}`);
-            setSuccess('Supprimé avec succès.');
+            showAlert('success', 'Succès', 'Supprimé avec succès.');
             fetchGroups();
         } catch {
-            setError('Erreur de suppression.');
+            showAlert('error', 'Erreur', 'Erreur de suppression.');
         }
     };
 
@@ -122,9 +120,6 @@ export default function GestionCoursSpecialises({ onClose }) {
                 </h2>
                 <button onClick={onClose} className="premium-modal-close-icon"><FaTimes /></button>
             </div>
-
-            {error && <div style={{ marginBottom: '20px', padding: '15px', background: '#fef2f2', color: '#b91c1c', borderRadius: '12px', border: '1px solid #fee2e2' }}>{error}</div>}
-            {success && <div style={{ marginBottom: '20px', padding: '15px', background: '#ecfdf5', color: '#047857', borderRadius: '12px', border: '1px solid #d1fae5', textAlign: 'center', fontWeight: 'bold' }}>{success}</div>}
 
             <form onSubmit={handleSubmit} className="premium-form-grid" style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
                 <div style={{ background: '#f8fafc', padding: '20px', borderRadius: '15px', border: '1px solid #e2e8f0' }}>

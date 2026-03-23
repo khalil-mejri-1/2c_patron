@@ -4,6 +4,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { FaShoppingCart, FaSearch, FaChevronDown, FaTimes, FaUser, FaMapMarkerAlt, FaPhoneAlt, FaMinusCircle, FaPlusCircle, FaSpinner, FaCheckCircle, FaCommentAlt, FaStar, FaRegStar, FaChevronLeft, FaChevronRight, FaEdit, FaSave, FaTrash, FaPlus, FaWhatsapp, FaFacebookMessenger, FaRobot, FaPaperPlane } from 'react-icons/fa';
 import Navbar from '../comp/navbar';
 import Footer from '../comp/Footer';
+import { useAlert } from '../context/AlertContext';
 import './shop_redesign.css';
 
 // 🚨 قائمة الفئات النهائية بناءً على طلبك
@@ -357,7 +358,7 @@ const ImageCarousel = ({ images, direction, height = '320px' }) => {
 // OrderModalComponent (المعدل)
 // ====================================================================
 
-const OrderModalComponent = ({ selectedProduct, quantity, handleQuantityChange, closeOrderModal, isLoggedIn, currentUserEmail, onOrderSuccess, onCustomerDataUpdate, appLanguage }) => {
+const OrderModalComponent = ({ selectedProduct, quantity, handleQuantityChange, closeOrderModal, isLoggedIn, currentUserEmail, onOrderSuccess, onCustomerDataUpdate, appLanguage, showAlert }) => {
     const t = translations[appLanguage] || translations.fr;
 
     const [customerData, setCustomerData] = useState({
@@ -387,7 +388,7 @@ const OrderModalComponent = ({ selectedProduct, quantity, handleQuantityChange, 
         const shippingAddress = customerData.adresse;
 
         if (!clientName || clientName.trim() === '' || !shippingAddress || !clientPhone) {
-            alert(t.validationError);
+            showAlert('warning', 'Validation', t.validationError);
             return;
         }
 
@@ -424,12 +425,12 @@ const OrderModalComponent = ({ selectedProduct, quantity, handleQuantityChange, 
                 onOrderSuccess(result.commandId);
             } else {
                 console.error("Échec de l'enregistrement de la commande:", result);
-                alert(`❌ ${t.networkError} : ${result.message || 'Problème de connexion au serveur.'}`);
+                showAlert('error', 'Erreur serveur', result.message || t.networkError);
             }
 
         } catch (error) {
             console.error("Erreur de réseau lors de la soumission:", error);
-            alert(`❌ ${t.networkError}`);
+            showAlert('error', 'Erreur de réseau', t.networkError);
         } finally {
             setIsSubmittingOrder(false);
         }
@@ -559,6 +560,7 @@ const OrderModalComponent = ({ selectedProduct, quantity, handleQuantityChange, 
 
 export default function ProductGrid() {
     const { appLanguage, languages } = useLanguage();
+    const { showAlert } = useAlert();
 
 
 
@@ -787,7 +789,7 @@ export default function ProductGrid() {
         // Validation & Auto-fill
         const currentName = categoryForm.name[appLanguage];
         if (!currentName) {
-            alert(appLanguage === 'ar' ? 'يرجى إدخال اسم الفئة' : 'Veuillez entrer le nom');
+            showAlert('warning', 'Validation', appLanguage === 'ar' ? 'يرجى إدخال اسم الفئة' : 'Veuillez entrer le nom');
             return;
         }
 
@@ -1542,6 +1544,7 @@ export default function ProductGrid() {
                         onOrderSuccess={handleOrderSuccessCallback}
                         onCustomerDataUpdate={handleCustomerDataUpdate}
                         appLanguage={appLanguage}
+                        showAlert={showAlert}
                     />,
                     document.body
                 )

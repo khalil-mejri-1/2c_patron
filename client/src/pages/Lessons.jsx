@@ -5,7 +5,7 @@ import '../comp/PremiumSkeleton.css';
 import Navbar from '../comp/navbar';
 import Footer from '../comp/Footer';
 import UniversalVideoPlayer from '../comp/UniversalVideoPlayer';
-import { useParams } from 'react-router-dom';
+import { useParams, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import BASE_URL from '../apiConfig';
 import { useLanguage } from '../context/LanguageContext';
@@ -180,8 +180,13 @@ export default function Lessons() {
     const topRef = useRef(null);
 
     const { leconTitle } = useParams();
+    const { pathname } = useLocation();
     const actualTitle = decodeURIComponent(leconTitle);
+    // Detect if we're on the /Leçons_coursage/ path (shorter video-only flow)
+    const isCoursagePath = pathname.startsWith('/Le%C3%A7ons_coursage') || pathname.startsWith('/Leçons_coursage');
 
+    const t = translations[appLanguage] || translations.fr;
+    const direction = appLanguage === 'ar' ? 'rtl' : 'ltr';
 
 
     const fetchSiteSettings = useCallback(async () => {
@@ -191,7 +196,7 @@ export default function Lessons() {
                 setCurriculumInfo(currRes.data);
                 const initCurr = {};
                 languages.forEach(l => {
-                    initCurr[l.code] = {
+                    initCurr[l.code] = { 
                         title: currRes.data[l.code]?.title || translations[l.code]?.listTitle || "",
                         playing: currRes.data[l.code]?.playing || translations[l.code]?.playing || ""
                     };
@@ -221,9 +226,9 @@ export default function Lessons() {
         try {
             // Convert to array if it is not one
             const titles = Array.isArray(allTitles) ? allTitles : [allTitles];
-
+            
             const res = await axios.get(`${BASE_URL}/api/specialized-videos`, {
-                params: { category: titles } // Sending array to handle the updated backend logic
+                params: { category: titles.length === 1 ? titles[0] : titles } // Send string if single, array if multiple
             });
             const preparedVideos = res.data.map((v, i) => ({
                 ...v,
@@ -234,7 +239,7 @@ export default function Lessons() {
             if (preparedVideos.length > 0) setCurrentVideo(preparedVideos[0]);
             setError(null);
         } catch (err) {
-            setError(translations[appLanguage]?.errorMsg || translations.fr.errorMsg);
+            setError(translations[appLanguage]?.errorMsg || translations.fr?.errorMsg || 'Erreur lors du chargement.');
         } finally {
             setLoading(false);
             window.scrollTo({ top: 0, behavior: 'instant' });
@@ -242,25 +247,24 @@ export default function Lessons() {
     }, [actualTitle, appLanguage]);
 
     const fetchCourseInfo = useCallback(async () => {
+        // If on the coursage path, skip the DB lookup and directly load by title
+        if (isCoursagePath) {
+            fetchVideos([actualTitle]);
+            return;
+        }
+
         try {
             const res = await axios.get(`${BASE_URL}/api/specialized-courses`);
-            // Find the group and specific course item
             let foundCourse = null;
             let foundGroupId = null;
 
             for (const group of res.data) {
                 const item = group.courses.find(c => {
-                    const searchTitle = actualTitle.trim().toLowerCase();
-                    
-                    // Check Technical Name / VIP Category
-                    if (c.technicalName?.toLowerCase() === searchTitle) return true;
-                    if (c.vip_category?.toLowerCase() === searchTitle) return true;
-
                     // Try to find match in any language
                     if (typeof c.title === 'object') {
-                        return Object.values(c.title).some(t => t?.toString().trim().toLowerCase() === searchTitle);
+                        return Object.values(c.title).some(t => t?.toString().trim() === actualTitle.trim());
                     }
-                    return c.title?.toString().trim().toLowerCase() === searchTitle;
+                    return c.title?.toString().trim() === actualTitle.trim();
                 });
                 if (item) {
                     foundCourse = item;
@@ -288,21 +292,15 @@ export default function Lessons() {
                 });
                 setEditHeroContent(initHero);
 
-                // Now fetch videos using all possible titles
-                const titles = [];
-                if (typeof foundCourse.title === 'object') {
-                    Object.values(foundCourse.title).forEach(t => { if (t) titles.push(t); });
-                } else if (foundCourse.title) {
-                    titles.push(foundCourse.title);
+                // Fetch videos using only the strict category identifiers:
+                // 1. The URL title (actualTitle) - what the user navigated to
+                // 2. The technicalName if set (the canonical key for this lesson)
+                // Do NOT use all language translations as this causes cross-category contamination
+                const titles = [actualTitle];
+                if (foundCourse.technicalName && !titles.includes(foundCourse.technicalName)) {
+                    titles.push(foundCourse.technicalName);
                 }
                 
-                // Add Technical Names
-                if (foundCourse.technicalName && !titles.includes(foundCourse.technicalName)) titles.push(foundCourse.technicalName);
-                if (foundCourse.vip_category && !titles.includes(foundCourse.vip_category)) titles.push(foundCourse.vip_category);
-
-                // Also add actualTitle just in case
-                if (!titles.includes(actualTitle)) titles.push(actualTitle);
-
                 fetchVideos(titles);
             } else {
                 // If course not found in DB yet, fallback to just actualTitle
@@ -312,7 +310,7 @@ export default function Lessons() {
             console.error("Error fetching course info", e);
             fetchVideos([actualTitle]);
         }
-    }, [actualTitle, languages, fetchVideos]);
+    }, [actualTitle, languages, fetchVideos, isCoursagePath]);
 
     useEffect(() => {
         // Check Admin
@@ -492,8 +490,6 @@ export default function Lessons() {
         } catch (e) { showAlert('error', 'Error', 'Failed to add lesson'); }
     };
 
-    const t = translations[appLanguage] || translations.fr;
-    const direction = appLanguage === 'ar' ? 'rtl' : 'ltr';
 
     const handleDeleteVideo = async (video) => {
         if (!window.confirm(appLanguage === 'ar' ? 'هل أنت متأكد من حذف هذا الدرس؟' : 'Voulez-vous vraiment supprimer cette leçon ?')) return;
@@ -506,7 +502,6 @@ export default function Lessons() {
             showAlert('error', 'Error', 'Failed to delete lesson');
         }
     };
-
 
 
     useEffect(() => {
@@ -593,11 +588,8 @@ export default function Lessons() {
                             <span className="accent-text" style={{ color: '#d4af37', fontStyle: 'italic', display: 'block', fontSize: '1.5rem', marginTop: '10px' }}>
                                 {heroContent[appLanguage].accent}
                             </span>
-
                         )}
                     </h1>
-                    <div className="curriculum-line"></div>
-
                 </div>
             </header>
 
@@ -605,12 +597,11 @@ export default function Lessons() {
                 {/* --- ACTIVE FOCUS PLAYER --- */}
                 {currentVideo && (
                     <div className="active-focus-cinema" ref={topRef}>
-                        <UniversalVideoPlayer
-                            url={currentVideo.url_lang?.[appLanguage] || currentVideo.url}
+                        <UniversalVideoPlayer 
+                            url={currentVideo.url_lang?.[appLanguage] || currentVideo.url} 
                             title={currentVideo.title}
                             autoPlay={true}
                         />
-
                     </div>
                 )}
 
@@ -633,18 +624,17 @@ export default function Lessons() {
                             >
                                 <FaEdit />
                             </button>
-
                         </div>
-
                     )}
-                    {/* <h2>{curriculumInfo[appLanguage]?.title || t.listTitle}</h2> */}
+                    <h2>{curriculumInfo[appLanguage]?.title || t.listTitle}</h2>
+                    <div className="curriculum-line"></div>
                 </div>
 
                 <div className="lessons-selection-grid">
                     {videos.map(video => (
                         <LessonCard
                             key={video._id}
-                            video={{ ...video, playing_text: curriculumInfo[appLanguage]?.playing }}
+                            video={{...video, playing_text: curriculumInfo[appLanguage]?.playing}}
                             isActive={currentVideo?._id === video._id}
                             onSelect={handleSelectVideo}
                             lang={t}
@@ -928,28 +918,23 @@ export default function Lessons() {
                         <button className="premium-modal-close-icon" onClick={() => setIsAddingVideo(false)}><FaTimes /></button>
                         <h2 className="premium-modal-title" style={{ textAlign: 'center' }}>{appLanguage === 'ar' ? 'إضافة درس جديد' : 'Ajouter une nouvelle leçon'}</h2>
 
-                        <div className="premium-form-group" style={{ marginBottom: '20px' }}>
-                            <label>Base Title (Internal)</label>
-                            <input
-                                type="text"
-                                value={newVideoData.title}
-                                onChange={e => setNewVideoData({ ...newVideoData, title: e.target.value })}
-                                placeholder="Basic title..."
-                            />
-                        </div>
 
                         <div className="premium-form-grid">
                             {languages.filter(l => l.code === appLanguage).map(lang => (
                                 <div key={lang.code} className="premium-lang-section" style={{ border: 'none', background: 'none' }}>
                                     <h4 className="lang-indicator" style={{ background: '#d4af37' }}>{lang.label}</h4>
                                     <div className="premium-form-group">
-                                        <label>Localized Title</label>
+                                        <label>{appLanguage === 'ar' ? 'عنوان الدرس' : 'Titre de la leçon'}</label>
                                         <input
                                             type="text"
                                             value={newVideoData.title_lang?.[lang.code] || ''}
                                             onChange={e => {
                                                 const updated = { ...newVideoData.title_lang, [lang.code]: e.target.value };
-                                                setNewVideoData({ ...newVideoData, title_lang: updated });
+                                                setNewVideoData({ 
+                                                    ...newVideoData, 
+                                                    title_lang: updated,
+                                                    title: e.target.value // Auto-sync base title
+                                                });
                                             }}
                                         />
                                     </div>

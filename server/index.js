@@ -1240,7 +1240,21 @@ app.delete('/api/specialized-courses/:id', async (req, res) => {
     try {
         const deletedCourse = await SpecializedCourse.findByIdAndDelete(req.params.id);
         if (!deletedCourse) return res.status(404).json({ message: 'Cours non trouvé' });
-        res.json({ message: 'Cours supprimé' });
+
+        // Auto-delete all associated videos when a category is deleted
+        const categoriesToDelete = [deletedCourse.vip_category];
+        if (deletedCourse.courses) {
+            deletedCourse.courses.forEach(c => {
+                const titleStr = typeof c.title === 'object' ? (c.title.fr || c.title.ar) : c.title;
+                const cat = c.technicalName || c.vip_category || titleStr;
+                if (cat && !categoriesToDelete.includes(cat)) {
+                    categoriesToDelete.push(cat);
+                }
+            });
+        }
+        await SpecializedVideo.deleteMany({ category: { $in: categoriesToDelete } });
+
+        res.json({ message: 'Cours et vidéos associées supprimés' });
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
@@ -1369,11 +1383,12 @@ app.post('/api/specialized-videos/upload', upload.single('video'), (req, res) =>
 app.get('/api/specialized-videos', async (req, res) => {
     try {
         const query = {};
-        if (req.query.category) {
-            if (Array.isArray(req.query.category)) {
-                query.category = { $in: req.query.category };
+        const queryCategory = req.query.category || req.query['category[]'];
+        if (queryCategory) {
+            if (Array.isArray(queryCategory)) {
+                query.category = { $in: queryCategory };
             } else {
-                query.category = req.query.category;
+                query.category = queryCategory;
             }
         }
         const videos = await SpecializedVideo.find(query).sort({ createdAt: -1 });
@@ -1381,6 +1396,29 @@ app.get('/api/specialized-videos', async (req, res) => {
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: "Erreur serveur." });
+    }
+});
+
+// 🗑️ Delete all videos matching a specific category
+app.delete('/api/specialized-videos/by-category', async (req, res) => {
+    try {
+        const queryCategory = req.query.category || req.query['category[]'];
+        if (!queryCategory) {
+            return res.status(400).json({ message: "Catégorie requise." });
+        }
+        
+        let categoriesToDelete = [];
+        if (Array.isArray(queryCategory)) {
+            categoriesToDelete = queryCategory;
+        } else {
+            categoriesToDelete = [queryCategory];
+        }
+        
+        const result = await SpecializedVideo.deleteMany({ category: { $in: categoriesToDelete } });
+        res.json({ message: "Vidéos supprimées", deletedCount: result.deletedCount });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: "Erreur lors de la suppression par catégorie." });
     }
 });
 

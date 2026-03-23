@@ -155,8 +155,9 @@
     margin: 0;
 }
 
-/* --- ⏳ Progress Bar --- */
+/* --- ⏳ Progress Bar (Hidden as requested) --- */
 .alert-progress {
+    display: none;
     position: absolute;
     bottom: 0;
     left: 0;

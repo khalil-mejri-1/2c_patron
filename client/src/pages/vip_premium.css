@@ -502,10 +502,10 @@
 .premium-form-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 45px;
+    gap: 0px;
     /* Significant gap to prevent overlapping */
     text-align: left;
-    margin-bottom: 40px;
+    margin-bottom: 0px;
     width: 100%;
 }
 

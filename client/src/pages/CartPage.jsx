@@ -3,6 +3,7 @@ import { FaTrashAlt, FaPlus, FaMinus, FaTimes } from 'react-icons/fa'; // Ajout 
 import Navbar from '../comp/navbar';
 import Footer from '../comp/Footer';
 import { Link } from 'react-router-dom';
+import { useAlert } from '../context/AlertContext';
 
 // --------------------------------------------------------
 // Fonction utilitaire pour lire le panier depuis localStorage
@@ -26,6 +27,7 @@ const getCartFromLocalStorage = () => {
 // --------------------------------------------------------
 
 export default function CartPage() {
+    const { showAlert } = useAlert();
     const [cartItems, setCartItems] = useState(getCartFromLocalStorage);
     const [subtotal, setSubtotal] = useState(0);
     const shippingCost = 5.00;
@@ -268,7 +270,7 @@ export default function CartPage() {
                             <button
                                 className="premium-btn-cta gold"
                                 onClick={() => {
-                                    alert("Redirection vers la page de paiement simulée...");
+                                    showAlert('success', 'Redirection', 'Redirection vers la page de paiement simulée...');
                                     setShowConfirmationModal(false);
                                 }}
                             >
@@ -304,7 +306,7 @@ export default function CartPage() {
                                 <h4 style={{ marginBottom: '5px', color: '#1e293b' }}>Commander en Invité</h4>
                                 <p style={{ color: '#64748b', fontSize: '0.85rem', marginBottom: '20px' }}>Vos informations seront uniquement utilisées pour cette commande.</p>
 
-                                <form onSubmit={(e) => { e.preventDefault(); alert("Formulaire invité soumis, redirection..."); setShowGuestForm(false); }} className="premium-form-grid" style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                                <form onSubmit={(e) => { e.preventDefault(); showAlert('success', 'Formulaire invité soumis', 'redirection en cours...'); setShowGuestForm(false); }} className="premium-form-grid" style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                                     <div className="premium-form-group">
                                         <input type="email" placeholder="Email *" required />
                                     </div>

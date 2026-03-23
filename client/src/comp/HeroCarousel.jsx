@@ -370,7 +370,7 @@ const SuccessModalComponent = ({ lastCommandRef, closeSuccessModal, handleFeedba
 // **********************************************
 // ********* 3. مكون نافذة الطلب (OrderModal) ****
 // **********************************************
-const OrderModalComponent = ({ selectedProduct, quantity, handleQuantityChange, closeOrderModal, isLoggedIn, currentUserEmail, onOrderSuccess, onCustomerDataUpdate, appLanguage }) => {
+const OrderModalComponent = ({ selectedProduct, quantity, handleQuantityChange, closeOrderModal, isLoggedIn, currentUserEmail, onOrderSuccess, onCustomerDataUpdate, appLanguage, showAlert }) => {
     const t = translations[appLanguage] || translations.fr;
 
     const [customerData, setCustomerData] = useState({
@@ -400,7 +400,7 @@ const OrderModalComponent = ({ selectedProduct, quantity, handleQuantityChange, 
         const shippingAddress = customerData.adresse;
 
         if (!clientName || clientName.trim() === '' || !shippingAddress || shippingAddress.trim() === '' || !clientPhone || clientPhone.trim() === '') {
-            alert(t.validationError);
+            showAlert('warning', 'Validation', t.validationError);
             return;
         }
 
@@ -436,12 +436,12 @@ const OrderModalComponent = ({ selectedProduct, quantity, handleQuantityChange, 
                 onOrderSuccess(result.commandId);
             } else {
                 console.error("Échec de l'enregistrement de la commande:", result);
-                alert(`❌ ${t.networkError} : ${result.message || 'Problème de connexion au serveur.'}`);
+                showAlert('error', t.networkError, result.message || 'Problème de connexion au serveur.');
             }
 
         } catch (error) {
             console.error("Erreur de réseau lors de la soumission:", error);
-            alert(`❌ ${t.networkError}`);
+            showAlert('error', 'Erreur', t.networkError);
         } finally {
             setIsSubmittingOrder(false);
         }
@@ -709,7 +709,7 @@ export default function HeroSection({ isLoggedIn = false, currentUserEmail = '' 
     const handleAddProduct = async () => {
         const hasNom = Object.values(newProduct.nom).some(v => v && v.trim() !== '');
         if (!hasNom || !newProduct.prix || !newProduct.image) {
-            alert(currentLanguage === 'ar' ? "يرجى ملء جميع الحقول" : "Please fill all fields");
+            showAlert('warning', 'Validation', currentLanguage === 'ar' ? "يرجى ملء جميع الحقول" : "Please fill all fields");
             return;
         }
 
@@ -1037,6 +1037,7 @@ export default function HeroSection({ isLoggedIn = false, currentUserEmail = '' 
                     onOrderSuccess={handleOrderSuccess}
                     onCustomerDataUpdate={handleCustomerDataUpdate}
                     appLanguage={currentLanguage}
+                    showAlert={showAlert}
                 />,
                 document.body
             )}
