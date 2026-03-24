@@ -124,8 +124,8 @@ const VideoIntroduction = ({ videoUrl, title, appLanguage, isAdmin, onEdit }) =>
             </div>
 
             <div className="premium-video-player-side">
-                <UniversalVideoPlayer 
-                    url={videoUrl} 
+                <UniversalVideoPlayer
+                    url={videoUrl}
                     title={`Introduction - ${actualTitle}`}
                     autoPlay={false}
                 />
@@ -179,7 +179,7 @@ export default function Cours() {
             setGroups(res.data);
             if (res.data.length > 0) {
                 const group = res.data[0];
-                
+
                 // Normalize Video Link
                 const vl = typeof group.video_link === 'object' ? { ...group.video_link } : { fr: group.video_link || '' };
                 languages.forEach(l => { if (!vl[l.code]) vl[l.code] = vl.fr || ''; });
@@ -187,7 +187,7 @@ export default function Cours() {
                 setHeroBg(group.hero_bg || "");
                 const hc = group.hero_content || {};
                 setHeroContent(hc);
-                
+
                 // Pre-initialize edit content with fallbacks
                 const init = {};
                 languages.forEach(l => {
@@ -277,17 +277,17 @@ export default function Cours() {
 
             const lessonObj = group.courses[indexInGroup];
             const updatedCourses = group.courses.filter((_, i) => i !== indexInGroup);
-            
+
             try {
                 // Determine the category name to delete its associated videos
                 const titleStr = typeof lessonObj.title === 'object' ? (lessonObj.title.fr || lessonObj.title.ar) : lessonObj.title;
-                const categoryToDelete = lessonObj.technicalName || lessonObj.vip_category || titleStr;
+                const categoryToDelete = lessonObj.technicalName || titleStr;
 
                 await Promise.all([
                     axios.put(`${BASE_URL}/api/specialized-courses/${groupId}`, { courses: updatedCourses }),
                     axios.delete(`${BASE_URL}/api/specialized-videos/by-category`, { params: { category: categoryToDelete } })
                 ]);
-                
+
                 showAlert('success', 'Deleted', 'Lesson removed');
                 fetchCourses();
             } catch (e) { showAlert('error', 'Error', 'Failed to delete'); }
@@ -295,38 +295,44 @@ export default function Cours() {
     };
 
     const handleVideoUpdate = async () => {
-        if (groups.length === 0) {
-            showAlert('error', 'Note', 'Add at least one lesson first to create the category group.');
-            return;
-        }
         try {
-            await axios.put(`${BASE_URL}/api/specialized-courses/${groups[0]._id}`, {
-                video_link: newVideoUrl
-            });
+            if (groups.length === 0) {
+                await axios.post(`${BASE_URL}/api/specialized-courses/group`, {
+                    video_link: newVideoUrl,
+                    vip_category: actualTitle
+                });
+            } else {
+                await axios.put(`${BASE_URL}/api/specialized-courses/${groups[0]._id}`, {
+                    video_link: newVideoUrl
+                });
+            }
             showAlert('success', 'Updated', 'Video intro link updated');
             fetchCourses();
             setShowVideoModal(false);
-        } catch (e) { showAlert('error', 'Error', 'Failed to update video'); }
+        } catch (e) {
+            console.error(e);
+            showAlert('error', 'Error', 'Failed to update video');
+        }
     };
 
     const handleOpenEditLesson = (groupId, indexInGroup, course) => {
         setLessonMode('edit');
         setSelectedGroupId(groupId);
         setSelectedLessonIndex(indexInGroup);
-        
+
         const title = typeof course.title === 'object' ? { ...course.title } : { fr: course.title || '' };
         const duration = typeof course.duration === 'object' ? { ...course.duration } : { fr: course.duration || '' };
-        
+
         languages.forEach(l => {
             if (!title[l.code]) title[l.code] = title.fr || '';
             if (!duration[l.code]) duration[l.code] = duration.fr || '';
         });
 
-        setLessonData({ 
-            technicalName: course.technicalName || course.vip_category || '',
-            title, 
-            image: course.image, 
-            duration 
+        setLessonData({
+            technicalName: course.technicalName || '',
+            title,
+            image: course.image,
+            duration
         });
         setShowLessonModal(true);
     };
@@ -343,19 +349,20 @@ export default function Cours() {
     };
 
     const handleHeroUpdate = async () => {
-        if (groups.length === 0) {
-            showAlert('error', 'Note', 'Add at least one lesson first to create the category group.');
-            return;
-        }
-
-        const newMasterTitle = editHeroContent[appLanguage]?.title || actualTitle;
-
         try {
-            await axios.put(`${BASE_URL}/api/specialized-courses/${groups[0]._id}`, {
-                hero_bg: editHeroContent[appLanguage]?.bg || heroBg,
-                hero_content: editHeroContent,
-                vip_category: newMasterTitle
-            });
+            if (groups.length === 0) {
+                await axios.post(`${BASE_URL}/api/specialized-courses/group`, {
+                    hero_bg: editHeroContent[appLanguage]?.bg || heroBg,
+                    hero_content: editHeroContent,
+                    vip_category: actualTitle
+                });
+            } else {
+                await axios.put(`${BASE_URL}/api/specialized-courses/${groups[0]._id}`, {
+                    hero_bg: editHeroContent[appLanguage]?.bg || heroBg,
+                    hero_content: editHeroContent
+                    // Removed vip_category mutation to prevent breaking URLs and video links
+                });
+            }
 
             // Update local state immediately for SPA feel
             setHeroContent(editHeroContent);
@@ -363,16 +370,14 @@ export default function Cours() {
 
             showAlert('success', 'Updated', 'Hero content updated');
 
-            if (newMasterTitle !== actualTitle) {
-                // If title changed, navigate to new URL using SPA router
-                navigate(`/cours_Manches/${encodeURIComponent(newMasterTitle)}`);
-            } else {
-                // Otherwise just refresh data and close modal
-                fetchCourses();
-                setIsEditingHero(false);
-                setIsEditingSection(false);
-            }
-        } catch (e) { showAlert('error', 'Error', 'Failed to update hero'); }
+            // No navigation needed since URL identifier (vip_category) is safely preserved
+            fetchCourses();
+            setIsEditingHero(false);
+            setIsEditingSection(false);
+        } catch (e) {
+            console.error(e);
+            showAlert('error', 'Error', 'Failed to update hero');
+        }
     };
 
     if (loading) {
@@ -441,7 +446,7 @@ export default function Cours() {
 
                 <div className="lessons-section-header">
                     <h2 className="lessons-section-title">
-                        {heroContent[appLanguage]?.sectionTitle || (appLanguage === 'en' ? t.coursesAccent : t.coursesTitle)} 
+                        {heroContent[appLanguage]?.sectionTitle || (appLanguage === 'en' ? t.coursesAccent : t.coursesTitle)}
                         <span> {heroContent[appLanguage]?.sectionAccent || (appLanguage === 'en' ? t.coursesTitle : t.coursesAccent)}</span>
                     </h2>
                     {isAdmin && (
@@ -460,7 +465,7 @@ export default function Cours() {
                     {groups.some(g => g.courses.length > 0) ? (
                         groups.map((group) => (
                             group.courses.map((course, idx) => {
-                                const courseTitleStr = course.technicalName || course.vip_category || (typeof course.title === 'object' ? (course.title.fr || course.title[Object.keys(course.title)[0]]) : course.title);
+                                const courseTitleStr = course.technicalName || (typeof course.title === 'object' ? (course.title.fr || course.title[Object.keys(course.title)[0]]) : course.title);
                                 const lessonPath = actualTitle === "Les corsages"
                                     ? `/Leçons_coursage/${encodeURIComponent(courseTitleStr)}`
                                     : `/Leçons/${encodeURIComponent(courseTitleStr)}`;
@@ -528,9 +533,22 @@ export default function Cours() {
                                     placeholder="Ex: manche-ballon"
                                     value={lessonData.technicalName || ''}
                                     onChange={(e) => setLessonData({ ...lessonData, technicalName: e.target.value })}
+                                    readOnly={appLanguage !== 'fr'}
+                                    title={appLanguage !== 'fr' ? (appLanguage === 'ar' ? 'يمكن تعديل هذا الاسم فقط عند توجيه الموقع للغة الفرنسية' : 'Modification autorisée uniquement en Français') : ''}
+                                    style={{
+                                        background: appLanguage !== 'fr' ? '#070707ff' : '#080808ff',
+                                        cursor: appLanguage !== 'fr' ? 'not-allowed' : 'text',
+                                        color: appLanguage !== 'fr' ? '#000000ff' : 'inherit',
+                                        opacity: appLanguage !== 'fr' ? 0.7 : 1
+                                    }}
                                 />
-                                <p style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '5px' }}>
-                                    {appLanguage === 'ar' ? 'هذا الاسم مشترك بين جميع اللغات وهو الذي تضعه في خانة category عند اضافة فيديو.' : 'Ce nom est commun à toutes les langues. C\'est ce qu\'il faut mettre dans le champ "category" lors de l\'ajout d\'une vidéo.'}
+                                <p style={{ fontSize: '0.75rem', color: appLanguage !== 'fr' ? '#d4af37' : '#64748b', marginTop: '5px', fontWeight: appLanguage !== 'fr' ? 'bold' : 'normal' }}>
+                                    {appLanguage === 'ar'
+                                        ? '⚠️ هذا الاسم مشترك ومحمي؛ لتعديله يجب تحويل لغة الموقع للفرنسية.'
+                                        : (appLanguage === 'fr'
+                                            ? 'Ce nom est commun à toutes les langues. C\'est l\'identifiant unique de la leçon.'
+                                            : '⚠️ Identifiant commun ; modification autorisée uniquement en Français.')
+                                    }
                                 </p>
                             </div>
                             {languages.filter(l => l.code === appLanguage).map(lang => (

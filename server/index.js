@@ -1265,16 +1265,15 @@ app.delete('/api/specialized-courses/:id', async (req, res) => {
 
 app.post('/api/specialized-courses/group', async (req, res) => {
     try {
-        const { video_link, courses } = req.body;
+        const { video_link, courses, vip_category, hero_bg, hero_content } = req.body;
 
-        if (!courses || !Array.isArray(courses) || courses.length === 0) {
-            return res.status(400).json({ message: 'Aucun cours fourni.' });
+        const vipCategoryName = (courses && courses.length > 0) ? courses[0].vip_category : vip_category;
+
+        if (!vipCategoryName) {
+            return res.status(400).json({ message: 'Catégorie requise.' });
         }
 
-        // نأخذ اسم الفئة من أول كورس
-        const vipCategoryName = courses[0].vip_category;
-
-        // البحث عن مجموعة موجودة بنفس الاسم (تحقق من المستوى العلوي أو المصفوفة)
+        // // البحث عن مجموعة موجودة بنفس الاسم (تحقق من المستوى العلوي أو المصفوفة)
         let existingGroup = await SpecializedCourse.findOne({
             $or: [
                 { vip_category: vipCategoryName },
@@ -1283,22 +1282,29 @@ app.post('/api/specialized-courses/group', async (req, res) => {
         });
 
         if (existingGroup) {
-            existingGroup.courses.push(...courses);
-            if (video_link && video_link.trim() !== '') {
+            if (courses && courses.length > 0) {
+                existingGroup.courses.push(...courses);
+            }
+            if (video_link && video_link !== undefined && video_link !== '') {
                 existingGroup.video_link = video_link;
             }
+            if (hero_bg !== undefined) existingGroup.hero_bg = hero_bg;
+            if (hero_content !== undefined) existingGroup.hero_content = hero_content;
+
             // ضمان وجود الاسم في المستوى العلوي أيضاً
             existingGroup.vip_category = vipCategoryName;
 
             await existingGroup.save();
-            return res.status(200).json({ message: 'Cours ajoutés à la catégorie existante.', data: existingGroup });
+            return res.status(200).json({ message: 'Mise à jour réussie.', data: existingGroup });
         }
 
         // إنشاء مجموعة جديدة إذا لم توجد
         const newGroup = new SpecializedCourse({
-            video_link,
-            courses,
-            vip_category: vipCategoryName
+            video_link: video_link || {},
+            courses: courses || [],
+            vip_category: vipCategoryName,
+            hero_bg: hero_bg || '',
+            hero_content: hero_content || {}
         });
 
         await newGroup.save();
@@ -1327,7 +1333,7 @@ app.post('/api/specialized-videos', upload.fields([
     { name: 'video', maxCount: 1 }
 ]), async (req, res) => {
     try {
-        const { title, description, category, videoUrl, title_lang, status_lang, url_lang } = req.body;
+        const { title, description, category, subCategory, videoUrl, title_lang, status_lang, url_lang } = req.body;
 
         // 1. Handle Main URL
         let finalUrl = videoUrl;
@@ -1353,6 +1359,7 @@ app.post('/api/specialized-videos', upload.fields([
             title,
             description,
             category,
+            subCategory: subCategory || '',
             title_lang: typeof title_lang === 'string' ? JSON.parse(title_lang) : title_lang,
             status_lang: typeof status_lang === 'string' ? JSON.parse(status_lang) : status_lang
         });
@@ -1385,11 +1392,14 @@ app.get('/api/specialized-videos', async (req, res) => {
         const query = {};
         const queryCategory = req.query.category || req.query['category[]'];
         if (queryCategory) {
-            if (Array.isArray(queryCategory)) {
-                query.category = { $in: queryCategory };
-            } else {
-                query.category = queryCategory;
-            }
+            const matchArr = Array.isArray(queryCategory) ? queryCategory : [queryCategory];
+            
+            // Check both category (for backwards compatibility/main category) 
+            // and subCategory (for the new hierarchical architecture)
+            query.$or = [
+                { category: { $in: matchArr } },
+                { subCategory: { $in: matchArr } }
+            ];
         }
         const videos = await SpecializedVideo.find(query).sort({ createdAt: -1 });
         res.json(videos);
@@ -1430,7 +1440,7 @@ app.put('/api/specialized-videos/:id', upload.fields([
     { name: 'video', maxCount: 1 }
 ]), async (req, res) => {
     try {
-        const { title, description, category, videoUrl, title_lang, status_lang, url_lang } = req.body;
+        const { title, description, category, subCategory, videoUrl, title_lang, status_lang, url_lang } = req.body;
 
         const videoId = req.params.id;
         if (!videoId.match(/^[0-9a-fA-F]{24}$/)) {
@@ -1444,6 +1454,10 @@ app.put('/api/specialized-videos/:id', upload.fields([
             title_lang: typeof title_lang === 'string' ? JSON.parse(title_lang) : title_lang,
             status_lang: typeof status_lang === 'string' ? JSON.parse(status_lang) : status_lang
         };
+
+        if (subCategory !== undefined) {
+            updateData.subCategory = subCategory.trim() || '';
+        }
 
         // Handle Main URL
         if (req.files['video']) {

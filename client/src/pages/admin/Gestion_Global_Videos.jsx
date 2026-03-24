@@ -70,6 +70,70 @@ export default function Gestion_Global_Videos() {
         });
     };
 
+    const handleReassignVideo = async (video, newLessonTitle) => {
+        if (!newLessonTitle) return;
+        try {
+            const formData = new FormData();
+            formData.append('title', video.title);
+            formData.append('category', video.category);
+            formData.append('subCategory', newLessonTitle);
+
+            // Re-send existing lang objects as JSON strings to satisfy the PUT route expectations
+            formData.append('title_lang', JSON.stringify(video.title_lang || {}));
+            formData.append('status_lang', JSON.stringify(video.status_lang || {}));
+            formData.append('url_lang', JSON.stringify(video.url_lang || {}));
+
+            await axios.put(`${BASE_URL}/api/specialized-videos/${video._id}`, formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            showAlert('success', 'Succès', 'La vidéo a été déplacée avec succès.');
+            fetchAll();
+        } catch (err) {
+            console.error("Erreur reassign video:", err);
+            showAlert('error', 'Erreur', 'Impossible de déplacer la vidéo.');
+        }
+    };
+
+    const handleDeleteCourse = async (groupId) => {
+        showAlert('confirm', 'Confirmation', "Voulez-vous vraiment supprimer cette catégorie principale et toutes ses leçons/vidéos associées ?", async () => {
+            try {
+                await axios.delete(`${BASE_URL}/api/specialized-courses/${groupId}`);
+                setCourses(courses.filter(c => c._id !== groupId));
+                showAlert('success', 'Succès', "Catégorie supprimée avec succès.");
+                fetchAll(); // Refresh to ensure deleted videos disappear from UI
+            } catch (error) {
+                console.error("Erreur delet course:", error);
+                showAlert('error', 'Erreur', "Erreur lors de la suppression de la catégorie.");
+            }
+        });
+    };
+
+    const handleDeleteSubCourse = async (groupId, courseIndex) => {
+        showAlert('confirm', 'Confirmation', "Voulez-vous vraiment supprimer cette leçon (sous-catégorie) ?", async () => {
+            try {
+                const group = courses.find(c => c._id === groupId);
+                if (!group) return;
+
+                const updatedCourses = group.courses.filter((_, i) => i !== courseIndex);
+
+                await axios.put(`${BASE_URL}/api/specialized-courses/${groupId}`, {
+                    courses: updatedCourses
+                });
+
+                setCourses(courses.map(c => {
+                    if (c._id === groupId) {
+                        return { ...c, courses: updatedCourses };
+                    }
+                    return c;
+                }));
+                showAlert('success', 'Succès', "Leçon supprimée avec succès.");
+            } catch (error) {
+                console.error("Erreur delet subcourse:", error);
+                showAlert('error', 'Erreur', "Erreur lors de la suppression de la leçon.");
+            }
+        });
+    };
+
     const toggleGroup = (id) => setExpandedGroups(prev => ({ ...prev, [id]: !prev[id] }));
 
     // --- Filtered Videos ---
@@ -93,12 +157,29 @@ export default function Gestion_Global_Videos() {
         return haystack.includes(searchTerm.toLowerCase());
     });
 
-    // Videos grouped by category for the category tab
+    // Videos grouped intelligently
     const videosByCategory = {};
     videos.forEach(v => {
-        const cat = v.category || 'Non classé';
-        if (!videosByCategory[cat]) videosByCategory[cat] = [];
-        videosByCategory[cat].push(v);
+        let origCat = v.category ? v.category.trim() : 'Non classé';
+        const ctg = courses.find(c => c.vip_category?.toLowerCase() === origCat.toLowerCase());
+        let mainCat = ctg ? ctg.vip_category : origCat;
+
+        // Backwards compatibility: if video has no subCategory, check if its "category" is actually a lesson name
+        if (!v.subCategory) {
+            const matchedGroup = courses.find(g =>
+                g.courses?.some(c => {
+                    const t = typeof c.title === 'object' ? (c.title.fr || Object.values(c.title)[0]) : c.title;
+                    return t?.toLowerCase() === mainCat.toLowerCase();
+                })
+            );
+            if (matchedGroup && matchedGroup.vip_category !== mainCat) {
+                mainCat = matchedGroup.vip_category;
+                v._inferredSubCategory = origCat; // Helper for rendering
+            }
+        }
+
+        if (!videosByCategory[mainCat]) videosByCategory[mainCat] = [];
+        videosByCategory[mainCat].push(v);
     });
 
     // Stat counts
@@ -261,82 +342,182 @@ export default function Gestion_Global_Videos() {
                                                 </div>
                                             </div>
                                         </div>
-                                        <div style={{ color: '#94a3b8', fontSize: '1.1rem' }}>
-                                            {isOpen ? <FaChevronUp /> : <FaChevronDown />}
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); handleDeleteCourse(group._id); }}
+                                                style={{
+                                                    padding: '8px 15px', borderRadius: '10px', border: 'none',
+                                                    background: 'rgba(239,68,68,0.1)', color: '#ef4444',
+                                                    cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', fontWeight: '600'
+                                                }}
+                                                title="Supprimer la catégorie principale"
+                                            >
+                                                <FaTrash size={12} /> Supprimer
+                                            </button>
+                                            <div style={{ color: '#94a3b8', fontSize: '1.1rem' }}>
+                                                {isOpen ? <FaChevronUp /> : <FaChevronDown />}
+                                            </div>
                                         </div>
                                     </div>
 
                                     {/* Lessons & Videos inside group */}
                                     {isOpen && (
-                                        <div style={{ padding: '20px 30px' }}>
-                                            {/* Lessons */}
-                                            {(group.courses?.length > 0) && (
-                                                <div style={{ marginBottom: '20px' }}>
-                                                    <div style={{ fontWeight: '700', color: '#475569', marginBottom: '12px', fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                                                        <FaBook style={{ marginRight: '6px', color: '#D4AF37' }} /> Leçons
-                                                    </div>
-                                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
-                                                        {group.courses.map((course, i) => {
-                                                            const titleStr = typeof course.title === 'object'
-                                                                ? (course.title.fr || course.title[Object.keys(course.title)[0]])
-                                                                : course.title;
-                                                            const techName = course.technicalName || course.vip_category || titleStr;
-                                                            return (
-                                                                <div key={i} style={{
-                                                                    padding: '8px 16px', borderRadius: '10px',
-                                                                    background: '#f8fafc', border: '1px solid #e2e8f0',
-                                                                    fontSize: '0.9rem', color: '#334155', fontWeight: '500',
-                                                                    display: 'flex', alignItems: 'center', gap: '8px'
-                                                                }}>
-                                                                    <FaBook size={11} style={{ color: '#D4AF37' }} />
-                                                                    {titleStr}
-                                                                    {techName !== titleStr && (
-                                                                        <span style={{ fontSize: '0.75rem', color: '#94a3b8', fontStyle: 'italic' }}>({techName})</span>
+                                        <div style={{ padding: '30px 40px' }}>
+                                            {/* Tree Structure Container */}
+                                            {(group.courses?.length > 0) ? (
+                                                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                    {group.courses.map((course, i) => {
+                                                        const titleStr = typeof course.title === 'object'
+                                                            ? (course.title.fr || Object.values(course.title)[0])
+                                                            : course.title;
+                                                        const techName = course.technicalName || course.vip_category || titleStr;
+
+                                                        // Videos for this specific lesson
+                                                        const lessonVideos = catVideos.filter(v =>
+                                                            v.subCategory === titleStr || v._inferredSubCategory === titleStr || (!v.subCategory && v.category === titleStr)
+                                                        );
+
+                                                        const isLastLesson = i === group.courses.length - 1;
+
+                                                        return (
+                                                            <div key={i} style={{ position: 'relative', paddingLeft: '40px' }}>
+                                                                {/* Tree Lines for Lesson */}
+                                                                <div style={{ position: 'absolute', top: 0, left: '15px', bottom: isLastLesson ? 'auto' : 0, height: isLastLesson ? '38px' : '100%', width: '2px', background: '#cbd5e1', zIndex: 0 }} />
+                                                                <div style={{ position: 'absolute', top: '38px', left: '15px', width: '25px', height: '2px', background: '#cbd5e1', zIndex: 0 }} />
+
+                                                                <div style={{ paddingTop: '15px', paddingBottom: '15px' }}>
+                                                                    {/* Lesson Header Card */}
+                                                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#fff', border: '1px solid #e2e8f0', padding: '12px 20px', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', position: 'relative', zIndex: 1 }}>
+                                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                                                            <div style={{ background: 'rgba(212,175,55,0.1)', padding: '6px', borderRadius: '8px', color: '#D4AF37', display: 'flex' }}>
+                                                                                <FaBook size={14} />
+                                                                            </div>
+                                                                            <div>
+                                                                                <div style={{ fontWeight: '800', color: '#1e293b', fontSize: '1.05rem', letterSpacing: '-0.01em' }}>{titleStr}</div>
+                                                                            </div>
+                                                                        </div>
+                                                                        <button
+                                                                            onClick={() => handleDeleteSubCourse(group._id, i)}
+                                                                            style={{
+                                                                                padding: '5px 10px', borderRadius: '6px', border: 'none', background: 'rgba(239,68,68,0.1)', color: '#ef4444', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', fontWeight: 'bold'
+                                                                            }} title="Supprimer la leçon"
+                                                                        >
+                                                                            <FaTrash size={10} /> Supprimer
+                                                                        </button>
+                                                                    </div>
+
+                                                                    {/* Videos Branch */}
+                                                                    {lessonVideos.length > 0 && (
+                                                                        <div style={{ position: 'relative', marginTop: '10px', paddingLeft: '40px' }}>
+                                                                            {/* Root vertical line for videos branching from lesson module */}
+                                                                            <div style={{ position: 'absolute', top: '-10px', left: '26px', bottom: lessonVideos.length === 0 ? 'auto' : 0, width: '2px', background: '#e2e8f0', zIndex: 0 }} />
+
+                                                                            {lessonVideos.map((video, vIndex) => {
+                                                                                const isLastVideo = vIndex === lessonVideos.length - 1;
+                                                                                return (
+                                                                                    <div key={video._id} style={{ position: 'relative', paddingTop: '8px', paddingBottom: '8px' }}>
+                                                                                        {/* Tree Lines for Video */}
+                                                                                        <div style={{ position: 'absolute', top: 0, left: '-14px', bottom: isLastVideo ? 'auto' : 0, height: isLastVideo ? '28px' : '100%', width: '2px', background: '#e2e8f0', zIndex: 0 }} />
+                                                                                        <div style={{ position: 'absolute', top: '28px', left: '-14px', width: '25px', height: '2px', background: '#e2e8f0', zIndex: 0 }} />
+
+                                                                                        {/* Video Item Card */}
+                                                                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#f8fafc', border: '1px solid #f1f5f9', padding: '10px 15px', borderRadius: '10px', position: 'relative', zIndex: 1 }}>
+                                                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                                                                <FaVideo color="#94a3b8" size={13} />
+                                                                                                <span style={{ fontWeight: '600', color: '#334155', fontSize: '0.9rem' }}>{video.title}</span>
+                                                                                            </div>
+                                                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                                                                                <div style={{ display: 'flex', gap: '5px' }}>
+                                                                                                    {['fr', 'ar', 'tn'].map(lang => (
+                                                                                                        <span key={lang} style={{
+                                                                                                            padding: '2px 7px', borderRadius: '6px', fontSize: '0.7rem', fontWeight: 'bold', textTransform: 'uppercase',
+                                                                                                            background: video.url_lang?.[lang] ? 'rgba(34,197,94,0.1)' : '#f1f5f9',
+                                                                                                            color: video.url_lang?.[lang] ? '#16a34a' : '#cbd5e1',
+                                                                                                            border: video.url_lang?.[lang] ? '1px solid rgba(34,197,94,0.2)' : '1px solid #e2e8f0'
+                                                                                                        }}>{lang}</span>
+                                                                                                    ))}
+                                                                                                </div>
+                                                                                                <button onClick={() => handleDeleteVideo(video._id)} style={{
+                                                                                                    padding: '4px', borderRadius: '4px', border: 'none', background: 'transparent', color: '#ef4444', cursor: 'pointer', display: 'flex'
+                                                                                                }} title="Supprimer la vidéo"><FaTrash size={12} /></button>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                );
+                                                                            })}
+                                                                        </div>
                                                                     )}
                                                                 </div>
-                                                            );
-                                                        })}
-                                                    </div>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            ) : (
+                                                <div style={{ color: '#94a3b8', fontSize: '0.9rem', fontStyle: 'italic', paddingLeft: '15px' }}>
+                                                    Aucune leçon enregistrée dans cette catégorie.
                                                 </div>
                                             )}
 
-                                            {/* Linked Videos */}
-                                            {catVideos.length > 0 ? (
-                                                <div>
-                                                    <div style={{ fontWeight: '700', color: '#475569', marginBottom: '12px', fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                                                        <FaVideo style={{ marginRight: '6px', color: '#D4AF37' }} /> Vidéos associées
-                                                    </div>
-                                                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
-                                                        <tbody>
-                                                            {catVideos.map(video => (
-                                                                <tr key={video._id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                                                                    <td style={{ padding: '10px 0', fontWeight: '600', color: '#1e293b' }}>{video.title}</td>
-                                                                    <td style={{ padding: '10px 0', color: '#94a3b8' }}>
-                                                                        {['fr', 'ar', 'en'].map(lang => (
-                                                                            <span key={lang} style={{
-                                                                                marginRight: '5px', padding: '2px 8px', borderRadius: '6px', fontSize: '0.75rem',
-                                                                                background: video.url_lang?.[lang] ? 'rgba(34,197,94,0.1)' : '#f1f5f9',
-                                                                                color: video.url_lang?.[lang] ? '#16a34a' : '#94a3b8',
-                                                                                border: video.url_lang?.[lang] ? '1px solid rgba(34,197,94,0.2)' : '1px solid #e2e8f0'
-                                                                            }}>{lang}</span>
+                                            {/* Unassigned / Global Videos */}
+                                            {(() => {
+                                                const unassignedVideos = catVideos.filter(v => {
+                                                    const lessonExists = group.courses?.some(c => {
+                                                        const t = typeof c.title === 'object' ? (c.title.fr || Object.values(c.title)[0]) : c.title;
+                                                        return t === v.subCategory || t === v._inferredSubCategory || t === v.category;
+                                                    });
+                                                    return !lessonExists;
+                                                });
+
+                                                if (unassignedVideos.length > 0) {
+                                                    return (
+                                                        <div style={{ marginTop: '30px', paddingTop: '20px', borderTop: '2px dashed #f1f5f9' }}>
+                                                            <div style={{ fontWeight: '700', color: '#64748b', marginBottom: '15px', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                                                <FaVideo style={{ marginRight: '6px' }} /> Autres vidéos associées ({unassignedVideos.length})
+                                                            </div>
+                                                            <div style={{ background: '#fff', borderRadius: '12px', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
+                                                                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
+                                                                    <tbody>
+                                                                        {unassignedVideos.map(video => (
+                                                                            <tr key={video._id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                                                                                <td style={{ padding: '12px 15px', fontWeight: '600', color: '#334155' }}>
+                                                                                    <FaVideo color="#cbd5e1" style={{ marginRight: '10px' }} /> {video.title}
+                                                                                </td>
+                                                                                <td style={{ padding: '12px 15px', color: '#94a3b8' }}>
+                                                                                    {['fr', 'ar', 'en'].map(lang => (
+                                                                                        <span key={lang} style={{
+                                                                                            marginRight: '6px', padding: '3px 8px', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase',
+                                                                                            background: video.url_lang?.[lang] ? 'rgba(34,197,94,0.1)' : '#f1f5f9',
+                                                                                            color: video.url_lang?.[lang] ? '#16a34a' : '#cbd5e1'
+                                                                                        }}>{lang}</span>
+                                                                                    ))}
+                                                                                </td>
+                                                                                <td style={{ padding: '12px 15px', textAlign: 'right' }}>
+                                                                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px' }}>
+                                                                                        <select
+                                                                                            onChange={(e) => handleReassignVideo(video, e.target.value)}
+                                                                                            style={{ padding: '4px 8px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.75rem', outline: 'none', background: '#f8fafc', color: '#475569', cursor: 'pointer' }}
+                                                                                        >
+                                                                                            <option value="">Déplacer vers...</option>
+                                                                                            {group.courses.map((c, cIdx) => {
+                                                                                                const t = typeof c.title === 'object' ? (c.title.fr || Object.values(c.title)[0]) : c.title;
+                                                                                                return <option key={cIdx} value={t}>{t}</option>;
+                                                                                            })}
+                                                                                        </select>
+                                                                                        <button onClick={() => handleDeleteVideo(video._id)} style={{
+                                                                                            padding: '6px', borderRadius: '6px', border: 'none', background: 'transparent', color: '#ef4444', cursor: 'pointer'
+                                                                                        }} title="Supprimer"><FaTrash size={14} /></button>
+                                                                                    </div>
+                                                                                </td>
+                                                                            </tr>
                                                                         ))}
-                                                                    </td>
-                                                                    <td style={{ padding: '10px 0', textAlign: 'right' }}>
-                                                                        <button onClick={() => handleDeleteVideo(video._id)} style={{
-                                                                            padding: '5px 10px', borderRadius: '8px', border: 'none',
-                                                                            background: 'rgba(239,68,68,0.1)', color: '#ef4444', cursor: 'pointer'
-                                                                        }}><FaTrash size={12} /></button>
-                                                                    </td>
-                                                                </tr>
-                                                            ))}
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                            ) : (
-                                                <div style={{ color: '#94a3b8', fontSize: '0.9rem', fontStyle: 'italic' }}>
-                                                    Aucune vidéo associée à cette catégorie. (category = "{group.vip_category}")
-                                                </div>
-                                            )}
+                                                                    </tbody>
+                                                                </table>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                }
+                                                return null;
+                                            })()}
                                         </div>
                                     )}
                                 </div>

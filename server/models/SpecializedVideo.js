@@ -9,6 +9,7 @@ const specializedVideoSchema = new mongoose.Schema({
     status_lang: { type: Object, default: {} }, // Multi-language status labels (Free/VIP)
     description: { type: String },
     category: { type: String, required: true },
+    subCategory: { type: String, default: '' }, // NEW: Link video directly to a subcategory
     createdAt: { type: Date, default: Date.now },
 });
 

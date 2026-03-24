@@ -5,6 +5,7 @@ const courseItemSchema = new mongoose.Schema({
     duration: { type: Object, required: false, default: {} },
     image: { type: String, required: true },
     vip_category: { type: String, required: true },
+    technicalName: { type: String, default: '' }, // Shared identifier for URL and videos
     hero_content: { type: Object, default: {} }, // Multi-language object
     hero_bg: { type: String, required: false },
 });

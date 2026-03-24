@@ -39,6 +39,7 @@ export function VideoFormModal({ isVisible, onClose, onSaveSuccess, initialVideo
     const [title, setTitle] = useState(initialVideo?.title || '');
     const [description, setDescription] = useState(initialVideo?.description || '');
     const [category, setCategory] = useState(initialVideo?.category || '');
+    const [subCategory, setSubCategory] = useState(initialVideo?.subCategory || '');
     const [currentVideoUrl, setCurrentVideoUrl] = useState(initialVideo?.url || '');
     const [error, setError] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -48,11 +49,13 @@ export function VideoFormModal({ isVisible, onClose, onSaveSuccess, initialVideo
             setTitle(initialVideo.title || '');
             setDescription(initialVideo.description || '');
             setCategory(initialVideo.category || '');
+            setSubCategory(initialVideo.subCategory || '');
             setCurrentVideoUrl(initialVideo.url || '');
         } else {
             setTitle('');
             setDescription('');
             setCategory('');
+            setSubCategory('');
             setCurrentVideoUrl('');
         }
         setError(null);
@@ -69,7 +72,7 @@ export function VideoFormModal({ isVisible, onClose, onSaveSuccess, initialVideo
         }
 
         setIsSubmitting(true);
-        const videoData = { title, description, category, videoUrl: currentVideoUrl };
+        const videoData = { title, description, category, subCategory, videoUrl: currentVideoUrl };
 
         try {
             if (isEditing) {
@@ -121,12 +124,23 @@ export function VideoFormModal({ isVisible, onClose, onSaveSuccess, initialVideo
                     </div>
 
                     <div className="premium-form-group">
-                        <label>Catégorie *</label>
-                        <select value={category} onChange={(e) => setCategory(e.target.value)} required>
-                            <option value="">-- Choisir --</option>
-                            {categories.map((cat, idx) => (
-                                <option key={idx} value={cat}>{cat}</option>
+                        <label>Catégorie Principale *</label>
+                        <select value={category} onChange={(e) => { setCategory(e.target.value); setSubCategory(''); }} required>
+                            <option value="">-- Choisir Catégorie --</option>
+                            {categories.map((group, idx) => (
+                                <option key={idx} value={group.vip_category}>{group.vip_category}</option>
                             ))}
+                        </select>
+                    </div>
+
+                    <div className="premium-form-group">
+                        <label>Sous-catégorie (Leçon) *</label>
+                        <select value={subCategory} onChange={(e) => setSubCategory(e.target.value)} required>
+                            <option value="">-- Choisir une leçon --</option>
+                            {category && categories.find(g => g.vip_category === category)?.courses?.map((c, idx) => {
+                                const titleStr = typeof c.title === 'object' ? (c.title.fr || Object.values(c.title)[0]) : c.title;
+                                return <option key={idx} value={titleStr}>{titleStr}</option>;
+                            })}
                         </select>
                     </div>
 
@@ -177,12 +191,7 @@ export default function GestionVedioSpecialises({ onClose }) {
     const fetchCategories = async () => {
         try {
             const res = await axios.get(COURSES_API_URL);
-            // Extract titles as strings for the dropdown. 
-            // We use the French title (or fallback) as the unique category key for videos.
-            const uniqueCategories = Array.from(new Set(res.data.flatMap(g => g.courses.map(c => 
-                typeof c.title === 'object' ? (c.title.fr || Object.values(c.title)[0]) : c.title
-            ))));
-            setCategories(uniqueCategories);
+            setCategories(res.data);
         } catch (err) {
             console.error(err);
         }
@@ -290,7 +299,9 @@ export default function GestionVedioSpecialises({ onClose }) {
 
                                 <div style={{ flex: 1 }}>
                                     <h4 style={{ margin: '0 0 5px 0', color: '#1e293b' }}>{video.title}</h4>
-                                    <span style={{ fontSize: '0.8rem', background: '#f1f5f9', color: '#475569', padding: '2px 8px', borderRadius: '12px', fontWeight: 'bold' }}>{video.category}</span>
+                                    <span style={{ fontSize: '0.8rem', background: '#f1f5f9', color: '#475569', padding: '2px 8px', borderRadius: '12px', fontWeight: 'bold' }}>
+                                        {video.category} {video.subCategory ? ` > ${video.subCategory}` : ''}
+                                    </span>
                                     <p style={{ margin: '10px 0 0 0', fontSize: '0.9rem', color: '#64748b', lineHeight: '1.4' }}>{video.description}</p>
                                 </div>
 

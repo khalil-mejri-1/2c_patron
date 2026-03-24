@@ -148,6 +148,7 @@ export default function Lessons() {
     const [heroBg, setHeroBg] = useState("");
     const [courseInfo, setCourseInfo] = useState(null);
     const [groupId, setGroupId] = useState(null);
+    const [groupCategoryName, setGroupCategoryName] = useState(null);
 
     // Curriculum & Certificate Settings
     const [curriculumInfo, setCurriculumInfo] = useState({});
@@ -257,6 +258,7 @@ export default function Lessons() {
             const res = await axios.get(`${BASE_URL}/api/specialized-courses`);
             let foundCourse = null;
             let foundGroupId = null;
+            let foundGroupCatName = null;
 
             for (const group of res.data) {
                 const item = group.courses.find(c => {
@@ -269,6 +271,7 @@ export default function Lessons() {
                 if (item) {
                     foundCourse = item;
                     foundGroupId = group._id;
+                    foundGroupCatName = group.vip_category;
                     break;
                 }
             }
@@ -276,6 +279,7 @@ export default function Lessons() {
             if (foundCourse) {
                 setCourseInfo(foundCourse);
                 setGroupId(foundGroupId);
+                setGroupCategoryName(foundGroupCatName);
                 const hc = foundCourse.hero_content || {};
                 setHeroContent(hc);
                 setHeroBg(foundCourse.hero_bg || foundCourse.image || "");
@@ -403,6 +407,7 @@ export default function Lessons() {
             const formData = new FormData();
             formData.append('title', editVideoContent.fr?.title || editingVideo.title);
             formData.append('category', editingVideo.category);
+            formData.append('subCategory', editingVideo.subCategory || '');
             formData.append('videoUrl', editVideoUrl);
             const title_lang = {};
             const status_lang = {};
@@ -449,7 +454,8 @@ export default function Lessons() {
         try {
             const formData = new FormData();
             formData.append('title', newVideoData.title);
-            formData.append('category', actualTitle);
+            formData.append('category', groupCategoryName || actualTitle);
+            formData.append('subCategory', actualTitle);
             formData.append('videoUrl', newVideoData.url);
             const title_lang = {};
             const status_lang = {};
