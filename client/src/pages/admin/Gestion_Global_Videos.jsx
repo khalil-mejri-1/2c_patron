@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { FaVideo, FaMapMarkerAlt, FaLink, FaLanguage, FaSpinner, FaSearch, FaFilter, FaExternalLinkAlt, FaLayerGroup, FaBook, FaChevronDown, FaChevronUp, FaTrash } from 'react-icons/fa';
+import { FaVideo, FaMapMarkerAlt, FaLink, FaLanguage, FaSpinner, FaSearch, FaFilter, FaExternalLinkAlt, FaLayerGroup, FaBook, FaChevronDown, FaChevronUp, FaTrash, FaPlus, FaTimes, FaPencilAlt } from 'react-icons/fa';
 import NavbarAdmin from '../../comp/Navbar_admin';
 import BASE_URL from '../../apiConfig';
 import { useLanguage } from '../../context/LanguageContext';
@@ -16,6 +16,15 @@ export default function Gestion_Global_Videos() {
     const [filterCategory, setFilterCategory] = useState('');
     const [activeTab, setActiveTab] = useState('categories'); // 'categories' | 'videos'
     const [expandedGroups, setExpandedGroups] = useState({});
+
+    // --- 📥 Bulk Video State ---
+    const [isBulkEntryOpen, setIsBulkEntryOpen] = useState(false);
+    const [bulkContext, setBulkContext] = useState({ mainCat: '', subCat: '' });
+    const [bulkTitles, setBulkTitles] = useState({ fr: '', ar: '', tn: '' });
+    const [bulkUrls, setBulkUrls] = useState({ fr: '', ar: '', tn: '' });
+    const [bulkLoading, setBulkLoading] = useState(false);
+    const [bulkModalMode, setBulkModalMode] = useState('add'); // 'add' | 'edit'
+    const [bulkVideoId, setBulkVideoId] = useState(null);
 
     useEffect(() => {
         fetchAll();
@@ -68,6 +77,76 @@ export default function Gestion_Global_Videos() {
                 showAlert('error', 'Erreur', "Erreur lors de la suppression.");
             }
         });
+    };
+
+    const handleSaveVideoMultiLang = async () => {
+        if (!bulkUrls.fr && !bulkUrls.ar && !bulkUrls.tn) {
+            showAlert('error', "Erreur", "Veuillez fournir au moins un lien de vidéo.");
+            return;
+        }
+        setBulkLoading(true);
+        try {
+            const formData = new FormData();
+            formData.append('category', bulkContext.mainCat);
+            formData.append('subCategory', bulkContext.subCat);
+            formData.append('title', bulkTitles.fr || bulkTitles.ar || bulkTitles.tn || "Sans Titre");
+
+            formData.append('title_lang', JSON.stringify({
+                fr: bulkTitles.fr || "",
+                ar: bulkTitles.ar || "",
+                en: bulkTitles.tn || "",
+                tn: bulkTitles.tn || ""
+            }));
+            formData.append('url_lang', JSON.stringify({
+                fr: bulkUrls.fr || "",
+                ar: bulkUrls.ar || "",
+                en: bulkUrls.tn || "",
+                tn: bulkUrls.tn || ""
+            }));
+            formData.append('status_lang', JSON.stringify({
+                fr: "VIP", ar: "VIP", en: "VIP", tn: "VIP"
+            }));
+
+            if (bulkModalMode === 'edit' && bulkVideoId) {
+                await axios.put(`${BASE_URL}/api/specialized-videos/${bulkVideoId}`, formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
+                showAlert('success', "Succès", "Vidéo modifiée avec succès !");
+            } else {
+                await axios.post(`${BASE_URL}/api/specialized-videos`, formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
+                showAlert('success', "Succès", "Vidéo multi-langues ajoutée avec succès !");
+            }
+
+            setIsBulkEntryOpen(false);
+            setBulkTitles({ fr: '', ar: '', tn: '' });
+            setBulkUrls({ fr: '', ar: '', tn: '' });
+            setBulkVideoId(null);
+            fetchAll();
+        } catch (error) {
+            console.error(error);
+            showAlert('error', "Erreur", "Impossible d'enregistrer la vidéo.");
+        } finally {
+            setBulkLoading(false);
+        }
+    };
+
+    const handleOpenEditVideo = (video) => {
+        setBulkModalMode('edit');
+        setBulkVideoId(video._id);
+        setBulkContext({ mainCat: video.category, subCat: video.subCategory });
+        setBulkTitles({
+            fr: video.title_lang?.fr || (video.title && !video.title_lang?.ar ? video.title : ''),
+            ar: video.title_lang?.ar || '',
+            tn: video.title_lang?.en || ''
+        });
+        setBulkUrls({
+            fr: video.url_lang?.fr || (video.url && !video.url_lang?.ar ? video.url : ''),
+            ar: video.url_lang?.ar || '',
+            tn: video.url_lang?.en || ''
+        });
+        setIsBulkEntryOpen(true);
     };
 
     const handleReassignVideo = async (video, newLessonTitle) => {
@@ -396,14 +475,32 @@ export default function Gestion_Global_Videos() {
                                                                                 <div style={{ fontWeight: '800', color: '#1e293b', fontSize: '1.05rem', letterSpacing: '-0.01em' }}>{titleStr}</div>
                                                                             </div>
                                                                         </div>
-                                                                        <button
-                                                                            onClick={() => handleDeleteSubCourse(group._id, i)}
-                                                                            style={{
-                                                                                padding: '5px 10px', borderRadius: '6px', border: 'none', background: 'rgba(239,68,68,0.1)', color: '#ef4444', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', fontWeight: 'bold'
-                                                                            }} title="Supprimer la leçon"
-                                                                        >
-                                                                            <FaTrash size={10} /> Supprimer
-                                                                        </button>
+                                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                                            <button
+                                                                                onClick={(e) => {
+                                                                                    e.stopPropagation();
+                                                                                    setBulkModalMode('add');
+                                                                                    setBulkVideoId(null);
+                                                                                    setBulkContext({ mainCat: group.vip_category, subCat: titleStr });
+                                                                                    setBulkTitles({ fr: '', ar: '', tn: '' });
+                                                                                    setBulkUrls({ fr: '', ar: '', tn: '' });
+                                                                                    setIsBulkEntryOpen(true);
+                                                                                }}
+                                                                                style={{
+                                                                                    padding: '5px 12px', borderRadius: '6px', border: 'none', background: 'rgba(34,197,94,0.1)', color: '#16a34a', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', fontWeight: 'bold'
+                                                                                }} title="Ajouter une vidéo (multi-langues)"
+                                                                            >
+                                                                                <FaPlus size={10} /> Ajouter
+                                                                            </button>
+                                                                            <button
+                                                                                onClick={() => handleDeleteSubCourse(group._id, i)}
+                                                                                style={{
+                                                                                    padding: '5px 10px', borderRadius: '6px', border: 'none', background: 'rgba(239,68,68,0.1)', color: '#ef4444', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', fontWeight: 'bold'
+                                                                                }} title="Supprimer la leçon"
+                                                                            >
+                                                                                <FaTrash size={10} /> Supprimer
+                                                                            </button>
+                                                                        </div>
                                                                     </div>
 
                                                                     {/* Videos Branch */}
@@ -428,18 +525,26 @@ export default function Gestion_Global_Videos() {
                                                                                             </div>
                                                                                             <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                                                                                                 <div style={{ display: 'flex', gap: '5px' }}>
-                                                                                                    {['fr', 'ar', 'tn'].map(lang => (
-                                                                                                        <span key={lang} style={{
-                                                                                                            padding: '2px 7px', borderRadius: '6px', fontSize: '0.7rem', fontWeight: 'bold', textTransform: 'uppercase',
-                                                                                                            background: video.url_lang?.[lang] ? 'rgba(34,197,94,0.1)' : '#f1f5f9',
-                                                                                                            color: video.url_lang?.[lang] ? '#16a34a' : '#cbd5e1',
-                                                                                                            border: video.url_lang?.[lang] ? '1px solid rgba(34,197,94,0.2)' : '1px solid #e2e8f0'
-                                                                                                        }}>{lang}</span>
-                                                                                                    ))}
+                                                                                                    {['fr', 'ar', 'tn'].map(lang => {
+                                                                                                        const isPresent = video.url_lang?.[lang] || (lang === 'tn' && video.url_lang?.en);
+                                                                                                        return (
+                                                                                                            <span key={lang} style={{
+                                                                                                                padding: '2px 7px', borderRadius: '6px', fontSize: '0.7rem', fontWeight: 'bold', textTransform: 'uppercase',
+                                                                                                                background: isPresent ? 'rgba(34,197,94,0.1)' : 'rgba(239, 68, 68, 0.08)',
+                                                                                                                color: isPresent ? '#16a34a' : '#ef4444',
+                                                                                                                border: isPresent ? '1px solid rgba(34,197,94,0.2)' : '1px solid rgba(239, 68, 68, 0.15)'
+                                                                                                            }}>{lang}</span>
+                                                                                                        );
+                                                                                                    })}
                                                                                                 </div>
-                                                                                                <button onClick={() => handleDeleteVideo(video._id)} style={{
-                                                                                                    padding: '4px', borderRadius: '4px', border: 'none', background: 'transparent', color: '#ef4444', cursor: 'pointer', display: 'flex'
-                                                                                                }} title="Supprimer la vidéo"><FaTrash size={12} /></button>
+                                                                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                                                                    <button onClick={() => handleOpenEditVideo(video)} style={{
+                                                                                                        padding: '4px', borderRadius: '4px', border: 'none', background: 'transparent', color: '#64748b', cursor: 'pointer', display: 'flex'
+                                                                                                    }} title="Modifier la vidéo"><FaPencilAlt size={11} /></button>
+                                                                                                    <button onClick={() => handleDeleteVideo(video._id)} style={{
+                                                                                                        padding: '4px', borderRadius: '4px', border: 'none', background: 'transparent', color: '#ef4444', cursor: 'pointer', display: 'flex'
+                                                                                                    }} title="Supprimer la vidéo"><FaTrash size={12} /></button>
+                                                                                                </div>
                                                                                             </div>
                                                                                         </div>
                                                                                     </div>
@@ -570,14 +675,17 @@ export default function Gestion_Global_Videos() {
                                             </td>
                                             <td style={{ padding: '20px 25px' }}>
                                                 <div style={{ display: 'flex', gap: '6px' }}>
-                                                    {['fr', 'ar', 'en'].map(lang => (
-                                                        <span key={lang} style={{
-                                                            padding: '4px 10px', borderRadius: '8px', fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase',
-                                                            background: video.url_lang?.[lang] ? 'rgba(34,197,94,0.1)' : '#f1f5f9',
-                                                            color: video.url_lang?.[lang] ? '#16a34a' : '#94a3b8',
-                                                            border: video.url_lang?.[lang] ? '1px solid rgba(34,197,94,0.2)' : '1px solid #e2e8f0'
-                                                        }}>{lang}</span>
-                                                    ))}
+                                                    {['fr', 'ar', 'tn'].map(lang => {
+                                                        const isPresent = video.url_lang?.[lang] || (lang === 'tn' && video.url_lang?.en);
+                                                        return (
+                                                            <span key={lang} style={{
+                                                                padding: '4px 10px', borderRadius: '8px', fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase',
+                                                                background: isPresent ? 'rgba(34,197,94,0.1)' : 'rgba(239, 68, 68, 0.08)',
+                                                                color: isPresent ? '#16a34a' : '#ef4444',
+                                                                border: isPresent ? '1px solid rgba(34,197,94,0.2)' : '1px solid rgba(239, 68, 68, 0.15)'
+                                                            }}>{lang}</span>
+                                                        );
+                                                    })}
                                                 </div>
                                             </td>
                                             <td style={{ padding: '20px 25px' }}>
@@ -588,6 +696,12 @@ export default function Gestion_Global_Videos() {
                                                     }}>
                                                         <FaExternalLinkAlt size={11} /> Voir
                                                     </a>
+                                                    <button onClick={() => handleOpenEditVideo(video)} style={{
+                                                        padding: '7px 13px', borderRadius: '10px', border: 'none',
+                                                        background: 'rgba(51, 65, 85, 0.08)', color: '#475569', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.85rem'
+                                                    }}>
+                                                        <FaPencilAlt size={11} /> Modifier
+                                                    </button>
                                                     <button onClick={() => handleDeleteVideo(video._id)} style={{
                                                         padding: '7px 13px', borderRadius: '10px', border: 'none',
                                                         background: 'rgba(239,68,68,0.1)', color: '#ef4444', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.85rem'
@@ -610,6 +724,132 @@ export default function Gestion_Global_Videos() {
                     </div>
                 )}
             </div>
+
+            {/* --- 📝 BULK ADD VIDEO MODAL --- */}
+            {isBulkEntryOpen && (
+                <div style={{
+                    position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+                    background: 'rgba(15, 23, 42, 0.7)', backdropFilter: 'blur(8px)',
+                    zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px'
+                }} onClick={() => setIsBulkEntryOpen(false)}>
+                    <div style={{
+                        background: '#fff', width: '100%', maxWidth: '800px', borderRadius: '24px',
+                        padding: '35px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', position: 'relative'
+                    }} onClick={(e) => e.stopPropagation()}>
+                        <button
+                            onClick={() => setIsBulkEntryOpen(false)}
+                            style={{ position: 'absolute', top: '25px', right: '25px', border: 'none', background: 'transparent', cursor: 'pointer', color: '#94a3b8' }}
+                        ><FaTimes size={22} /></button>
+
+                        <div style={{ marginBottom: '30px' }}>
+                            <h2 style={{ fontSize: '1.75rem', fontWeight: '800', color: '#1e293b', marginBottom: '8px' }}>
+                                {bulkModalMode === 'edit' ? 'Modifier la Vidéo' : 'Ajouter des Vidéos Multi-langues'}
+                            </h2>
+                            <p style={{ color: '#64748b', fontSize: '1rem' }}>
+                                Leçon: <span style={{ color: '#D4AF37', fontWeight: 'bold' }}>{bulkContext.subCat}</span>
+                            </p>
+                        </div>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', marginBottom: '35px' }}>
+                            {/* --- French Section --- */}
+                            <div style={{ background: '#f8fafc', padding: '20px', borderRadius: '18px', border: '1px solid #f1f5f9' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '15px' }}>
+                                    <span style={{ padding: '4px 8px', borderRadius: '6px', background: 'rgba(34,197,94,0.1)', color: '#16a34a', fontSize: '0.7rem', fontWeight: 'bold' }}>FR</span>
+                                    <span style={{ fontWeight: '700', color: '#475569', fontSize: '0.9rem' }}>Français</span>
+                                </div>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                    <div>
+                                        <label style={{ fontSize: '0.75rem', color: '#94a3b8', marginBottom: '4px', display: 'block' }}>Nom du vidéo</label>
+                                        <input
+                                            type="text" placeholder="Ex: Introduction"
+                                            value={bulkTitles.fr} onChange={(e) => setBulkTitles({ ...bulkTitles, fr: e.target.value })}
+                                            style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid #e2e8f0', outline: 'none', fontSize: '0.9rem' }}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label style={{ fontSize: '0.75rem', color: '#94a3b8', marginBottom: '4px', display: 'block' }}>Lien du vidéo</label>
+                                        <input
+                                            type="text" placeholder="https://..."
+                                            value={bulkUrls.fr} onChange={(e) => setBulkUrls({ ...bulkUrls, fr: e.target.value })}
+                                            style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid #e2e8f0', outline: 'none', fontSize: '0.9rem' }}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* --- Arabic Section --- */}
+                            <div style={{ background: '#f8fafc', padding: '20px', borderRadius: '18px', border: '1px solid #f1f5f9' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '15px' }}>
+                                    <span style={{ padding: '4px 8px', borderRadius: '6px', background: 'rgba(34,197,94,0.1)', color: '#16a34a', fontSize: '0.7rem', fontWeight: 'bold' }}>AR</span>
+                                    <span style={{ fontWeight: '700', color: '#475569', fontSize: '0.9rem' }}>العربية</span>
+                                </div>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                    <div>
+                                        <label style={{ fontSize: '0.75rem', color: '#94a3b8', marginBottom: '4px', display: 'block', textAlign: 'right' }}>اسم الفيديو</label>
+                                        <input
+                                            type="text" placeholder="مثال: مقدمة"
+                                            value={bulkTitles.ar} onChange={(e) => setBulkTitles({ ...bulkTitles, ar: e.target.value })}
+                                            style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid #e2e8f0', outline: 'none', fontSize: '0.9rem', textAlign: 'right', direction: 'rtl' }}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label style={{ fontSize: '0.75rem', color: '#94a3b8', marginBottom: '4px', display: 'block', textAlign: 'right' }}>رابط الفيديو</label>
+                                        <input
+                                            type="text" placeholder="https://..."
+                                            value={bulkUrls.ar} onChange={(e) => setBulkUrls({ ...bulkUrls, ar: e.target.value })}
+                                            style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid #e2e8f0', outline: 'none', fontSize: '0.9rem', textAlign: 'right', direction: 'rtl' }}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* --- Tunisian Section --- */}
+                            <div style={{ background: '#f8fafc', padding: '20px', borderRadius: '18px', border: '1px solid #f1f5f9' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '15px' }}>
+                                    <span style={{ padding: '4px 8px', borderRadius: '6px', background: 'rgba(34,197,94,0.1)', color: '#16a34a', fontSize: '0.7rem', fontWeight: 'bold' }}>TN</span>
+                                    <span style={{ fontWeight: '700', color: '#475569', fontSize: '0.9rem' }}>Tounsi / EN</span>
+                                </div>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                    <div>
+                                        <label style={{ fontSize: '0.75rem', color: '#94a3b8', marginBottom: '4px', display: 'block' }}>Nom du vidéo (TN)</label>
+                                        <input
+                                            type="text" placeholder="Ex: Intro TN"
+                                            value={bulkTitles.tn} onChange={(e) => setBulkTitles({ ...bulkTitles, tn: e.target.value })}
+                                            style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid #e2e8f0', outline: 'none', fontSize: '0.9rem' }}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label style={{ fontSize: '0.75rem', color: '#94a3b8', marginBottom: '4px', display: 'block' }}>Lien du vidéo (TN)</label>
+                                        <input
+                                            type="text" placeholder="https://..."
+                                            value={bulkUrls.tn} onChange={(e) => setBulkUrls({ ...bulkUrls, tn: e.target.value })}
+                                            style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid #e2e8f0', outline: 'none', fontSize: '0.9rem' }}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '15px', justifyContent: 'flex-end' }}>
+                            <button
+                                onClick={() => setIsBulkEntryOpen(false)}
+                                style={{ padding: '12px 25px', borderRadius: '12px', border: 'none', background: '#f1f5f9', color: '#475569', fontWeight: '700', cursor: 'pointer' }}
+                            >Annuler</button>
+                            <button
+                                onClick={handleSaveVideoMultiLang}
+                                disabled={bulkLoading}
+                                style={{
+                                    padding: '12px 35px', borderRadius: '12px', border: 'none', background: '#D4AF37', color: '#fff', fontWeight: 'bold', cursor: 'pointer',
+                                    display: 'flex', alignItems: 'center', gap: '8px', boxShadow: '0 10px 15px -3px rgba(212,175,55,0.3)'
+                                }}
+                            >
+                                {bulkLoading ? <FaSpinner className="spinner" /> : (bulkModalMode === 'edit' ? <FaPencilAlt /> : <FaPlus />)}
+                                {bulkModalMode === 'edit' ? 'Enregistrer les modifications' : 'Enregistrer Tout'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <style dangerouslySetInnerHTML={{ __html: `@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } } .spinner { animation: spin 1s linear infinite; }` }} />
         </div>

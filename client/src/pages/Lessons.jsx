@@ -55,7 +55,6 @@ const translations = {
         errorTitle: "Loading failed.",
         errorMsg: "Failed to retrieve videos. Please check server connection.",
         lessonsTitle: (title) => `${title} Lessons`,
-        lessonsTitle: (title) => `${title} Lessons`,
         listTitle: "Lesson Curriculum",
         noVideos: (title) => `No videos available for category "${title}" at the moment.`,
         certificateTitle: "Get Your Certification",
@@ -67,6 +66,23 @@ const translations = {
         playing: "NOW PLAYING",
         cancel: "Cancel",
         save: "Save"
+    },
+    tn: {
+        loading: "جاري تحميل محتوى الدورة...",
+        errorTitle: "تعذر تحميل الدروس",
+        errorMsg: "حدث خطأ أثناء استخراج الفيديوهات. يرجى التأكد من استقرار الخادم.",
+        lessonsTitle: (title) => `دروس ${title}`,
+        listTitle: "المنهج التعليمي (تونسي)",
+        noVideos: (title) => `لا تتوفر فيديوهات حالياً لهذه الفئة: "${title}".`,
+        certificateTitle: "احصل على شهادتك المعتمدة",
+        certificateText: "بمجرد إكمال المنهج بالكامل، يمكنك الحصول على شهادة معتمدة من مشغل صفاقس تعزز ملفك المهني.",
+        whatsappNum: "26 123 456",
+        whatsappBtn: "اطلب شهادتك الآن",
+        free: "مجاني",
+        badge: "دورة تعليمية",
+        playing: "قيد المشاهدة (TN)",
+        cancel: "إلغاء",
+        save: "حفظ"
     }
 };
 
@@ -110,7 +126,7 @@ const LessonCard = ({ video, isActive, onSelect, lang, isAdmin, onEdit, onDelete
                 </div>
             )}
             <div className="l-card-preview-box">
-                <img src={video.thumbnail} alt={video.title_lang?.[appLanguage] || video.title} className="l-card-preview-img" />
+                <img src={video.thumbnail} alt={video.title} className="l-card-preview-img" />
                 <div className="l-play-overlay">
                     <div className="l-play-btn-circle">
                         {isActive ? <FaPlayCircle /> : <FaPlay />}
@@ -118,7 +134,7 @@ const LessonCard = ({ video, isActive, onSelect, lang, isAdmin, onEdit, onDelete
                 </div>
             </div>
             <div className="l-card-details">
-                <h3 className="l-card-title-text">{video.title_lang?.[appLanguage] || video.title}</h3>
+                <h3 className="l-card-title-text">{video.title}</h3>
                 <div className="l-card-meta-bar">
                     {(isActive || video.status_lang?.[appLanguage] || video.isVip) && (
                         <span className="l-meta-tag">
@@ -231,11 +247,17 @@ export default function Lessons() {
             const res = await axios.get(`${BASE_URL}/api/specialized-videos`, {
                 params: { category: titles.length === 1 ? titles[0] : titles } // Send string if single, array if multiple
             });
-            const preparedVideos = res.data.map((v, i) => ({
-                ...v,
-                isVip: i % 3 === 0,
-                thumbnail: getThumbnailUrl(v.url_lang?.[appLanguage] || v.url, v.title, appLanguage)
-            }));
+            const preparedVideos = res.data.map((v, i) => {
+                const localizedTitle = v.title_lang?.[appLanguage] || (appLanguage === 'tn' && v.title_lang?.en) || v.title;
+                const localizedUrl = v.url_lang?.[appLanguage] || (appLanguage === 'tn' && v.url_lang?.en) || v.url;
+                return {
+                    ...v,
+                    title: localizedTitle, // Overwrite base title with translation
+                    url: localizedUrl,     // Overwrite base url with translation
+                    isVip: i % 3 === 0,
+                    thumbnail: getThumbnailUrl(localizedUrl, localizedTitle)
+                };
+            });
             setVideos(preparedVideos);
             if (preparedVideos.length > 0) setCurrentVideo(preparedVideos[0]);
             setError(null);
@@ -604,7 +626,7 @@ export default function Lessons() {
                 {currentVideo && (
                     <div className="active-focus-cinema" ref={topRef}>
                         <UniversalVideoPlayer 
-                            url={currentVideo.url_lang?.[appLanguage] || currentVideo.url} 
+                            url={currentVideo.url} 
                             title={currentVideo.title}
                             autoPlay={true}
                         />
