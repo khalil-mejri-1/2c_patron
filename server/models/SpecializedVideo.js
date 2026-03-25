@@ -10,6 +10,7 @@ const specializedVideoSchema = new mongoose.Schema({
     description: { type: String },
     category: { type: String, required: true },
     subCategory: { type: String, default: '' }, // NEW: Link video directly to a subcategory
+    order: { type: Number, default: 0 },         // NEW: Custom order for video listing
     createdAt: { type: Date, default: Date.now },
 });
 

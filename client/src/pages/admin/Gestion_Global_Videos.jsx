@@ -22,6 +22,7 @@ export default function Gestion_Global_Videos() {
     const [bulkContext, setBulkContext] = useState({ mainCat: '', subCat: '' });
     const [bulkTitles, setBulkTitles] = useState({ fr: '', ar: '', tn: '' });
     const [bulkUrls, setBulkUrls] = useState({ fr: '', ar: '', tn: '' });
+    const [bulkOrder, setBulkOrder] = useState(0);
     const [bulkLoading, setBulkLoading] = useState(false);
     const [bulkModalMode, setBulkModalMode] = useState('add'); // 'add' | 'edit'
     const [bulkVideoId, setBulkVideoId] = useState(null);
@@ -106,6 +107,7 @@ export default function Gestion_Global_Videos() {
             formData.append('status_lang', JSON.stringify({
                 fr: "VIP", ar: "VIP", en: "VIP", tn: "VIP"
             }));
+            formData.append('order', bulkOrder);
 
             if (bulkModalMode === 'edit' && bulkVideoId) {
                 await axios.put(`${BASE_URL}/api/specialized-videos/${bulkVideoId}`, formData, {
@@ -139,13 +141,14 @@ export default function Gestion_Global_Videos() {
         setBulkTitles({
             fr: video.title_lang?.fr || (video.title && !video.title_lang?.ar ? video.title : ''),
             ar: video.title_lang?.ar || '',
-            tn: video.title_lang?.en || ''
+            tn: video.title_lang?.tn || video.title_lang?.en || ''
         });
         setBulkUrls({
             fr: video.url_lang?.fr || (video.url && !video.url_lang?.ar ? video.url : ''),
             ar: video.url_lang?.ar || '',
-            tn: video.url_lang?.en || ''
+            tn: video.url_lang?.tn || video.url_lang?.en || ''
         });
+        setBulkOrder(video.order || 0);
         setIsBulkEntryOpen(true);
     };
 
@@ -484,6 +487,7 @@ export default function Gestion_Global_Videos() {
                                                                                     setBulkContext({ mainCat: group.vip_category, subCat: titleStr });
                                                                                     setBulkTitles({ fr: '', ar: '', tn: '' });
                                                                                     setBulkUrls({ fr: '', ar: '', tn: '' });
+                                                                                    setBulkOrder(0);
                                                                                     setIsBulkEntryOpen(true);
                                                                                 }}
                                                                                 style={{
@@ -748,6 +752,17 @@ export default function Gestion_Global_Videos() {
                             <p style={{ color: '#64748b', fontSize: '1rem' }}>
                                 Leçon: <span style={{ color: '#D4AF37', fontWeight: 'bold' }}>{bulkContext.subCat}</span>
                             </p>
+                            
+                            <div style={{ marginTop: '20px', padding: '15px', background: '#f8fafc', borderRadius: '15px', display: 'flex', alignItems: 'center', gap: '15px', border: '1px solid #f1f5f9' }}>
+                                <label style={{ fontWeight: '700', color: '#475569', fontSize: '0.9rem' }}>Ordre d'affichage :</label>
+                                <input 
+                                    type="number" 
+                                    value={bulkOrder} 
+                                    onChange={(e) => setBulkOrder(e.target.value)}
+                                    style={{ width: '80px', padding: '10px', borderRadius: '10px', border: '1px dotted #cbd5e1', outline: 'none', textAlign: 'center', fontWeight: 'bold' }}
+                                />
+                                <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>(Les petits numéros s'affichent en premier)</span>
+                            </div>
                         </div>
 
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', marginBottom: '35px' }}>

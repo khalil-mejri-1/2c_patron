@@ -178,6 +178,7 @@ export default function Lessons() {
     const [isEditingVideo, setIsEditingVideo] = useState(false);
     const [editingVideo, setEditingVideo] = useState(null);
     const [editVideoContent, setEditVideoContent] = useState({});
+    const [editVideoOrder, setEditVideoOrder] = useState(0);
     const [editVideoUrl, setEditVideoUrl] = useState("");
     const [editSelectedFile, setEditSelectedFile] = useState(null);
     const [editSelectedLangFiles, setEditSelectedLangFiles] = useState({});
@@ -420,6 +421,7 @@ export default function Lessons() {
             };
         });
         setEditVideoContent(init);
+        setEditVideoOrder(video.order || 0);
         setIsEditingVideo(true);
     };
 
@@ -443,6 +445,7 @@ export default function Lessons() {
             formData.append('title_lang', JSON.stringify(title_lang));
             formData.append('status_lang', JSON.stringify(status_lang));
             formData.append('url_lang', JSON.stringify(url_lang));
+            formData.append('order', editVideoOrder);
 
             if (editSelectedFile) formData.append('video', editSelectedFile);
 
@@ -887,6 +890,17 @@ export default function Lessons() {
                     <div className="premium-modal-content large" onClick={(e) => e.stopPropagation()}>
                         <button className="premium-modal-close-icon" onClick={() => setIsEditingVideo(false)}><FaTimes /></button>
                         <h2 className="premium-modal-title" style={{ textAlign: 'center' }}>Modifier la Leçon (Langues)</h2>
+
+                        <div style={{ marginBottom: '20px', padding: '15px', background: '#f8fafc', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '15px' }}>
+                            <label style={{ fontWeight: '600', color: '#1e293b' }}>Ordre d'affichage :</label>
+                            <input 
+                                type="number" 
+                                value={editVideoOrder} 
+                                onChange={(e) => setEditVideoOrder(e.target.value)}
+                                style={{ width: '80px', padding: '8px', borderRadius: '8px', border: '1px solid #e2e8f0', outline: 'none' }}
+                            />
+                            <span style={{ fontSize: '0.8rem', color: '#64748b' }}>(Le numéro le plus petit s'affiche en premier)</span>
+                        </div>
 
                         <div className="premium-form-grid">
                             {languages.filter(l => l.code === appLanguage).map(lang => (

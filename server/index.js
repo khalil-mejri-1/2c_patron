@@ -1333,7 +1333,7 @@ app.post('/api/specialized-videos', upload.fields([
     { name: 'video', maxCount: 1 }
 ]), async (req, res) => {
     try {
-        const { title, description, category, subCategory, videoUrl, title_lang, status_lang, url_lang } = req.body;
+        const { title, description, category, subCategory, videoUrl, title_lang, status_lang, url_lang, order } = req.body;
 
         // 1. Handle Main URL
         let finalUrl = videoUrl;
@@ -1361,7 +1361,8 @@ app.post('/api/specialized-videos', upload.fields([
             category,
             subCategory: subCategory || '',
             title_lang: typeof title_lang === 'string' ? JSON.parse(title_lang) : title_lang,
-            status_lang: typeof status_lang === 'string' ? JSON.parse(status_lang) : status_lang
+            status_lang: typeof status_lang === 'string' ? JSON.parse(status_lang) : status_lang,
+            order: Number(order) || 0
         });
 
         await newVideo.save();
@@ -1401,7 +1402,7 @@ app.get('/api/specialized-videos', async (req, res) => {
                 { subCategory: { $in: matchArr } }
             ];
         }
-        const videos = await SpecializedVideo.find(query).sort({ createdAt: -1 });
+        const videos = await SpecializedVideo.find(query).sort({ order: 1, createdAt: -1 });
         res.json(videos);
     } catch (err) {
         console.error(err);
@@ -1440,7 +1441,7 @@ app.put('/api/specialized-videos/:id', upload.fields([
     { name: 'video', maxCount: 1 }
 ]), async (req, res) => {
     try {
-        const { title, description, category, subCategory, videoUrl, title_lang, status_lang, url_lang } = req.body;
+        const { title, description, category, subCategory, videoUrl, title_lang, status_lang, url_lang, order } = req.body;
 
         const videoId = req.params.id;
         if (!videoId.match(/^[0-9a-fA-F]{24}$/)) {
@@ -1452,7 +1453,8 @@ app.put('/api/specialized-videos/:id', upload.fields([
             description: description?.trim() || '',
             category: category?.trim(),
             title_lang: typeof title_lang === 'string' ? JSON.parse(title_lang) : title_lang,
-            status_lang: typeof status_lang === 'string' ? JSON.parse(status_lang) : status_lang
+            status_lang: typeof status_lang === 'string' ? JSON.parse(status_lang) : status_lang,
+            order: Number(order) || 0
         };
 
         if (subCategory !== undefined) {
