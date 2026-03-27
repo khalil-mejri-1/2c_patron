@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { useLanguage } from '../context/LanguageContext';
-import { FaShoppingCart, FaSearch, FaChevronDown, FaTimes, FaUser, FaMapMarkerAlt, FaPhoneAlt, FaMinusCircle, FaPlusCircle, FaSpinner, FaCheckCircle, FaCommentAlt, FaStar, FaRegStar, FaChevronLeft, FaChevronRight, FaEdit, FaSave, FaTrash, FaPlus, FaWhatsapp, FaFacebookMessenger, FaRobot, FaPaperPlane } from 'react-icons/fa';
+import { FaShoppingCart, FaSearch, FaChevronDown, FaTimes, FaUser, FaMapMarkerAlt, FaPhoneAlt, FaMinusCircle, FaPlusCircle, FaSpinner, FaCheckCircle, FaCommentAlt, FaStar, FaRegStar, FaChevronLeft, FaChevronRight, FaEdit, FaSave, FaTrash, FaPlus, FaWhatsapp, FaFacebookMessenger, FaRobot, FaPaperPlane, FaCloudUploadAlt } from 'react-icons/fa';
 import Navbar from '../comp/navbar';
 import Footer from '../comp/Footer';
 import { useAlert } from '../context/AlertContext';
@@ -252,10 +252,11 @@ const ImageCarousel = ({ images, direction, height = '320px' }) => {
                 className="carousel-inner"
                 style={{
                     display: 'flex',
-                    transition: 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
+                    transition: 'transform 0.5s cubic-bezier(0.25, 0.8, 0.25, 1)',
                     transform: `translateX(-${currentIndex * 100}%)`,
                     height: '100%',
-                    width: '100%'
+                    width: '100%',
+                    borderRadius: '16px'
                 }}
             >
                 {images.map((url, index) => (
@@ -281,52 +282,60 @@ const ImageCarousel = ({ images, direction, height = '320px' }) => {
                     <button
                         onClick={goToPrevious}
                         className="carousel-control-btn prev"
+                        onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(0, 0, 0, 0.7)'; e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)'; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(0, 0, 0, 0.4)'; e.currentTarget.style.transform = 'translateY(-50%) scale(1)'; }}
                         style={{
                             position: 'absolute',
                             top: '50%',
                             transform: 'translateY(-50%)',
-                            left: '10px',
-                            background: 'rgba(255,255,255,0.8)',
+                            left: '12px',
+                            background: 'rgba(0, 0, 0, 0.4)',
+                            backdropFilter: 'blur(4px)',
+                            WebkitBackdropFilter: 'blur(4px)',
                             border: 'none',
-                            color: '#1a1a1a',
-                            width: '32px',
-                            height: '32px',
+                            color: '#fff',
+                            width: '40px',
+                            height: '40px',
                             cursor: 'pointer',
                             zIndex: 15,
                             borderRadius: '50%',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                            transition: 'all 0.3s'
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+                            transition: 'all 0.3s ease'
                         }}
                     >
-                        {direction === 'ar' ? <FaChevronRight size={14} /> : <FaChevronLeft size={14} />}
+                        {direction === 'ar' ? <FaChevronRight size={18} style={{ marginLeft: '2px' }} /> : <FaChevronLeft size={18} style={{ marginRight: '2px' }} />}
                     </button>
                     <button
                         onClick={(e) => goToNext(e)}
                         className="carousel-control-btn next"
+                        onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(0, 0, 0, 0.7)'; e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)'; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(0, 0, 0, 0.4)'; e.currentTarget.style.transform = 'translateY(-50%) scale(1)'; }}
                         style={{
                             position: 'absolute',
                             top: '50%',
                             transform: 'translateY(-50%)',
-                            right: '10px',
-                            background: 'rgba(255,255,255,0.8)',
+                            right: '12px',
+                            background: 'rgba(0, 0, 0, 0.4)',
+                            backdropFilter: 'blur(4px)',
+                            WebkitBackdropFilter: 'blur(4px)',
                             border: 'none',
-                            color: '#1a1a1a',
-                            width: '32px',
-                            height: '32px',
+                            color: '#fff',
+                            width: '40px',
+                            height: '40px',
                             cursor: 'pointer',
                             zIndex: 15,
                             borderRadius: '50%',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                            transition: 'all 0.3s'
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+                            transition: 'all 0.3s ease'
                         }}
                     >
-                        {direction === 'ar' ? <FaChevronLeft size={14} /> : <FaChevronRight size={14} />}
+                        {direction === 'ar' ? <FaChevronLeft size={18} style={{ marginRight: '2px' }} /> : <FaChevronRight size={18} style={{ marginLeft: '2px' }} />}
                     </button>
 
                     <div className="carousel-dots-indicators" style={{ position: 'absolute', bottom: '15px', width: '100%', textAlign: 'center', display: 'flex', justifyContent: 'center', gap: '6px', zIndex: 15 }}>
@@ -335,13 +344,13 @@ const ImageCarousel = ({ images, direction, height = '320px' }) => {
                                 key={index}
                                 style={{
                                     display: 'inline-block',
-                                    width: index === currentIndex ? '12px' : '6px',
-                                    height: '6px',
+                                    width: index === currentIndex ? '24px' : '8px',
+                                    height: '8px',
                                     borderRadius: '10px',
-                                    backgroundColor: index === currentIndex ? '#D4AF37' : 'rgba(255,255,255,0.6)',
+                                    backgroundColor: index === currentIndex ? '#D4AF37' : 'rgba(255,255,255,0.7)',
                                     cursor: 'pointer',
-                                    transition: 'all 0.3s',
-                                    boxShadow: '0 1px 3px rgba(0,0,0,0.2)'
+                                    transition: 'all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1)',
+                                    boxShadow: '0 2px 5px rgba(0,0,0,0.3)'
                                 }}
                                 onClick={(e) => { e.stopPropagation(); setCurrentIndex(index); }}
                             ></span>
@@ -358,7 +367,7 @@ const ImageCarousel = ({ images, direction, height = '320px' }) => {
 // OrderModalComponent (المعدل)
 // ====================================================================
 
-const OrderModalComponent = ({ selectedProduct, quantity, handleQuantityChange, closeOrderModal, isLoggedIn, currentUserEmail, onOrderSuccess, onCustomerDataUpdate, appLanguage, showAlert }) => {
+const OrderModalComponent = ({ selectedProduct, quantity, handleQuantityChange, closeOrderModal, isLoggedIn, currentUserEmail, onOrderSuccess, onCustomerDataUpdate, appLanguage, showAlert, isAdmin }) => {
     const t = translations[appLanguage] || translations.fr;
 
     const [customerData, setCustomerData] = useState({
@@ -367,6 +376,9 @@ const OrderModalComponent = ({ selectedProduct, quantity, handleQuantityChange, 
         phone: ''
     });
     const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
+    // 💡 Add state for inner images to update UI instantly without full refresh
+    const [innerImages, setInnerImages] = useState(selectedProduct.innerImages || []);
+    const [isUploading, setIsUploading] = useState(false);
 
     const handleCustomerDataChange = (e) => {
         const { name, value } = e.target;
@@ -458,13 +470,126 @@ const OrderModalComponent = ({ selectedProduct, quantity, handleQuantityChange, 
                 </div>
 
                 {/* 🆕 المكان الجديد للكاروسيل المتحرك */}
-                {/* 💡 تم التعديل هنا: دمج الصورة الرئيسية مع الصور الثانوية في الكاروسيل */}
+                {/* 💡 تم التعديل هنا: دمج الصورة الرئيسية مع الصور الثانوية والصور الداخلية المخصصة في الكاروسيل */}
                 <ImageCarousel
-                    images={[selectedProduct.url, ...(selectedProduct.secondaryImages || [])].filter(Boolean)}
+                    images={[selectedProduct.url, ...(selectedProduct.secondaryImages || []), ...innerImages].filter(Boolean)}
                     direction={direction}
                     height="400px"
                 />
-                {/* 🔚 نهاية الكاروسيل */}
+                
+                {/* 💡 Upload button for Inner Images (Visible to Admin Only) */}
+                {isAdmin && (
+                    <div style={{ marginTop: '12px', display: 'flex', justifyContent: 'center' }}>
+                        <input
+                            type="file"
+                            accept="image/*"
+                            multiple
+                            id="premiumInnerUpload"
+                            disabled={isUploading}
+                            onChange={async (e) => {
+                                const files = Array.from(e.target.files);
+                                if (!files || files.length === 0) return;
+                                
+                                setIsUploading(true);
+                                try {
+                                    const uploadedUrls = [];
+                                    for (const file of files) {
+                                        const formData = new FormData();
+                                        formData.append('image', file);
+                                        const res = await fetch(`${BASE_URL}/api/upload`, { method: 'POST', body: formData });
+                                        if (res.ok) {
+                                            const data = await res.json();
+                                            uploadedUrls.push(data.url);
+                                        }
+                                    }
+                                    
+                                    if (uploadedUrls.length > 0) {
+                                        const newInnerImages = [...innerImages, ...uploadedUrls];
+                                        setInnerImages(newInnerImages);
+                                        // Save to DB
+                                        fetch(`${BASE_URL}/api/products/${selectedProduct.id}`, {
+                                            method: 'PUT',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({ innerImages: newInnerImages })
+                                        }).catch(err => console.error(err));
+                                        
+                                        // Update selected product object directly to persist before closing
+                                        selectedProduct.innerImages = newInnerImages;
+                                        
+                                        showAlert('success', 'Succès', appLanguage === 'ar' ? `تم إضافة ${uploadedUrls.length} صور بنجاح` : `${uploadedUrls.length} images ajoutées avec succès`);
+                                    }
+                                } catch (err) {
+                                    showAlert('error', 'Erreur', 'Erreur de connexion lors du téléchargement');
+                                } finally {
+                                    setIsUploading(false);
+                                    e.target.value = null; // reset
+                                }
+                            }}
+                            style={{ display: 'none' }}
+                        />
+                        <label 
+                            htmlFor="premiumInnerUpload"
+                            style={{
+                                background: 'linear-gradient(135deg, #1e293b, #0f172a)',
+                                color: '#D4AF37',
+                                padding: '12px 24px',
+                                borderRadius: '30px',
+                                fontSize: '0.9rem',
+                                fontWeight: '600',
+                                cursor: isUploading ? 'not-allowed' : 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '10px',
+                                boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
+                                transition: 'all 0.3s ease',
+                                opacity: isUploading ? 0.7 : 1
+                            }}
+                        >
+                            <FaCloudUploadAlt size={20} className={isUploading ? "spin-animation" : ""} />
+                            {appLanguage === 'ar' ? (isUploading ? 'جاري الرفع...' : ' إضافة صور لمعرض هذه النافذة فقط (Admin)') : (isUploading ? 'Téléchargement...' : ' Ajouter des photos pour ce produit (Admin)')}
+                        </label>
+                    </div>
+                )}
+                
+                {/* 💡 Exhibition of Inner Images for Admin to Delete/Manage */}
+                {isAdmin && innerImages.length > 0 && (
+                    <div style={{ marginTop: '15px', padding: '15px', background: '#f8fafc', borderRadius: '12px' }}>
+                        <p style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#475569', marginBottom: '10px' }}>
+                            {appLanguage === 'ar' ? 'الصور الداخلية الحالية (يمكنك حذفها):' : 'Images internes actuelles (gestion):'}
+                        </p>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                            {innerImages.map((url, idx) => (
+                                <div key={idx} style={{ position: 'relative', width: '70px', height: '70px', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 2px 6px rgba(0,0,0,0.1)' }}>
+                                    <img src={url} alt={`Inner ${idx}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            if (!window.confirm(appLanguage === 'ar' ? 'هل أنت متأكد من حذف هذه الصورة؟' : 'Supprimer cette image?')) return;
+                                            const newInnerImages = innerImages.filter((_, i) => i !== idx);
+                                            setInnerImages(newInnerImages);
+                                            // Save to DB
+                                            fetch(`${BASE_URL}/api/products/${selectedProduct.id}`, {
+                                                method: 'PUT',
+                                                headers: { 'Content-Type': 'application/json' },
+                                                body: JSON.stringify({ innerImages: newInnerImages })
+                                            }).catch(err => console.error(err));
+                                            selectedProduct.innerImages = newInnerImages;
+                                            showAlert('success', 'Succès', appLanguage === 'ar' ? 'تم حذف الصورة' : 'Image supprimée');
+                                        }}
+                                        style={{
+                                            position: 'absolute', top: '4px', right: '4px', background: 'rgba(239, 68, 68, 0.9)', color: 'white', border: 'none', borderRadius: '50%', width: '22px', height: '22px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '10px', transition: 'transform 0.2s'
+                                        }}
+                                        onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.15)'}
+                                        onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                                    >
+                                        <FaTrash />
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+                {/* 🔚 نهاية مربع رفع وإدارة الصور الداخلية */}
 
                 <div className="quantity-control-group">
                     <label>{t.qtyLabel}</label>
@@ -871,6 +996,7 @@ export default function ProductGrid() {
                     // ✅ التصحيح الأساسي: يختار mainImage (الجديد) أو image (القديم) كصورة رئيسية.
                     url: p.mainImage || p.image,
                     secondaryImages: p.secondaryImages || [],
+                    innerImages: p.innerImages || [], // 💡 Added to support images exclusively in the Order Modal carousel
                     alt: typeof p.nom === 'object' ? (p.nom[appLanguage] || p.nom.fr) : p.nom,
                     category: p.categorie,
                     order: p.order || 0
@@ -1545,6 +1671,7 @@ export default function ProductGrid() {
                         onCustomerDataUpdate={handleCustomerDataUpdate}
                         appLanguage={appLanguage}
                         showAlert={showAlert}
+                        isAdmin={isAdmin}
                     />,
                     document.body
                 )

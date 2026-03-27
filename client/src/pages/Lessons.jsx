@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { FaPlay, FaPlayCircle, FaCheckCircle, FaEdit, FaImage, FaTimes, FaWhatsapp, FaCertificate, FaArrowRight, FaLock, FaSpinner, FaTrash } from 'react-icons/fa';
+import { FaPlay, FaPlayCircle, FaCheckCircle, FaEdit, FaImage, FaTimes, FaWhatsapp, FaCertificate, FaArrowRight, FaLock, FaSpinner, FaTrash, FaCloudUploadAlt } from 'react-icons/fa';
 import '../pages/lessons_premium.css';
 import '../comp/PremiumSkeleton.css';
 import Navbar from '../comp/navbar';
@@ -93,9 +93,21 @@ const getThumbnailUrl = (url, fallbackTitle) => {
     const matchYoutube = url?.match(youtubeRegex);
     if (matchYoutube) return `https://img.youtube.com/vi/${matchYoutube[1]}/hqdefault.jpg`;
 
-    const driveRegex = /drive\.google\.com\/file\/d\/([^\/\?]+)/;
+    const driveRegex = /(?:drive\.google\.com\/file\/d\/|drive\.google\.com\/open\?id=|drive\.google\.com\/uc\?id=)([^\/\?&]+)/;
     const matchDrive = url?.match(driveRegex);
     if (matchDrive) return `https://drive.google.com/thumbnail?id=${matchDrive[1]}&sz=w1000`;
+
+    // Cloudinary Direct URL
+    if (url?.includes("res.cloudinary.com") && url?.endsWith(".mp4")) {
+        return url.replace('.mp4', '.jpg');
+    }
+
+    // Cloudinary iframe Player URL
+    const cloudinaryEmbedRegex = /player\.cloudinary\.com\/embed\/\?cloud_name=([^&]+)&public_id=([^&]+)/;
+    const matchCloudinary = url?.match(cloudinaryEmbedRegex);
+    if (matchCloudinary) {
+        return `https://res.cloudinary.com/${matchCloudinary[1]}/video/upload/${matchCloudinary[2]}.jpg`;
+    }
 
     return `https://images.unsplash.com/photo-1558769132-cb1aea458c5e?q=80&w=2574&auto=format&fit=crop`;
 };
@@ -195,6 +207,9 @@ export default function Lessons() {
         url_lang: { fr: '', ar: '', en: '' }
     });
 
+    // Cloudinary Upload State
+    const [uploadingToCloudinary, setUploadingToCloudinary] = useState(null);
+
     const topRef = useRef(null);
 
     const { leconTitle } = useParams();
@@ -214,7 +229,7 @@ export default function Lessons() {
                 setCurriculumInfo(currRes.data);
                 const initCurr = {};
                 languages.forEach(l => {
-                    initCurr[l.code] = { 
+                    initCurr[l.code] = {
                         title: currRes.data[l.code]?.title || translations[l.code]?.listTitle || "",
                         playing: currRes.data[l.code]?.playing || translations[l.code]?.playing || ""
                     };
@@ -239,12 +254,48 @@ export default function Lessons() {
         } catch (e) { console.error("Error fetching site settings", e); }
     }, []);
 
+    const handleFastCloudinaryUpload = async (e, langCode, mode) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        setUploadingToCloudinary(langCode);
+        const formData = new FormData();
+        formData.append('image', file); // Server route specifically looks for 'image' field for media
+
+        try {
+            const res = await axios.post(`${BASE_URL}/api/upload`, formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+
+            if (res.data && res.data.url) {
+                if (mode === 'edit') {
+                    setEditVideoContent(prev => ({
+                        ...prev,
+                        [langCode]: { ...prev[langCode], url: res.data.url }
+                    }));
+                } else if (mode === 'add') {
+                    setNewVideoData(prev => ({
+                        ...prev,
+                        url_lang: { ...prev.url_lang, [langCode]: res.data.url },
+                        url: res.data.url // Ensure fallback base url is set
+                    }));
+                }
+                showAlert('success', 'Success', appLanguage === 'ar' ? 'تم رفع الفيديو وربطه بنجاح!' : 'Vidéo uploadée et liée avec succès!');
+            }
+        } catch (err) {
+            console.error(err);
+            showAlert('error', 'Error', appLanguage === 'ar' ? 'فشل فاستخراج الرابط' : 'Échec de l\'upload de la vidéo.');
+        } finally {
+            setUploadingToCloudinary(null);
+        }
+    };
+
     const fetchVideos = useCallback(async (allTitles = [actualTitle]) => {
         setLoading(true);
         try {
             // Convert to array if it is not one
             const titles = Array.isArray(allTitles) ? allTitles : [allTitles];
-            
+
             const res = await axios.get(`${BASE_URL}/api/specialized-videos`, {
                 params: { category: titles.length === 1 ? titles[0] : titles } // Send string if single, array if multiple
             });
@@ -327,7 +378,7 @@ export default function Lessons() {
                 if (foundCourse.technicalName && !titles.includes(foundCourse.technicalName)) {
                     titles.push(foundCourse.technicalName);
                 }
-                
+
                 fetchVideos(titles);
             } else {
                 // If course not found in DB yet, fallback to just actualTitle
@@ -628,8 +679,8 @@ export default function Lessons() {
                 {/* --- ACTIVE FOCUS PLAYER --- */}
                 {currentVideo && (
                     <div className="active-focus-cinema" ref={topRef}>
-                        <UniversalVideoPlayer 
-                            url={currentVideo.url} 
+                        <UniversalVideoPlayer
+                            url={currentVideo.url}
                             title={currentVideo.title}
                             autoPlay={true}
                         />
@@ -665,7 +716,7 @@ export default function Lessons() {
                     {videos.map(video => (
                         <LessonCard
                             key={video._id}
-                            video={{...video, playing_text: curriculumInfo[appLanguage]?.playing}}
+                            video={{ ...video, playing_text: curriculumInfo[appLanguage]?.playing }}
                             isActive={currentVideo?._id === video._id}
                             onSelect={handleSelectVideo}
                             lang={t}
@@ -697,6 +748,24 @@ export default function Lessons() {
                         <FaWhatsapp size={22} />
                         <span>{certInfo[appLanguage]?.btn || t.whatsappBtn}</span>
                     </a>
+                </section>
+
+                {/* --- EXTRA VIDEO SECTION (Requested Demo) --- */}
+                <section style={{ marginTop: '40px', background: '#fff', padding: '30px', borderRadius: '24px', boxShadow: '0 10px 40px rgba(0,0,0,0.06)' }}>
+                    <h3 style={{ textAlign: 'center', marginBottom: '20px', color: '#1e293b', fontSize: '1.5rem', fontWeight: 'bold' }}>
+                        {appLanguage === 'ar' ? 'نموذج توضيحي (Cloudinary Player)' : 'Démo (Cloudinary Player)'}
+                    </h3>
+                    <iframe
+                        src="https://player.cloudinary.com/embed/?cloud_name=dq1yjnjxs&public_id=Screen_Recording_2025-12-29_170646_iv1san"
+
+                        // src='https://drive.google.com/file/d/1aZmR0fgKjdEClQWSONsLgEURIMySSE-l/view?usp=sharing'
+                        width="640"
+                        height="360"
+                        style={{ height: 'auto', width: '100%', aspectRatio: '640 / 360' }}
+                        allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
+                        allowFullScreen
+                        frameBorder="0"
+                    ></iframe>
                 </section>
             </main>
 
@@ -893,9 +962,9 @@ export default function Lessons() {
 
                         <div style={{ marginBottom: '20px', padding: '15px', background: '#f8fafc', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '15px' }}>
                             <label style={{ fontWeight: '600', color: '#1e293b' }}>Ordre d'affichage :</label>
-                            <input 
-                                type="number" 
-                                value={editVideoOrder} 
+                            <input
+                                type="number"
+                                value={editVideoOrder}
                                 onChange={(e) => setEditVideoOrder(e.target.value)}
                                 style={{ width: '80px', padding: '8px', borderRadius: '8px', border: '1px solid #e2e8f0', outline: 'none' }}
                             />
@@ -919,28 +988,34 @@ export default function Lessons() {
                                     </div>
                                     <div className="premium-form-group">
                                         <label>URL Vidéo</label>
-                                        <input
-                                            type="text"
-                                            value={editVideoContent[lang.code]?.url || ''}
-                                            onChange={e => setEditVideoContent({
-                                                ...editVideoContent,
-                                                [lang.code]: { ...editVideoContent[lang.code], url: e.target.value }
-                                            })}
-                                            placeholder="https://..."
-                                        />
-                                    </div>
-                                    <div className="premium-form-group">
-                                        <label>Ou Fichier Vidéo</label>
-                                        <input
-                                            type="file"
-                                            accept="video/*"
-                                            onChange={e => setEditSelectedLangFiles({
-                                                ...editSelectedLangFiles,
-                                                [lang.code]: e.target.files[0]
-                                            })}
-                                            className="premium-file-input"
-                                        />
-                                        {editSelectedLangFiles[lang.code] && <p style={{ fontSize: '12px', color: '#d4af37' }}>Fichier: {editSelectedLangFiles[lang.code].name}</p>}
+                                        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                                            <input
+                                                type="text"
+                                                value={editVideoContent[lang.code]?.url || ''}
+                                                onChange={e => setEditVideoContent({
+                                                    ...editVideoContent,
+                                                    [lang.code]: { ...editVideoContent[lang.code], url: e.target.value }
+                                                })}
+                                                placeholder="YouTube, Cloudinary, Streamable..."
+                                                style={{ flex: 1 }}
+                                            />
+                                            <input
+                                                type="file"
+                                                accept="video/*"
+                                                id={`edit-upload-${lang.code}`}
+                                                style={{ display: 'none' }}
+                                                onChange={(e) => handleFastCloudinaryUpload(e, lang.code, 'edit')}
+                                            />
+                                            <button
+                                                type="button"
+                                                className="premium-btn-cta gold"
+                                                style={{ padding: '0 15px', height: '40px', minWidth: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                                onClick={() => document.getElementById(`edit-upload-${lang.code}`).click()}
+                                                disabled={uploadingToCloudinary === lang.code}
+                                            >
+                                                {uploadingToCloudinary === lang.code ? <FaSpinner className="player-spinner" size={16} /> : <FaCloudUploadAlt size={20} />}
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             ))}
@@ -972,8 +1047,8 @@ export default function Lessons() {
                                             value={newVideoData.title_lang?.[lang.code] || ''}
                                             onChange={e => {
                                                 const updated = { ...newVideoData.title_lang, [lang.code]: e.target.value };
-                                                setNewVideoData({ 
-                                                    ...newVideoData, 
+                                                setNewVideoData({
+                                                    ...newVideoData,
                                                     title_lang: updated,
                                                     title: e.target.value // Auto-sync base title
                                                 });
@@ -982,28 +1057,34 @@ export default function Lessons() {
                                     </div>
                                     <div className="premium-form-group">
                                         <label>URL Vidéo</label>
-                                        <input
-                                            type="text"
-                                            value={newVideoData.url_lang?.[lang.code] || ''}
-                                            onChange={e => {
-                                                const updated = { ...newVideoData.url_lang, [lang.code]: e.target.value };
-                                                setNewVideoData({ ...newVideoData, url_lang: updated });
-                                            }}
-                                            placeholder="https://..."
-                                        />
-                                    </div>
-                                    <div className="premium-form-group">
-                                        <label>Ou Fichier Vidéo</label>
-                                        <input
-                                            type="file"
-                                            accept="video/*"
-                                            onChange={e => setSelectedLangFiles({
-                                                ...selectedLangFiles,
-                                                [lang.code]: e.target.files[0]
-                                            })}
-                                            className="premium-file-input"
-                                        />
-                                        {selectedLangFiles[lang.code] && <p style={{ fontSize: '12px', color: '#d4af37' }}>Fichier: {selectedLangFiles[lang.code].name}</p>}
+                                        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                                            <input
+                                                type="text"
+                                                value={newVideoData.url_lang?.[lang.code] || ''}
+                                                onChange={e => {
+                                                    const updated = { ...newVideoData.url_lang, [lang.code]: e.target.value };
+                                                    setNewVideoData({ ...newVideoData, url_lang: updated });
+                                                }}
+                                                placeholder="YouTube, Cloudinary, Streamable..."
+                                                style={{ flex: 1 }}
+                                            />
+                                            <input
+                                                type="file"
+                                                accept="video/*"
+                                                id={`add-upload-${lang.code}`}
+                                                style={{ display: 'none' }}
+                                                onChange={(e) => handleFastCloudinaryUpload(e, lang.code, 'add')}
+                                            />
+                                            <button
+                                                type="button"
+                                                className="premium-btn-cta gold"
+                                                style={{ padding: '0 15px', height: '40px', minWidth: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                                onClick={() => document.getElementById(`add-upload-${lang.code}`).click()}
+                                                disabled={uploadingToCloudinary === lang.code}
+                                            >
+                                                {uploadingToCloudinary === lang.code ? <FaSpinner className="player-spinner" size={16} /> : <FaCloudUploadAlt size={20} />}
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             ))}

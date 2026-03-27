@@ -1,12 +1,16 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { FaSpinner, FaExclamationTriangle } from 'react-icons/fa';
 import BASE_URL from '../apiConfig';
 
 /**
  * Universal Video Player Component
- * Supports: YouTube, Streamable, Google Drive, Direct MP4/WebM
+ * Mobile-Optimized with Fallbacks & Loaders
  */
-const UniversalVideoPlayer = ({ url, title = 'Video Player', autoPlay = true, className = '' }) => {
-    if (!url) return <div className="video-player-placeholder">No video source provided</div>;
+const UniversalVideoPlayer = ({ url, title = 'Video Player', autoPlay = false, className = '' }) => {
+    const [isLoading, setIsLoading] = useState(true);
+    const [hasError, setHasError] = useState(false);
+
+    if (!url) return <div className="video-player-placeholder" style={{ padding: '20px', textAlign: 'center', background: '#000', color: '#fff' }}>No video source provided</div>;
 
     // Normalize URL
     const fullUrl = url.startsWith('http') ? url : `${BASE_URL}${url}`;
@@ -19,7 +23,7 @@ const UniversalVideoPlayer = ({ url, title = 'Video Player', autoPlay = true, cl
         if (matchYoutube) {
             return {
                 type: 'iframe',
-                src: `https://www.youtube.com/embed/${matchYoutube[1]}?autoplay=${autoPlay ? 1 : 0}&rel=0`
+                src: `https://www.youtube.com/embed/${matchYoutube[1]}?autoplay=${autoPlay ? 1 : 0}&rel=0&playsinline=1`
             };
         }
 
@@ -34,73 +38,101 @@ const UniversalVideoPlayer = ({ url, title = 'Video Player', autoPlay = true, cl
         }
 
         // Google Drive
-        const driveRegex = /drive\.google\.com\/file\/d\/([^\/\?]+)/;
+        const driveRegex = /(?:drive\.google\.com\/file\/d\/|drive\.google\.com\/open\?id=|drive\.google\.com\/uc\?id=)([^\/\?&]+)/;
         const matchDrive = src.match(driveRegex);
         if (matchDrive) {
             return {
                 type: 'iframe',
-                isDrive: true,
                 src: `https://drive.google.com/file/d/${matchDrive[1]}/preview`
             };
         }
 
-        // Direct Video Files
+        // Cloudinary HTML Embed Player (Must be rendered as iframe, not native video)
+        if (src.includes("player.cloudinary.com")) {
+            return { type: 'iframe', src: src };
+        }
+
+        // Direct Video Files & Cloudinary Direct URLs (True Streaming)
         if (src.endsWith(".mp4") || src.endsWith(".webm") || src.endsWith(".ogg") || src.startsWith("/uploads") || src.includes("res.cloudinary.com")) {
             return { type: 'video', src: src.startsWith('http') ? src : `${BASE_URL}${src}` };
         }
 
-        // Fallback (assume URL is already embed-ready or direct)
+        // Fallback for unknown URLs
         return { type: 'iframe', src: src };
     };
 
     const config = getVideoConfig(url);
 
-    return (
-        <div className={`universal-video-container ${className}`} style={{ position: 'relative', width: '100%', height: '100%', minHeight: '300px', backgroundColor: '#000', borderRadius: 'inherit', overflow: 'hidden' }}>
+    const handleVideoReady = () => setIsLoading(false);
+    const handleVideoError = () => {
+        setIsLoading(false);
+        setHasError(true);
+    };
 
-            {/* UI Mask for Google Drive to block pop-out button interactions */}
-            {config.isDrive && (
-                <div
-                    className="video-player-mask"
-                    style={{
-                        position: 'absolute',
-                        top: 0,
-                        right: 0,
-                        width: '100px',
-                        height: '100px',
-                        zIndex: 100,
-                        backgroundColor: 'transparent',
-                        pointerEvents: 'auto',
-                    }}
-                ></div>
+    return (
+        <div className={`universal-video-container ${className}`} style={{ position: 'relative', width: '100%', height: '100%', minHeight: '300px', backgroundColor: '#000', borderRadius: 'inherit', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
+
+            <style>{`
+                @keyframes player-spin { 100% { transform: rotate(360deg); } }
+                .player-spinner { animation: player-spin 1s linear infinite; }
+            `}</style>
+            
+            {/* Loading Indicator */}
+            {isLoading && !hasError && (
+                <div style={{ position: 'absolute', zIndex: 10, color: '#D4AF37', display: 'flex', flexDirection: 'column', alignItems: 'center', pointerEvents: 'none' }}>
+                    <FaSpinner className="player-spinner" size={34} style={{ marginBottom: '10px' }} />
+                    <span style={{ fontSize: '0.9rem', color: '#fff', fontWeight: '500', letterSpacing: '1px' }}>Chargement...</span>
+                </div>
             )}
 
+            {/* Error Fallback */}
+            {hasError && (
+                <div style={{ position: 'absolute', zIndex: 10, color: '#ef4444', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '20px', background: 'rgba(0,0,0,0.8)', borderRadius: '12px' }}>
+                    <FaExclamationTriangle size={34} style={{ marginBottom: '12px', color: '#f59e0b' }} />
+                    <span style={{ fontSize: '1rem', fontWeight: 'bold', color: '#fff' }}>Erreur de lecture</span>
+                    <span style={{ fontSize: '0.85rem', color: '#e2e8f0', marginTop: '8px', maxWidth: '250px', lineHeight: '1.4' }}>Ce format vidéo ou ce lien ne supporte pas le streaming mobile direct. Veuillez vérifier la source.</span>
+                </div>
+            )}
+
+            {/* Renderer based on detected type */}
             {config.type === 'video' ? (
                 <video
                     src={config.src}
                     controls
                     autoPlay={autoPlay}
-                    style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                    muted={autoPlay}        // 💡 Required for mobile autoplay to work
+                    playsInline={true}      // 💡 Crucial for iOS/Safari inline playback
+                    webkit-playsinline="true"
+                    preload="auto"          // 💡 Force buffer to help prevent stuttering
+                    onCanPlay={handleVideoReady}
+                    onLoadedData={handleVideoReady}
+                    // Handle stalling or waiting on mobile
+                    onWaiting={() => setIsLoading(true)}
+                    onPlaying={() => setIsLoading(false)}
+                    onError={handleVideoError}
+                    style={{ 
+                        width: '100%', height: '100%', objectFit: 'contain', 
+                        display: hasError ? 'none' : 'block'
+                    }}
                     controlsList="nodownload"
                 />
             ) : (
-                <div style={{ width: '100%', height: '100%', overflow: 'hidden', position: 'relative', borderRadius: 'inherit' }}>
+                <div style={{ width: '100%', height: '100%', position: 'relative', flex: 1, display: hasError ? 'none' : 'block' }}>
                     <iframe
                         src={config.src}
                         title={title}
                         width="100%"
-                        height={config.isDrive ? 'calc(100% + 60px)' : '100%'}
+                        height="100%"
                         frameBorder="0"
-                        allow="autoplay; fullscreen; accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        allow="autoplay; fullscreen; accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                         allowFullScreen
+                        onLoad={handleVideoReady}
+                        onError={handleVideoError}
                         style={{
                             border: 0,
                             width: '100%',
-                            minHeight: '500px',
-                            marginTop: config.isDrive ? '-60px' : '0', // Shift up to hide Drive controls
-                            position: 'relative'
+                            minHeight: '350px'
                         }}
-                        loading="lazy"
                     ></iframe>
                 </div>
             )}

@@ -895,7 +895,6 @@
 /* --- CAROUSEL RESTORATION --- */
 /* Fix visibility issue by ensuring it takes space in flex column */
 .order-modal-content .image-carousel-container {
-    margin: 0 35px 25px;
     width: auto;
     align-self: stretch;
     flex-shrink: 0;

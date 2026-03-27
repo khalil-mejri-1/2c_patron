@@ -30,6 +30,13 @@ const productSchema = new mongoose.Schema({
         }
     },
     
+    // 💡 3. الصور المخصصة للنافذة الداخلية (Order Modal) - لا تظهر في الخارج
+    innerImages: {
+        type: [String],
+        required: false,
+        default: []
+    },
+    
     prix: {
         type: Number,
         required: [true, 'Le prix est requis'],
