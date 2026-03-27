@@ -1808,22 +1808,40 @@ export default function ProductGrid() {
 
                             <div className="input-field-group">
                                 <label style={{ display: 'block', marginBottom: '10px', fontSize: '0.75rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-                                    {appLanguage === 'ar' ? 'رابط الصورة الرئيسية' : 'Image Principale (URL)'}
+                                    {appLanguage === 'ar' ? 'الصورة الرئيسية (تُرفع إلى Cloudinary)' : 'Image Principale (Fichier vers Cloudinary)'}
                                 </label>
                                 <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
                                     <input
-                                        type="text"
-                                        placeholder="https://images.unsplash.com/..."
-                                        value={productForm.mainImage}
-                                        onChange={e => setProductForm({ ...productForm, mainImage: e.target.value })}
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={async (e) => {
+                                            const file = e.target.files[0];
+                                            if (file) {
+                                                const formData = new FormData();
+                                                formData.append('image', file);
+                                                try {
+                                                    const res = await fetch(`${BASE_URL}/api/upload`, { method: 'POST', body: formData });
+                                                    const data = await res.json();
+                                                    if (res.ok) {
+                                                        setProductForm({ ...productForm, mainImage: data.url });
+                                                        showAlert('success', 'Succès', appLanguage === 'ar' ? 'تم الرفع بنجاح' : 'Image téléchargée avec succès');
+                                                    } else {
+                                                        showAlert('error', 'Erreur', data.message || 'Échec de l\'upload');
+                                                    }
+                                                } catch (err) {
+                                                    showAlert('error', 'Erreur', 'Erreur lors de l\'upload');
+                                                }
+                                            }
+                                        }}
                                         style={{
                                             flex: 1,
-                                            padding: '16px 20px',
+                                            padding: '12px',
                                             borderRadius: '16px',
                                             border: '2px solid #f1f5f9',
                                             fontSize: '1rem',
                                             outline: 'none',
-                                            background: '#f8fafc'
+                                            background: '#f8fafc',
+                                            cursor: 'pointer'
                                         }}
                                     />
                                     {productForm.mainImage && (
@@ -1836,36 +1854,43 @@ export default function ProductGrid() {
 
                             <div className="input-field-group">
                                 <label style={{ display: 'block', marginBottom: '10px', fontSize: '0.75rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-                                    {appLanguage === 'ar' ? 'الصور الثانوية (روابط)' : 'Images Secondaires (URLs)'}
+                                    {appLanguage === 'ar' ? 'الصور الثانوية (تُرفع إلى Cloudinary)' : 'Images Secondaires (Fichiers)'}
                                 </label>
                                 <div style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
                                     <input
-                                        type="text"
-                                        id="newSecondaryImage"
-                                        placeholder="https://images.unsplash.com/..."
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={async (e) => {
+                                            const file = e.target.files[0];
+                                            if (file) {
+                                                const formData = new FormData();
+                                                formData.append('image', file);
+                                                try {
+                                                    const res = await fetch(`${BASE_URL}/api/upload`, { method: 'POST', body: formData });
+                                                    const data = await res.json();
+                                                    if (res.ok) {
+                                                        setProductForm({ ...productForm, secondaryImages: [...productForm.secondaryImages, data.url] });
+                                                        e.target.value = null; // إعادة تعيين الحقل بعد الرفع
+                                                        showAlert('success', 'Succès', appLanguage === 'ar' ? 'تم رفع الصورة' : 'Image téléchargée');
+                                                    } else {
+                                                        showAlert('error', 'Erreur', data.message || 'Échec de l\'upload');
+                                                    }
+                                                } catch (err) {
+                                                    showAlert('error', 'Erreur', 'Erreur lors de l\'upload');
+                                                }
+                                            }
+                                        }}
                                         style={{
                                             flex: 1,
-                                            padding: '12px 15px',
+                                            padding: '10px 15px',
                                             borderRadius: '12px',
                                             border: '1px solid #f1f5f9',
                                             fontSize: '0.9rem',
                                             outline: 'none',
-                                            background: '#f8fafc'
+                                            background: '#f8fafc',
+                                            cursor: 'pointer'
                                         }}
                                     />
-                                    <button
-                                        onClick={() => {
-                                            const val = document.getElementById('newSecondaryImage').value.trim();
-                                            if (val) {
-                                                setProductForm({ ...productForm, secondaryImages: [...productForm.secondaryImages, val] });
-                                                document.getElementById('newSecondaryImage').value = '';
-                                            }
-                                        }}
-                                        className="premium-btn-save"
-                                        style={{ padding: '10px 20px' }}
-                                    >
-                                        <FaPlus />
-                                    </button>
                                 </div>
 
                                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))', gap: '15px' }}>

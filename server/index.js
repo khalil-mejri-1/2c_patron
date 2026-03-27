@@ -19,6 +19,13 @@ const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
+const cloudinary = require('cloudinary').v2;
+
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME || 'dzxxqr90c', // يجب تبديل هذا باسم الكلاود الخاص بك
+    api_key: process.env.CLOUDINARY_API_KEY || '675683535499862',
+    api_secret: process.env.CLOUDINARY_API_SECRET || 'xwaWkEPrTyGmd-2Amq3_9319uYY'
+});
 
 const Command = require('./models/command.js');
 // استيراد النماذج
@@ -65,6 +72,22 @@ const upload = multer({ storage });
 
 // Serve uploads directory
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// -------------------- Cloudinary Upload Route --------------------
+app.post('/api/upload', upload.single('image'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ message: 'Aucun fichier fourni' });
+        }
+        const result = await cloudinary.uploader.upload(req.file.path);
+        // حذف الملف المحلي بعد رفعه إلى Cloudinary
+        fs.unlinkSync(req.file.path);
+        res.status(200).json({ url: result.secure_url });
+    } catch (error) {
+        console.error("Erreur d'upload Cloudinary:", error);
+        res.status(500).json({ message: 'Échec de l\'upload de l\'image', error: error.message });
+    }
+});
 
 
 // --- B. MONGODB CONNECTION SETUP ---
@@ -1394,7 +1417,7 @@ app.get('/api/specialized-videos', async (req, res) => {
         const queryCategory = req.query.category || req.query['category[]'];
         if (queryCategory) {
             const matchArr = Array.isArray(queryCategory) ? queryCategory : [queryCategory];
-            
+
             // Check both category (for backwards compatibility/main category) 
             // and subCategory (for the new hierarchical architecture)
             query.$or = [
@@ -1417,14 +1440,14 @@ app.delete('/api/specialized-videos/by-category', async (req, res) => {
         if (!queryCategory) {
             return res.status(400).json({ message: "Catégorie requise." });
         }
-        
+
         let categoriesToDelete = [];
         if (Array.isArray(queryCategory)) {
             categoriesToDelete = queryCategory;
         } else {
             categoriesToDelete = [queryCategory];
         }
-        
+
         const result = await SpecializedVideo.deleteMany({ category: { $in: categoriesToDelete } });
         res.json({ message: "Vidéos supprimées", deletedCount: result.deletedCount });
     } catch (err) {
