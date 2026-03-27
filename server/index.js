@@ -145,7 +145,7 @@ const getDeviceInfoFromUA = (ua) => {
 };
 
 app.get('/', (req, res) => {
-    res.send('Hello World! Connected to Express and MongoDB. 2/22/2026');
+    res.send('Hello World! Connected to Express and MongoDB. 3/27/2026');
 });
 
 // **********************************************
