@@ -56,18 +56,8 @@ app.use(express.urlencoded({ extended: true })); // ✅ ضروري لقراءة 
 
 
 // -------------------- Multer Configuration --------------------
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        const dir = './uploads/specialized-videos';
-        if (!fs.existsSync(dir)) {
-            fs.mkdirSync(dir, { recursive: true });
-        }
-        cb(null, dir);
-    },
-    filename: (req, file, cb) => {
-        cb(null, Date.now() + '-' + file.originalname);
-    }
-});
+// نستعمل memoryStorage بدلاً من diskStorage لتفادي خطأ read-only system في Vercel
+const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
 // Serve uploads directory
@@ -79,13 +69,21 @@ app.post('/api/upload', upload.single('image'), async (req, res) => {
         if (!req.file) {
             return res.status(400).json({ message: 'Aucun fichier fourni' });
         }
-        const result = await cloudinary.uploader.upload(req.file.path);
-        // حذف الملف المحلي بعد رفعه إلى Cloudinary
-        fs.unlinkSync(req.file.path);
-        res.status(200).json({ url: result.secure_url });
+        // استخدام upload_stream لرفع الملف من الذاكرة مباشرة دون الحاجة لحفظه على قرص الخادم (Vercel يمنع ذلك)
+        const stream = cloudinary.uploader.upload_stream(
+            { resource_type: 'auto', folder: 'magasin' },
+            (error, result) => {
+                if (error) {
+                    console.error("Erreur d'upload Cloudinary:", error);
+                    return res.status(500).json({ message: 'Échec de l\'upload de l\'image', error: error.message });
+                }
+                res.status(200).json({ url: result.secure_url });
+            }
+        );
+        stream.end(req.file.buffer);
     } catch (error) {
-        console.error("Erreur d'upload Cloudinary:", error);
-        res.status(500).json({ message: 'Échec de l\'upload de l\'image', error: error.message });
+        console.error("Erreur d'upload:", error);
+        res.status(500).json({ message: 'Échec de l\'upload', error: error.message });
     }
 });
 
