@@ -17,6 +17,8 @@ const UniversalVideoPlayer = ({ url, title = 'Video Player', autoPlay = false, c
 
     // Detection Logic
     const getVideoConfig = (src) => {
+        if (!src) return { type: 'error' };
+
         // YouTube
         const youtubeRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
         const matchYoutube = src.match(youtubeRegex);
@@ -47,18 +49,24 @@ const UniversalVideoPlayer = ({ url, title = 'Video Player', autoPlay = false, c
             };
         }
 
-        // Cloudinary HTML Embed Player (Must be rendered as iframe, not native video)
+        // Cloudinary HTML Embed Player
         if (src.includes("player.cloudinary.com")) {
             return { type: 'iframe', src: src };
         }
 
-        // Direct Video Files & Cloudinary Direct URLs (True Streaming)
+        // Direct Video Files & Cloudinary Direct URLs
         if (src.endsWith(".mp4") || src.endsWith(".webm") || src.endsWith(".ogg") || src.startsWith("/uploads") || src.includes("res.cloudinary.com")) {
             return { type: 'video', src: src.startsWith('http') ? src : `${BASE_URL}${src}` };
         }
 
-        // Fallback for unknown URLs
-        return { type: 'iframe', src: src };
+        // Only allow external iframes if they clearly look like external HTTPS links
+        // This prevents relative "junk" strings from being interpreted as same-domain routes (which causes the recursion)
+        if (src.startsWith('https://') || src.startsWith('http://')) {
+            return { type: 'iframe', src: src };
+        }
+
+        // Fallback for everything else: Treat as error to avoid site-in-site recursion
+        return { type: 'error', src: null };
     };
 
     const config = getVideoConfig(url);
@@ -68,6 +76,11 @@ const UniversalVideoPlayer = ({ url, title = 'Video Player', autoPlay = false, c
         setIsLoading(false);
         setHasError(true);
     };
+
+    // If it's a detected error from the start, just render black
+    if (config.type === 'error') {
+        return <div className={`universal-video-container ${className}`} style={{ width: '100%', height: '100%', background: '#000', borderRadius: 'inherit' }} />;
+    }
 
     return (
         <div 
@@ -98,13 +111,9 @@ const UniversalVideoPlayer = ({ url, title = 'Video Player', autoPlay = false, c
                 </div>
             )}
 
-            {/* Error Fallback */}
+            {/* Error Fallback - Just show black as requested by user */}
             {hasError && (
-                <div style={{ position: 'absolute', zIndex: 10, color: '#ef4444', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '20px', background: 'rgba(0,0,0,0.8)', borderRadius: '12px' }}>
-                    <FaExclamationTriangle size={34} style={{ marginBottom: '12px', color: '#f59e0b' }} />
-                    <span style={{ fontSize: '1rem', fontWeight: 'bold', color: '#fff' }}>Erreur de lecture</span>
-                    <span style={{ fontSize: '0.85rem', color: '#e2e8f0', marginTop: '8px', maxWidth: '250px', lineHeight: '1.4' }}>Ce format vidéo ou ce lien ne supporte pas le streaming mobile direct. Veuillez vérifier la source.</span>
-                </div>
+                <div style={{ position: 'absolute', inset: 0, zIndex: 10, background: '#000' }}></div>
             )}
 
             {/* Renderer based on detected type */}
@@ -113,13 +122,12 @@ const UniversalVideoPlayer = ({ url, title = 'Video Player', autoPlay = false, c
                     src={config.src}
                     controls
                     autoPlay={autoPlay}
-                    muted={autoPlay}        // 💡 Required for mobile autoplay to work
-                    playsInline={true}      // 💡 Crucial for iOS/Safari inline playback
+                    muted={autoPlay}
+                    playsInline={true}
                     webkit-playsinline="true"
-                    preload="auto"          // 💡 Force buffer to help prevent stuttering
+                    preload="auto"
                     onCanPlay={handleVideoReady}
                     onLoadedData={handleVideoReady}
-                    // Handle stalling or waiting on mobile
                     onWaiting={() => setIsLoading(true)}
                     onPlaying={() => setIsLoading(false)}
                     onError={handleVideoError}
