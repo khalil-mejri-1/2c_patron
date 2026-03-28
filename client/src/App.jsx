@@ -90,39 +90,46 @@ function AppContent() {
     }, [location.pathname, navigate]);
 
 
+    const currentPath = decodeURIComponent(location.pathname);
+    const isVipSection = vipRequiredPaths.some(path => currentPath.toLowerCase().startsWith(path.toLowerCase())) || 
+                         currentPath.startsWith('/Leçons_coursage');
+
     return (
-        <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/magasin" element={<ProductGrid />} />
-            <Route path="/Vip-access" element={<Vipaccess />} />
-            <Route path="/vip-access" element={<Vipaccess />} />
-            <Route path="/cours_Manches/:courseTitle" element={<Cours />} />
-            <Route path="/Leçons/:leconTitle" element={<Lessons />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/Login" element={<Login />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/contact" element={<Contact />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/logintest" element={<Login_test />} />
-            <Route path="/Abonnement-VIP" element={<Abonnementvip />} />
+        <>
+            <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/magasin" element={<ProductGrid />} />
+                <Route path="/Vip-access" element={<Vipaccess />} />
+                <Route path="/vip-access" element={<Vipaccess />} />
+                <Route path="/cours_Manches/:courseTitle" element={<Cours />} />
+                <Route path="/Leçons/:leconTitle" element={<Lessons />} />
+                <Route path="/register" element={<Register />} />
+                <Route path="/Login" element={<Login />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/contact" element={<Contact />} />
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/logintest" element={<Login_test />} />
+                <Route path="/Abonnement-VIP" element={<Abonnementvip />} />
 
-            <Route path="/Leçons_coursage/:leconTitle" element={<Lessons />} />
+                <Route path="/Leçons_coursage/:leconTitle" element={<Lessons />} />
 
 
-            <Route path="/admin" element={<Admin />} />
-            <Route path="/admin_clients" element={<Gestion_de_Client />} />
-            <Route path="/admin_products" element={<Gestion_de_Produit />} />
-            <Route path="/admin_videos" element={<Gestion_de_Vidéo />} />
-            <Route path="/admin_all_videos" element={<Gestion_Global_Videos />} />
-            <Route path="/admin_command" element={<Admin_command />} />
-            <Route path="/admin_message" element={<Gestion_Message />} />
-            <Route path="/admin_commentaire" element={<Gestion_commentaire />} />
-            <Route path="/admin_abonnement" element={<Gestion_abonnement />} />
-            <Route path="/admin_espace_vip" element={<Gestion_de_espace_vip />} />
-            <Route path="/admin_settings" element={<Gestion_Settings />} />
+                <Route path="/admin" element={<Admin />} />
+                <Route path="/admin_clients" element={<Gestion_de_Client />} />
+                <Route path="/admin_products" element={<Gestion_de_Produit />} />
+                <Route path="/admin_videos" element={<Gestion_de_Vidéo />} />
+                <Route path="/admin_all_videos" element={<Gestion_Global_Videos />} />
+                <Route path="/admin_command" element={<Admin_command />} />
+                <Route path="/admin_message" element={<Gestion_Message />} />
+                <Route path="/admin_commentaire" element={<Gestion_commentaire />} />
+                <Route path="/admin_abonnement" element={<Gestion_abonnement />} />
+                <Route path="/admin_espace_vip" element={<Gestion_de_espace_vip />} />
+                <Route path="/admin_settings" element={<Gestion_Settings />} />
 
-            <Route path="/*" element={<Home />} />
-        </Routes>
+                <Route path="/*" element={<Home />} />
+            </Routes>
+            {isVipSection && <AIChatbot />}
+        </>
     );
 }
 
@@ -131,7 +138,6 @@ function App() {
         <BrowserRouter>
             <ScrollToTop />
             <AppContent />
-            <AIChatbot />
         </BrowserRouter>
     );
 }
