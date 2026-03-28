@@ -65,18 +65,36 @@
     padding: 0 20px;
 }
 
+.active-video-wrapper {
+    background: #fff;
+    padding: 30px;
+    border-radius: 40px;
+    box-shadow: 0 30px 60px rgba(15, 23, 42, 0.08);
+    margin-bottom: 60px;
+    margin-top: -60px;
+    position: relative;
+    z-index: 100;
+    transition: all 0.4s ease;
+}
+
 .active-focus-cinema {
     width: 100%;
-
+    margin: 0 auto;
     aspect-ratio: 16 / 9;
     background: #000;
     border-radius: 32px;
     overflow: hidden;
-    box-shadow: 0 50px 100px rgba(0, 0, 0, 0.2);
-    margin-bottom: 80px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
     position: relative;
     z-index: 10;
+}
+
+.active-video-title {
+    margin-top: 25px;
+    text-align: center;
+    font-family: 'Playfair Display', serif;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #1e293b;
 }
 
 .active-focus-cinema iframe,
@@ -327,7 +345,58 @@
 
 @media (max-width: 768px) {
     .lessons-main-title-premium {
-        font-size: 2.5rem;
+        font-size: 2.2rem;
+    }
+
+    .lessons-hero-header {
+        height: 35vh;
+        min-height: 400px;
+        clip-path: polygon(0 0, 100% 0, 100% 90%, 0 100%);
+        margin-bottom: -120px; /* Stronger push up */
+    }
+
+    .lessons-explorer-container {
+        padding: 0 10px;
+        margin-top: -20px;
+    }
+
+    .active-video-wrapper {
+        background: #fff;
+        padding: 40px 20px;
+        margin-top: -80px;
+        border-radius: 32px;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.08);
+        margin-left: 0;
+        margin-right: 0;
+        width: 100%;
+        max-width: 1000px;
+        margin-left: auto;
+        margin-right: auto;
+        border: none;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .active-focus-cinema {
+        aspect-ratio: 16 / 9;
+        width: 100%;
+        border-radius: 20px;
+        background: #000;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        order: 2; /* Video comes AFTER title now */
+    }
+
+    .active-video-title {
+        order: 1; /* Title comes FIRST */
+        font-size: 1.8rem;
+        margin-top: 0;
+        margin-bottom: 30px;
+        color: #1e293b;
+        font-weight: 800;
+        text-align: center;
+        width: 100%;
     }
 
     .lessons-selection-grid {

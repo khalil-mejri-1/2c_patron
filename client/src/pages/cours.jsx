@@ -23,7 +23,7 @@ const translations = {
         videoFeature3: "أسرار اللمسات النهائية الراقية",
         coursesTitle: "الدروس",
         coursesAccent: "المتاحة",
-        button: "ابدأ التعلم الآن",
+        button: "ابدأ الدرس",
         noCourses: "لا توجد دروس متاحة حالياً في هذه فئة.",
         duration: "عرض كامل",
         categoryTag: "برنامج تعليمي",
@@ -51,7 +51,7 @@ const translations = {
         videoFeature3: "Finitions haute couture",
         coursesTitle: "Cours",
         coursesAccent: "Disponibles",
-        button: "Commencer la Leçon",
+        button: "Commencer",
         noCourses: "Aucun cours trouvé dans cette catégorie.",
         duration: "Accès complet",
         categoryTag: "FORMATION",
@@ -79,7 +79,7 @@ const translations = {
         videoFeature3: "Luxury finishing secrets",
         coursesTitle: "Available",
         coursesAccent: "Courses",
-        button: "Start Learning",
+        button: "Start",
         noCourses: "No courses found in this category.",
         duration: "Full Access",
         categoryTag: "PROGRAM",
@@ -98,19 +98,27 @@ const translations = {
     }
 };
 
-const VideoIntroduction = ({ videoUrl, title, appLanguage, isAdmin, onEdit }) => {
+const VideoIntroduction = ({ videoUrl, title, appLanguage, isAdmin, onEdit, onDelete }) => {
     const actualTitle = decodeURIComponent(title);
     const t = translations[appLanguage] || translations.fr;
     const direction = appLanguage === 'ar' ? 'rtl' : 'ltr';
 
-
-
     return (
         <div className="premium-video-intro-box" dir={direction}>
             {isAdmin && (
-                <button className="admin-edit-intro-btn admin-edit-master-btn" onClick={onEdit}>
-                    <FaVideo /> {t.editIntro}
-                </button>
+                <div className="admin-intro-controls" style={{ position: 'absolute', top: '15px', right: '15px', display: 'flex', gap: '10px', zIndex: 10 }}>
+                    <button className="admin-edit-master-btn" onClick={onEdit} title={t.editIntro}>
+                        <FaVideo /> {t.editIntro}
+                    </button>
+                    <button 
+                        className="admin-edit-master-btn" 
+                        onClick={onDelete} 
+                        style={{ backgroundColor: 'rgba(239, 68, 68, 0.9)', color: '#fff' }}
+                        title={appLanguage === 'ar' ? 'حذف المقدمة' : 'Supprimer l\'intro'}
+                    >
+                        <FaTrash />
+                    </button>
+                </div>
             )}
             <div className="premium-video-info">
                 <span className="premium-video-tag">{t.videoTag}</span>
@@ -124,11 +132,17 @@ const VideoIntroduction = ({ videoUrl, title, appLanguage, isAdmin, onEdit }) =>
             </div>
 
             <div className="premium-video-player-side">
-                <UniversalVideoPlayer
-                    url={videoUrl}
-                    title={`Introduction - ${actualTitle}`}
-                    autoPlay={false}
-                />
+                {videoUrl ? (
+                    <UniversalVideoPlayer
+                        url={videoUrl}
+                        title={`Introduction - ${actualTitle}`}
+                        autoPlay={false}
+                    />
+                ) : (
+                    <div className="no-video-placeholder" style={{ background: '#000', borderRadius: '24px', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b' }}>
+                        <FaVideo size={40} />
+                    </div>
+                )}
             </div>
         </div>
     );
@@ -315,6 +329,22 @@ export default function Cours() {
         }
     };
 
+    const handleDeleteIntro = async () => {
+        if (!groups.length || !groups[0].video_link) return;
+        
+        showAlert('confirm', appLanguage === 'ar' ? 'هل أنت متأكد من حذف المقدمة؟' : 'Voulez-vous vraiment supprimer l\'introduction ?', '', async () => {
+            try {
+                await axios.put(`${BASE_URL}/api/specialized-courses/${groups[0]._id}`, {
+                    video_link: {} // Clear localized video links
+                });
+                showAlert('success', 'Deleted', appLanguage === 'ar' ? 'تم حذف المقدمة بنجاح' : 'Introduction supprimée');
+                fetchCourses();
+            } catch (e) {
+                showAlert('error', 'Error', 'Failed to delete intro');
+            }
+        });
+    };
+
     const handleOpenEditLesson = (groupId, indexInGroup, course) => {
         setLessonMode('edit');
         setSelectedGroupId(groupId);
@@ -384,9 +414,44 @@ export default function Cours() {
         return (
             <div className="courses-premium-page" dir={direction}>
                 <Navbar />
-                <div className="loading-state" style={{ textAlign: 'center', padding: '160px 0' }}>
-                    <FaSpinner className="spinner" size={60} color="#D4AF37" style={{ animation: 'spin 1.5s linear infinite' }} />
-                    <p style={{ marginTop: '20px', fontSize: '1.2rem', color: '#64748b' }}>{t.loading}</p>
+                
+                {/* Skeleton Hero */}
+                <div className="skeleton-hero">
+                    <div className="skeleton-hero-badge skeleton-shimmer"></div>
+                    <div className="skeleton-hero-title skeleton-shimmer"></div>
+                </div>
+
+                {/* Skeleton Intro */}
+                <div className="skeleton-intro-box">
+                    <div className="skeleton-intro-left">
+                        <div className="skeleton-line title skeleton-shimmer"></div>
+                        <div className="skeleton-line skeleton-shimmer"></div>
+                        <div className="skeleton-line skeleton-shimmer"></div>
+                        <div className="skeleton-line short skeleton-shimmer"></div>
+                        <div className="skeleton-meta-lines">
+                            <div className="skeleton-meta-row skeleton-shimmer"></div>
+                            <div className="skeleton-meta-row skeleton-shimmer"></div>
+                        </div>
+                    </div>
+                    <div className="skeleton-intro-right skeleton-shimmer"></div>
+                </div>
+
+                <div className="skeleton-section-title skeleton-shimmer"></div>
+
+                {/* Skeleton Grid */}
+                <div className="skeleton-lesson-grid">
+                    {[1, 2, 3, 4].map(n => (
+                        <div key={n} className="skeleton-lesson-card">
+                            <div className="skeleton-card-img skeleton-shimmer"></div>
+                            <div className="skeleton-card-body">
+                                <div className="skeleton-line title skeleton-shimmer"></div>
+                                <div className="skeleton-card-footer">
+                                    <div className="skeleton-meta-row skeleton-shimmer" style={{ width: '60px' }}></div>
+                                    <div className="skeleton-btn-mini skeleton-shimmer"></div>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
                 </div>
             </div>
         );
@@ -434,15 +499,16 @@ export default function Cours() {
             </header>
 
             <div className="lessons-grid-section">
-                {videoUrl || isAdmin ? (
+                {videoUrl && (
                     <VideoIntroduction
-                        videoUrl={videoUrl || ""}
+                        videoUrl={videoUrl}
                         title={actualTitle}
                         appLanguage={appLanguage}
                         isAdmin={isAdmin}
                         onEdit={() => setShowVideoModal(true)}
+                        onDelete={handleDeleteIntro}
                     />
-                ) : null}
+                )}
 
                 <div className="lessons-section-header">
                     <h2 className="lessons-section-title">
@@ -451,6 +517,11 @@ export default function Cours() {
                     </h2>
                     {isAdmin && (
                         <div style={{ display: 'flex', gap: '8px' }}>
+                            {!videoUrl && (
+                                <button className="premium-btn-add" onClick={() => setShowVideoModal(true)} style={{ background: '#d4af37', color: '#1e293b' }}>
+                                    <FaPlus /> {appLanguage === 'ar' ? 'إضافة مقدمة' : 'Ajouter une introduction'}
+                                </button>
+                            )}
                             <button className="premium-btn-add" onClick={() => setIsEditingSection(true)} style={{ background: '#e2e8f0', color: '#1e293b' }}>
                                 <FaEdit /> {appLanguage === 'ar' ? 'تعديل العنوان' : 'Modifier le Titre'}
                             </button>

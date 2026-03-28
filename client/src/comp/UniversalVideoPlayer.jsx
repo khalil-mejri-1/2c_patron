@@ -70,7 +70,20 @@ const UniversalVideoPlayer = ({ url, title = 'Video Player', autoPlay = false, c
     };
 
     return (
-        <div className={`universal-video-container ${className}`} style={{ position: 'relative', width: '100%', height: '100%', minHeight: '300px', backgroundColor: '#000', borderRadius: 'inherit', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
+        <div 
+            className={`universal-video-container ${className}`} 
+            style={{ 
+                position: 'relative', 
+                width: '100%', 
+                height: '100%', 
+                backgroundColor: '#000', 
+                borderRadius: 'inherit', 
+                overflow: 'hidden', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center' 
+            }}
+        >
 
             <style>{`
                 @keyframes player-spin { 100% { transform: rotate(360deg); } }
@@ -131,7 +144,7 @@ const UniversalVideoPlayer = ({ url, title = 'Video Player', autoPlay = false, c
                         style={{
                             border: 0,
                             width: '100%',
-                            minHeight: '350px'
+                            height: '100%'
                         }}
                     ></iframe>
                 </div>

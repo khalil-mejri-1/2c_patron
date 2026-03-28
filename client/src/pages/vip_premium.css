@@ -182,6 +182,13 @@
     gap: 40px;
 }
 
+@media (max-width: 768px) {
+    .vip-courses-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+}
+
 /* --- 📋 PREMIUM COURSE CARD 📋 --- */
 .vip-card-premium {
     background: #ffffff;
@@ -305,8 +312,88 @@
     cursor: pointer;
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 10px;
     transition: all 0.3s ease;
+}
+
+@media (max-width: 768px) {
+    .vip-card-premium {
+        flex-direction: row; /* Horizontal layout */
+        height: auto; /* Dynamic height */
+        min-height: 120px;
+        border-radius: 18px;
+        align-items: flex-start; /* Top align for variable text */
+        padding: 12px;
+        gap: 15px;
+    }
+
+    .vip-card-img-wrapper {
+        width: 100px; /* Slightly smaller to give text more room */
+        height: 100px;
+        border-radius: 12px;
+        flex-shrink: 0;
+        margin-top: 5px;
+    }
+
+    .vip-card-tag {
+        top: 8px;
+        left: 8px;
+        padding: 3px 8px;
+        font-size: 0.55rem;
+        border-radius: 5px;
+    }
+
+    .vip-card-body {
+        padding: 0;
+        justify-content: space-between;
+        height: 100%;
+    }
+
+    .vip-card-title {
+        font-size: 1rem;
+        margin-bottom: 6px;
+        font-weight: 800;
+        color: #1a1a1a;
+    }
+
+    .vip-card-desc {
+        display: block; /* Show description again */
+        font-size: 0.8rem;
+        margin-bottom: 12px;
+        color: #64748b;
+        line-height: 1.4;
+    }
+
+    .vip-card-footer {
+        border-top: none;
+        padding-top: 0;
+        flex-direction: row;
+        gap: 10px;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .vip-meta-item {
+        font-size: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .vip-meta-item span {
+        display: inline-block; /* Show it back */
+    }
+
+    .vip-access-btn {
+        padding: 8px 15px;
+        font-size: 0.8rem;
+        width: auto;
+    }
+
+    .btn-arrow {
+        display: none;
+    }
 }
 
 .vip-card-premium:hover .vip-access-btn {
@@ -601,12 +688,12 @@
         font-size: 2.8rem;
     }
 
-    .vip-courses-grid {
-        grid-template-columns: 1fr;
-    }
-
     .vip-hero-premium {
         padding: 140px 20px 80px;
+    }
+
+    .vip-content-section {
+        padding: 0 10px 60px;
     }
 }
 

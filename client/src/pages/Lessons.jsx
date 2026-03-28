@@ -5,7 +5,6 @@ import '../comp/PremiumSkeleton.css';
 import Navbar from '../comp/navbar';
 import Footer from '../comp/Footer';
 import UniversalVideoPlayer from '../comp/UniversalVideoPlayer';
-import HLSStreamingPlayer from '../comp/HLSStreamingPlayer';
 import { useParams, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import BASE_URL from '../apiConfig';
@@ -677,15 +676,20 @@ export default function Lessons() {
             </header>
 
             <main className="lessons-explorer-container">
-                {/* --- ACTIVE FOCUS PLAYER --- */}
+                {/* --- ACTIVE FOCUS PLAYER (Premium Streaming Style Wrapped) --- */}
                 {currentVideo && (
-                    <div className="active-focus-cinema" ref={topRef}>
-                        <UniversalVideoPlayer
-                            url={currentVideo.url}
-                            title={currentVideo.title}
-                            autoPlay={true}
-                        />
-                    </div>
+                    <section className="active-video-wrapper">
+                        <div className="active-focus-cinema" ref={topRef}>
+                            <UniversalVideoPlayer
+                                url={currentVideo.url}
+                                title={currentVideo.title}
+                                autoPlay={true}
+                            />
+                            {/* Transparent shield to hide/block the Google Drive pop-out button */}
+                            <div className="video-player-shield"></div>
+                        </div>
+
+                    </section>
                 )}
 
                 {/* --- LESSONS LIST --- */}
@@ -749,52 +753,7 @@ export default function Lessons() {
                         <FaWhatsapp size={22} />
                         <span>{certInfo[appLanguage]?.btn || t.whatsappBtn}</span>
                     </a>
-                </section>
 
-                {/* --- PRODUCTION HLS STREAMING DASHBOARD (VPS INTEGRATED) --- */}
-                <section className="hls-streaming-dashboard-premium" style={{ marginTop: '50px', background: '#0f172a', padding: '40px', borderRadius: '32px', border: '1px solid rgba(255,255,255,0.05)', boxShadow: '0 30px 60px rgba(0,0,0,0.4)', color: '#fff' }}>
-                    <div className="hls-dashboard-header" style={{ textAlign: 'center', marginBottom: '30px' }}>
-                        <div style={{ display: 'inline-block', padding: '6px 12px', background: 'rgba(212, 175, 55, 0.1)', color: '#D4AF37', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '16px', border: '1px solid rgba(212, 175, 55, 0.2)' }}>
-                            VPS High-Performance Streaming
-                        </div>
-                        <h2 style={{ fontSize: '2.2rem', fontWeight: '800', margin: '0 0 10px 0', letterSpacing: '-0.5px', background: 'linear-gradient(135deg, #fff 0%, #94a3b8 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-                            {appLanguage === 'ar' ? 'نظام البث المباشر (HLS Adaptive)' : 'Système de Streaming (HLS Adaptive)'}
-                        </h2>
-                        <p style={{ color: '#94a3b8', fontSize: '1rem', maxWidth: '600px', margin: '0 auto' }}>
-                            {appLanguage === 'ar' ? 'بث ذكي يتكيف مع سرعة الإنترنت لضمان عدم التقطيع بدقة تصل لـ 1080p.' : 'Streaming adaptatif haute performance garantissant zéro mise en mémoire tampon jusqu\'à 1080p.'}
-                        </p>
-                    </div>
-
-                    <div className="hls-player-wrapper-lux" style={{ width: '100%', maxWidth: '1000px', margin: '0 auto', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '20px', overflow: 'hidden', background: '#000' }}>
-                        <HLSStreamingPlayer 
-                            src="https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8" // Master playlist URL (Example HLS for demo)
-                            title="Production Server Stream Test"
-                        />
-                    </div>
-
-                    {/* Stats & Quality Specs */}
-                    <div className="hls-stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginTop: '40px', maxWidth: '1000px', margin: '40px auto 0 auto' }}>
-                        <div style={{ padding: '20px', background: 'rgba(255,255,255,0.03)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                            <div style={{ color: '#D4AF37', fontSize: '0.8rem', fontWeight: 'bold', marginBottom: '8px' }}>ENCODING</div>
-                            <div style={{ fontSize: '1.1rem', fontWeight: '600' }}>H.264 / AAC</div>
-                            <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>Mobile-Optimized Engine</div>
-                        </div>
-                        <div style={{ padding: '20px', background: 'rgba(255,255,255,0.03)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                            <div style={{ color: '#D4AF37', fontSize: '0.8rem', fontWeight: 'bold', marginBottom: '8px' }}>QUALITY LAYERS</div>
-                            <div style={{ fontSize: '1.1rem', fontWeight: '600' }}>360p • 480p • 720p • 1080p</div>
-                            <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>Adaptive Resolution Toggle</div>
-                        </div>
-                        <div style={{ padding: '20px', background: 'rgba(255,255,255,0.03)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                            <div style={{ color: '#D4AF37', fontSize: '0.8rem', fontWeight: 'bold', marginBottom: '8px' }}>LATENCY</div>
-                            <div style={{ fontSize: '1.1rem', fontWeight: '600' }}>Low-Latency HLS</div>
-                            <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>Fast-Start Edge Segments</div>
-                        </div>
-                        <div style={{ padding: '20px', background: 'rgba(255,255,255,0.03)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                            <div style={{ color: '#D4AF37', fontSize: '0.8rem', fontWeight: 'bold', marginBottom: '8px' }}>VPS SERVER</div>
-                            <div style={{ fontSize: '1.1rem', fontWeight: '600' }}>5 Cores / 6GB RAM</div>
-                            <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px' }}>NVMe Ready Storage</div>
-                        </div>
-                    </div>
                 </section>
             </main>
 
