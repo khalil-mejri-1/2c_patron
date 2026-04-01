@@ -97,9 +97,18 @@ const getThumbnailUrl = (url, fallbackTitle) => {
     const matchDrive = url?.match(driveRegex);
     if (matchDrive) return `https://drive.google.com/thumbnail?id=${matchDrive[1]}&sz=w1000`;
 
+    const videoExtensions = ['.mp4', '.webm', '.ogg', '.mov'];
+    const isDirectVideo = videoExtensions.some(ext => url?.toLowerCase().endsWith(ext));
+    
     // Cloudinary Direct URL
     if (url?.includes("res.cloudinary.com") && url?.endsWith(".mp4")) {
-        return url.replace('.mp4', '.jpg');
+        // If it's cloudinary, we can still use the #t=2 logic with the mp4 URL for a better preview
+        return `${url}#t=2`;
+    }
+
+    if (isDirectVideo) {
+        // Append #t=2 to signal the frame to the browser
+        return `${url}#t=2`;
     }
 
     // Cloudinary iframe Player URL
@@ -138,7 +147,19 @@ const LessonCard = ({ video, isActive, onSelect, lang, isAdmin, onEdit, onDelete
                 </div>
             )}
             <div className="l-card-preview-box">
-                <img src={video.thumbnail} alt={video.title} className="l-card-preview-img" />
+                {video.thumbnail?.includes('#t=2') ? (
+                    <video 
+                        src={video.thumbnail} 
+                        className="l-card-preview-img" 
+                        muted 
+                        playsInline 
+                        preload="metadata" 
+                        onMouseOver={e => e.currentTarget.play()} 
+                        onMouseOut={e => { e.currentTarget.pause(); e.currentTarget.currentTime = 2; }}
+                    />
+                ) : (
+                    <img src={video.thumbnail} alt={video.title} className="l-card-preview-img" />
+                )}
                 <div className="l-play-overlay">
                     <div className="l-play-btn-circle">
                         {isActive ? <FaPlayCircle /> : <FaPlay />}
