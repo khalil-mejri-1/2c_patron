@@ -13,14 +13,35 @@
 // server.js (الكود النهائي المصحح والمؤمن - الآن يستخدم روابط URL بدلاً من الرفع المحلي للملفات)
 
 // 1. استيراد الوحدات (Imports)
+require('dotenv').config();
 const express = require('express');
-const { GoogleGenAI } = require("@google/genai");
 const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
 const cloudinary = require('cloudinary').v2;
+const { GoogleGenAI } = require("@google/genai");
+
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const genAI = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
+// Note: In the new @google/genai SDK, we don't call getGenerativeModel on the top level
+// We call models.generateContent directly on the instance
+
+// --- 🤖 AI MODELS CHECK ---
+(async () => {
+    try {
+        const res = await genAI.models.list();
+        console.log("✅ Models Response:", res);
+        if (res.models) {
+            res.models.map((m) => {
+                console.log("👉 Model Name:", m.name);
+            });
+        }
+    } catch (e) {
+        console.error("❌ Error listing AI models:", e.message);
+    }
+})();
 
 cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME || 'dzxxqr90c', // يجب تبديل هذا باسم الكلاود الخاص بك
@@ -1763,43 +1784,6 @@ app.put('/api/settings/:key', async (req, res) => {
     }
 });
 
-// ------------------------- 🤖 AI ASSISTANT (GEMINI SDK) -------------------------
-const GEMINI_API_KEY = 'AIzaSyArl1ccayKbvHH5PfovQKKCzfHePhzcaqM';
-const genAI = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
-
-app.post('/api/chatbot', async (req, res) => {
-    const { message, language } = req.body;
-    try {
-        const [courses, videos] = await Promise.all([
-            SpecializedCourse.find({}),
-            SpecializedVideo.find({})
-        ]);
-
-        const catalogSummary = courses.map(group => {
-            const lessons = (group.courses || []).map(c => typeof c.title === 'object' ? Object.values(c.title).join(' ') : c.title).join(', ');
-            return `${group.vip_category}: [${lessons}]`;
-        }).join('\n');
-
-        const systemPrompt = `Tu es l'assistant intelligent de '2C Patron' (Atelier Sfax).
-Donne des réponses courtes, professionnelles et encourageantes.
-Catalogue: ${catalogSummary}.
-Nombre total de vidéos : ${videos.length}.
-Réponds en ${language === 'ar' ? 'arabe tunisien' : 'français'}.
-Si on te demande un cours qui n'est pas là, conseille de contacter le support via WhatsApp.`;
-
-        const response = await genAI.models.generateContent({
-            model: "gemini-3-flash-preview", 
-            contents: `${systemPrompt}\n\nUtilisateur: ${message}`,
-        });
-
-        const aiText = response.text || (language === 'ar' ? 'عذراً، لم أستطع فهم الرسالة.' : 'Désolé, je n\'ai pas pu comprendre le message.');
-        res.json({ text: aiText });
-    } catch (error) {
-        console.error("SDK AI Error:", error);
-        res.status(500).json({ text: language === 'ar' ? 'خطأ في النظام.' : 'Erreur du système.' });
-    }
-});
-
 // ------------------------- BULK RESET (SPECIALIZED) -------------------------
 // Delete all specialized videos
 app.delete('/api/specialized-videos-all/reset-now', async (req, res) => {
@@ -1818,6 +1802,40 @@ app.delete('/api/specialized-courses-all/reset-now', async (req, res) => {
         res.json({ message: 'Tous les cours spécialisés ont été supprimés' });
     } catch (err) {
         res.status(500).json({ message: err.message });
+    }
+});
+
+// ------------------------- AI CHAT ASSISTANT -------------------------
+app.post('/api/ai-chat', async (req, res) => {
+    const { message, language } = req.body;
+    if (!message) return res.status(400).json({ error: 'Message is required' });
+
+    try {
+        const prompt = `
+            You are a professional assistant specialized ONLY in sewing, clothing, fashion design, and patterns (مجال الخياطة والملابس).
+            Your name is "Assistant Atelier Sfax".
+            
+            RULES:
+            1. If the user asks about ANYTHING outside the field of sewing, clothing, or fashion (food, sports, politics, math, general info), you MUST answer EXACTLY with:
+               "أسف، لا يمكنني الإجابة خارج مجال الخياطة والملابس." (if the question is in Arabic)
+               or "Désolé, je ne peux pas répondre en dehors du domaine de la couture et de l'habillement." (if the question is in French).
+            2. Be professional and helpful for sewing tasks.
+            3. Use the language: ${language === 'ar' ? 'Arabic' : 'French'}.
+            4. Keep responses concise and practical.
+
+            User message: ${message}
+        `;
+
+        const result = await genAI.models.generateContent({
+            model: "models/gemini-2.5-flash",
+            contents: prompt
+        });
+
+        const responseText = result.text || result.response?.text();
+        res.status(200).json({ reply: responseText });
+    } catch (error) {
+        console.error("Gemini AI Error:", error);
+        res.status(500).json({ error: 'AI Assistant Error' });
     }
 });
 

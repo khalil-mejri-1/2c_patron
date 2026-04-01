@@ -13,7 +13,7 @@ async function check() {
             ]
         }).toArray();
         console.log('Results in "videos":', results);
-        
+
         await mongoose.disconnect();
     } catch (e) {
         console.log('Error:', e);

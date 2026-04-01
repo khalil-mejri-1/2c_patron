@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaRobot, FaTimes, FaPaperPlane } from 'react-icons/fa';
+import { FaRobot, FaTimes, FaPaperPlane, FaSpinner } from 'react-icons/fa';
 import { useLanguage } from '../context/LanguageContext';
 import axios from 'axios';
 import BASE_URL from '../apiConfig';
@@ -9,31 +9,33 @@ export default function AIChatbot() {
     const [isChatOpen, setIsChatOpen] = useState(false);
     const [chatMessages, setChatMessages] = useState([]);
     const [currentMessage, setCurrentMessage] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
 
     useEffect(() => {
         setChatMessages([{ sender: 'ai', text: appLanguage === 'ar' ? 'مرحباً! أنا مساعدك الذكي. كيف يمكنني مساعدتك اليوم؟' : 'Bonjour ! Je suis votre assistant intelligent. Comment puis-je vous aider ?' }]);
     }, [appLanguage]);
 
-    const [isTyping, setIsTyping] = useState(false);
-
     const handleSendMessage = async () => {
-        if(!currentMessage.trim() || isTyping) return;
+        if(!currentMessage.trim() || isLoading) return;
         const msg = currentMessage;
         setChatMessages(prev => [...prev, { sender: 'user', text: msg }]);
         setCurrentMessage('');
-        setIsTyping(true);
+        setIsLoading(true);
         
         try {
-            const res = await axios.post(`${BASE_URL}/api/chatbot`, {
+            const response = await axios.post(`${BASE_URL}/api/ai-chat`, {
                 message: msg,
                 language: appLanguage
             });
-            setChatMessages(prev => [...prev, { sender: 'ai', text: res.data.text }]);
-        } catch (err) {
-            console.error(err);
-            setChatMessages(prev => [...prev, { sender: 'ai', text: appLanguage === 'ar' ? 'عذراً، حدث خطأ ما.' : 'Désolé, une erreur est survenue.' }]);
+            
+            if (response.data && response.data.reply) {
+                setChatMessages(prev => [...prev, { sender: 'ai', text: response.data.reply }]);
+            }
+        } catch (error) {
+            console.error("AI Chat Error:", error);
+            setChatMessages(prev => [...prev, { sender: 'ai', text: appLanguage === 'ar' ? 'عذراً، حدث خطأ في الاتصال بالمساعد الذكي.' : 'Désolé, une erreur s\'est produite lors de la connexion à l\'assistant.' }]);
         } finally {
-            setIsTyping(false);
+            setIsLoading(false);
         }
     };
 
@@ -71,12 +73,10 @@ export default function AIChatbot() {
                                 {m.text}
                             </div>
                         ))}
-                        {isTyping && (
-                            <div style={{ 
-                                alignSelf: appLanguage === 'ar' ? 'flex-end' : 'flex-start',
-                                background: '#eceef1', color: '#94a3b8', padding: '10px 15px', borderRadius: '16px', borderBottomLeftRadius: appLanguage === 'ar' ? '16px' : '4px', borderBottomRightRadius: appLanguage === 'ar' ? '4px' : '16px', maxWidth: '85%', fontSize: '0.8rem'
-                            }}>
-                                {appLanguage === 'ar' ? 'يكتب...' : 'En train d\'écrire...'}
+                        {isLoading && (
+                            <div style={{ alignSelf: appLanguage === 'ar' ? 'flex-end' : 'flex-start', background: '#ffffff', color: '#334155', padding: '12px 16px', borderRadius: '16px', borderBottomLeftRadius: appLanguage === 'ar' ? '16px' : '4px', borderBottomRightRadius: appLanguage === 'ar' ? '4px' : '16px', maxWidth: '85%', fontSize: '0.9rem', boxShadow: '0 2px 5px rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <FaSpinner className="spinner" style={{ animation: 'spin 1s linear infinite' }} />
+                                <span>{appLanguage === 'ar' ? 'جاري التفكير...' : 'En train de réfléchir...'}</span>
                             </div>
                         )}
                     </div>
@@ -103,6 +103,10 @@ export default function AIChatbot() {
             >
                 <FaRobot />
             </button>
+            <style dangerouslySetInnerHTML={{ __html: `
+                @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+                .spinner { animation: spin 1s linear infinite; }
+            `}} />
         </div>
     );
 }
