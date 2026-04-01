@@ -1117,9 +1117,23 @@ app.post('/api/vip-categories', async (req, res) => {
     try {
         const newCategory = new VipCategory(req.body);
         const savedCategory = await newCategory.save();
+
+        // --- Cross-System Synchronization ---
+        // 1. If we added a category, ensure a SpecializedCourse group exists for it
+        const catName = savedCategory.title?.fr || savedCategory.title;
+        if (catName) {
+            const existingGroup = await SpecializedCourse.findOne({ vip_category: catName });
+            if (!existingGroup) {
+                const newGroup = new SpecializedCourse({
+                    vip_category: catName,
+                    courses: [] 
+                });
+                await newGroup.save();
+            }
+        }
+
         res.status(201).json(savedCategory);
     } catch (error) {
-        // Handle validation errors (e.g., missing title or unique constraint)
         res.status(400).json({ message: "Erreur lors de la création de la catégorie.", error: error.message });
     }
 });
@@ -1168,7 +1182,19 @@ app.delete('/api/vip-categories/:id', async (req, res) => {
         if (!deletedCategory) {
             return res.status(404).json({ message: "Catégorie non trouvée." });
         }
-        res.status(200).json({ message: "Catégorie supprimée avec succès." });
+
+        // --- Cross-System Cleanup ---
+        // 1. Delete associated course groups (SpecializedCourse) by name
+        const catName = deletedCategory.title?.fr || deletedCategory.title;
+        if (catName) {
+            await SpecializedCourse.deleteMany({ vip_category: catName });
+        }
+
+        // 2. Delete associated videos
+        // (VipCategory might have technical names or just use the main name)
+        await SpecializedVideo.deleteMany({ category: catName });
+
+        res.status(200).json({ message: "Catégorie supprimée avec succès sur tous les systèmes." });
     } catch (error) {
         res.status(500).json({ message: "Erreur lors de la suppression de la catégorie.", error: error.message });
     }
@@ -1262,7 +1288,7 @@ app.delete('/api/specialized-courses/:id', async (req, res) => {
         const deletedCourse = await SpecializedCourse.findByIdAndDelete(req.params.id);
         if (!deletedCourse) return res.status(404).json({ message: 'Cours non trouvé' });
 
-        // Auto-delete all associated videos when a category is deleted
+        // --- Multi-Step Cleanup ---
         const categoriesToDelete = [deletedCourse.vip_category];
         if (deletedCourse.courses) {
             deletedCourse.courses.forEach(c => {
@@ -1273,9 +1299,23 @@ app.delete('/api/specialized-courses/:id', async (req, res) => {
                 }
             });
         }
+
+        // 1. Delete associated videos
         await SpecializedVideo.deleteMany({ category: { $in: categoriesToDelete } });
 
-        res.json({ message: 'Cours et vidéos associées supprimés' });
+        // 2. Sync Deletion with VIP Categories (Public cards)
+        // If this group was the "parent" group matching a public category name, delete it.
+        if (deletedCourse.vip_category) {
+            await VipCategory.deleteMany({ 
+                $or: [
+                    { title: deletedCourse.vip_category },
+                    { 'title.fr': deletedCourse.vip_category },
+                    { 'title.ar': deletedCourse.vip_category }
+                ]
+            });
+        }
+
+        res.json({ message: 'Cours, vidéos et cartes VIP associées supprimés' });
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
@@ -1329,6 +1369,29 @@ app.post('/api/specialized-courses/group', async (req, res) => {
         });
 
         await newGroup.save();
+
+        // --- Cross-System Synchronization ---
+        // Ensure a VipCategory exists for this course group so it shows on the UI
+        try {
+            const existingVip = await VipCategory.findOne({
+                $or: [
+                    { title: vipCategoryName },
+                    { 'title.fr': vipCategoryName }
+                ]
+            });
+            if (!existingVip) {
+                const firstCourse = courses && courses[0];
+                const newVip = new VipCategory({
+                    title: { fr: vipCategoryName, ar: '', tn: '' },
+                    description: { fr: (firstCourse?.description?.fr || firstCourse?.description || "Nouvelle formation"), ar: '', tn: '' },
+                    duration: { fr: (firstCourse?.duration?.fr || firstCourse?.duration || "Access 24/7"), ar: '', tn: '' },
+                    image: firstCourse?.image || '',
+                    order: 99
+                });
+                await newVip.save();
+            }
+        } catch (e) { console.error("Sync error:", e); }
+
         res.status(201).json({ message: 'Nouvelle catégorie créée avec succès.', data: newGroup });
 
     } catch (error) {
