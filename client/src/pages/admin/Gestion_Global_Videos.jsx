@@ -125,10 +125,10 @@ export default function Gestion_Global_Videos() {
             setBulkTitles({ fr: '', ar: '', tn: '' });
             setBulkUrls({ fr: '', ar: '', tn: '' });
             setBulkVideoId(null);
-            fetchAll();
-        } catch (error) {
-            console.error(error);
-            showAlert('error', "Erreur", "Impossible d'enregistrer la vidéo.");
+            setIsBulkEntryOpen(false);
+            setBulkTitles({ fr: '', ar: '', tn: '' });
+            setBulkUrls({ fr: '', ar: '', tn: '' });
+            setBulkOrder(0);
         } finally {
             setBulkLoading(false);
         }
@@ -241,27 +241,43 @@ export default function Gestion_Global_Videos() {
 
     // Videos grouped intelligently
     const videosByCategory = {};
-    videos.forEach(v => {
-        let origCat = v.category ? v.category.trim() : 'Non classé';
-        const ctg = courses.find(c => c.vip_category?.toLowerCase() === origCat.toLowerCase());
-        let mainCat = ctg ? ctg.vip_category : origCat;
+    const unassignedVideosMap = {}; // For videos that don't match any official group
 
-        // Backwards compatibility: if video has no subCategory, check if its "category" is actually a lesson name
-        if (!v.subCategory) {
-            const matchedGroup = courses.find(g =>
+    videos.forEach(v => {
+        const vCat = (v.category || '').trim();
+        const vSub = (v.subCategory || '').trim();
+
+        // 1. Find the official group (Course Category Group)
+        const matchedGroup = courses.find(c => 
+            (c.vip_category || '').trim().toLowerCase() === vCat.toLowerCase() ||
+            c._id?.toString() === vCat // Fallback if category was saved as ID
+        );
+
+        if (matchedGroup) {
+            const groupId = matchedGroup._id?.toString();
+            if (!videosByCategory[groupId]) videosByCategory[groupId] = [];
+            videosByCategory[groupId].push(v);
+        } else {
+            // Check if maybe the "category" is actually a lesson name (backwards compatibility)
+            const groupByLesson = courses.find(g =>
                 g.courses?.some(c => {
                     const t = typeof c.title === 'object' ? (c.title.fr || Object.values(c.title)[0]) : c.title;
-                    return t?.toLowerCase() === mainCat.toLowerCase();
+                    return (t || '').trim().toLowerCase() === vCat.toLowerCase();
                 })
             );
-            if (matchedGroup && matchedGroup.vip_category !== mainCat) {
-                mainCat = matchedGroup.vip_category;
-                v._inferredSubCategory = origCat; // Helper for rendering
+
+            if (groupByLesson) {
+                const groupId = groupByLesson._id?.toString();
+                if (!videosByCategory[groupId]) videosByCategory[groupId] = [];
+                v._inferredSubCategory = vCat; 
+                videosByCategory[groupId].push(v);
+            } else {
+                // Truly unassigned
+                const key = vCat || 'Non classé';
+                if (!unassignedVideosMap[key]) unassignedVideosMap[key] = [];
+                unassignedVideosMap[key].push(v);
             }
         }
-
-        if (!videosByCategory[mainCat]) videosByCategory[mainCat] = [];
-        videosByCategory[mainCat].push(v);
     });
 
     // Stat counts
@@ -390,7 +406,7 @@ export default function Gestion_Global_Videos() {
                             </div>
                         ) : filteredCourses.map(group => {
                             const isOpen = expandedGroups[group._id] !== false; // default open
-                            const catVideos = videosByCategory[group.vip_category] || [];
+                            const catVideos = videosByCategory[group._id?.toString()] || [];
 
                             return (
                                 <div key={group._id} style={{
@@ -452,12 +468,16 @@ export default function Gestion_Global_Videos() {
                                                         const titleStr = typeof course.title === 'object'
                                                             ? (course.title.fr || Object.values(course.title)[0])
                                                             : course.title;
-                                                        const techName = course.technicalName || course.vip_category || titleStr;
 
                                                         // Videos for this specific lesson
-                                                        const lessonVideos = catVideos.filter(v =>
-                                                            v.subCategory === titleStr || v._inferredSubCategory === titleStr || (!v.subCategory && v.category === titleStr)
-                                                        );
+                                                        const lessonVideos = catVideos.filter(v => {
+                                                            const vSub = (v.subCategory || '').trim().toLowerCase();
+                                                            const vInf = (v._inferredSubCategory || '').trim().toLowerCase();
+                                                            const titleNorm = (titleStr || '').trim().toLowerCase();
+                                                            const vCat = (v.category || '').trim().toLowerCase();
+                                                            
+                                                            return vSub === titleNorm || vInf === titleNorm || (!v.subCategory && vCat === titleNorm);
+                                                        });
 
                                                         const isLastLesson = i === group.courses.length - 1;
 
@@ -484,7 +504,7 @@ export default function Gestion_Global_Videos() {
                                                                                     e.stopPropagation();
                                                                                     setBulkModalMode('add');
                                                                                     setBulkVideoId(null);
-                                                                                    setBulkContext({ mainCat: group.vip_category, subCat: titleStr });
+                                                                                    setBulkContext({ mainCat: (group.vip_category || '').trim(), subCat: (titleStr || '').trim() });
                                                                                     setBulkTitles({ fr: '', ar: '', tn: '' });
                                                                                     setBulkUrls({ fr: '', ar: '', tn: '' });
                                                                                     setBulkOrder(0);
@@ -572,7 +592,12 @@ export default function Gestion_Global_Videos() {
                                                 const unassignedVideos = catVideos.filter(v => {
                                                     const lessonExists = group.courses?.some(c => {
                                                         const t = typeof c.title === 'object' ? (c.title.fr || Object.values(c.title)[0]) : c.title;
-                                                        return t === v.subCategory || t === v._inferredSubCategory || t === v.category;
+                                                        const titleNorm = (t || '').trim().toLowerCase();
+                                                        const vSub = (v.subCategory || '').trim().toLowerCase();
+                                                        const vInf = (v._inferredSubCategory || '').trim().toLowerCase();
+                                                        const vCat = (v.category || '').trim().toLowerCase();
+                                                        
+                                                        return titleNorm === vSub || titleNorm === vInf || titleNorm === vCat;
                                                     });
                                                     return !lessonExists;
                                                 });
@@ -746,12 +771,16 @@ export default function Gestion_Global_Videos() {
                         ><FaTimes size={22} /></button>
 
                         <div style={{ marginBottom: '30px' }}>
-                            <h2 style={{ fontSize: '1.75rem', fontWeight: '800', color: '#1e293b', marginBottom: '8px' }}>
-                                {bulkModalMode === 'edit' ? 'Modifier la Vidéo' : 'Ajouter des Vidéos Multi-langues'}
+                            <h2 style={{ fontSize: '1.5rem', fontWeight: '800', color: '#1e293b', marginBottom: '8px' }}>
+                                {bulkModalMode === 'edit' ? 'Modifier Vidéo' : 'Ajouter une Video'}
                             </h2>
-                            <p style={{ color: '#64748b', fontSize: '1rem' }}>
-                                Leçon: <span style={{ color: '#D4AF37', fontWeight: 'bold' }}>{bulkContext.subCat}</span>
-                            </p>
+                            <div style={{ display: 'flex', gap: '10px', fontSize: '0.9rem' }}>
+                                <span style={{ color: '#64748b' }}>Filière:</span>
+                                <span style={{ color: '#D4AF37', fontWeight: 'bold' }}>{bulkContext.mainCat}</span>
+                                <span style={{ color: '#cbd5e1' }}>|</span>
+                                <span style={{ color: '#64748b' }}>Leçon:</span>
+                                <span style={{ color: '#D4AF37', fontWeight: 'bold' }}>{bulkContext.subCategory || bulkContext.subCat}</span>
+                            </div>
                             
                             <div style={{ marginTop: '20px', padding: '15px', background: '#f8fafc', borderRadius: '15px', display: 'flex', alignItems: 'center', gap: '15px', border: '1px solid #f1f5f9' }}>
                                 <label style={{ fontWeight: '700', color: '#475569', fontSize: '0.9rem' }}>Ordre d'affichage :</label>

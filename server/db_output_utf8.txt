@@ -1,0 +1,134 @@
+﻿Connected.
+Courses (Groups):
+- Les corsages (_id: 69bdef61230b6bd1113b0d4b)
+  * [object Object]
+  * [object Object]
+  * [object Object]
+- Les pantalons (_id: 69c252528e5a935723462ab0)
+  * [object Object]
+  * [object Object]
+  * [object Object]
+  * [object Object]
+- Les jupes (_id: 69c25b5d66f329e8d56b629d)
+  * [object Object]
+  * [object Object]
+  * [object Object]
+  * [object Object]
+  * [object Object]
+  * [object Object]
+- Les coles (_id: 69c31429afa72b90a2d7138a)
+  * [object Object]
+  * [object Object]
+  * [object Object]
+  * [object Object]
+  * [object Object]
+  * [object Object]
+- Les Manches (_id: 69c3197a71bd8529291b9675)
+  * [object Object]
+  * [object Object]
+  * [object Object]
+  * [object Object]
+- les fermetures (_id: 69c44b81a335eb8aefe6b41d)
+  * [object Object]
+  * [object Object]
+  * [object Object]
+- les poches (_id: 69c44c4ea335eb8aefe6b4f7)
+  * [object Object]
+  * [object Object]
+  * [object Object]
+  * [object Object]
+- Prise de mesure (_id: 69c6e8868a25436adbaaf24d)
+- Mat├⌐riel de couture  (_id: 69c7179ec0de38fe409fed13)
+  * [object Object]
+- Les robes (_id: 69cc1d24a3db821282dd9222)
+  * [object Object]
+  * [object Object]
+- Les chemises (_id: 69cc1f25338f03af3336bf92)
+  * [object Object]
+  * [object Object]
+- aaaa (_id: 69cd5baca003ded031600503)
+  * [object Object]
+Videos:
+- Title: Patron, Category: "Les corsages", Sub: "aaa"
+- Title: Couture, Category: "Les corsages", Sub: "aaa"
+- Title: abv, Category: "Les corsages", Sub: "abc"
+- Title: Coupe, Category: "Les pantalons", Sub: "Pantalon droite"
+- Title: Couture, Category: "Les pantalons", Sub: "Pantalon droite"
+- Title: Patron, Category: "Les pantalons", Sub: "Pantalon large"
+- Title: Coupe, Category: "Les pantalons", Sub: "Pantalon large"
+- Title: Couture, Category: "Les pantalons", Sub: "Pantalon large"
+- Title: Patron, Category: "Les pantalons", Sub: "cal├ºons"
+- Title: Coupe, Category: "Les pantalons", Sub: "cal├ºons"
+- Title: Couture, Category: "Les pantalons", Sub: "cal├ºons"
+- Title: Patron, Category: "Les pantalons", Sub: "Short"
+- Title: Coupe, Category: "Les pantalons", Sub: "Short"
+- Title: Couture, Category: "Les pantalons", Sub: "Short"
+- Title: Coupe, Category: "Les jupes", Sub: "Jupe droite"
+- Title: Couture, Category: "Les jupes", Sub: "Jupe droite"
+- Title: Patron, Category: "Les jupes", Sub: "Jupe ├⌐vas├⌐e"
+- Title: Coupe, Category: "Les jupes", Sub: "Jupe ├⌐vas├⌐e"
+- Title: Couture, Category: "Les jupes", Sub: "Jupe ├⌐vas├⌐e"
+- Title: Patron, Category: "Les jupes", Sub: "Jupe cloche ┘ü┘è┘ç ┘à╪┤┘â┘ä╪⌐"
+- Title: Coupe, Category: "Les jupes", Sub: "Jupe cloche ┘ü┘è┘ç ┘à╪┤┘â┘ä╪⌐"
+- Title: Couture, Category: "Les jupes", Sub: "Jupe cloche ┘ü┘è┘ç ┘à╪┤┘â┘ä╪⌐"
+- Title: Patron, Category: "Les jupes", Sub: "Jupe syr├¿ne"
+- Title: Coupe, Category: "Les jupes", Sub: "Jupe syr├¿ne"
+- Title: Couture, Category: "Les jupes", Sub: "Jupe syr├¿ne"
+- Title: Patron, Category: "Les jupes", Sub: "Jupe panneaux"
+- Title: Coupe, Category: "Les jupes", Sub: "Jupe panneaux"
+- Title: Couture, Category: "Les jupes", Sub: "Jupe panneaux"
+- Title: Patron, Category: "Les jupes", Sub: "Jupes godet"
+- Title: Coupe, Category: "Les jupes", Sub: "Jupes godet"
+- Title: Couture, Category: "Les jupes", Sub: "Jupes godet"
+- Title: Patron, Category: "Les coles", Sub: "col chale"
+- Title: Coupe, Category: "Les coles", Sub: "col chale"
+- Title: Couture, Category: "Les coles", Sub: "col chale"
+- Title: Patron, Category: "Les coles", Sub: "col claudine"
+- Title: Coupe, Category: "Les coles", Sub: "col claudine"
+- Title: Couture, Category: "Les coles", Sub: "col claudine"
+- Title: Patron, Category: "Les coles", Sub: "col et pied de col"
+- Title: Coupe, Category: "Les coles", Sub: "col et pied de col"
+- Title: Couture, Category: "Les coles", Sub: "col et pied de col"
+- Title: Patron, Category: "Les coles", Sub: "col officier"
+- Title: Coupe, Category: "Les coles", Sub: "col officier"
+- Title: Couture, Category: "Les coles", Sub: "col officier"
+- Title: Patron, Category: "Les coles", Sub: "col plat"
+- Title: Coupe, Category: "Les coles", Sub: "col plat"
+- Title: Couture, Category: "Les coles", Sub: "col plat"
+- Title: Patron, Category: "Les coles", Sub: "col tailleur"
+- Title: Coupe, Category: "Les coles", Sub: "col tailleur"
+- Title: Couture, Category: "Les coles", Sub: "col tailleur"
+- Title: patron, Category: "Les Manches", Sub: "Manche ballon"
+- Title: coupe, Category: "Les Manches", Sub: "Manche ballon"
+- Title: Couture, Category: "Les Manches", Sub: "Manche ballon"
+- Title: Patron, Category: "Les Manches", Sub: "Manche papillon"
+- Title: Coupe, Category: "Les Manches", Sub: "Manche papillon"
+- Title: Couture, Category: "Les Manches", Sub: "Manche papillon"
+- Title: Patron, Category: "Les Manches", Sub: "Manche gigot"
+- Title: Coupe, Category: "Les Manches", Sub: "Manche gigot"
+- Title: Couture, Category: "Les Manches", Sub: "Manche gigot"
+- Title: Couture, Category: "Les Manches", Sub: "Manche ├á volant"
+- Title: Coupe, Category: "Les Manches", Sub: "Manche ├á volant"
+- Title: Patron, Category: "Les Manches", Sub: "Manche ├á volant"
+- Title: Fermeture invisible, Category: "les fermetures", Sub: "Fermeture invisible"
+- Title: Fermeture simple, Category: "les fermetures", Sub: "Fermeture simple"
+- Title: Braguette, Category: "La braguette", Sub: "La braguette"
+- Title: La braguette, Category: "les fermetures", Sub: "la braguette"
+- Title: aaaaa, Category: "Mat├⌐riel de couture", Sub: "bcd"
+- Title: Poche invisible, Category: "les poches", Sub: "Poche invisible"
+- Title: Poche italienne, Category: "les poches", Sub: "Poche italienne"
+- Title: Parementure, Category: "Parmenture", Sub: "Parmenture"
+- Title: Poche plaqu├⌐, Category: "les poches", Sub: "Poche plaqu├⌐e"
+- Title: Mat├⌐riel couture, Category: "Mat├⌐riel de couture", Sub: "Mat├⌐riel couture"
+- Title: Patron, Category: "Les chemises", Sub: "Chemise col clodine"
+- Title: Coupe, Category: "Les chemises", Sub: "Chemise col clodine"
+- Title: Couture, Category: "Les chemises", Sub: "Chemise col clodine"
+- Title: Couture, Category: "Chemise simple", Sub: "Chemise simple"
+- Title: Coupe, Category: "Chemise simple", Sub: "Chemise simple"
+- Title: Patron, Category: "Chemise simple", Sub: "Chemise simple"
+- Title: Patron, Category: "Les robes", Sub: "Robe 1"
+- Title: Couture, Category: "Les robes", Sub: "Robe 1"
+- Title: Coupe, Category: "Les robes", Sub: "Robe 1"
+- Title: Patron, Category: "robe 2", Sub: "robe 2"
+- Title: Coupe, Category: "robe 2", Sub: "robe 2"
+- Title: Couture, Category: "robe 2", Sub: "robe 2"
