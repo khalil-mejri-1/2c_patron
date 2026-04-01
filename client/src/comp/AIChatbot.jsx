@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { FaRobot, FaTimes, FaPaperPlane } from 'react-icons/fa';
 import { useLanguage } from '../context/LanguageContext';
+import axios from 'axios';
+import BASE_URL from '../apiConfig';
 
 export default function AIChatbot() {
     const { appLanguage } = useLanguage();
@@ -12,16 +14,27 @@ export default function AIChatbot() {
         setChatMessages([{ sender: 'ai', text: appLanguage === 'ar' ? 'مرحباً! أنا مساعدك الذكي. كيف يمكنني مساعدتك اليوم؟' : 'Bonjour ! Je suis votre assistant intelligent. Comment puis-je vous aider ?' }]);
     }, [appLanguage]);
 
-    const handleSendMessage = () => {
-        if(!currentMessage.trim()) return;
+    const [isTyping, setIsTyping] = useState(false);
+
+    const handleSendMessage = async () => {
+        if(!currentMessage.trim() || isTyping) return;
         const msg = currentMessage;
         setChatMessages(prev => [...prev, { sender: 'user', text: msg }]);
         setCurrentMessage('');
+        setIsTyping(true);
         
-        // Mock AI response
-        setTimeout(() => {
-            setChatMessages(prev => [...prev, { sender: 'ai', text: appLanguage === 'ar' ? 'شكراً لرسالتك. الذكاء الاصطناعي قيد التطوير حالياً للرد على استفسارك.' : 'Merci pour votre message. L\'IA est actuellement en développement pour répondre à votre demande.' }]);
-        }, 1000);
+        try {
+            const res = await axios.post(`${BASE_URL}/api/chatbot`, {
+                message: msg,
+                language: appLanguage
+            });
+            setChatMessages(prev => [...prev, { sender: 'ai', text: res.data.text }]);
+        } catch (err) {
+            console.error(err);
+            setChatMessages(prev => [...prev, { sender: 'ai', text: appLanguage === 'ar' ? 'عذراً، حدث خطأ ما.' : 'Désolé, une erreur est survenue.' }]);
+        } finally {
+            setIsTyping(false);
+        }
     };
 
     return (
@@ -58,6 +71,14 @@ export default function AIChatbot() {
                                 {m.text}
                             </div>
                         ))}
+                        {isTyping && (
+                            <div style={{ 
+                                alignSelf: appLanguage === 'ar' ? 'flex-end' : 'flex-start',
+                                background: '#eceef1', color: '#94a3b8', padding: '10px 15px', borderRadius: '16px', borderBottomLeftRadius: appLanguage === 'ar' ? '16px' : '4px', borderBottomRightRadius: appLanguage === 'ar' ? '4px' : '16px', maxWidth: '85%', fontSize: '0.8rem'
+                            }}>
+                                {appLanguage === 'ar' ? 'يكتب...' : 'En train d\'écrire...'}
+                            </div>
+                        )}
                     </div>
                     <div style={{ padding: '15px', borderTop: '1px solid #e2e8f0', background: 'white', display: 'flex', gap: '10px' }} dir={appLanguage === 'ar' ? 'rtl' : 'ltr'}>
                         <input 

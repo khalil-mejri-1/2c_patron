@@ -14,6 +14,7 @@
 
 // 1. استيراد الوحدات (Imports)
 const express = require('express');
+const { GoogleGenAI } = require("@google/genai");
 const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
@@ -1126,7 +1127,7 @@ app.post('/api/vip-categories', async (req, res) => {
             if (!existingGroup) {
                 const newGroup = new SpecializedCourse({
                     vip_category: catName,
-                    courses: [] 
+                    courses: []
                 });
                 await newGroup.save();
             }
@@ -1306,7 +1307,7 @@ app.delete('/api/specialized-courses/:id', async (req, res) => {
         // 2. Sync Deletion with VIP Categories (Public cards)
         // If this group was the "parent" group matching a public category name, delete it.
         if (deletedCourse.vip_category) {
-            await VipCategory.deleteMany({ 
+            await VipCategory.deleteMany({
                 $or: [
                     { title: deletedCourse.vip_category },
                     { 'title.fr': deletedCourse.vip_category },
@@ -1534,7 +1535,7 @@ app.put('/api/specialized-videos/:id', upload.fields([
         }
 
         const updateData = {};
-        
+
         if (title !== undefined) updateData.title = title.trim();
         if (description !== undefined) updateData.description = description.trim();
         if (category !== undefined) updateData.category = category.trim();
@@ -1601,9 +1602,9 @@ app.patch('/api/specialized-videos/bulk-thumbnail', async (req, res) => {
             { $set: { thumbnail } }
         );
 
-        res.json({ 
+        res.json({
             message: `✅ ${result.modifiedCount} vidéos mises à jour avec succès.`,
-            modifiedCount: result.modifiedCount 
+            modifiedCount: result.modifiedCount
         });
     } catch (error) {
         console.error("Bulk thumbnail update error:", error);
@@ -1759,6 +1760,43 @@ app.put('/api/settings/:key', async (req, res) => {
         res.json(setting);
     } catch (err) {
         res.status(500).json({ error: err.message });
+    }
+});
+
+// ------------------------- 🤖 AI ASSISTANT (GEMINI SDK) -------------------------
+const GEMINI_API_KEY = 'AIzaSyArl1ccayKbvHH5PfovQKKCzfHePhzcaqM';
+const genAI = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
+
+app.post('/api/chatbot', async (req, res) => {
+    const { message, language } = req.body;
+    try {
+        const [courses, videos] = await Promise.all([
+            SpecializedCourse.find({}),
+            SpecializedVideo.find({})
+        ]);
+
+        const catalogSummary = courses.map(group => {
+            const lessons = (group.courses || []).map(c => typeof c.title === 'object' ? Object.values(c.title).join(' ') : c.title).join(', ');
+            return `${group.vip_category}: [${lessons}]`;
+        }).join('\n');
+
+        const systemPrompt = `Tu es l'assistant intelligent de '2C Patron' (Atelier Sfax).
+Donne des réponses courtes, professionnelles et encourageantes.
+Catalogue: ${catalogSummary}.
+Nombre total de vidéos : ${videos.length}.
+Réponds en ${language === 'ar' ? 'arabe tunisien' : 'français'}.
+Si on te demande un cours qui n'est pas là, conseille de contacter le support via WhatsApp.`;
+
+        const response = await genAI.models.generateContent({
+            model: "gemini-3-flash-preview", 
+            contents: `${systemPrompt}\n\nUtilisateur: ${message}`,
+        });
+
+        const aiText = response.text || (language === 'ar' ? 'عذراً، لم أستطع فهم الرسالة.' : 'Désolé, je n\'ai pas pu comprendre le message.');
+        res.json({ text: aiText });
+    } catch (error) {
+        console.error("SDK AI Error:", error);
+        res.status(500).json({ text: language === 'ar' ? 'خطأ في النظام.' : 'Erreur du système.' });
     }
 });
 

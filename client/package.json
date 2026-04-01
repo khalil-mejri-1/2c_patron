@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@google/genai": "^1.48.0",
     "@videojs/http-streaming": "^3.17.4",
     "axios": "^1.13.2",
     "hls.js": "^1.6.15",
