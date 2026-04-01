@@ -1417,7 +1417,7 @@ app.post('/api/specialized-videos', upload.fields([
     { name: 'video', maxCount: 1 }
 ]), async (req, res) => {
     try {
-        const { title, description, category, subCategory, videoUrl, title_lang, status_lang, url_lang, order } = req.body;
+        const { title, description, category, subCategory, videoUrl, title_lang, status_lang, url_lang, order, thumbnail } = req.body;
 
         // 1. Handle Main URL
         let finalUrl = videoUrl;
@@ -1442,6 +1442,7 @@ app.post('/api/specialized-videos', upload.fields([
             url_lang: finalUrlLang,
             title,
             description,
+            thumbnail,
             category,
             subCategory: subCategory || '',
             title_lang: typeof title_lang === 'string' ? JSON.parse(title_lang) : title_lang,
@@ -1525,46 +1526,54 @@ app.put('/api/specialized-videos/:id', upload.fields([
     { name: 'video', maxCount: 1 }
 ]), async (req, res) => {
     try {
-        const { title, description, category, subCategory, videoUrl, title_lang, status_lang, url_lang, order } = req.body;
+        const { title, description, category, subCategory, videoUrl, title_lang, status_lang, url_lang, order, thumbnail } = req.body;
 
         const videoId = req.params.id;
         if (!videoId.match(/^[0-9a-fA-F]{24}$/)) {
             return res.status(400).json({ message: "ID de vidéo invalide." });
         }
 
-        const updateData = {
-            title: title?.trim(),
-            description: description?.trim() || '',
-            category: category?.trim(),
-            title_lang: typeof title_lang === 'string' ? JSON.parse(title_lang) : title_lang,
-            status_lang: typeof status_lang === 'string' ? JSON.parse(status_lang) : status_lang,
-            order: Number(order) || 0
-        };
+        const updateData = {};
+        
+        if (title !== undefined) updateData.title = title.trim();
+        if (description !== undefined) updateData.description = description.trim();
+        if (category !== undefined) updateData.category = category.trim();
+        if (order !== undefined) updateData.order = Number(order);
+        if (thumbnail !== undefined) updateData.thumbnail = thumbnail;
+
+        if (title_lang !== undefined) {
+            updateData.title_lang = typeof title_lang === 'string' ? JSON.parse(title_lang) : title_lang;
+        }
+        if (status_lang !== undefined) {
+            updateData.status_lang = typeof status_lang === 'string' ? JSON.parse(status_lang) : status_lang;
+        }
 
         if (subCategory !== undefined) {
             updateData.subCategory = subCategory.trim() || '';
         }
 
         // Handle Main URL
-        if (req.files['video']) {
+        if (req.files && req.files['video']) {
             updateData.url = `/uploads/specialized-videos/${req.files['video'][0].filename}`;
         } else if (videoUrl) {
             updateData.url = videoUrl;
         }
 
         // Handle Multi-lang URLs
-        let finalUrlLang = typeof url_lang === 'string' ? JSON.parse(url_lang) : (url_lang || {});
-        ['fr', 'ar', 'en'].forEach(lang => {
-            if (req.files[`video_${lang}`]) {
-                finalUrlLang[lang] = `/uploads/specialized-videos/${req.files[`video_${lang}`][0].filename}`;
-            }
-        });
-        updateData.url_lang = finalUrlLang;
+        if (url_lang !== undefined || (req.files && Object.keys(req.files).some(k => k.startsWith('video_')))) {
+            let finalUrlLang = typeof url_lang === 'string' ? JSON.parse(url_lang) : (url_lang || {});
+            ['fr', 'ar', 'en'].forEach(lang => {
+                if (req.files && req.files[`video_${lang}`]) {
+                    finalUrlLang[lang] = `/uploads/specialized-videos/${req.files[`video_${lang}`][0].filename}`;
+                }
+            });
+            updateData.url_lang = finalUrlLang;
+        }
 
         const updatedVideo = await SpecializedVideo.findByIdAndUpdate(
             videoId,
-            updateData,
-            { new: true }
+            { $set: updateData },
+            { new: true, runValidators: true }
         );
 
         if (!updatedVideo) {

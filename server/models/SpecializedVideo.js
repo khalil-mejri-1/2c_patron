@@ -8,6 +8,7 @@ const specializedVideoSchema = new mongoose.Schema({
     title_lang: { type: Object, default: {} }, // Multi-language titles
     status_lang: { type: Object, default: {} }, // Multi-language status labels (Free/VIP)
     description: { type: String },
+    thumbnail: { type: String },               // NEW: Custom thumbnail URL (Cloudinary etc)
     category: { type: String, required: true },
     subCategory: { type: String, default: '' }, // NEW: Link video directly to a subcategory
     order: { type: Number, default: 0 },         // NEW: Custom order for video listing

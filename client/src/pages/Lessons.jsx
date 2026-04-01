@@ -112,7 +112,9 @@ const getThumbnailUrl = (url, fallbackTitle) => {
     return `https://images.unsplash.com/photo-1558769132-cb1aea458c5e?q=80&w=2574&auto=format&fit=crop`;
 };
 
-const LessonCard = ({ video, isActive, onSelect, lang, isAdmin, onEdit, onDelete, appLanguage }) => {
+const LessonCard = ({ video, isActive, onSelect, lang, isAdmin, onEdit, onDelete, onUploadThumbnail, uploadingId, appLanguage }) => {
+    const fileRef = useRef(null);
+
     return (
         <div
             className={`lesson-card-item-premium ${isActive ? 'is-active' : ''}`}
@@ -120,7 +122,22 @@ const LessonCard = ({ video, isActive, onSelect, lang, isAdmin, onEdit, onDelete
             style={{ position: 'relative' }}
         >
             {isAdmin && (
-                <div style={{ position: 'absolute', top: '10px', right: '10px', zIndex: 5, display: 'flex', gap: '5px' }}>
+                <div style={{ position: 'absolute', top: '10px', right: '10px', zIndex: 12, display: 'flex', gap: '5px' }}>
+                    <input 
+                        type="file" 
+                        ref={fileRef} 
+                        style={{ display: 'none' }} 
+                        accept="image/*" 
+                        onChange={(e) => onUploadThumbnail(video, e.target.files[0])} 
+                    />
+                    <button
+                        className="edit-btn-minimal-lux"
+                        style={{ padding: '5px', background: 'rgba(212,175,55,0.9)' }}
+                        onClick={(e) => { e.stopPropagation(); fileRef.current?.click(); }}
+                        title="Upload Thumbnail"
+                    >
+                        {uploadingId === video._id ? <FaSpinner className="spinner" size={12} /> : <FaCloudUploadAlt size={12} />}
+                    </button>
                     <button
                         className="edit-btn-minimal-lux"
                         style={{ padding: '5px' }}
@@ -145,7 +162,7 @@ const LessonCard = ({ video, isActive, onSelect, lang, isAdmin, onEdit, onDelete
                     </div>
                 </div>
             </div>
-            <div className="l-card-details">
+            <div className="l-card-details" style={{ textAlign: appLanguage === 'ar' ? 'right' : 'left' }}>
                 <h3 className="l-card-title-text">{video.title}</h3>
                 <div className="l-card-meta-bar">
                     {(isActive || video.status_lang?.[appLanguage] || video.isVip) && (
@@ -252,7 +269,36 @@ export default function Lessons() {
                 setEditCertData(initCert);
             }
         } catch (e) { console.error("Error fetching site settings", e); }
-    }, []);
+    }, [languages]);
+
+    const handleVideoThumbnailUpload = async (video, file) => {
+        if (!file) return;
+
+        setUploadingToCloudinary(video._id);
+        const formData = new FormData();
+        formData.append('image', file);
+
+        try {
+            const res = await axios.post(`${BASE_URL}/api/upload`, formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+
+            if (res.data && res.data.url) {
+                // Update specific video thumbnail directly via specialized-videos PUT
+                await axios.put(`${BASE_URL}/api/specialized-videos/${video._id}`, {
+                    thumbnail: res.data.url
+                });
+
+                showAlert('success', 'Success', appLanguage === 'ar' ? 'تم تحديث الصورة المصغرة بنجاح!' : 'Thumbnail mise à jour !');
+                fetchVideos();
+            }
+        } catch (err) {
+            console.error(err);
+            showAlert('error', 'Error', 'Failed to upload thumbnail');
+        } finally {
+            setUploadingToCloudinary(null);
+        }
+    };
 
     const handleFastCloudinaryUpload = async (e, langCode, mode) => {
         const file = e.target.files[0];
@@ -304,10 +350,10 @@ export default function Lessons() {
                 const localizedUrl = v.url_lang?.[appLanguage] || (appLanguage === 'tn' && v.url_lang?.en) || v.url;
                 return {
                     ...v,
-                    title: localizedTitle, // Overwrite base title with translation
-                    url: localizedUrl,     // Overwrite base url with translation
-                    isVip: i % 3 === 0,
-                    thumbnail: getThumbnailUrl(localizedUrl, localizedTitle)
+                    title: localizedTitle,
+                    url: localizedUrl,
+                    isVip: v.status_lang?.fr === 'VIP' || v.status_lang?.ar === 'VIP' || i % 3 === 0,
+                    thumbnail: v.thumbnail || getThumbnailUrl(localizedUrl, localizedTitle)
                 };
             });
             setVideos(preparedVideos);
@@ -728,6 +774,8 @@ export default function Lessons() {
                             isAdmin={isAdmin}
                             onEdit={handleEditVideo}
                             onDelete={handleDeleteVideo}
+                            onUploadThumbnail={handleVideoThumbnailUpload}
+                            uploadingId={uploadingToCloudinary}
                             appLanguage={appLanguage}
                         />
                     ))}
