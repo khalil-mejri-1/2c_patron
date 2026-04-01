@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { FaVideo, FaMapMarkerAlt, FaLink, FaLanguage, FaSpinner, FaSearch, FaFilter, FaExternalLinkAlt, FaLayerGroup, FaBook, FaChevronDown, FaChevronUp, FaTrash, FaPlus, FaTimes, FaPencilAlt } from 'react-icons/fa';
+import { FaVideo, FaMapMarkerAlt, FaLink, FaLanguage, FaSpinner, FaSearch, FaFilter, FaExternalLinkAlt, FaLayerGroup, FaBook, FaChevronDown, FaChevronUp, FaTrash, FaPlus, FaTimes, FaPencilAlt, FaImage, FaUpload } from 'react-icons/fa';
 import NavbarAdmin from '../../comp/Navbar_admin';
 import BASE_URL from '../../apiConfig';
 import { useLanguage } from '../../context/LanguageContext';
@@ -16,6 +16,11 @@ export default function Gestion_Global_Videos() {
     const [filterCategory, setFilterCategory] = useState('');
     const [activeTab, setActiveTab] = useState('categories'); // 'categories' | 'videos'
     const [expandedGroups, setExpandedGroups] = useState({});
+    const fileInputRef = useRef(null);
+    const [uploadingId, setUploadingId] = useState(null); // Track specific course being uploaded
+
+    // Current selection for upload
+    const [uploadContext, setUploadContext] = useState({ groupId: null, courseIndex: null });
 
     // --- 📥 Bulk Video State ---
     const [isBulkEntryOpen, setIsBulkEntryOpen] = useState(false);
@@ -173,6 +178,50 @@ export default function Gestion_Global_Videos() {
         } catch (err) {
             console.error("Erreur reassign video:", err);
             showAlert('error', 'Erreur', 'Impossible de déplacer la vidéo.');
+        }
+    };
+
+    const triggerThumbnailUpload = (groupId, courseIndex) => {
+        setUploadContext({ groupId, courseIndex });
+        if (fileInputRef.current) fileInputRef.current.click();
+    };
+
+    const handleThumbnailUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const { groupId, courseIndex } = uploadContext;
+        if (!groupId || courseIndex === null) return;
+
+        setUploadingId(`${groupId}-${courseIndex}`);
+        try {
+            const formData = new FormData();
+            formData.append('image', file);
+            
+            const uploadRes = await axios.post(`${BASE_URL}/api/upload`, formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            
+            const imageUrl = uploadRes.data.url;
+
+            const groupToUpdate = courses.find(c => c._id === groupId);
+            if (!groupToUpdate) throw new Error("Groupe non trouvé");
+
+            const updatedCourses = [...groupToUpdate.courses];
+            updatedCourses[courseIndex] = { ...updatedCourses[courseIndex], image: imageUrl };
+
+            await axios.put(`${BASE_URL}/api/specialized-courses/${groupId}`, {
+                courses: updatedCourses
+            });
+
+            showAlert('success', "Succès", "Image mise à jour !");
+            fetchAll();
+        } catch (error) {
+            console.error("Upload error:", error);
+            showAlert('error', "Erreur", "Échec de l'upload de l'image.");
+        } finally {
+            setUploadingId(null);
+            e.target.value = '';
         }
     };
 
@@ -488,17 +537,61 @@ export default function Gestion_Global_Videos() {
                                                                 <div style={{ position: 'absolute', top: '38px', left: '15px', width: '25px', height: '2px', background: '#cbd5e1', zIndex: 0 }} />
 
                                                                 <div style={{ paddingTop: '15px', paddingBottom: '15px' }}>
-                                                                    {/* Lesson Header Card */}
-                                                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#fff', border: '1px solid #e2e8f0', padding: '12px 20px', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', position: 'relative', zIndex: 1 }}>
-                                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                                                            <div style={{ background: 'rgba(212,175,55,0.1)', padding: '6px', borderRadius: '8px', color: '#D4AF37', display: 'flex' }}>
-                                                                                <FaBook size={14} />
+                                                                    {/* Lesson Header Card (Premium Layout) */}
+                                                                    <div style={{ 
+                                                                        display: 'flex', alignItems: 'center', justifyContent: 'space-between', 
+                                                                        background: '#fff', border: '1px solid #e2e8f0', padding: '10px 15px', 
+                                                                        borderRadius: '16px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', 
+                                                                        position: 'relative', zIndex: 1, minHeight: '75px'
+                                                                    }}>
+                                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                                                            {/* Thumbnail Display */}
+                                                                            <div style={{ 
+                                                                                width: '90px', height: '60px', borderRadius: '10px', 
+                                                                                overflow: 'hidden', background: '#f1f5f9', border: '1px solid #e2e8f0',
+                                                                                display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative'
+                                                                            }}>
+                                                                                {course.image ? (
+                                                                                    <img src={course.image} alt={titleStr} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                                                ) : (
+                                                                                    <FaImage color="#cbd5e1" size={24} />
+                                                                                )}
+                                                                                
+                                                                                {/* Quick Upload Overlay */}
+                                                                                <div 
+                                                                                    onClick={() => triggerThumbnailUpload(group._id, i)}
+                                                                                    style={{
+                                                                                        position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.3)',
+                                                                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                                                        opacity: 0, transition: 'opacity 0.2s', cursor: 'pointer', color: '#fff'
+                                                                                    }}
+                                                                                    onMouseEnter={(e) => e.target.style.opacity = 1}
+                                                                                    onMouseLeave={(e) => e.target.style.opacity = 0}
+                                                                                >
+                                                                                    {uploadingId === `${group._id}-${i}` ? <FaSpinner className="spinner" /> : <FaUpload />}
+                                                                                </div>
                                                                             </div>
+
                                                                             <div>
-                                                                                <div style={{ fontWeight: '800', color: '#1e293b', fontSize: '1.05rem', letterSpacing: '-0.01em' }}>{titleStr}</div>
+                                                                                <div style={{ fontWeight: '800', color: '#1e293b', fontSize: '1rem', letterSpacing: '-0.01e' }}>{titleStr}</div>
+                                                                                <div style={{ display: 'flex', gap: '8px', marginTop: '4px', alignItems: 'center' }}>
+                                                                                    <span style={{ fontSize: '0.7rem', color: '#D4AF37', fontWeight: 'bold', textTransform: 'uppercase' }}>VIP</span>
+                                                                                    <span style={{ fontSize: '0.75rem', color: '#64748b' }}>{course.duration?.fr || course.duration || "24/7 Access"}</span>
+                                                                                </div>
                                                                             </div>
                                                                         </div>
-                                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+
+                                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                                            <button
+                                                                                onClick={() => triggerThumbnailUpload(group._id, i)}
+                                                                                style={{
+                                                                                    width: '32px', height: '32px', borderRadius: '8px', border: 'none', 
+                                                                                    background: 'rgba(212,175,55,0.1)', color: '#D4AF37', 
+                                                                                    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                                                                                }} title="Changer l'image"
+                                                                            >
+                                                                                {uploadingId === `${group._id}-${i}` ? <FaSpinner className="spinner" size={12} /> : <FaImage size={14} />}
+                                                                            </button>
                                                                             <button
                                                                                 onClick={(e) => {
                                                                                     e.stopPropagation();
@@ -511,18 +604,22 @@ export default function Gestion_Global_Videos() {
                                                                                     setIsBulkEntryOpen(true);
                                                                                 }}
                                                                                 style={{
-                                                                                    padding: '5px 12px', borderRadius: '6px', border: 'none', background: 'rgba(34,197,94,0.1)', color: '#16a34a', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', fontWeight: 'bold'
-                                                                                }} title="Ajouter une vidéo (multi-langues)"
+                                                                                    width: '32px', height: '32px', borderRadius: '8px', border: 'none', 
+                                                                                    background: 'rgba(34,197,94,0.1)', color: '#16a34a', 
+                                                                                    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                                                                                }} title="Ajouter une vidéo"
                                                                             >
-                                                                                <FaPlus size={10} /> Ajouter
+                                                                                <FaPlus size={12} />
                                                                             </button>
                                                                             <button
                                                                                 onClick={() => handleDeleteSubCourse(group._id, i)}
                                                                                 style={{
-                                                                                    padding: '5px 10px', borderRadius: '6px', border: 'none', background: 'rgba(239,68,68,0.1)', color: '#ef4444', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', fontWeight: 'bold'
+                                                                                    width: '32px', height: '32px', borderRadius: '8px', border: 'none', 
+                                                                                    background: 'rgba(239,68,68,0.1)', color: '#ef4444', 
+                                                                                    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
                                                                                 }} title="Supprimer la leçon"
                                                                             >
-                                                                                <FaTrash size={10} /> Supprimer
+                                                                                <FaTrash size={12} />
                                                                             </button>
                                                                         </div>
                                                                     </div>
@@ -894,6 +991,14 @@ export default function Gestion_Global_Videos() {
                     </div>
                 </div>
             )}
+
+            <input 
+                type="file" 
+                ref={fileInputRef} 
+                style={{ display: 'none' }} 
+                accept="image/*" 
+                onChange={handleThumbnailUpload} 
+            />
 
             <style dangerouslySetInnerHTML={{ __html: `@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } } .spinner { animation: spin 1s linear infinite; }` }} />
         </div>

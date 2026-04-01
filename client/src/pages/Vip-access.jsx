@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { FaPlayCircle, FaCheckCircle, FaSpinner, FaCertificate, FaTimes, FaChevronRight, FaEdit, FaPlus, FaTrash } from 'react-icons/fa';
+import React, { useState, useEffect, useRef } from 'react';
+import { FaPlayCircle, FaCheckCircle, FaSpinner, FaCertificate, FaTimes, FaChevronRight, FaEdit, FaPlus, FaTrash, FaUpload } from 'react-icons/fa';
 import Navbar from '../comp/navbar';
 import Footer from '../comp/Footer';
 import { NavLink } from 'react-router-dom';
@@ -98,6 +98,9 @@ export default function Vipaccess() {
     const [error, setError] = useState(null);
     const [isAdmin, setIsAdmin] = useState(false);
     const { showAlert } = useAlert();
+    const fileInputRef = useRef(null);
+    const [uploadingId, setUploadingId] = useState(null);
+    const [uploadContextId, setUploadContextId] = useState(null);
 
     const [vipHeroSettings, setVipHeroSettings] = useState({});
     const [isEditingVipHero, setIsEditingVipHero] = useState(false);
@@ -139,6 +142,36 @@ export default function Vipaccess() {
             console.error("Erreur API:", err);
             setError(t.error);
             setLoading(false);
+        }
+    };
+
+    const handleTriggerUpload = (id) => {
+        setUploadContextId(id);
+        if (fileInputRef.current) fileInputRef.current.click();
+    };
+
+    const handleUploadImage = async (e) => {
+        const file = e.target.files[0];
+        if (!file || !uploadContextId) return;
+
+        setUploadingId(uploadContextId);
+        try {
+            const formData = new FormData();
+            formData.append('image', file);
+            
+            const uploadRes = await axios.post(`${BASE_URL}/api/upload`, formData);
+            const imageUrl = uploadRes.data.url;
+
+            await axios.put(`${BASE_URL}/api/vip-categories/${uploadContextId}`, { image: imageUrl });
+            
+            showAlert('success', 'Succès', 'Image de couverture mise à jour !');
+            fetchCategories();
+        } catch (err) {
+            console.error("Upload error:", err);
+            showAlert('error', 'Erreur', "Échec de l'upload de l'image.");
+        } finally {
+            setUploadingId(null);
+            e.target.value = '';
         }
     };
 
@@ -347,6 +380,9 @@ export default function Vipaccess() {
                                     <div className="vip-card-overlay">
                                         {isAdmin && (
                                             <div className="admin-card-controls">
+                                                <button className="control-btn edit" onClick={() => handleTriggerUpload(course._id)} title="Changer l'image">
+                                                    {uploadingId === course._id ? <FaSpinner className="spinner" /> : <FaUpload />}
+                                                </button>
                                                 <button className="control-btn edit" onClick={() => handleOpenEdit(course)}><FaEdit /></button>
                                                 <button className="control-btn delete" onClick={() => handleDelete(course._id)}><FaTrash /></button>
                                             </div>
