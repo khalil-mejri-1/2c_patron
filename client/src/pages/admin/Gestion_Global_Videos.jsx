@@ -21,6 +21,9 @@ export default function Gestion_Global_Videos() {
 
     // Current selection for upload
     const [uploadContext, setUploadContext] = useState({ groupId: null, courseIndex: null });
+    const videoThumbnailRef = useRef(null);
+    const [videoThumbnailTitle, setVideoThumbnailTitle] = useState(null);
+    const [isBulkThumbUploading, setIsBulkThumbUploading] = useState(false);
 
     // --- 📥 Bulk Video State ---
     const [isBulkEntryOpen, setIsBulkEntryOpen] = useState(false);
@@ -225,6 +228,40 @@ export default function Gestion_Global_Videos() {
         }
     };
 
+    const triggerVideoBulkThumbnailUpload = (title) => {
+        setVideoThumbnailTitle(title);
+        if (videoThumbnailRef.current) videoThumbnailRef.current.click();
+    };
+
+    const handleVideoBulkThumbnailUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file || !videoThumbnailTitle) return;
+
+        setIsBulkThumbUploading(true);
+        try {
+            const formData = new FormData();
+            formData.append('image', file);
+            
+            const uploadRes = await axios.post(`${BASE_URL}/api/upload`, formData);
+            const imageUrl = uploadRes.data.url;
+
+            const res = await axios.patch(`${BASE_URL}/api/specialized-videos/bulk-thumbnail`, {
+                title: videoThumbnailTitle,
+                thumbnail: imageUrl
+            });
+
+            showAlert('success', 'Succès', res.data.message);
+            fetchAll();
+        } catch (err) {
+            console.error(err);
+            showAlert('error', 'Erreur', "Échec de la mise à jour des miniatures.");
+        } finally {
+            setIsBulkThumbUploading(false);
+            setVideoThumbnailTitle(null);
+            e.target.value = '';
+        }
+    };
+
     const handleDeleteCourse = async (groupId) => {
         showAlert('confirm', 'Confirmation', "Voulez-vous vraiment supprimer cette catégorie principale et toutes ses leçons/vidéos associées ?", async () => {
             try {
@@ -348,6 +385,7 @@ export default function Gestion_Global_Videos() {
     return (
         <div style={{ background: '#f0f4f8', minHeight: '100vh', paddingBottom: '60px' }}>
             <NavbarAdmin />
+            <input type="file" ref={videoThumbnailRef} onChange={handleVideoBulkThumbnailUpload} style={{ display: 'none' }} />
 
             <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '100px 20px' }}>
 
@@ -641,7 +679,13 @@ export default function Gestion_Global_Videos() {
                                                                                         {/* Video Item Card */}
                                                                                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#f8fafc', border: '1px solid #f1f5f9', padding: '10px 15px', borderRadius: '10px', position: 'relative', zIndex: 1 }}>
                                                                                             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                                                                                <FaVideo color="#94a3b8" size={13} />
+                                                                                                {video.thumbnail ? (
+                                                                                                    <img src={video.thumbnail} alt="" style={{ width: '26px', height: '26px', borderRadius: '6px', objectFit: 'cover', border: '1px solid #e2e8f0' }} />
+                                                                                                ) : (
+                                                                                                    <div style={{ width: '26px', height: '26px', borderRadius: '6px', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                                                                        <FaVideo color="#94a3b8" size={11} />
+                                                                                                    </div>
+                                                                                                )}
                                                                                                 <span style={{ fontWeight: '600', color: '#334155', fontSize: '0.9rem' }}>{video.title}</span>
                                                                                             </div>
                                                                                             <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
@@ -659,24 +703,29 @@ export default function Gestion_Global_Videos() {
                                                                                                     })}
                                                                                                 </div>
                                                                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                                                                    <button onClick={() => handleOpenEditVideo(video)} style={{
-                                                                                                        padding: '4px', borderRadius: '4px', border: 'none', background: 'transparent', color: '#64748b', cursor: 'pointer', display: 'flex'
-                                                                                                    }} title="Modifier la vidéo"><FaPencilAlt size={11} /></button>
-                                                                                                    <button onClick={() => handleDeleteVideo(video._id)} style={{
-                                                                                                        padding: '4px', borderRadius: '4px', border: 'none', background: 'transparent', color: '#ef4444', cursor: 'pointer', display: 'flex'
-                                                                                                    }} title="Supprimer la vidéo"><FaTrash size={12} /></button>
+                                                                        <button onClick={() => triggerVideoBulkThumbnailUpload(video.title)} style={{
+                                                                            padding: '4px', borderRadius: '4px', border: 'none', background: 'transparent', color: '#16a34a', cursor: 'pointer', display: 'flex'
+                                                                        }} title="Thumbnail par titre (Patron/Coupe/Couture)">
+                                                                            {isBulkThumbUploading && videoThumbnailTitle === video.title ? <FaSpinner className="spinner" size={11} /> : <FaImage size={11} />}
+                                                                        </button>
+                                                                        <button onClick={() => handleOpenEditVideo(video)} style={{
+                                                                            padding: '4px', borderRadius: '4px', border: 'none', background: 'transparent', color: '#64748b', cursor: 'pointer', display: 'flex'
+                                                                        }} title="Modifier la vidéo"><FaPencilAlt size={11} /></button>
+                                                                        <button onClick={() => handleDeleteVideo(video._id)} style={{
+                                                                            padding: '4px', borderRadius: '4px', border: 'none', background: 'transparent', color: '#ef4444', cursor: 'pointer', display: 'flex'
+                                                                        }} title="Supprimer la vidéo"><FaTrash size={12} /></button>
+                                                                    </div>
                                                                                                 </div>
                                                                                             </div>
                                                                                         </div>
-                                                                                    </div>
-                                                                                );
-                                                                            })}
-                                                                        </div>
-                                                                    )}
+                                                                                    );
+                                                                                })}
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
                                                                 </div>
-                                                            </div>
-                                                        );
-                                                    })}
+                                                            );
+                                                        })}
                                                 </div>
                                             ) : (
                                                 <div style={{ color: '#94a3b8', fontSize: '0.9rem', fontStyle: 'italic', paddingLeft: '15px' }}>
@@ -711,7 +760,14 @@ export default function Gestion_Global_Videos() {
                                                                         {unassignedVideos.map(video => (
                                                                             <tr key={video._id} style={{ borderBottom: '1px solid #f1f5f9' }}>
                                                                                 <td style={{ padding: '12px 15px', fontWeight: '600', color: '#334155' }}>
-                                                                                    <FaVideo color="#cbd5e1" style={{ marginRight: '10px' }} /> {video.title}
+                                                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                                                        {video.thumbnail ? (
+                                                                                            <img src={video.thumbnail} alt="" style={{ width: '24px', height: '24px', borderRadius: '4px', objectFit: 'cover' }} />
+                                                                                        ) : (
+                                                                                            <FaVideo color="#cbd5e1" />
+                                                                                        )}
+                                                                                        {video.title}
+                                                                                    </div>
                                                                                 </td>
                                                                                 <td style={{ padding: '12px 15px', color: '#94a3b8' }}>
                                                                                     {['fr', 'ar', 'en'].map(lang => (
@@ -724,6 +780,14 @@ export default function Gestion_Global_Videos() {
                                                                                 </td>
                                                                                 <td style={{ padding: '12px 15px', textAlign: 'right' }}>
                                                                                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px' }}>
+                                                                                        <button onClick={() => triggerVideoBulkThumbnailUpload(video.title)} style={{
+                                                                                            padding: '5px', borderRadius: '6px', border: 'none', background: 'rgba(34,197,94,0.1)', color: '#16a34a', cursor: 'pointer', display: 'flex'
+                                                                                        }} title="Thumbnail par titre (Patron/Coupe/Couture)">
+                                                                                            {isBulkThumbUploading && videoThumbnailTitle === video.title ? <FaSpinner className="spinner" size={12} /> : <FaImage size={12} />}
+                                                                                        </button>
+                                                                                        <button onClick={() => handleOpenEditVideo(video)} style={{
+                                                                                            padding: '5px', borderRadius: '6px', border: 'none', background: 'rgba(71,85,105,0.1)', color: '#475569', cursor: 'pointer', display: 'flex'
+                                                                                        }}><FaPencilAlt size={11} /></button>
                                                                                         <select
                                                                                             onChange={(e) => handleReassignVideo(video, e.target.value)}
                                                                                             style={{ padding: '4px 8px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.75rem', outline: 'none', background: '#f8fafc', color: '#475569', cursor: 'pointer' }}
@@ -779,8 +843,12 @@ export default function Gestion_Global_Videos() {
                                             <td style={{ padding: '20px 25px', color: '#94a3b8', fontSize: '0.9rem' }}>{index + 1}</td>
                                             <td style={{ padding: '20px 25px' }}>
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                                                    <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: 'rgba(212,175,55,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#D4AF37', flexShrink: 0 }}>
-                                                        <FaVideo size={18} />
+                                                    <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: 'rgba(212,175,55,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#D4AF37', flexShrink: 0, overflow: 'hidden' }}>
+                                                        {video.thumbnail ? (
+                                                            <img src={video.thumbnail} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                        ) : (
+                                                            <FaVideo size={18} />
+                                                        )}
                                                     </div>
                                                     <div>
                                                         <div style={{ fontWeight: '700', color: '#1e293b' }}>{video.title}</div>
@@ -998,6 +1066,14 @@ export default function Gestion_Global_Videos() {
                 style={{ display: 'none' }} 
                 accept="image/*" 
                 onChange={handleThumbnailUpload} 
+            />
+
+            <input 
+                type="file" 
+                ref={videoThumbnailRef} 
+                style={{ display: 'none' }} 
+                accept="image/*" 
+                onChange={handleVideoBulkThumbnailUpload} 
             />
 
             <style dangerouslySetInnerHTML={{ __html: `@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } } .spinner { animation: spin 1s linear infinite; }` }} />

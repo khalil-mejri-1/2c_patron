@@ -1587,6 +1587,30 @@ app.put('/api/specialized-videos/:id', upload.fields([
     }
 });
 
+// ✅ Mettre à jour les miniatures en masse par TITRE (Update thumbnails in bulk by TITLE)
+app.patch('/api/specialized-videos/bulk-thumbnail', async (req, res) => {
+    try {
+        const { title, thumbnail } = req.body;
+        if (!title || !thumbnail) {
+            return res.status(400).json({ message: "Titre et miniature requis." });
+        }
+
+        // Use case-insensitive match to be safe
+        const result = await SpecializedVideo.updateMany(
+            { title: { $regex: new RegExp(`^${title.trim()}$`, 'i') } },
+            { $set: { thumbnail } }
+        );
+
+        res.json({ 
+            message: `✅ ${result.modifiedCount} vidéos mises à jour avec succès.`,
+            modifiedCount: result.modifiedCount 
+        });
+    } catch (error) {
+        console.error("Bulk thumbnail update error:", error);
+        res.status(500).json({ message: "Erreur serveur." });
+    }
+});
+
 
 
 
