@@ -750,7 +750,8 @@ export default function HeroSection({ isLoggedIn = false, currentUserEmail = '' 
                 const response = await fetch(`${BASE_URL}/api/home-products`);
                 if (!response.ok) throw new Error("Failed to fetch products.");
                 const data = await response.json();
-                const mappedProducts = data.map((item) => ({
+                const sortedData = data.sort((a, b) => (a.order || 0) - (b.order || 0));
+                const mappedProducts = sortedData.map((item) => ({
                     id: item._id,
                     price: item.prix,
                     name: typeof item.nom === 'object' ? (item.nom[currentLanguage] || item.nom.fr) : item.nom,
@@ -928,21 +929,7 @@ export default function HeroSection({ isLoggedIn = false, currentUserEmail = '' 
 
                 <div className="hero-3d-container">
 
-                    {isAdmin && (
-                        <button
-                            onClick={() => setIsAddingProduct(true)}
-                            className="admin-edit-master-btn"
-                            style={{
-                                position: 'absolute',
-                                top: '25px',
-                                right: '35px',
-                                zIndex: 110
-                            }}
-                            title="Ajouter un produit"
-                        >
-                            <FaPlusCircle /> {currentLanguage === 'ar' ? 'إضافة منتج' : 'Ajouter Produit'}
-                        </button>
-                    )}
+
 
                     {/* Display buttons only if we have products and are not loading */}
                     {!isLoading && products.length > 0 && (

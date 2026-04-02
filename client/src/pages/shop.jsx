@@ -716,6 +716,8 @@ export default function ProductGrid() {
     const [finalCustomerData, setFinalCustomerData] = useState({ firstName: '', adresse: '', phone: '' });
 
     const [isAdmin, setIsAdmin] = useState(false);
+    const [homeItems, setHomeItems] = useState([]);
+    const [productOrders, setProductOrders] = useState({}); // Tracking order input per product
     const [isEditingField, setIsEditingField] = useState(null); // 'title', 'subtitle', 'sidebar', 'reset', 'info', 'navTitle', 'cartBtn'
     // Default structure for content
     const defaultStructure = {
@@ -735,6 +737,61 @@ export default function ProductGrid() {
     const [contactSettings, setContactSettings] = useState({ whatsapp: '', messenger: '' });
     const [isEditingContact, setIsEditingContact] = useState(false);
     const [editContactForm, setEditContactForm] = useState({ whatsapp: '', messenger: '' });
+
+    const fetchCategories = async () => {
+        try {
+            const res = await fetch(`${BASE_URL}/api/shop-categories`);
+            if (res.ok) {
+                const data = await res.json();
+                setShopCategories(data);
+            }
+        } catch (err) { }
+    };
+
+    const fetchHomeItems = async () => {
+        try {
+            const res = await fetch(`${BASE_URL}/api/home-products`);
+            if (res.ok) {
+                const data = await res.json();
+                setHomeItems(data);
+            }
+        } catch (err) { }
+    };
+
+    const fetchProducts = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const response = await fetch(API_URL);
+            if (!response.ok) {
+                throw new Error(`Erreur HTTP: ${response.status}`);
+            }
+            const data = await response.json();
+
+            const mappedProducts = data.map(p => ({
+                id: p._id,
+                name: typeof p.nom === 'object' ? (p.nom[appLanguage] || p.nom.fr) : p.nom,
+                fullNom: p.nom,
+                price: p.prix,
+                currency: 'DT',
+                // ✅ التصحيح الأساسي: يختار mainImage (الجديد) أو image (القديم) كصورة رئيسية.
+                url: p.mainImage || p.image,
+                secondaryImages: p.secondaryImages || [],
+                innerImages: p.innerImages || [], // 💡 Added to support images exclusively in the Order Modal carousel
+                alt: typeof p.nom === 'object' ? (p.nom[appLanguage] || p.nom.fr) : p.nom,
+                category: p.categorie,
+                order: p.order || 0
+            }));
+
+            setFetchedProducts(mappedProducts);
+
+        } catch (err) {
+            console.error("Échec de la récupération des produits :", err);
+            setError("Impossible de charger les produits. Veuillez vérifier الـ API.");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
         // Check Admin
@@ -759,18 +816,23 @@ export default function ProductGrid() {
             })
             .catch(() => { });
 
-        fetchCategories();
-    }, [languages]);
+        fetchProducts();
+        fetchHomeItems();
+    }, [appLanguage]); // Re-fetch on lang change and check if products are in hero carousel 
 
-    const fetchCategories = async () => {
-        try {
-            const res = await fetch(`${BASE_URL}/api/shop-categories`);
-            if (res.ok) {
-                const data = await res.json();
-                setShopCategories(data);
-            }
-        } catch (err) { }
-    };
+    // ✅ Match and Sync orders whenever fetchedProducts or homeItems change
+    useEffect(() => {
+        if (fetchedProducts.length > 0 && homeItems.length > 0) {
+            const syncOrders = {};
+            homeItems.forEach(h => {
+                const sp = fetchedProducts.find(p => p.url === h.image);
+                if (sp) syncOrders[sp.id] = h.order || 0;
+            });
+            setProductOrders(prev => ({ ...prev, ...syncOrders }));
+        }
+    }, [fetchedProducts, homeItems]);
+
+
 
     const handleSaveShopContent = async () => {
         localStorage.setItem('shop_content_backup', JSON.stringify(editShopContent));
@@ -976,47 +1038,6 @@ export default function ProductGrid() {
             } catch (err) { }
         };
         fetchContactSettings();
-
-        const fetchProducts = async () => {
-            setLoading(true);
-            setError(null);
-            try {
-                const response = await fetch(API_URL);
-                if (!response.ok) {
-                    throw new Error(`Erreur HTTP: ${response.status}`);
-                }
-                const data = await response.json();
-
-                const mappedProducts = data.map(p => ({
-                    id: p._id,
-                    name: typeof p.nom === 'object' ? (p.nom[appLanguage] || p.nom.fr) : p.nom,
-                    fullNom: p.nom,
-                    price: p.prix,
-                    currency: 'DT',
-                    // ✅ التصحيح الأساسي: يختار mainImage (الجديد) أو image (القديم) كصورة رئيسية.
-                    url: p.mainImage || p.image,
-                    secondaryImages: p.secondaryImages || [],
-                    innerImages: p.innerImages || [], // 💡 Added to support images exclusively in the Order Modal carousel
-                    alt: typeof p.nom === 'object' ? (p.nom[appLanguage] || p.nom.fr) : p.nom,
-                    category: p.categorie,
-                    order: p.order || 0
-                }));
-
-                setFetchedProducts(mappedProducts);
-
-            } catch (err) {
-                console.error("Échec de la récupération des produits :", err);
-                setError("Impossible de charger les produits. Veuillez vérifier الـ API.");
-            } finally {
-                setLoading(false);
-                window.scrollTo({ top: 0, behavior: 'instant' });
-            }
-        };
-
-        // ... (بقية الكود)
-
-        fetchProducts();
-
     }, []);
 
     useEffect(() => {
@@ -1078,6 +1099,81 @@ export default function ProductGrid() {
         setFinalCustomerData(data);
     };
 
+
+    const handleToggleHero = async (product) => {
+        const existingHeroItem = homeItems.find(item => item.image === product.url);
+        
+        if (existingHeroItem) {
+            // REMOVE (OFF)
+            const confirmMsg = appLanguage === 'ar' 
+                ? `هل أنت متأكد من إزالة "${product.name}" من الصفحة الرئيسية؟`
+                : `Voulez-vous vraiment retirer "${product.name}" de la page d'accueil ?`;
+                
+            if (!window.confirm(confirmMsg)) return;
+
+            try {
+                const res = await fetch(`${BASE_URL}/api/home-products/${existingHeroItem._id}`, { method: 'DELETE' });
+                if (res.ok) {
+                    showAlert('success', 'Succès', appLanguage === 'ar' ? 'تمت الإزالة' : 'Produit retiré');
+                    fetchHomeItems();
+                }
+            } catch (err) {
+                showAlert('error', 'Error', err.message);
+            }
+        } else {
+            // ADD (ON)
+            const orderValue = productOrders[product.id] || 0;
+            
+            try {
+                const postData = {
+                    nom: product.fullNom || product.name,
+                    prix: product.price,
+                    image: product.url,
+                    order: Number(orderValue)
+                };
+
+                const postRes = await fetch(`${BASE_URL}/api/home-products`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(postData)
+                });
+
+                if (postRes.ok) {
+                    showAlert('success', 'Succès', 
+                        appLanguage === 'ar' ? 'تمت الإضافة بنجاح' : 'Produit ajouté avec succès'
+                    );
+                    fetchHomeItems();
+                } else {
+                    throw new Error("Failed to add hero product");
+                }
+            } catch (err) {
+                console.error(err);
+                showAlert('error', 'Error', err.message);
+            }
+        }
+    };
+
+    const handleUpdateHeroOrder = async (product) => {
+        const existingHeroItem = homeItems.find(item => item.image === product.url);
+        if (!existingHeroItem) return;
+
+        const newOrder = Number(productOrders[product.id] || 0);
+
+        try {
+            const res = await fetch(`${BASE_URL}/api/home-products/${existingHeroItem._id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ order: newOrder })
+            });
+
+            if (res.ok) {
+                showAlert('success', 'Succès', appLanguage === 'ar' ? 'تم تحديث الترتيب' : 'Ordre mis à jour');
+                fetchHomeItems();
+            }
+        } catch (err) {
+            showAlert('error', 'Error', err.message);
+        }
+    };
 
     const productsToFilter = fetchedProducts;
     const lowerSearchTerm = searchTerm.toLowerCase();
@@ -1563,31 +1659,78 @@ export default function ProductGrid() {
                                                         <FaEdit size={14} />
                                                         {appLanguage === 'ar' ? 'تعديل' : 'Modifier'}
                                                     </button>
-                                                    <button
-                                                        onClick={(e) => { e.stopPropagation(); handleOpenEditProduct(product); }}
-                                                        className="hero-edit-title-btn-premium"
-                                                        style={{
-                                                            width: 'auto',
-                                                            height: 'auto',
-                                                            padding: '10px 18px',
-                                                            borderRadius: '12px',
-                                                            background: '#ffffff',
-                                                            color: '#D4AF37',
-                                                            boxShadow: '0 8px 25px rgba(0,0,0,0.1)',
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            gap: '10px',
-                                                            fontWeight: '700',
-                                                            fontSize: '0.85rem',
-                                                            border: 'none',
-                                                            cursor: 'pointer',
-                                                            transition: 'all 0.3s'
-                                                        }}
-                                                        title="Ajouter Images"
-                                                    >
-                                                        <FaPlusCircle size={14} />
-                                                        {appLanguage === 'ar' ? 'إضافة صور الكاروسيل' : 'Images Carousel'}
-                                                    </button>
+
+                                                    {/* Toggle Hero (Home Carousel) */}
+                                                    <div style={{
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: '8px',
+                                                        background: '#ffffff',
+                                                        padding: '8px 12px',
+                                                        borderRadius: '12px',
+                                                        boxShadow: '0 8px 25px rgba(0,0,0,0.1)',
+                                                        zIndex: 11
+                                                    }}>
+                                                        <input 
+                                                            type="number"
+                                                            placeholder="#"
+                                                            value={productOrders[product.id] || ''}
+                                                            onChange={(e) => setProductOrders({...productOrders, [product.id]: e.target.value})}
+                                                            style={{
+                                                                width: '45px',
+                                                                padding: '6px',
+                                                                borderRadius: '8px',
+                                                                border: '2px solid #f1f5f9',
+                                                                fontSize: '0.8rem',
+                                                                textAlign: 'center',
+                                                                outline: 'none',
+                                                                background: '#f8fafc'
+                                                            }}
+                                                            title={appLanguage === 'ar' ? 'الترتيب' : 'Ordre'}
+                                                        />
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); handleToggleHero(product); }}
+                                                            style={{
+                                                                padding: '8px 14px',
+                                                                borderRadius: '10px',
+                                                                border: 'none',
+                                                                cursor: 'pointer',
+                                                                fontSize: '0.75rem',
+                                                                fontWeight: '800',
+                                                                transition: 'all 0.3s',
+                                                                background: homeItems.some(item => item.image === product.url) ? '#10b981' : '#64748b',
+                                                                color: 'white',
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                gap: '6px'
+                                                            }}
+                                                        >
+                                                            {homeItems.some(item => item.image === product.url) ? 'ON' : 'OFF'}
+                                                            <FaPaperPlane size={10} />
+                                                        </button>
+
+                                                        {homeItems.some(item => item.image === product.url) && (
+                                                            <button
+                                                                onClick={(e) => { e.stopPropagation(); handleUpdateHeroOrder(product); }}
+                                                                style={{
+                                                                    padding: '10px',
+                                                                    borderRadius: '10px',
+                                                                    border: 'none',
+                                                                    cursor: 'pointer',
+                                                                    background: '#f8fafc',
+                                                                    color: '#D4AF37',
+                                                                    display: 'flex',
+                                                                    alignItems: 'center',
+                                                                    justifyContent: 'center',
+                                                                    boxShadow: '0 2px 5px rgba(0,0,0,0.05)',
+                                                                    border: '1px solid #e2e8f0'
+                                                                }}
+                                                                title={appLanguage === 'ar' ? 'حفظ الترتيب' : 'Sauvegarder l\'ordre'}
+                                                            >
+                                                                <FaSave size={14} />
+                                                            </button>
+                                                        )}
+                                                    </div>
                                                     <button
                                                         onClick={(e) => { e.stopPropagation(); handleDeleteProduct(product.id); }}
                                                         className="hero-edit-title-btn-premium"
