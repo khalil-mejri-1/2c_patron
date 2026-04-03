@@ -11,7 +11,6 @@ import Vipaccess from "./pages/Vip-access.jsx";
 import Cours from "./pages/cours.jsx";
 import Lessons from "./pages/Lessons.jsx";
 import Login from "./pages/Login.jsx";
-import Register from "./pages/Register.jsx";
 import About from "./pages/About.jsx";
 import Contact from "./pages/Contact.jsx";
 import Profile from "./pages/Profile.jsx";
@@ -102,7 +101,6 @@ function AppContent() {
                 <Route path="/vip-access" element={<Vipaccess />} />
                 <Route path="/les_cours/:courseTitle" element={<Cours />} />
                 <Route path="/Leçons/:leconTitle" element={<Lessons />} />
-                <Route path="/register" element={<Register />} />
                 <Route path="/Login" element={<Login />} />
                 <Route path="/about" element={<About />} />
                 <Route path="/contact" element={<Contact />} />

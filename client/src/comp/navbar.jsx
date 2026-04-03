@@ -2,14 +2,11 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { FaBars, FaTimes, FaSearch, FaShoppingBag, FaUser, FaSignOutAlt, FaSignInAlt, FaUserPlus, FaCrown, FaTachometerAlt, FaPlus, FaSave, FaArrowLeft, FaEdit, FaPhoneAlt, FaCheck } from 'react-icons/fa';
 import logo from "../img/logo.png";
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { jwtDecode } from 'jwt-decode';
 import { useLanguage } from '../context/LanguageContext';
 import ar from "../img/ar.png";
 import fr from "../img/fr.png";
 import eg from "../img/eg.png";
 import BASE_URL from '../apiConfig';
-
-const GOOGLE_CLIENT_ID = "435113772089-sa576v0m6hq96rg9369icj3g66pnkh9r.apps.googleusercontent.com";
 
 const translations = {
     ar: {
@@ -20,7 +17,6 @@ const translations = {
         contact: "اتصل بنا",
         vip: "ماستر أتيليه (VIP)",
         login: "تسجيل الدخول",
-        register: "إنشاء حساب",
         dashboard: "لوحة التحكم",
         myAccount: "حسابي",
         manageSub: "إدارة الاشتراك",
@@ -44,7 +40,6 @@ const translations = {
         contact: "Contact",
         vip: "Master Atelier (VIP)",
         login: "Se connecter",
-        register: "S'inscrire",
         dashboard: "Tableau de bord",
         myAccount: "Mon Compte",
         manageSub: "Gérer Abonnement",
@@ -68,7 +63,6 @@ const translations = {
         contact: "Contact",
         vip: "Master Atelier (VIP)",
         login: "Login",
-        register: "Register",
         dashboard: "Dashboard",
         myAccount: "My Account",
         manageSub: "Manage Subscription",
@@ -99,6 +93,7 @@ export default function Navbar({ initialCartCount = 0 }) {
     const [isAdmin, setIsAdmin] = useState(false);
     const [showVipModal, setShowVipModal] = useState(false);
     const [vipPhone, setVipPhone] = useState('');
+    const [vipFullName, setVipFullName] = useState('');
     const [isSubmittingVip, setIsSubmittingVip] = useState(false);
     const [vipRequestSuccess, setVipRequestSuccess] = useState(false);
 
@@ -158,30 +153,9 @@ export default function Navbar({ initialCartCount = 0 }) {
         }
     };
 
-    const handleCredentialResponse = useCallback((response) => {
-        try {
-            const userObject = jwtDecode(response.credential);
-            updateAuthStatus(true, userObject.email);
-            setIsOpen(false);
-            setIsDropdownOpen(false);
-        } catch (error) {
-            console.error("Error decoding JWT:", error);
-        }
-    }, []);
+    /* handleCredentialResponse removed */
 
-    const renderGoogleSignInButton = () => {
-        const buttonContainer = document.getElementById("google-sign-in-button");
-        if (window.google && buttonContainer) {
-            window.google.accounts.id.renderButton(buttonContainer, {
-                type: "standard",
-                shape: "rectangular",
-                theme: "outline",
-                text: "signin_with",
-                size: "large",
-                logo_alignment: "left"
-            });
-        }
-    };
+    /* renderGoogleSignInButton removed */
 
     const handleLogout = () => {
         setShowConfirmModal(true);
@@ -203,16 +177,7 @@ export default function Navbar({ initialCartCount = 0 }) {
         localStorage.removeItem('role');
         localStorage.removeItem('login'); // Just in case
 
-        // 3. Clear Google Session if exists (Async but non-blocking)
-        if (emailToRevoke && window.google?.accounts?.id) {
-            try {
-                window.google.accounts.id.revoke(emailToRevoke, (done) => {
-                    console.log('Consent revoked for:', emailToRevoke, done);
-                });
-            } catch (err) {
-                console.error("Google revoke error:", err);
-            }
-        }
+        /* Google revoke removed */
 
         // 4. Reset & Redirect immediately
         // window.location.href = '/' is usually faster/cleaner than reload() for a fresh start
@@ -266,7 +231,7 @@ export default function Navbar({ initialCartCount = 0 }) {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    nom: userName,
+                    nom: vipFullName || 'Client',
                     mail: userEmail,
                     telephone: vipPhone
                 })
@@ -276,6 +241,7 @@ export default function Navbar({ initialCartCount = 0 }) {
                 setTimeout(() => {
                     setShowVipModal(false);
                     setVipRequestSuccess(false);
+                    setVipFullName('');
                     setVipPhone('');
                 }, 5000);
             } else {
@@ -324,23 +290,7 @@ export default function Navbar({ initialCartCount = 0 }) {
         };
     }, [userEmail, checkVipStatusFromDB]);
 
-    useEffect(() => {
-        if (window.google && !isLoggedIn) {
-            window.google.accounts.id.initialize({
-                client_id: GOOGLE_CLIENT_ID,
-                callback: handleCredentialResponse,
-                context: "signin",
-                ux_mode: "popup",
-                auto_prompt: false,
-            });
-            renderGoogleSignInButton();
-            return () => {
-                if (window.google && window.google.accounts && window.google.accounts.id) {
-                    window.google.accounts.id.cancel();
-                }
-            };
-        }
-    }, [handleCredentialResponse, isLoggedIn]);
+        /* Google ID initialize and render effect removed */
 
     useEffect(() => {
         if (showConfirmModal || showVipModal) {
@@ -508,11 +458,6 @@ export default function Navbar({ initialCartCount = 0 }) {
                                     <FaSignInAlt /> Se connecter
                                 </NavLink>
                             </li>
-                            <li className="mobile-auth-link login_button" onClick={() => setIsOpen(false)}>
-                                <NavLink to="/register" className="nav-link-item mobile-register-btn">
-                                    <FaUserPlus /> S'inscrire
-                                </NavLink>
-                            </li>
                         </>
                     ) : (
                         <></>
@@ -653,7 +598,6 @@ export default function Navbar({ initialCartCount = 0 }) {
                     ) : (
                         <div className="auth-buttons-desktop">
                             <Link to="/login" className="auth-btn login-btn">{t.login}</Link>
-                            <Link to="/register" className="auth-btn register-btn">{t.register}</Link>
                         </div>
                     )}
 
@@ -708,6 +652,31 @@ export default function Navbar({ initialCartCount = 0 }) {
 
                                 <form onSubmit={handleVipRequest}>
                                     <div className="premium-form-group" style={{ marginBottom: '20px' }}>
+                                        <label style={{ display: 'block', marginBottom: '8px', color: '#64748b', fontSize: '0.9rem' }}>Nom Complet</label>
+                                        <div style={{ position: 'relative' }}>
+                                            <FaUser style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)', color: '#D4AF37' }} />
+                                            <input
+                                                type="text"
+                                                placeholder="Votre Nom et Prénom"
+                                                value={vipFullName}
+                                                onChange={(e) => setVipFullName(e.target.value)}
+                                                required
+                                                style={{
+                                                    width: '100%',
+                                                    padding: '12px 15px 12px 45px',
+                                                    borderRadius: '12px',
+                                                    border: '1px solid #e2e8f0',
+                                                    fontSize: '1rem',
+                                                    outline: 'none',
+                                                    transition: 'border-color 0.2s'
+                                                }}
+                                                onFocus={(e) => e.target.style.borderColor = '#D4AF37'}
+                                                onBlur={(e) => e.target.style.borderColor = '#e2e8f0'}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="premium-form-group" style={{ marginBottom: '25px' }}>
                                         <label style={{ display: 'block', marginBottom: '8px', color: '#64748b', fontSize: '0.9rem' }}>Numéro de Téléphone</label>
                                         <div style={{ position: 'relative' }}>
                                             <FaPhoneAlt style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)', color: '#D4AF37' }} />

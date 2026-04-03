@@ -152,36 +152,39 @@ export default function Gestion_de_Client() {
                                                 </span>
                                             </td>
                                             <td style={{ padding: '20px' }}>
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                    <span style={{
-                                                        fontSize: '0.85rem',
-                                                        color: '#1e293b',
-                                                        fontFamily: 'monospace',
-                                                        background: '#f1f5f9',
-                                                        padding: '4px 8px',
-                                                        borderRadius: '6px',
-                                                        fontWeight: 'bold',
-                                                        border: '1px solid #e2e8f0'
-                                                    }}>
-                                                        {user.registrationIp || user.lockedIp || 'N/A'}
-                                                    </span>
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                        <span style={{
+                                                            fontSize: '0.9rem',
+                                                            color: '#1e293b',
+                                                            fontFamily: 'monospace',
+                                                            background: '#f1f5f9',
+                                                            padding: '5px 10px',
+                                                            borderRadius: '6px',
+                                                            fontWeight: 'bold',
+                                                            border: '1px solid #cbd5e1',
+                                                            boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.05)'
+                                                        }}>
+                                                            {user.lockedIp || user.registrationIp || '---'}
+                                                        </span>
+                                                    </div>
+                                                    {user.deviceInfo && (
+                                                        <span
+                                                            style={{
+                                                                fontSize: '0.75rem',
+                                                                color: '#64748b',
+                                                                fontWeight: '600',
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                gap: '6px',
+                                                                paddingLeft: '2px'
+                                                            }}
+                                                            title={user.userAgent || 'Données brutes non disponibles'}
+                                                        >
+                                                            <span style={{ fontSize: '1rem' }}>{user.deviceInfo.includes('Mobile') ? '📱' : '💻'}</span> {user.deviceInfo}
+                                                         </span>
+                                                     )}
                                                 </div>
-                                                {user.deviceInfo && (
-                                                    <span
-                                                        style={{
-                                                            fontSize: '0.75rem',
-                                                            color: '#475569',
-                                                            fontWeight: '500',
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            gap: '4px',
-                                                            cursor: 'help'
-                                                        }}
-                                                        title={user.userAgent || 'Données brutes non disponibles'}
-                                                    >
-                                                        {user.deviceInfo}
-                                                    </span>
-                                                )}
                                             </td>
                                             <td style={{ padding: '20px', textAlign: 'right' }}>
                                                 <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>

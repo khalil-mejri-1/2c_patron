@@ -10,7 +10,7 @@ async function check() {
             category: { $regex: '^aaaa', $options: 'i' }
         }).toArray();
         console.log('Results (aaaa regex):', results);
-        
+
         await mongoose.disconnect();
     } catch (e) {
         console.log('Error:', e);

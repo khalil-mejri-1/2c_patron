@@ -10,15 +10,24 @@ const abonnementSchema = new mongoose.Schema({
     
     mail: { 
         type: String,
-        required: [true, "L'adresse email est requise."],
+        required: false,
         lowercase: true,
-        match: [/\S+@\S+\.\S+/, 'Veuillez utiliser une adresse email valide.']
     },
 
     telephone: {
         type: String,
         required: [true, "Le numéro de téléphone est requis."],
         trim: true
+    },
+    
+    generated_mail: { 
+        type: String,
+        required: false,
+    },
+    
+    generated_password: { 
+        type: String,
+        required: false,
     },
     
     preuve_paiement_url: { 

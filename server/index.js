@@ -29,19 +29,19 @@ const genAI = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
 // We call models.generateContent directly on the instance
 
 // --- 🤖 AI MODELS CHECK ---
-(async () => {
-    try {
-        const res = await genAI.models.list();
-        console.log("✅ Models Response:", res);
-        if (res.models) {
-            res.models.map((m) => {
-                console.log("👉 Model Name:", m.name);
-            });
-        }
-    } catch (e) {
-        console.error("❌ Error listing AI models:", e.message);
-    }
-})();
+// (async () => {
+//     try {
+//         const res = await genAI.models.list();
+//         console.log("✅ Models Response:", res);
+//         if (res.models) {
+//             res.models.map((m) => {
+//                 console.log("👉 Model Name:", m.name);
+//             });
+//         }
+//     } catch (e) {
+//         console.error("❌ Error listing AI models:", e.message);
+//     }
+// })();
 
 cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME || 'dzxxqr90c', // يجب تبديل هذا باسم الكلاود الخاص بك
@@ -71,6 +71,7 @@ const PORT = 3000;
 
 
 // -------------------- A. MIDDLEWARE SETUP --------------------
+app.set('trust proxy', true);
 
 app.use(cors());
 app.use(express.json());
@@ -215,107 +216,63 @@ app.get('/api/videos/stream/:id', async (req, res) => {
 // **********************************************
 
 // ... (جميع مسارات المستخدمين هنا دون تغيير) ...
-app.post('/api/login-google', async (req, res) => {
-    try {
-        const { mail, mot_de_pass } = req.body;
-        const user = await User.findOne({ mail: mail });
-        if (!user) return res.status(404).json({ error: 'User not found in database.' });
-
-        const currentIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-
-        // Skip IP lock for Admins
-        if (user.statut !== 'admin') {
-            if (!user.lockedIp) {
-                user.lockedIp = currentIp;
-                await user.save();
-                return res.status(200).json({
-                    firstLogin: true,
-                    message: 'Login successful via Google. Device locked.',
-                    id: user._id,
-                    nom: user.nom,
-                    image: user.image,
-                    statut: user.statut,
-                    abonne: user.abonne
-                });
-            } else if (user.lockedIp !== currentIp) {
-                return res.status(403).json({
-                    errorType: 'IP_LOCKED',
-                    error: 'Accès restreint : الجهاز غير معترف به.'
-                });
-            }
-        }
-
-        if (user.mot_de_pass === mot_de_pass) {
-            res.status(200).json({ message: 'Login successful via Google.', id: user._id, nom: user.nom, image: user.image, statut: user.statut, abonne: user.abonne, firstLogin: false });
-        } else {
-            res.status(401).json({ error: 'Email registered, but password/auth method mismatch.' });
-        }
-    } catch (error) {
-        console.error('Error during Google login check:', error.message);
-        res.status(500).json({ error: 'Internal server error during login.' });
-    }
-});
-
-app.post('/api/users', async (req, res) => {
-    try {
-        const { nom, mail, mot_de_pass, image, statut, abonne } = req.body;
-
-        const currentIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-
-        const newUser = new User({
-            nom,
-            mail,
-            mot_de_pass,
-            image,
-            statut: statut || 'client',
-            abonne,
-            lockedIp: (statut || 'client') === 'admin' ? null : currentIp,
-            registrationIp: currentIp,
-            deviceInfo: getDeviceInfoFromUA(req.headers['user-agent']),
-            userAgent: req.headers['user-agent']
-        });
-
-        await newUser.save();
-
-        res.status(201).json({
-            message: 'User created successfully!',
-            user: newUser,
-            firstLogin: (statut || 'client') === 'admin' ? false : true
-        });
-    } catch (error) {
-        if (error.code === 11000) return res.status(400).json({ error: 'Email already exists.', details: error.message });
-        console.error('Error creating user:', error.message);
-        res.status(400).json({ error: 'Failed to create user', details: error.message });
-    }
-});
+// Public registration and Google login removed. Login only available via admin-generated accounts.
 
 app.post('/api/login-traditional', async (req, res) => {
     try {
         const { mail, mot_de_pass } = req.body;
-        const user = await User.findOne({ mail: mail });
-        if (!user) return res.status(401).json({ error: 'E-mail ou mot de passe incorrect. Veuillez réessayer.' });
+        let user = await User.findOne({ mail: mail });
+
+        // 💡 Jeśli użytkownika nie ma w bazie User, sprawdzamy w bazie Abonnement (Administrator-generated accounts)
+        if (!user) {
+            const aboRequest = await Abonnement.findOne({ 
+                generated_mail: mail, 
+                generated_password: mot_de_pass,
+                statut_abonnement: 'approuvé'
+            });
+
+            if (aboRequest) {
+                // Automatycznie tworzymy użytkownika w tabeli User przy pierwszym logowaniu
+                user = new User({
+                    nom: aboRequest.nom,
+                    mail: aboRequest.generated_mail,
+                    mot_de_pass: aboRequest.generated_password,
+                    abonne: 'oui',
+                    statut: 'client'
+                });
+                await user.save();
+                console.log(`✅ Compte client créé automatiquement lors du premier login pour : ${mail}`);
+            } else {
+                return res.status(401).json({ error: 'E-mail ou mot de passe incorrect. Veuillez réessayer.' });
+            }
+        }
 
         if (user.mot_de_pass === mot_de_pass) {
-            const currentIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+            // Robust IP detection logic
+            let currentIp = req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress || '';
+            if (currentIp.includes(',')) currentIp = currentIp.split(',')[0].trim();
+            if (currentIp.startsWith('::ffff:')) {
+                currentIp = currentIp.replace('::ffff:', '');
+            } else if (currentIp === '::1') {
+                currentIp = '127.0.0.1';
+            }
 
-            // Skip IP lock for Admins
+            const ua = req.headers['user-agent'];
+            const deviceInfo = getDeviceInfoFromUA(ua);
+
+            // Update IP/Device info if not set (For all users, including Admins)
+            // Ensure both registrationIp and lockedIp are initialized
+            if (!user.lockedIp || !user.deviceInfo || !user.registrationIp) {
+                user.registrationIp = user.registrationIp || currentIp;
+                user.lockedIp = user.lockedIp || currentIp;
+                user.deviceInfo = user.deviceInfo || deviceInfo;
+                user.userAgent = user.userAgent || ua;
+                await user.save();
+            }
+
+            // Skip IP lock check for Admins, but proceed for clients
             if (user.statut !== 'admin') {
-                if (!user.lockedIp) {
-                    user.lockedIp = currentIp;
-                    const ua = req.headers['user-agent'];
-                    user.deviceInfo = getDeviceInfoFromUA(ua);
-                    user.userAgent = ua;
-                    await user.save();
-                    return res.status(200).json({
-                        firstLogin: true,
-                        message: 'Connexion traditionnelle réussie. Appareil vérrouillé.',
-                        id: user._id,
-                        nom: user.nom,
-                        image: user.image,
-                        statut: user.statut,
-                        abonne: user.abonne
-                    });
-                } else if (user.lockedIp !== currentIp) {
+                 if (user.lockedIp !== currentIp) {
                     return res.status(403).json({
                         errorType: 'IP_LOCKED',
                         error: 'Accès restreint : الجهاز غير معترف به.'
@@ -323,12 +280,20 @@ app.post('/api/login-traditional', async (req, res) => {
                 }
             }
 
-            res.status(200).json({ message: 'Connexion traditionnelle réussie.', id: user._id, nom: user.nom, image: user.image, statut: user.statut, abonne: user.abonne, firstLogin: false });
+            res.status(200).json({ 
+                message: 'Connexion réussie.', 
+                id: user._id, 
+                nom: user.nom, 
+                image: user.image, 
+                statut: user.statut, 
+                abonne: user.abonne, 
+                firstLogin: !user.lockedIp // Consider first login if IP was just set
+            });
         } else {
             res.status(401).json({ error: 'E-mail ou mot de passe incorrect. Veuillez réessayer.' });
         }
     } catch (error) {
-        console.error('Error during traditional login:', error.message);
+        console.error('Error during login:', error.message);
         res.status(500).json({ error: 'Erreur interne du serveur lors de la connexion.' });
     }
 });
@@ -972,21 +937,18 @@ app.delete('/api/commentaires/:id', async (req, res) => {
 
 app.post('/api/abonnement', async (req, res) => {
     try {
-        // 💡 Ces données sont maintenant envoyées par le frontend au format JSON,
-        // 💡 après que le frontend ait uploadé l'image sur ImgBB.
         const { nom, mail, telephone } = req.body;
 
         if (!telephone) {
             return res.status(400).json({ message: "Le numéro de téléphone est requis." });
         }
 
-        // vérifier si l'email existe déjà
-        const existant = await Abonnement.findOne({ mail });
-        if (existant) {
-            return res.status(400).json({ message: "Une demande avec cet email existe déjà." });
-        }
-
-        const abonnement = new Abonnement({ nom, mail, telephone });
+        const abonnement = new Abonnement({ 
+            nom: nom || 'Client', 
+            mail: mail || undefined, 
+            telephone 
+        });
+        
         await abonnement.save();
 
         res.status(201).json({
@@ -994,6 +956,7 @@ app.post('/api/abonnement', async (req, res) => {
             abonnement
         });
     } catch (error) {
+        console.error("ERREUR:", error);
         res.status(500).json({ message: "Erreur serveur", error: error.message });
     }
 });
@@ -1048,6 +1011,61 @@ app.delete('/api/abonnement/:id', async (req, res) => {
 });
 
 
+
+// Helpers for generating credentials
+const generatePassword = (length = 12) => {
+    const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+";
+    let password = "";
+    for (let i = 0; i < length; i++) {
+        password += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return password;
+};
+
+const generateEmail = async (name) => {
+    const cleanName = name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, '');
+    let email = "";
+    let isUnique = false;
+    while (!isUnique) {
+        const randomDigits = Math.floor(100 + Math.random() * 9000); // 3 or 4 digits
+        email = `${cleanName}${randomDigits}@2c-patron.com`;
+        const exists = await User.findOne({ mail: email });
+        if (!exists) isUnique = true;
+    }
+    return email;
+};
+
+app.post('/api/abonnement/generate-account/:id', async (req, res) => {
+    try {
+        const abonnementId = req.params.id;
+        const abo = await Abonnement.findById(abonnementId);
+        if (!abo) return res.status(404).json({ message: "Demande non trouvée." });
+
+        if (abo.statut_abonnement === 'approuvé') {
+            return res.status(400).json({ message: "Ce compte a déjà été approuvé." });
+        }
+
+        const generatedEmail = await generateEmail(abo.nom);
+        const generatedPassword = generatePassword();
+
+        // On ne crée plus l'utilisateur ici, il sera créé automatiquement lors de sa première connexion
+        
+        // Update the abonnement request
+        abo.statut_abonnement = 'approuvé';
+        abo.generated_mail = generatedEmail;
+        abo.generated_password = generatedPassword;
+        await abo.save();
+
+        res.status(201).json({
+            message: "Compte généré avec succès.",
+            email: generatedEmail,
+            password: generatedPassword
+        });
+    } catch (error) {
+        console.error("Error generating account:", error);
+        res.status(500).json({ message: "Erreur lors de la génération du compte.", error: error.message });
+    }
+});
 
 // ... (بقية المسارات دون تغيير) ...
 app.get('/api/users', async (req, res) => {

@@ -139,142 +139,7 @@ export default function AuthForm({ type = 'login' }) {
         }
     };
 
-    // ----------------------------------------------------
-    // 1. منطق معالجة الدخول/التسجيل عبر Google (المتصل بالـ DB)
-    // ----------------------------------------------------
-    const handleGoogleAuth = async (userObject) => {
-        setErrorMessage('');
-
-        const authData = {
-            nom: userObject.name || 'Utilisateur Google',
-            mail: userObject.email,
-            // نستخدم ID Google كـ mot_de_pass للتمييز في DB
-            mot_de_pass: `GOOGLE_AUTH_${userObject.sub}`,
-            image: userObject.picture || null,
-        };
-
-        // 🚀 A. منطق تسجيل الدخول عبر Google (التحقق من الوجود في DB) 🚀
-        if (isLogin) {
-            try {
-                // استدعاء مسار التحقق من الدخول الخاص بـ Google في الخادم
-                const loginResponse = await fetch(`${BASE_URL}/api/login-google`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ mail: authData.mail, mot_de_pass: authData.mot_de_pass }),
-                });
-
-                if (loginResponse.ok) {
-                    // نجاح: المستخدم موجود وتم تسجيل دخوله
-                    const dbUser = await loginResponse.json();
-
-                    const user = { email: authData.mail, name: authData.nom, statut: dbUser.statut, ...dbUser };
-                    const users = getUsers().filter(u => u.email !== user.email);
-                    saveUsers([...users, user]);
-
-                    if (dbUser.firstLogin) {
-                        user.firstLogin = true;
-                    }
-
-                    performLogin(user);
-                    return;
-
-                } else {
-                    // فشل: المستخدم غير موجود في DB (401 أو 404)
-                    const errorData = await loginResponse.json().catch(() => ({}));
-
-                    if (errorData.errorType === 'IP_LOCKED') {
-                        const contactMsg = appLanguage === 'ar'
-                            ? `يجب عليك تسجيل الدخول من نفس الجهاز الذي تم تسجيل الدخول به أول مرة. إذا واجهت مشكلة، تواصل مع الإدارة عبر الواتساب: ${whatsApp}`
-                            : `Accès restreint : Vous devez vous connecter depuis l'appareil initial. Contactez l'admin via WhatsApp : ${whatsApp}`;
-                        setErrorMessage(contactMsg);
-                    } else {
-                        setErrorMessage("Cet email n'est pas enregistré dans la base de données. Veuillez créer un compte d'abord.");
-                    }
-                    return;
-                }
-
-            } catch (error) {
-                console.error("Erreur de communication avec le serveur lors de la connexion:", error);
-                setErrorMessage("Échec de la communication avec le serveur.");
-                return;
-            }
-        }
-
-        // B. منطق التسجيل عبر Google (فقط في وضع التسجيل - Register) 
-        try {
-            // استدعاء مسار التسجيل العام في الخادم
-            const response = await fetch(`${BASE_URL}/api/users`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(authData),
-            });
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                if (data.details && data.details.includes('E11000')) {
-                    setErrorMessage("Cet email est déjà enregistré. Veuillez vous connecter.");
-                } else {
-                    setErrorMessage(data.error || "Erreur lors de l'enregistrement via Google.");
-                }
-                return;
-            }
-
-            console.log('User registered successfully in DB:', data.user);
-
-            const newUser = {
-                id: data.user._id,
-                name: authData.nom,
-                email: authData.mail,
-                statut: data.user.statut,
-                firstLogin: data.firstLogin
-            };
-            saveUsers([...getUsers(), newUser]);
-
-            performLogin(newUser);
-        } catch (error) {
-            console.error("Erreur de communication avec le serveur:", error);
-            setErrorMessage("Échec de la communication avec le serveur pour l'enregistrement.");
-        }
-    };
-
-    // ----------------------------------------------------
-    // منطق معالجة استجابة Google (Callback)
-    // ----------------------------------------------------
-    const handleGoogleCredentialResponse = useCallback((response) => {
-        try {
-            const userObject = jwtDecode(response.credential);
-            handleGoogleAuth(userObject);
-        } catch (error) {
-            console.error("Erreur de décودage JWT Google:", error);
-            setErrorMessage("Erreur d'authentification Google. Veuillez réessayer.");
-        }
-    }, [isLogin]);
-
-    // ----------------------------------------------------
-    // useEffect لتهيئة زر Google
-    // ----------------------------------------------------
-    useEffect(() => {
-        if (window.google) {
-            window.google.accounts.id.initialize({
-                client_id: "435113772089-sa576v0m6hq96rg9369icj3g66pnkh9r.apps.googleusercontent.com",
-                callback: handleGoogleCredentialResponse,
-                context: isLogin ? "signin" : "signup",
-                ux_mode: "popup",
-            });
-
-            window.google.accounts.id.renderButton(
-                document.getElementById("google-sign-in-button"),
-                {
-                    type: "standard",
-                    size: "large",
-                    text: isLogin ? "signin_with" : "signup_with",
-                    width: '350',
-                    locale: 'fr',
-                }
-            );
-        }
-    }, [handleGoogleCredentialResponse, isLogin]);
+    // Google login removed based on user request.
 
     // ----------------------------------------------------
     // 2. منطق إرسال النموذج التقليدي (Email/Password) - المتصل بالـ DB
@@ -289,57 +154,7 @@ export default function AuthForm({ type = 'login' }) {
             return;
         }
 
-        if (!isLogin) {
-            if (password.length < 6) {
-                setErrorMessage("Le mot de passe doit contenir au moins 6 caractères.");
-                return;
-            }
-            if (password !== confirmPassword) {
-                setErrorMessage("Les mots de passe ne correspondent pas !");
-                return;
-            }
-        }
-
-        // B. منطق التسجيل (S'inscrire) - POST /api/users
-        if (!isLogin) {
-            const newUserForDB = {
-                nom: name,
-                mail: email,
-                mot_de_pass: password, // يجب أن يقوم الخادم بتشفير هذا!
-                image: null,
-            };
-
-            try {
-                const response = await fetch(`${BASE_URL}/api/users`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(newUserForDB),
-                });
-
-                const data = await response.json();
-
-                if (!response.ok) {
-                    if (data.details && data.details.includes('E11000')) {
-                        setErrorMessage("Cette adresse e-mail est déjà utilisée.");
-                    } else {
-                        setErrorMessage(data.error || "Échec de la création du compte.");
-                    }
-                    return;
-                }
-
-                // بعد نجاح التسجيل في الخادم، نحدث الـ localStorage وننتقل لصفحة الدخول
-                const newUser = { id: Date.now(), name, email, password };
-                saveUsers([...getUsers(), newUser]);
-
-                window.location.href = '/login';
-                return;
-
-            } catch (error) {
-                console.error("Erreur de communication avec le serveur lors de l'inscription:", error);
-                setErrorMessage("Échec de la communication avec le serveur.");
-                return;
-            }
-        }
+        // Login only logic below. Registration removed.
 
         // C. منطق تسجيل الدخول (Se connecter) - POST /api/login-traditional
         if (isLogin) {
@@ -429,9 +244,7 @@ export default function AuthForm({ type = 'login' }) {
                                 )}
                             </h2>
                             <p className="luxury-desc">
-                                {isLogin
-                                    ? "Accédez à votre espace privilégié et retrouvez tous vos ateliers et patrons exclusifs."
-                                    : "Devenez membre VIP et accédez aux secrets les mieux gardés du patronage professionnel."}
+                                Accédez à votre espace privilégié et retrouvez tous vos ateliers et patrons exclusifs.
                             </p>
 
                         </div>
@@ -452,29 +265,11 @@ export default function AuthForm({ type = 'login' }) {
                             )}
 
                             {/* Social Auth Section */}
-                            <div className="auth-social-area">
-                                <div id="google-sign-in-button" className="google-btn-premium"></div>
-                                <div className="auth-divider">
-                                    <span>ou avec vos identifiants</span>
-                                </div>
-                            </div>
+                            <div className="auth-social-area" style={{ display: 'none' }}></div>
 
                             {/* Traditional Form */}
                             <form className="glam-form-fields" onSubmit={handleSubmit}>
-                                {!isLogin && (
-                                    <div className="premium-input-group">
-                                        <div className="input-field-wrapper">
-                                            <FaUser className="field-icon" />
-                                            <input
-                                                type="text"
-                                                placeholder="Votre Nom Complet"
-                                                value={name}
-                                                onChange={(e) => setName(e.target.value)}
-                                                required
-                                            />
-                                        </div>
-                                    </div>
-                                )}
+
 
                                 <div className="premium-input-group">
                                     <div className="input-field-wrapper">
@@ -502,20 +297,7 @@ export default function AuthForm({ type = 'login' }) {
                                     </div>
                                 </div>
 
-                                {!isLogin && (
-                                    <div className="premium-input-group">
-                                        <div className="input-field-wrapper">
-                                            <FaKey className="field-icon" />
-                                            <input
-                                                type="password"
-                                                placeholder="Confirmer le mot de passe"
-                                                value={confirmPassword}
-                                                onChange={(e) => setConfirmPassword(e.target.value)}
-                                                required
-                                            />
-                                        </div>
-                                    </div>
-                                )}
+                                <></>
 
                                 {isLogin && (
                                     <div className="auth-footer-options">
@@ -536,11 +318,7 @@ export default function AuthForm({ type = 'login' }) {
                                 </button>
 
                                 <div className="auth-switch-box">
-                                    {isLogin ? (
-                                        <>Nouveau ici ? <Link to="/register">Rejoignez-nous</Link></>
-                                    ) : (
-                                        <>Déjà membre ? <Link to="/login">Connectez-vous</Link></>
-                                    )}
+                                     Mot de passe requis pour accéder à l'atelier.
                                 </div>
                             </form>
                         </div>
