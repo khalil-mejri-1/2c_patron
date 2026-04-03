@@ -114,17 +114,28 @@ app.post('/api/upload', upload.single('image'), async (req, res) => {
 // --- B. MONGODB CONNECTION SETUP ---
 const MONGODB_URI = 'mongodb+srv://2cparton0011:nYdiX2GXYnduOmyG@cluster0.07ov0j7.mongodb.net/?appName=Cluster0';
 
-mongoose.connect(MONGODB_URI)
-    .then(() => {
-        console.log('🎉 Successfully connected to MongoDB!');
-        app.listen(PORT, () => {
-            console.log(`🚀 Server is running on http://localhost:${PORT}`);
+const connectDB = async () => {
+    if (mongoose.connection.readyState >= 1) return;
+    try {
+        await mongoose.connect(MONGODB_URI, {
+            serverSelectionTimeoutMS: 5000, // Timeout after 5 seconds
         });
-    })
-    .catch((err) => {
+        console.log('🎉 Successfully connected to MongoDB!');
+    } catch (err) {
         console.error('❌ MongoDB connection error:', err);
-        process.exit(1);
+    }
+};
+
+// Initial connection
+connectDB();
+
+// Only listen locally, Vercel exports the app
+if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
+    app.listen(PORT, () => {
+        console.log(`🚀 Server is running on http://localhost:${PORT}`);
     });
+}
+
 
 
 // -------------------- C. ROUTES --------------------
@@ -937,6 +948,7 @@ app.delete('/api/commentaires/:id', async (req, res) => {
 
 app.post('/api/abonnement', async (req, res) => {
     try {
+        await connectDB(); // Ensure DB is connected inside handler for Vercel
         const { nom, mail, telephone } = req.body;
 
         if (!telephone) {
@@ -956,7 +968,7 @@ app.post('/api/abonnement', async (req, res) => {
             abonnement
         });
     } catch (error) {
-        console.error("ERREUR:", error);
+        console.error("ERREUR lors de l'ajout d'abonnement:", error);
         res.status(500).json({ message: "Erreur serveur", error: error.message });
     }
 });
@@ -1857,14 +1869,4 @@ app.post('/api/ai-chat', async (req, res) => {
     }
 });
 
-mongoose.connect('mongodb+srv://2cparton0011:nYdiX2GXYnduOmyG@cluster0.07ov0j7.mongodb.net/?appName=Cluster0')
-    .then(() => {
-        console.log('🎉 Successfully connected to MongoDB!');
-        app.listen(PORT, () => {
-            console.log(`🚀 Server is running on http://localhost:${PORT}`);
-        });
-    })
-    .catch((err) => {
-        console.error('❌ MongoDB connection error:', err);
-        process.exit(1);
-    });
+module.exports = app; // For Vercel
