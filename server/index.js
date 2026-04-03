@@ -58,6 +58,9 @@ const Abonnement = require('./models/Abonnement.js');
 const Video = require('./models/Video.js');
 const User = require("./models/user.js");
 const Product = require("./models/Product.js");
+
+// Cleanup: Drop unique index on mail in abonnements if it exists (one-time)
+Abonnement.collection.dropIndex('mail_1').catch(() => {});
 const Message = require("./models/message.js");
 const VipCategory = require('./models/VipCategory');
 const SpecializedCourse = require('./models/SpecializedCourse.js');
@@ -114,28 +117,17 @@ app.post('/api/upload', upload.single('image'), async (req, res) => {
 // --- B. MONGODB CONNECTION SETUP ---
 const MONGODB_URI = 'mongodb+srv://2cparton0011:nYdiX2GXYnduOmyG@cluster0.07ov0j7.mongodb.net/?appName=Cluster0';
 
-const connectDB = async () => {
-    if (mongoose.connection.readyState >= 1) return;
-    try {
-        await mongoose.connect(MONGODB_URI, {
-            serverSelectionTimeoutMS: 5000, // Timeout after 5 seconds
-        });
+mongoose.connect(MONGODB_URI)
+    .then(() => {
         console.log('🎉 Successfully connected to MongoDB!');
-    } catch (err) {
+        app.listen(PORT, () => {
+            console.log(`🚀 Server is running on http://localhost:${PORT}`);
+        });
+    })
+    .catch((err) => {
         console.error('❌ MongoDB connection error:', err);
-    }
-};
-
-// Initial connection
-connectDB();
-
-// Only listen locally, Vercel exports the app
-if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
-    app.listen(PORT, () => {
-        console.log(`🚀 Server is running on http://localhost:${PORT}`);
+        process.exit(1);
     });
-}
-
 
 
 // -------------------- C. ROUTES --------------------
@@ -948,9 +940,9 @@ app.delete('/api/commentaires/:id', async (req, res) => {
 
 app.post('/api/abonnement', async (req, res) => {
     try {
-        await connectDB(); // Ensure DB is connected inside handler for Vercel
         const { nom, mail, telephone } = req.body;
-
+        console.log("Body reçu:", req.body); // Debug
+        
         if (!telephone) {
             return res.status(400).json({ message: "Le numéro de téléphone est requis." });
         }
@@ -961,6 +953,7 @@ app.post('/api/abonnement', async (req, res) => {
             telephone
         });
 
+        console.log("Instance Abonnement créée:", abonnement); // Debug
         await abonnement.save();
 
         res.status(201).json({
@@ -968,8 +961,27 @@ app.post('/api/abonnement', async (req, res) => {
             abonnement
         });
     } catch (error) {
-        console.error("ERREUR lors de l'ajout d'abonnement:", error);
-        res.status(500).json({ message: "Erreur serveur", error: error.message });
+        console.error("ERREUR lors de la création de l'abonnement:", error);
+        
+        // Handle Duplicate Email Error (MongoServerError: E11000)
+        if (error.code === 11000 && error.keyPattern && error.keyPattern.mail) {
+            return res.status(409).json({ 
+                message: "Une demande d'abonnement est déjà en cours pour cette adresse e-mail." 
+            });
+        }
+
+        if (error.name === 'ValidationError') {
+            const messages = Object.values(error.errors).map(val => val.message);
+            return res.status(400).json({
+                message: 'Erreur de validation',
+                errors: messages
+            });
+        }
+
+        res.status(500).json({ 
+            message: "Erreur serveur lors de la demande d'accès VIP.", 
+            error: error.message 
+        });
     }
 });
 
@@ -1869,4 +1881,14 @@ app.post('/api/ai-chat', async (req, res) => {
     }
 });
 
-module.exports = app; // For Vercel
+mongoose.connect('mongodb+srv://2cparton0011:nYdiX2GXYnduOmyG@cluster0.07ov0j7.mongodb.net/?appName=Cluster0')
+    .then(() => {
+        console.log('🎉 Successfully connected to MongoDB!');
+        app.listen(PORT, () => {
+            console.log(`🚀 Server is running on http://localhost:${PORT}`);
+        });
+    })
+    .catch((err) => {
+        console.error('❌ MongoDB connection error:', err);
+        process.exit(1);
+    });

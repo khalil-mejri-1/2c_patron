@@ -652,14 +652,14 @@ export default function Navbar({ initialCartCount = 0 }) {
 
                                 <form onSubmit={handleVipRequest}>
                                     <div className="premium-form-group" style={{ marginBottom: '20px' }}>
-                                        <label style={{ display: 'block', marginBottom: '8px', color: '#64748b', fontSize: '0.9rem' }}>Nom Complet</label>
+                                        <label style={{ display: 'block', marginBottom: '8px', color: '#64748b', fontSize: '0.9rem' }}>Numéro de Téléphone</label>
                                         <div style={{ position: 'relative' }}>
-                                            <FaUser style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)', color: '#D4AF37' }} />
+                                            <FaPhoneAlt style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)', color: '#D4AF37' }} />
                                             <input
-                                                type="text"
-                                                placeholder="Votre Nom et Prénom"
-                                                value={vipFullName}
-                                                onChange={(e) => setVipFullName(e.target.value)}
+                                                type="tel"
+                                                placeholder="Ex: +216 22 222 222"
+                                                value={vipPhone}
+                                                onChange={(e) => setVipPhone(e.target.value)}
                                                 required
                                                 style={{
                                                     width: '100%',
@@ -676,15 +676,15 @@ export default function Navbar({ initialCartCount = 0 }) {
                                         </div>
                                     </div>
 
-                                    <div className="premium-form-group" style={{ marginBottom: '25px' }}>
-                                        <label style={{ display: 'block', marginBottom: '8px', color: '#64748b', fontSize: '0.9rem' }}>Numéro de Téléphone</label>
+                                    <div className="premium-form-group" style={{ marginBottom: '20px' }}>
+                                        <label style={{ display: 'block', marginBottom: '8px', color: '#64748b', fontSize: '0.9rem' }}>Nom Complet</label>
                                         <div style={{ position: 'relative' }}>
-                                            <FaPhoneAlt style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)', color: '#D4AF37' }} />
+                                            <FaUser style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)', color: '#D4AF37' }} />
                                             <input
-                                                type="tel"
-                                                placeholder="Ex: +216 22 222 222"
-                                                value={vipPhone}
-                                                onChange={(e) => setVipPhone(e.target.value)}
+                                                type="text"
+                                                placeholder="Votre Nom et Prénom"
+                                                value={vipFullName}
+                                                onChange={(e) => setVipFullName(e.target.value)}
                                                 required
                                                 style={{
                                                     width: '100%',
