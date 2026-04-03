@@ -16,7 +16,6 @@ import About from "./pages/About.jsx";
 import Contact from "./pages/Contact.jsx";
 import Profile from "./pages/Profile.jsx";
 import Login_test from "./pages/login_test.jsx";
-import Abonnementvip from "./pages/abonnementvip.jsx";
 import Admin from "./pages/admin/admin.jsx";
 import Gestion_de_Client from "./pages/admin/Gestion_de_Client.jsx";
 import Gestion_de_Produit from "./pages/admin/Gestion_de_Produit.jsx";
@@ -37,7 +36,7 @@ function AppContent() {
     const [isVip, setIsVip] = useState(false);
 
     const restrictedPathsForAuthenticated = ['/login', '/register', '/logintest'];
-    const vipRequiredPaths = ['/vip-access', '/Vip-access', '/cours_Manches', '/Leçons'];
+    const vipRequiredPaths = ['/vip-access', '/Vip-access', '/les_cours', '/Leçons'];
 
     useEffect(() => {
         const checkAuthAndVipStatus = async () => {
@@ -80,8 +79,8 @@ function AppContent() {
 
             if (isVipPath) {
                 if (!vipStatus) {
-                    console.warn(`Non-VIP user tried to access ${currentPath}. Redirecting to Abonnement VIP.`);
-                    navigate('/Abonnement-VIP');
+                    console.warn(`Non-VIP user tried to access ${currentPath}.`);
+                    // Ici on pourrait déclencher un modal, mais la navbar le fait déjà via les liens.
                 }
             }
         };
@@ -92,7 +91,7 @@ function AppContent() {
 
     const currentPath = decodeURIComponent(location.pathname);
     const isVipSection = vipRequiredPaths.some(path => currentPath.toLowerCase().startsWith(path.toLowerCase())) || 
-                         currentPath.startsWith('/Leçons_coursage');
+                         currentPath.startsWith('/les_Leçons');
 
     return (
         <>
@@ -101,7 +100,7 @@ function AppContent() {
                 <Route path="/magasin" element={<ProductGrid />} />
                 <Route path="/Vip-access" element={<Vipaccess />} />
                 <Route path="/vip-access" element={<Vipaccess />} />
-                <Route path="/cours_Manches/:courseTitle" element={<Cours />} />
+                <Route path="/les_cours/:courseTitle" element={<Cours />} />
                 <Route path="/Leçons/:leconTitle" element={<Lessons />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/Login" element={<Login />} />
@@ -109,9 +108,9 @@ function AppContent() {
                 <Route path="/contact" element={<Contact />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/logintest" element={<Login_test />} />
-                <Route path="/Abonnement-VIP" element={<Abonnementvip />} />
 
-                <Route path="/Leçons_coursage/:leconTitle" element={<Lessons />} />
+
+                <Route path="/les_Leçons/:leconTitle" element={<Lessons />} />
 
 
                 <Route path="/admin" element={<Admin />} />

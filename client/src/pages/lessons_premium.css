@@ -58,6 +58,96 @@
 }
 
 
+/* --- 🥖 BREADCRUMB NAVIGATION 🥖 --- */
+.breadcrumb-container {
+    max-width: 1280px;
+    margin: 0 auto 20px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    position: relative;
+    z-index: 200;
+    animation: fadeInDown 0.8s ease;
+}
+
+.breadcrumb-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: #ffffff;
+    color: #1a1a1a;
+    text-decoration: none;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+    border: 1px solid rgba(0, 0, 0, 0.03);
+}
+
+.breadcrumb-link:hover {
+    background: #d4af37;
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(212, 175, 55, 0.2);
+    border-color: #d4af37;
+}
+
+.breadcrumb-separator {
+    color: #94a3b8;
+    font-size: 0.7rem;
+    opacity: 0.6;
+}
+
+.breadcrumb-current {
+    padding: 8px 16px;
+    background: rgba(212, 175, 55, 0.1);
+    color: #d4af37;
+    border-radius: 12px;
+    font-weight: 800;
+    font-size: 0.85rem;
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    white-space: nowrap;
+}
+
+[dir="rtl"] .breadcrumb-separator {
+    transform: rotate(180deg);
+}
+
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 768px) {
+    .breadcrumb-container {
+        padding: 0px;
+        gap: 8px;
+        margin-bottom: 30px;
+    }
+
+    .breadcrumb-link,
+    .breadcrumb-current {
+        padding: 6px 12px;
+        font-size: 0.75rem;
+        border-radius: 10px;
+    }
+
+    .breadcrumb-separator {
+        font-size: 0.6rem;
+    }
+}
+
 /* --- 📹 CINEMA PLAYER 📹 --- */
 .lessons-explorer-container {
     max-width: 1300px;
@@ -109,7 +199,7 @@
     position: absolute;
     top: 0;
     right: 0;
-    width: 80px; 
+    width: 80px;
     height: 80px;
     z-index: 100;
     background: transparent;
@@ -352,7 +442,8 @@
         height: 35vh;
         min-height: 400px;
         clip-path: polygon(0 0, 100% 0, 100% 90%, 0 100%);
-        margin-bottom: -120px; /* Stronger push up */
+        margin-bottom: -120px;
+        /* Stronger push up */
     }
 
     .lessons-explorer-container {
@@ -365,7 +456,7 @@
         padding: 40px 20px;
         margin-top: -80px;
         border-radius: 32px;
-        box-shadow: 0 20px 50px rgba(0,0,0,0.08);
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.08);
         margin-left: 0;
         margin-right: 0;
         width: 100%;
@@ -384,12 +475,14 @@
         border-radius: 20px;
         background: #000;
         overflow: hidden;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-        order: 2; /* Video comes AFTER title now */
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        order: 2;
+        /* Video comes AFTER title now */
     }
 
     .active-video-title {
-        order: 1; /* Title comes FIRST */
+        order: 1;
+        /* Title comes FIRST */
         font-size: 1.8rem;
         margin-top: 0;
         margin-bottom: 30px;

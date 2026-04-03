@@ -5,7 +5,7 @@ import '../comp/PremiumSkeleton.css';
 import Navbar from '../comp/navbar';
 import Footer from '../comp/Footer';
 import UniversalVideoPlayer from '../comp/UniversalVideoPlayer';
-import { useParams, useLocation } from 'react-router-dom';
+import { useParams, useLocation, NavLink } from 'react-router-dom';
 import axios from 'axios';
 import BASE_URL from '../apiConfig';
 import { useLanguage } from '../context/LanguageContext';
@@ -30,7 +30,9 @@ const translations = {
         badge: "دورة تعليمية",
         playing: "قيد المشاهدة",
         cancel: "إلغاء",
-        save: "حفظ"
+        save: "حفظ",
+        breadcrumbHome: "الرئيسية",
+        breadcrumbVip: "دخول VIP"
     },
     fr: {
         loading: "Chargement du contenu...",
@@ -48,7 +50,9 @@ const translations = {
         badge: "FORMATION VIP",
         playing: "LECTURE EN COURS",
         cancel: "Annuler",
-        save: "Enregistrer"
+        save: "Enregistrer",
+        breadcrumbHome: "Accueil",
+        breadcrumbVip: "Accès VIP"
     },
     en: {
         loading: "Loading content...",
@@ -65,7 +69,9 @@ const translations = {
         badge: "VIP PROGRAM",
         playing: "NOW PLAYING",
         cancel: "Cancel",
-        save: "Save"
+        save: "Save",
+        breadcrumbHome: "Home",
+        breadcrumbVip: "VIP Access"
     },
     tn: {
         loading: "جاري تحميل محتوى الدورة...",
@@ -82,7 +88,9 @@ const translations = {
         badge: "دورة تعليمية",
         playing: "قيد المشاهدة (TN)",
         cancel: "إلغاء",
-        save: "حفظ"
+        save: "حفظ",
+        breadcrumbHome: "الرئيسية",
+        breadcrumbVip: "دخول VIP"
     }
 };
 
@@ -123,12 +131,12 @@ const LessonCard = ({ video, isActive, onSelect, lang, isAdmin, onEdit, onDelete
         >
             {isAdmin && (
                 <div style={{ position: 'absolute', top: '10px', right: '10px', zIndex: 12, display: 'flex', gap: '5px' }}>
-                    <input 
-                        type="file" 
-                        ref={fileRef} 
-                        style={{ display: 'none' }} 
-                        accept="image/*" 
-                        onChange={(e) => onUploadThumbnail(video, e.target.files[0])} 
+                    <input
+                        type="file"
+                        ref={fileRef}
+                        style={{ display: 'none' }}
+                        accept="image/*"
+                        onChange={(e) => onUploadThumbnail(video, e.target.files[0])}
                     />
                     <button
                         className="edit-btn-minimal-lux"
@@ -232,8 +240,7 @@ export default function Lessons() {
     const { leconTitle } = useParams();
     const { pathname } = useLocation();
     const actualTitle = decodeURIComponent(leconTitle);
-    // Detect if we're on the /Leçons_coursage/ path (shorter video-only flow)
-    const isCoursagePath = pathname.startsWith('/Le%C3%A7ons_coursage') || pathname.startsWith('/Leçons_coursage');
+    const isCoursagePath = pathname.startsWith('/les_Leçons') || pathname.startsWith('/les_Leçons');
 
     const t = translations[appLanguage] || translations.fr;
     const direction = appLanguage === 'ar' ? 'rtl' : 'ltr';
@@ -722,6 +729,26 @@ export default function Lessons() {
             </header>
 
             <main className="lessons-explorer-container">
+                {/* --- 🥖 BREADCRUMB NAVIGATION 🥖 --- */}
+                <nav className="breadcrumb-container">
+                    <NavLink to="/" className="breadcrumb-link">
+                        {t.breadcrumbHome}
+                    </NavLink>
+                    <FaArrowRight className="breadcrumb-separator" style={{ transform: direction === 'rtl' ? 'rotate(180deg)' : 'none', fontSize: '0.8rem', opacity: 0.6 }} />
+                    <NavLink to="/Vip-access" className="breadcrumb-link">
+                        {t.breadcrumbVip}
+                    </NavLink>
+                    <FaArrowRight className="breadcrumb-separator" style={{ transform: direction === 'rtl' ? 'rotate(180deg)' : 'none', fontSize: '0.8rem', opacity: 0.6 }} />
+                    <NavLink to={`/les_cours/${encodeURIComponent(groupCategoryName || actualTitle)}`} className="breadcrumb-link">
+                        {groupCategoryName || actualTitle}
+                    </NavLink>
+                    <FaArrowRight className="breadcrumb-separator" style={{ transform: direction === 'rtl' ? 'rotate(180deg)' : 'none', fontSize: '0.8rem', opacity: 0.6 }} />
+                    <div className="breadcrumb-current">
+                        {currentVideo?.title || actualTitle}
+                    </div>
+                </nav>
+
+
                 {/* --- ACTIVE FOCUS PLAYER (Premium Streaming Style Wrapped) --- */}
                 {currentVideo && (
                     <section className="active-video-wrapper">

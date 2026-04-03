@@ -13,7 +13,8 @@ export default function NavbarAdmin() {
     const [counts, setCounts] = useState({
         commands: 0,
         messages: 0,
-        comments: 0
+        comments: 0,
+        vipRequests: 0
     });
 
     // Styles pour les badges premium
@@ -26,6 +27,8 @@ export default function NavbarAdmin() {
             colors = { bg: '#ef4444', glow: 'rgba(239, 68, 68, 0.4)' };
         } else if (to === '/admin_commentaire') {
             colors = { bg: '#10b981', glow: 'rgba(16, 185, 129, 0.4)' };
+        } else if (to === '/admin_abonnement') {
+            colors = { bg: '#D4AF37', glow: 'rgba(212, 175, 55, 0.4)' };
         }
 
         return {
@@ -61,16 +64,18 @@ export default function NavbarAdmin() {
         
         const fetchCounts = async () => {
             try {
-                const [cmdRes, msgRes, cmtRes] = await Promise.all([
+                const [cmdRes, msgRes, cmtRes, vipRes] = await Promise.all([
                     fetch(`${BASE_URL}/api/commands`).then(r => r.json()).catch(() => []),
                     fetch(`${BASE_URL}/api/messages`).then(r => r.json()).catch(() => []),
-                    fetch(`${BASE_URL}/api/commentaires`).then(r => r.json()).catch(() => [])
+                    fetch(`${BASE_URL}/api/commentaires`).then(r => r.json()).catch(() => []),
+                    fetch(`${BASE_URL}/api/abonnement`).then(r => r.json()).catch(() => [])
                 ]);
 
                 setCounts({
                     commands: cmdRes.filter(c => c.status === 'En attente').length,
                     messages: msgRes.filter(m => !m.estTraite).length,
-                    comments: cmtRes.filter(c => c.statut === 'En attente').length
+                    comments: cmtRes.filter(c => c.statut === 'En attente').length,
+                    vipRequests: vipRes.filter(v => v.statut_abonnement === 'en_attente').length
                 });
             } catch (err) {
                 console.error("Error fetching navbar counts", err);
@@ -88,6 +93,7 @@ export default function NavbarAdmin() {
         { to: "/admin_command", label: "Commandes", icon: <FaShoppingCart />, badge: counts.commands },
         { to: "/admin_message", label: "Messages", icon: <FaEnvelope />, badge: counts.messages },
         { to: "/admin_commentaire", label: "Avis", icon: <FaComments />, badge: counts.comments },
+        { to: "/admin_abonnement", label: "Demande VIP", icon: <FaCrown />, badge: counts.vipRequests },
         { to: "/admin_all_videos", label: "Vidéos", icon: <FaVideo /> },
         { to: "/admin_settings", label: "Réglages", icon: <FaCog /> },
         { to: "/", label: "Retour au Site", icon: <FaHome /> },

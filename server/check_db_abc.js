@@ -11,7 +11,7 @@ async function check() {
 
         const abcVideosDash = await db.collection('specialized-videos').find({ subCategory: 'abc' }).toArray();
         console.log('Videos with subCategory "abc" (dash):', abcVideosDash);
-        
+
         await mongoose.disconnect();
     } catch (e) {
         console.log('Error:', e);

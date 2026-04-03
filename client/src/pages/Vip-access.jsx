@@ -37,7 +37,9 @@ const translations = {
         categoryDuration: "المدة (مثلاً: Access 24/7)",
         save: "حفظ",
         cancel: "إلغاء",
-        adminActions: "إدارة المحتوى"
+        adminActions: "إدارة المحتوى",
+        breadcrumbHome: "الرئيسية",
+        breadcrumbCurrent: "دخول VIP"
     },
     fr: {
         badge: "ACCÈS EXCLUSIF",
@@ -62,7 +64,9 @@ const translations = {
         categoryDuration: "Durée (ex: Access 24/7)",
         save: "Enregistrer",
         cancel: "Annuler",
-        adminActions: "Gestion VIP"
+        adminActions: "Gestion VIP",
+        breadcrumbHome: "Accueil",
+        breadcrumbCurrent: "Accès VIP"
     },
     en: {
         badge: "EXCLUSIVE ACCESS",
@@ -87,7 +91,9 @@ const translations = {
         categoryDuration: "Duration (e.g., Access 24/7)",
         save: "Save",
         cancel: "Cancel",
-        adminActions: "VIP Management"
+        adminActions: "VIP Management",
+        breadcrumbHome: "Home",
+        breadcrumbCurrent: "VIP Access"
     }
 };
 
@@ -338,6 +344,17 @@ export default function Vipaccess() {
                 </div>
             </header>
 
+            {/* --- 🥖 BREADCRUMB NAVIGATION 🥖 --- */}
+            <nav className="breadcrumb-container">
+                <NavLink to="/" className="breadcrumb-link">
+                    {t.breadcrumbHome}
+                </NavLink>
+                <FaChevronRight className="breadcrumb-separator" />
+                <div className="breadcrumb-current">
+                    {t.breadcrumbCurrent}
+                </div>
+            </nav>
+
             {/* --- 🏛️ CATEGORIES GRID 🏛️ --- */}
             <section className="vip-content-section">
                 {isAdmin && (
@@ -404,7 +421,7 @@ export default function Vipaccess() {
                                                 {typeof course.duration === 'object' ? (course.duration[appLanguage] || course.duration.fr) : (course.duration || 'Access 24/7')}
                                             </span>
                                         </div>
-                                        <NavLink to={`/cours_Manches/${encodeURIComponent(typeof course.title === 'object' ? (course.title.fr || course.title[Object.keys(course.title)[0]]) : course.title)}`}>
+                                        <NavLink to={`/les_cours/${encodeURIComponent(typeof course.title === 'object' ? (course.title.fr || course.title[Object.keys(course.title)[0]]) : course.title)}`}>
                                             <button className="vip-access-btn">
                                                 <span>{t.button}</span>
                                                 <FaChevronRight className="btn-arrow" />

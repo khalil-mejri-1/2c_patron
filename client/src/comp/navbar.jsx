@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { FaBars, FaTimes, FaSearch, FaShoppingBag, FaUser, FaSignOutAlt, FaSignInAlt, FaUserPlus, FaCrown, FaTachometerAlt, FaPlus, FaSave, FaArrowLeft, FaEdit } from 'react-icons/fa';
+import { FaBars, FaTimes, FaSearch, FaShoppingBag, FaUser, FaSignOutAlt, FaSignInAlt, FaUserPlus, FaCrown, FaTachometerAlt, FaPlus, FaSave, FaArrowLeft, FaEdit, FaPhoneAlt, FaCheck } from 'react-icons/fa';
 import logo from "../img/logo.png";
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
@@ -98,6 +98,9 @@ export default function Navbar({ initialCartCount = 0 }) {
     const [isVip, setIsVip] = useState(false);
     const [isAdmin, setIsAdmin] = useState(false);
     const [showVipModal, setShowVipModal] = useState(false);
+    const [vipPhone, setVipPhone] = useState('');
+    const [isSubmittingVip, setIsSubmittingVip] = useState(false);
+    const [vipRequestSuccess, setVipRequestSuccess] = useState(false);
 
     const { appLanguage, changeLanguage, languages, addLanguage, deleteLanguage, updateLanguage } = useLanguage();
     const t = translations[appLanguage] || translations.fr;
@@ -250,6 +253,39 @@ export default function Navbar({ initialCartCount = 0 }) {
             e.preventDefault();
             setIsOpen(false);
             setShowVipModal(true);
+        }
+    };
+
+    const handleVipRequest = async (e) => {
+        e.preventDefault();
+        if (!vipPhone) return;
+        setIsSubmittingVip(true);
+        try {
+            const userName = localStorage.getItem('currentUserEmail')?.split('@')[0] || 'Client';
+            const res = await fetch(`${BASE_URL}/api/abonnement`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    nom: userName,
+                    mail: userEmail,
+                    telephone: vipPhone
+                })
+            });
+            if (res.ok) {
+                setVipRequestSuccess(true);
+                setTimeout(() => {
+                    setShowVipModal(false);
+                    setVipRequestSuccess(false);
+                    setVipPhone('');
+                }, 5000);
+            } else {
+                const data = await res.json();
+                alert(data.message || 'Erreur lors de l\'envoi');
+            }
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setIsSubmittingVip(false);
         }
     };
 
@@ -604,7 +640,7 @@ export default function Navbar({ initialCartCount = 0 }) {
                                         <Link to="/profile" className="dropdown-item" onClick={() => setIsDropdownOpen(false)}>
                                             <FaUser /> {t.myAccount}
                                         </Link>
-                                        <Link to="/Abonnement-VIP" className="dropdown-item vip-link" onClick={() => setIsDropdownOpen(false)}>
+                                        <Link to="/profile" className="dropdown-item" onClick={() => setIsDropdownOpen(false)}>
                                             <FaCrown /> {t.manageSub}
                                         </Link>
                                         <button onClick={handleLogout} className="dropdown-item logout-item">
@@ -645,8 +681,8 @@ export default function Navbar({ initialCartCount = 0 }) {
             )}
 
             {showVipModal && (
-                <div className="premium-modal-backdrop" onClick={() => setShowVipModal(false)}>
-                    <div className="premium-modal-content" onClick={(e) => e.stopPropagation()}>
+                <div className="premium-modal-backdrop" onClick={() => !isSubmittingVip && setShowVipModal(false)}>
+                    <div className="premium-modal-content" onClick={(e) => e.stopPropagation()} style={{ padding: '40px' }}>
                         <button className="premium-modal-close-icon" onClick={() => setShowVipModal(false)}><FaTimes /></button>
 
                         <div className="premium-modal-header">
@@ -656,23 +692,67 @@ export default function Navbar({ initialCartCount = 0 }) {
                             <h2 className="premium-modal-title">{t.limitedAccess}</h2>
                         </div>
 
-                        <div style={{ padding: '0 20px 30px', textAlign: 'center' }}>
-                            <p style={{ color: '#64748b', fontSize: '1.05rem', lineHeight: '1.6', margin: '0 0 20px' }}>
-                                {t.vipMessage}
-                            </p>
-                            <div style={{ background: '#fef3c7', color: '#92400e', padding: '12px 20px', borderRadius: '12px', fontSize: '0.9rem', fontWeight: '700', display: 'inline-block' }}>
-                                {t.vipBenefits}
-                            </div>
-                        </div>
+                        {!vipRequestSuccess ? (
+                            <>
+                                <div style={{ textAlign: 'center', marginBottom: '25px' }}>
+                                    <p style={{ color: '#64748b', fontSize: '1rem', lineHeight: '1.6' }}>
+                                        {t.vipMessage}
+                                    </p>
+                                    <div style={{ background: '#fef3c7', color: '#92400e', padding: '10px 15px', borderRadius: '10px', fontSize: '0.85rem', fontWeight: '700', marginTop: '15px' }}>
+                                        {t.vipBenefits}
+                                    </div>
+                                    <p style={{ marginTop: '20px', color: '#1e293b', fontWeight: 'bold' }}>
+                                        Un administrateur vous contactera dans les plus brefs délais pour vous informer des détails.
+                                    </p>
+                                </div>
 
-                        <div className="premium-btn-group">
-                            <button onClick={() => setShowVipModal(false)} className="premium-btn-cta secondary">
-                                {t.later}
-                            </button>
-                            <Link to="/Abonnement-VIP" onClick={() => setShowVipModal(false)} className="premium-btn-cta gold" style={{ textDecoration: 'none', display: 'flex', justifyContent: 'center' }}>
-                                {t.becomeVip}
-                            </Link>
-                        </div>
+                                <form onSubmit={handleVipRequest}>
+                                    <div className="premium-form-group" style={{ marginBottom: '20px' }}>
+                                        <label style={{ display: 'block', marginBottom: '8px', color: '#64748b', fontSize: '0.9rem' }}>Numéro de Téléphone</label>
+                                        <div style={{ position: 'relative' }}>
+                                            <FaPhoneAlt style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)', color: '#D4AF37' }} />
+                                            <input
+                                                type="tel"
+                                                placeholder="Ex: +216 22 222 222"
+                                                value={vipPhone}
+                                                onChange={(e) => setVipPhone(e.target.value)}
+                                                required
+                                                style={{
+                                                    width: '100%',
+                                                    padding: '12px 15px 12px 45px',
+                                                    borderRadius: '12px',
+                                                    border: '1px solid #e2e8f0',
+                                                    fontSize: '1rem',
+                                                    outline: 'none',
+                                                    transition: 'border-color 0.2s'
+                                                }}
+                                                onFocus={(e) => e.target.style.borderColor = '#D4AF37'}
+                                                onBlur={(e) => e.target.style.borderColor = '#e2e8f0'}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="premium-btn-group">
+                                        <button type="button" onClick={() => setShowVipModal(false)} className="premium-btn-cta secondary" disabled={isSubmittingVip}>
+                                            {t.later}
+                                        </button>
+                                        <button type="submit" className="premium-btn-cta gold" disabled={isSubmittingVip}>
+                                            {isSubmittingVip ? 'Envoi...' : 'Envoyer la demande'}
+                                        </button>
+                                    </div>
+                                </form>
+                            </>
+                        ) : (
+                            <div style={{ textAlign: 'center', padding: '20px 0' }}>
+                                <div style={{ width: '60px', height: '60px', background: '#ecfdf5', color: '#10b981', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem', margin: '0 auto 20px' }}>
+                                    <FaCheck />
+                                </div>
+                                <h3 style={{ color: '#064e3b', marginBottom: '10px' }}>Demande envoyée !</h3>
+                                <p style={{ color: '#065f46', fontSize: '1.1rem' }}>
+                                    Un administrateur vous contactera dans les plus brefs délais pour vous informer des détails.
+                                </p>
+                            </div>
+                        )}
                     </div>
                 </div>
             )}

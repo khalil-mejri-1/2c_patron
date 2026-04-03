@@ -3,7 +3,7 @@ import { FaPlayCircle, FaCheckCircle, FaSpinner, FaChevronRight, FaEdit, FaPlus,
 import Navbar from '../comp/navbar';
 import Footer from '../comp/Footer';
 import UniversalVideoPlayer from '../comp/UniversalVideoPlayer';
-import { Link, useParams, useNavigate } from 'react-router-dom';
+import { Link, useParams, useNavigate, NavLink } from 'react-router-dom';
 import axios from 'axios';
 import BASE_URL from '../apiConfig';
 import { useAlert } from '../context/AlertContext';
@@ -38,7 +38,9 @@ const translations = {
         lessonImg: "رابط الصورة",
         lessonDur: "المدة",
         videoUrl: "رابط الفيديو (Iframe)",
-        courseMainTitle: "العنوان الرئيسي"
+        courseMainTitle: "العنوان الرئيسي",
+        breadcrumbHome: "الرئيسية",
+        breadcrumbVip: "دخول VIP"
     },
     fr: {
         loading: "Chargement des formations...",
@@ -66,7 +68,9 @@ const translations = {
         lessonImg: "Lien image (URL)",
         lessonDur: "Durée",
         videoUrl: "Lien Vidéo (Iframe)",
-        courseMainTitle: "Titre Principal"
+        courseMainTitle: "Titre Principal",
+        breadcrumbHome: "Accueil",
+        breadcrumbVip: "Accès VIP"
     },
     en: {
         loading: "Loading specialized courses...",
@@ -94,7 +98,9 @@ const translations = {
         lessonImg: "Image URL",
         lessonDur: "Duration",
         videoUrl: "Video URL (Iframe)",
-        courseMainTitle: "Main Title"
+        courseMainTitle: "Main Title",
+        breadcrumbHome: "Home",
+        breadcrumbVip: "VIP Access"
     }
 };
 
@@ -110,9 +116,9 @@ const VideoIntroduction = ({ videoUrl, title, appLanguage, isAdmin, onEdit, onDe
                     <button className="admin-edit-master-btn" onClick={onEdit} title={t.editIntro}>
                         <FaVideo /> {t.editIntro}
                     </button>
-                    <button 
-                        className="admin-edit-master-btn" 
-                        onClick={onDelete} 
+                    <button
+                        className="admin-edit-master-btn"
+                        onClick={onDelete}
                         style={{ backgroundColor: 'rgba(239, 68, 68, 0.9)', color: '#fff' }}
                         title={appLanguage === 'ar' ? 'حذف المقدمة' : 'Supprimer l\'intro'}
                     >
@@ -331,7 +337,7 @@ export default function Cours() {
 
     const handleDeleteIntro = async () => {
         if (!groups.length || !groups[0].video_link) return;
-        
+
         showAlert('confirm', appLanguage === 'ar' ? 'هل أنت متأكد من حذف المقدمة؟' : 'Voulez-vous vraiment supprimer l\'introduction ?', '', async () => {
             try {
                 await axios.put(`${BASE_URL}/api/specialized-courses/${groups[0]._id}`, {
@@ -414,7 +420,7 @@ export default function Cours() {
         return (
             <div className="courses-premium-page" dir={direction}>
                 <Navbar />
-                
+
                 {/* Skeleton Hero */}
                 <div className="skeleton-hero">
                     <div className="skeleton-hero-badge skeleton-shimmer"></div>
@@ -499,6 +505,21 @@ export default function Cours() {
             </header>
 
             <div className="lessons-grid-section">
+                {/* --- 🥖 BREADCRUMB NAVIGATION 🥖 --- */}
+                <nav className="breadcrumb-container" >
+                    <NavLink to="/" className="breadcrumb-link">
+                        {t.breadcrumbHome}
+                    </NavLink>
+                    <FaChevronRight className="breadcrumb-separator" />
+                    <NavLink to="/Vip-access" className="breadcrumb-link">
+                        {t.breadcrumbVip}
+                    </NavLink>
+                    <FaChevronRight className="breadcrumb-separator" />
+                    <div className="breadcrumb-current">
+                        {actualTitle}
+                    </div>
+                </nav>
+
                 {videoUrl && (
                     <VideoIntroduction
                         videoUrl={videoUrl}
@@ -538,7 +559,7 @@ export default function Cours() {
                             group.courses.map((course, idx) => {
                                 const courseTitleStr = course.technicalName || (typeof course.title === 'object' ? (course.title.fr || course.title[Object.keys(course.title)[0]]) : course.title);
                                 const lessonPath = actualTitle === "Les corsages"
-                                    ? `/Leçons_coursage/${encodeURIComponent(courseTitleStr)}`
+                                    ? `/les_Leçons/${encodeURIComponent(courseTitleStr)}`
                                     : `/Leçons/${encodeURIComponent(courseTitleStr)}`;
 
                                 return (

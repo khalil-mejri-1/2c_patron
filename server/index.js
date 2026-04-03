@@ -974,10 +974,10 @@ app.post('/api/abonnement', async (req, res) => {
     try {
         // 💡 Ces données sont maintenant envoyées par le frontend au format JSON,
         // 💡 après que le frontend ait uploadé l'image sur ImgBB.
-        const { nom, mail, preuve_paiement_url } = req.body;
+        const { nom, mail, telephone } = req.body;
 
-        if (!preuve_paiement_url) {
-            return res.status(400).json({ message: "L'URL de preuve de paiement est requise." });
+        if (!telephone) {
+            return res.status(400).json({ message: "Le numéro de téléphone est requis." });
         }
 
         // vérifier si l'email existe déjà
@@ -986,7 +986,7 @@ app.post('/api/abonnement', async (req, res) => {
             return res.status(400).json({ message: "Une demande avec cet email existe déjà." });
         }
 
-        const abonnement = new Abonnement({ nom, mail, preuve_paiement_url });
+        const abonnement = new Abonnement({ nom, mail, telephone });
         await abonnement.save();
 
         res.status(201).json({

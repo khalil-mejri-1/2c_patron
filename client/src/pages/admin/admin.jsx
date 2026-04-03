@@ -170,6 +170,14 @@ export default function Admin() {
                 color="#10b981"
                 label={stats.comments > 0 ? `${stats.comments} En attente` : "Tous les avis"}
               />
+              <StatCard
+                icon={FaCrown}
+                title="Demandes VIP"
+                count={stats.vipRequests}
+                link="/admin_abonnement"
+                color="#D4AF37"
+                label={stats.vipRequests > 0 ? `${stats.vipRequests} Nouvelles` : "À jour"}
+              />
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '30px' }}>
@@ -198,6 +206,13 @@ export default function Admin() {
                       desc: 'Catalogue Spécialisé',
                       link: '/admin_all_videos',
                       icon: <FaVideo />,
+                    },
+                    {
+                      title: 'Demandes VIP',
+                      desc: 'Recrutement & Accès',
+                      link: '/admin_abonnement',
+                      icon: <FaCrown />,
+                      badge: stats.vipRequests > 0 ? { count: stats.vipRequests, color: '#D4AF37' } : null
                     }
                   ].map((action, idx) => (
                     <Link key={idx} to={action.link} style={{
