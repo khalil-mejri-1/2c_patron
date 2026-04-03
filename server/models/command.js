@@ -71,14 +71,7 @@ const commandSchema = new mongoose.Schema({
         type: Date,
         default: Date.now,
     },
-    ipAddress: {
-        type: String,
-        required: false,
-    },
-    deviceInfo: {
-        type: String,
-        required: false,
-    }
+
 }, {
     timestamps: true // Ajoute createdAt et updatedAt
 });

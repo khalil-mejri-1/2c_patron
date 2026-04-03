@@ -827,6 +827,7 @@ export default function HeroSection({ isLoggedIn = false, currentUserEmail = '' 
         const offset = (index - currentIndex + len) % len;
         if (offset === 1) handleNext();
         else if (offset === 2 || offset === len - 1) handlePrev();
+        else if (offset === 0) openOrderModal(products[index]);
     };
 
     // ********* Modals Logic *************
@@ -973,39 +974,12 @@ export default function HeroSection({ isLoggedIn = false, currentUserEmail = '' 
                                         className={`${cardClass}`}
                                         onClick={() => handleCardClick(index)}
                                     >
-                                        {isMain ? (
-                                            <>
-                                                <div className="hero-card-image-container">
-                                                    <img
-                                                        src={product.url}
-                                                        alt={product.alt}
-                                                        className="hero-card-image"
-                                                    />
-                                                </div>
-                                                <div className="hero-card-details">
-                                                    <h3 className="hero-card-title">{product.name}</h3>
-                                                    <div className="hero-card-meta">
-                                                        <span className="hero-card-price">{product.price} {product.currency}</span>
-                                                        <button
-                                                            className="hero-card-btn"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                openOrderModal(product);
-                                                            }}
-                                                        >
-                                                            <FaShoppingCart />
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </>
-                                        ) : (
-                                            <img
-                                                src={product.url}
-                                                alt={product.alt}
-                                                className="hero-card-image"
-                                                style={{ height: '100%', objectFit: 'cover' }}
-                                            />
-                                        )}
+                                        <img
+                                            src={product.url}
+                                            alt={product.alt}
+                                            className="hero-card-image"
+                                            style={{ height: '100%', objectFit: 'cover', cursor: isMain ? 'pointer' : 'default' }}
+                                        />
                                     </div>
                                 );
                             }))}

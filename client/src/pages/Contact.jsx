@@ -88,7 +88,7 @@ const translations = {
     }
 };
 
-const API_ENDPOINT = `${BASE_URL} /api/messages`;
+const API_ENDPOINT = `${BASE_URL}/api/messages`;
 
 export default function Contact() {
     const { appLanguage, languages } = useLanguage();
@@ -130,10 +130,13 @@ export default function Contact() {
     // 1. ⚙️ جلب التحقق من المسؤول
     useEffect(() => {
         // Check Admin
-        const users = JSON.parse(localStorage.getItem('users') || '[]');
         const email = localStorage.getItem('currentUserEmail') || localStorage.getItem('loggedInUserEmail');
-        const currentUser = users.find(u => u.email === email);
-        if (currentUser?.statut === 'admin') setIsAdmin(true);
+        const storedRole = localStorage.getItem('userRole') || localStorage.getItem('role');
+        const storedIsAdmin = localStorage.getItem('isAdmin');
+
+        if (storedRole === 'admin' || storedIsAdmin === 'true' || (email && email.toLowerCase() === 'admin@admin.com')) {
+            setIsAdmin(true);
+        }
 
         // Load Content
         fetch(`${BASE_URL}/api/settings/contact-content`)

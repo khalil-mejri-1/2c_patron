@@ -22,6 +22,7 @@ const fs = require('fs');
 const multer = require('multer');
 const cloudinary = require('cloudinary').v2;
 const { GoogleGenAI } = require("@google/genai");
+const crypto = require('crypto');
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const genAI = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
@@ -133,40 +134,6 @@ mongoose.connect(MONGODB_URI)
 // -------------------- C. ROUTES --------------------
 app.get('/favicon.ico', (req, res) => res.status(204).end());
 
-// دالة متقدمة لاستخراج تفاصيل الجهاز (نوعه، نظامه، وإصداره)
-const getDeviceInfoFromUA = (ua) => {
-    if (!ua) return 'Inconnu';
-
-    let info = '';
-
-    // 1. تحديد نوع الجهاز الأساسي (حاسوب أم هاتف)
-    const isMobile = /Mobi|Android|iPhone|iPad|iPod/.test(ua);
-    info += isMobile ? '📱 Mobile' : '💻 Ordinateur';
-
-    // 2. تحديد نظام التشغيل والإصدار
-    if (ua.includes('Windows NT 10.0')) {
-        // ويندوز 10 و 11 يظهران كـ 10.0، لكن سنميز الويندوز بشكل عام
-        info += ' (Windows 10/11)';
-    } else if (ua.includes('Windows NT 6.3')) {
-        info += ' (Windows 8.1)';
-    } else if (ua.includes('Windows NT 6.2')) {
-        info += ' (Windows 8)';
-    } else if (ua.includes('Windows NT 6.1')) {
-        info += ' (Windows 7)';
-    } else if (ua.includes('iPhone')) {
-        info += ' (iPhone)';
-    } else if (ua.includes('iPad')) {
-        info += ' (iPad)';
-    } else if (ua.includes('Android')) {
-        info += ' (Android)';
-    } else if (ua.includes('Macintosh')) {
-        info += ' (Mac OS)';
-    } else if (ua.includes('Linux')) {
-        info += ' (Linux)';
-    }
-
-    return info;
-};
 
 app.get('/', (req, res) => {
     res.send('Hello World! Connected to Express and MongoDB. 3/4/2026');
@@ -251,33 +218,22 @@ app.post('/api/login-traditional', async (req, res) => {
         }
 
         if (user.mot_de_pass === mot_de_pass) {
-            // Robust IP detection logic
-            let currentIp = req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress || '';
-            if (currentIp.includes(',')) currentIp = currentIp.split(',')[0].trim();
-            if (currentIp.startsWith('::ffff:')) {
-                currentIp = currentIp.replace('::ffff:', '');
-            } else if (currentIp === '::1') {
-                currentIp = '127.0.0.1';
-            }
+            const { fingerprint } = req.body;
+            let firstLogin = false;
 
-            const ua = req.headers['user-agent'];
-            const deviceInfo = getDeviceInfoFromUA(ua);
-
-            // Update IP/Device info if not set (For all users, including Admins)
-            // Ensure both registrationIp and lockedIp are initialized
-            if (!user.lockedIp || !user.deviceInfo || !user.registrationIp) {
-                user.registrationIp = user.registrationIp || currentIp;
-                user.lockedIp = user.lockedIp || currentIp;
-                user.deviceInfo = user.deviceInfo || deviceInfo;
-                user.userAgent = user.userAgent || ua;
+            // Handle Fingerprint logic (Replaces IP/Device Info)
+            if (!user.lockedFingerprint) {
+                // First login: Generate and lock the fingerprint
+                const newFingerprint = crypto.randomBytes(32).toString('hex');
+                user.lockedFingerprint = newFingerprint;
                 await user.save();
-            }
-
-            // Skip IP lock check for Admins, but proceed for clients
-            if (user.statut !== 'admin') {
-                if (user.lockedIp !== currentIp) {
+                firstLogin = true;
+                console.log(`🔒 Device locked for user: ${mail}`);
+            } else {
+                // Subsequent login: Check if provided fingerprint matches
+                if (user.statut !== 'admin' && user.lockedFingerprint !== fingerprint) {
                     return res.status(403).json({
-                        errorType: 'IP_LOCKED',
+                        errorType: 'IP_LOCKED', // Keep same error type for frontend compatibility
                         error: 'Accès restreint : الجهاز غير معترف به.'
                     });
                 }
@@ -290,7 +246,8 @@ app.post('/api/login-traditional', async (req, res) => {
                 image: user.image,
                 statut: user.statut,
                 abonne: user.abonne,
-                firstLogin: !user.lockedIp // Consider first login if IP was just set
+                fingerprint: user.lockedFingerprint,
+                firstLogin: firstLogin
             });
         } else {
             res.status(401).json({ error: 'E-mail ou mot de passe incorrect. Veuillez réessayer.' });
@@ -600,8 +557,6 @@ app.post('/api/commands', async (req, res) => {
             shippingAddress,
             totalAmount,
             items: items, // 🖼️ الآن `items` سيحتوي على `productImage` لكل منتج
-            ipAddress: req.headers['x-forwarded-for'] || req.socket.remoteAddress,
-            deviceInfo: getDeviceInfoFromUA(req.headers['user-agent'])
         });
 
         // 4. Sauvegarder la commande dans la base de données

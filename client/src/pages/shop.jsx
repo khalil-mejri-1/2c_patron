@@ -244,6 +244,7 @@ const ImageCarousel = ({ images, direction, height = '320px' }) => {
     return (
         <div
             className="image-carousel-container"
+            dir="ltr"
             style={{ height, width: '100%', position: 'relative', overflow: 'hidden' }}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
@@ -306,7 +307,7 @@ const ImageCarousel = ({ images, direction, height = '320px' }) => {
                             transition: 'all 0.3s ease'
                         }}
                     >
-                        {direction === 'ar' ? <FaChevronRight size={18} style={{ marginLeft: '2px' }} /> : <FaChevronLeft size={18} style={{ marginRight: '2px' }} />}
+                        <FaChevronLeft size={18} style={{ marginRight: '2px' }} />
                     </button>
                     <button
                         onClick={(e) => goToNext(e)}
@@ -335,7 +336,7 @@ const ImageCarousel = ({ images, direction, height = '320px' }) => {
                             transition: 'all 0.3s ease'
                         }}
                     >
-                        {direction === 'ar' ? <FaChevronLeft size={18} style={{ marginRight: '2px' }} /> : <FaChevronRight size={18} style={{ marginLeft: '2px' }} />}
+                        <FaChevronRight size={18} style={{ marginLeft: '2px' }} />
                     </button>
 
                     <div className="carousel-dots-indicators" style={{ position: 'absolute', bottom: '15px', width: '100%', textAlign: 'center', display: 'flex', justifyContent: 'center', gap: '6px', zIndex: 15 }}>
@@ -818,6 +819,7 @@ export default function ProductGrid() {
 
         fetchProducts();
         fetchHomeItems();
+        fetchCategories();
     }, [appLanguage]); // Re-fetch on lang change and check if products are in hero carousel 
 
     // ✅ Match and Sync orders whenever fetchedProducts or homeItems change

@@ -38,22 +38,7 @@ const userSchema = new mongoose.Schema({
         type: Date,
         default: Date.now
     },
-    lockedIp: {
-        type: String,
-        required: false,
-        default: null
-    },
-    registrationIp: {
-        type: String,
-        required: false,
-        default: null
-    },
-    deviceInfo: {
-        type: String,
-        required: false,
-        default: null
-    },
-    userAgent: {
+    lockedFingerprint: {
         type: String,
         required: false,
         default: null

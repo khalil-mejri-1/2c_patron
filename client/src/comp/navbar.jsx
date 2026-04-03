@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { FaBars, FaTimes, FaSearch, FaShoppingBag, FaUser, FaSignOutAlt, FaSignInAlt, FaUserPlus, FaCrown, FaTachometerAlt, FaPlus, FaSave, FaArrowLeft, FaEdit, FaPhoneAlt, FaCheck } from 'react-icons/fa';
+import ReactDOM from 'react-dom';
+import { FaBars, FaTimes, FaSearch, FaShoppingBag, FaUser, FaSignOutAlt, FaSignInAlt, FaUserPlus, FaCrown, FaTachometerAlt, FaPlus, FaSave, FaArrowLeft, FaEdit, FaPhoneAlt, FaCheck, FaCheckCircle } from 'react-icons/fa';
 import logo from "../img/logo.png";
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
@@ -7,6 +8,7 @@ import ar from "../img/ar.png";
 import fr from "../img/fr.png";
 import eg from "../img/eg.png";
 import BASE_URL from '../apiConfig';
+import '../pages/home_premium.css';
 
 const translations = {
     ar: {
@@ -203,8 +205,12 @@ export default function Navbar({ initialCartCount = 0 }) {
             // 🛡️ Vérification du statut Admin
             if (data && data.statut === 'admin') {
                 setIsAdmin(true);
+                localStorage.setItem('userRole', 'admin');
+                localStorage.setItem('isAdmin', 'true');
             } else {
                 setIsAdmin(false);
+                // Don't clear role if it's already set to something else, but clear isAdmin to be safe
+                localStorage.setItem('isAdmin', 'false');
             }
         } catch (error) {
             console.error("Erreur lors de la vérification du statut VIP:", error);
@@ -290,7 +296,7 @@ export default function Navbar({ initialCartCount = 0 }) {
         };
     }, [userEmail, checkVipStatusFromDB]);
 
-        /* Google ID initialize and render effect removed */
+    /* Google ID initialize and render effect removed */
 
     useEffect(() => {
         if (showConfirmModal || showVipModal) {
@@ -624,106 +630,128 @@ export default function Navbar({ initialCartCount = 0 }) {
                 </div>
             )}
 
-            {showVipModal && (
+            {/* 🛑 Modal Accès Limité (Creative Design - Synced with Home) */}
+            {showVipModal && ReactDOM.createPortal(
                 <div className="premium-modal-backdrop" onClick={() => !isSubmittingVip && setShowVipModal(false)}>
-                    <div className="premium-modal-content" onClick={(e) => e.stopPropagation()} style={{ padding: '40px' }}>
-                        <button className="premium-modal-close-icon" onClick={() => setShowVipModal(false)}><FaTimes /></button>
-
-                        <div className="premium-modal-header">
-                            <div className="vip-cert-icon-wrapper" style={{ margin: '0 auto 15px', background: 'rgba(212, 175, 55, 0.1)', color: '#d4af37' }}>
-                                <FaCrown />
-                            </div>
-                            <h2 className="premium-modal-title">{t.limitedAccess}</h2>
+                    <div className="creative-modal-content" onClick={(e) => e.stopPropagation()} style={{ overflow: 'visible' }}>
+                        {/* ABSOLUTE CROWN */}
+                        <div className="creative-crown-wrapper">
+                            <FaCrown />
                         </div>
 
-                        {!vipRequestSuccess ? (
-                            <>
-                                <div style={{ textAlign: 'center', marginBottom: '25px' }}>
-                                    <p style={{ color: '#64748b', fontSize: '1rem', lineHeight: '1.6' }}>
+                        {/* Top Header Section */}
+                        <div className="creative-modal-header">
+                            <button
+                                className="creative-close-btn"
+                                onClick={() => setShowVipModal(false)}
+                            >
+                                <FaTimes />
+                            </button>
+
+                            <h2 className="creative-title">
+                                {t.limitedAccess}
+                            </h2>
+                        </div>
+
+                        {/* Body Section */}
+                        <div className="creative-modal-body">
+                            {!vipRequestSuccess ? (
+                                <>
+                                    <p className="creative-subtitle">
                                         {t.vipMessage}
                                     </p>
-                                    <div style={{ background: '#fef3c7', color: '#92400e', padding: '10px 15px', borderRadius: '10px', fontSize: '0.85rem', fontWeight: '700', marginTop: '15px' }}>
+
+                                    <div className="creative-benefit-pill">
                                         {t.vipBenefits}
                                     </div>
-                                    <p style={{ marginTop: '20px', color: '#1e293b', fontWeight: 'bold' }}>
-                                        Un administrateur vous contactera dans les plus brefs délais pour vous informer des détails.
-                                    </p>
-                                </div>
 
-                                <form onSubmit={handleVipRequest}>
-                                    <div className="premium-form-group" style={{ marginBottom: '20px' }}>
-                                        <label style={{ display: 'block', marginBottom: '8px', color: '#64748b', fontSize: '0.9rem' }}>Numéro de Téléphone</label>
-                                        <div style={{ position: 'relative' }}>
-                                            <FaPhoneAlt style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)', color: '#D4AF37' }} />
-                                            <input
-                                                type="tel"
-                                                placeholder="Ex: +216 22 222 222"
-                                                value={vipPhone}
-                                                onChange={(e) => setVipPhone(e.target.value)}
-                                                required
-                                                style={{
-                                                    width: '100%',
-                                                    padding: '12px 15px 12px 45px',
-                                                    borderRadius: '12px',
-                                                    border: '1px solid #e2e8f0',
-                                                    fontSize: '1rem',
-                                                    outline: 'none',
-                                                    transition: 'border-color 0.2s'
-                                                }}
-                                                onFocus={(e) => e.target.style.borderColor = '#D4AF37'}
-                                                onBlur={(e) => e.target.style.borderColor = '#e2e8f0'}
-                                            />
+                                    <form onSubmit={handleVipRequest} style={{ width: '100%' }}>
+                                        <div className="creative-input-group">
+                                            <label>{appLanguage === 'ar' ? 'رقم الهاتف' : 'Numéro de Téléphone'}</label>
+                                            <div className="creative-input-wrapper">
+                                                <FaPhoneAlt />
+                                                <input
+                                                    type="tel"
+                                                    placeholder="Ex: 22 222 222"
+                                                    value={vipPhone}
+                                                    onChange={(e) => setVipPhone(e.target.value.replace(/\D/g, ''))}
+                                                    minLength={8}
+                                                    required
+                                                    className="creative-input"
+                                                />
+                                            </div>
                                         </div>
-                                    </div>
 
-                                    <div className="premium-form-group" style={{ marginBottom: '20px' }}>
-                                        <label style={{ display: 'block', marginBottom: '8px', color: '#64748b', fontSize: '0.9rem' }}>Nom Complet</label>
-                                        <div style={{ position: 'relative' }}>
-                                            <FaUser style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)', color: '#D4AF37' }} />
-                                            <input
-                                                type="text"
-                                                placeholder="Votre Nom et Prénom"
-                                                value={vipFullName}
-                                                onChange={(e) => setVipFullName(e.target.value)}
-                                                required
-                                                style={{
-                                                    width: '100%',
-                                                    padding: '12px 15px 12px 45px',
-                                                    borderRadius: '12px',
-                                                    border: '1px solid #e2e8f0',
-                                                    fontSize: '1rem',
-                                                    outline: 'none',
-                                                    transition: 'border-color 0.2s'
-                                                }}
-                                                onFocus={(e) => e.target.style.borderColor = '#D4AF37'}
-                                                onBlur={(e) => e.target.style.borderColor = '#e2e8f0'}
-                                            />
+                                        <div className="creative-input-group">
+                                            <label>{appLanguage === 'ar' ? 'الاسم الكامل' : 'Nom Complet'}</label>
+                                            <div className="creative-input-wrapper">
+                                                <FaUser />
+                                                <input
+                                                    type="text"
+                                                    placeholder={appLanguage === 'ar' ? 'اسمك الكامل' : 'Votre Nom et Prénom'}
+                                                    value={vipFullName}
+                                                    onChange={(e) => setVipFullName(e.target.value.replace(/[^a-zA-Z\s\u0600-\u06FF]/g, ''))}
+                                                    required
+                                                    className="creative-input"
+                                                />
+                                            </div>
                                         </div>
-                                    </div>
 
-                                    <div className="premium-btn-group">
-                                        <button type="button" onClick={() => setShowVipModal(false)} className="premium-btn-cta secondary" disabled={isSubmittingVip}>
+                                        <button type="submit" className="creative-submit-btn" disabled={isSubmittingVip}>
+                                            {isSubmittingVip ? (appLanguage === 'ar' ? 'جاري الإرسال...' : 'Envoi...') : (appLanguage === 'ar' ? 'إرسال الطلب' : 'Envoyer la demande')}
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            className="creative-later-btn"
+                                            onClick={() => setShowVipModal(false)}
+                                            style={{
+                                                background: 'none',
+                                                border: 'none',
+                                                color: '#b5bac1',
+                                                marginTop: '15px',
+                                                cursor: 'pointer',
+                                                fontWeight: '800',
+                                                fontSize: '0.85rem',
+                                                textTransform: 'uppercase'
+                                            }}
+                                        >
                                             {t.later}
                                         </button>
-                                        <button type="submit" className="premium-btn-cta gold" disabled={isSubmittingVip}>
-                                            {isSubmittingVip ? 'Envoi...' : 'Envoyer la demande'}
-                                        </button>
+                                    </form>
+                                </>
+                            ) : (
+                                <div style={{ padding: '15px 0' }}>
+                                    <div style={{
+                                        width: '70px',
+                                        height: '70px',
+                                        background: '#ecfdf5',
+                                        color: '#34d399',
+                                        borderRadius: '50%',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        fontSize: '2.5rem',
+                                        margin: '0 auto 20px',
+                                        boxShadow: '0 15px 35px rgba(52, 211, 153, 0.15)'
+                                    }}>
+                                        <FaCheckCircle />
                                     </div>
-                                </form>
-                            </>
-                        ) : (
-                            <div style={{ textAlign: 'center', padding: '20px 0' }}>
-                                <div style={{ width: '60px', height: '60px', background: '#ecfdf5', color: '#10b981', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem', margin: '0 auto 20px' }}>
-                                    <FaCheck />
+                                    <h3 style={{ color: '#0f172a', fontSize: '1.6rem', marginBottom: '10px', fontWeight: '900' }}>
+                                        {appLanguage === 'ar' ? 'تم استلام طلبك!' : 'Demande Reçue !'}
+                                    </h3>
+                                    <p style={{ color: '#64748b', fontSize: '1rem', lineHeight: '1.6', maxWidth: '300px', margin: '0 auto' }}>
+                                        {appLanguage === 'ar'
+                                            ? "تم إرسال بياناتك بنجاح. سيقوم المسؤول بالاتصال بك في أقرب وقت."
+                                            : "Vos informations ont été envoyées. Un administrateur vous contactera prochainement."
+                                        }
+                                    </p>
                                 </div>
-                                <h3 style={{ color: '#064e3b', marginBottom: '10px' }}>Demande envoyée !</h3>
-                                <p style={{ color: '#065f46', fontSize: '1.1rem' }}>
-                                    Un administrateur vous contactera dans les plus brefs délais pour vous informer des détails.
-                                </p>
-                            </div>
-                        )}
+                            )}
+                        </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
 
             {/* 🛑 Modal Ajouter une Langue */}

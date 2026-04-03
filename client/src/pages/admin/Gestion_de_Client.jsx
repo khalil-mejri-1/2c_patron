@@ -103,7 +103,6 @@ export default function Gestion_de_Client() {
                                         <th style={{ padding: '20px', color: '#1e293b', fontWeight: 'bold' }}>Client</th>
                                         <th style={{ padding: '20px', color: '#1e293b', fontWeight: 'bold' }}>Rôle</th>
                                         <th style={{ padding: '20px', color: '#1e293b', fontWeight: 'bold' }}>Abonnement</th>
-                                        <th style={{ padding: '20px', color: '#1e293b', fontWeight: 'bold' }}>Adresse IP</th>
                                         <th style={{ padding: '20px', color: '#1e293b', fontWeight: 'bold', textAlign: 'right' }}>Actions</th>
                                     </tr>
                                 </thead>
@@ -151,41 +150,7 @@ export default function Gestion_de_Client() {
                                                     Newsletter: {user.abonne?.toUpperCase() || 'NON'}
                                                 </span>
                                             </td>
-                                            <td style={{ padding: '20px' }}>
-                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                        <span style={{
-                                                            fontSize: '0.9rem',
-                                                            color: '#1e293b',
-                                                            fontFamily: 'monospace',
-                                                            background: '#f1f5f9',
-                                                            padding: '5px 10px',
-                                                            borderRadius: '6px',
-                                                            fontWeight: 'bold',
-                                                            border: '1px solid #cbd5e1',
-                                                            boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.05)'
-                                                        }}>
-                                                            {user.lockedIp || user.registrationIp || '---'}
-                                                        </span>
-                                                    </div>
-                                                    {user.deviceInfo && (
-                                                        <span
-                                                            style={{
-                                                                fontSize: '0.75rem',
-                                                                color: '#64748b',
-                                                                fontWeight: '600',
-                                                                display: 'flex',
-                                                                alignItems: 'center',
-                                                                gap: '6px',
-                                                                paddingLeft: '2px'
-                                                            }}
-                                                            title={user.userAgent || 'Données brutes non disponibles'}
-                                                        >
-                                                            <span style={{ fontSize: '1rem' }}>{user.deviceInfo.includes('Mobile') ? '📱' : '💻'}</span> {user.deviceInfo}
-                                                         </span>
-                                                     )}
-                                                </div>
-                                            </td>
+
                                             <td style={{ padding: '20px', textAlign: 'right' }}>
                                                 <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
                                                     <button

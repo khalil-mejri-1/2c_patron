@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { FaUser, FaLock, FaEnvelope, FaChevronRight, FaKey } from 'react-icons/fa';
+import { FaUser, FaLock, FaEnvelope, FaChevronRight, FaKey, FaSpinner } from 'react-icons/fa';
 import { jwtDecode } from 'jwt-decode';
 import Navbar from '../comp/navbar';
 import Footer from '../comp/Footer';
@@ -12,44 +12,28 @@ import { useLanguage } from '../context/LanguageContext';
 // ----------------------------------------------------
 // دالة لجلب معلومات الجهاز والمتصفح
 // ----------------------------------------------------
-const getDeviceInfo = () => {
-    const ua = navigator.userAgent;
-    let browser = "Inconnu";
-    let os = "Inconnu";
-    let device = "PC / Desktop";
-
-    // Browser
-    if (ua.indexOf("Firefox") > -1) browser = "Mozilla Firefox";
-    else if (ua.indexOf("SamsungBrowser") > -1) browser = "Samsung Browser";
-    else if (ua.indexOf("Opera") > -1 || ua.indexOf("OPR") > -1) browser = "Opera";
-    else if (ua.indexOf("Trident") > -1) browser = "Internet Explorer";
-    else if (ua.indexOf("Edge") > -1) browser = "Microsoft Edge";
-    else if (ua.indexOf("Chrome") > -1) browser = "Google Chrome";
-    else if (ua.indexOf("Safari") > -1) browser = "Apple Safari";
-
-    // OS & Windows Version Detail
-    if (ua.indexOf("Windows NT 10.0") > -1) os = "Windows 10/11";
-    else if (ua.indexOf("Windows NT 6.3") > -1) os = "Windows 8.1";
-    else if (ua.indexOf("Windows NT 6.2") > -1) os = "Windows 8";
-    else if (ua.indexOf("Windows NT 6.1") > -1) os = "Windows 7";
-    else if (ua.indexOf("Windows NT 6.0") > -1) os = "Windows Vista";
-    else if (ua.indexOf("Windows NT 5.1") > -1) os = "Windows XP";
-    else if (ua.indexOf("Windows") > -1) os = "Windows";
-    else if (ua.indexOf("Mac") > -1) os = "MacOS";
-    else if (ua.indexOf("X11") > -1) os = "Linux";
-    else if (ua.indexOf("Android") > -1) os = "Android";
-    else if (ua.indexOf("iPhone") > -1) os = "iOS (iPhone)";
-
-    // Device
-    if (/Mobi|Android|iPhone/i.test(ua)) {
-        device = "Smartphone / Mobile";
-        const match = ua.match(/\(([^;]+);/);
-        if (match && match[1]) {
-            device = `Mobile (${match[1].trim()})`;
-        }
+// ----------------------------------------------------
+// Helpers for Cookies (Hidden Logic)
+// ----------------------------------------------------
+const setCookie = (name, value, days = 365) => {
+    let expires = "";
+    if (days) {
+        let date = new Date();
+        date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+        expires = "; expires=" + date.toUTCString();
     }
+    document.cookie = name + "=" + (value || "") + expires + "; path=/; SameSite=Lax";
+};
 
-    return { browser, os, device };
+const getCookie = (name) => {
+    let nameEQ = name + "=";
+    let ca = document.cookie.split(';');
+    for (let i = 0; i < ca.length; i++) {
+        let c = ca[i];
+        while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+        if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+    }
+    return null;
 };
 
 // ----------------------------------------------------
@@ -79,6 +63,7 @@ export default function AuthForm({ type = 'login' }) {
     const [name, setName] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
     const [whatsApp, setWhatsApp] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
 
     useEffect(() => {
         fetch(`${BASE_URL}/api/settings/general`)
@@ -101,13 +86,18 @@ export default function AuthForm({ type = 'login' }) {
         const completeRedirection = () => {
             // 1. حفظ بيانات الدخول العامة
             localStorage.setItem('login', 'true');
-            localStorage.setItem('currentUserEmail', user.email);
+            localStorage.setItem('currentUserEmail', user.email || user.mail);
+            localStorage.setItem('userRole', user.statut || 'client');
+            // 3. Stocker le code chiffré (Fingerprint)
+            if (user.fingerprint) {
+                setCookie('_device_session_key', user.fingerprint);
+            }
 
-            // 2. التحقق من حالة المستخدم (statut) وإعادة التوجيه بناءً عليها
-            if (user.email === 'admin@admin.com' || user.mail === 'admin@admin.com') {
+            // 4. التحقق من حالة المستخدم (statut) وإعادة التوجيه بناءً عليها
+            if (user.email === 'admin@admin.com' || user.mail === 'admin@admin.com' || user.statut === 'admin') {
+                localStorage.setItem('userRole', 'admin');
+                localStorage.setItem('isAdmin', 'true');
                 window.location.href = '/Vip-access';
-            } else if (user.statut === 'admin') {
-                window.location.href = '/admin_clients';
             } else {
                 window.location.href = '/';
             }
@@ -118,15 +108,15 @@ export default function AuthForm({ type = 'login' }) {
             const securityLabels = {
                 ar: {
                     title: "تنبيه أمني هام",
-                    msg: "⚠️ ملاحظة هامة: لقد تم ربط حسابك بهذا الجهاز بنجاح.\n\nلضمان أقصى درجات الحماية لحسابك، يجب عليك تسجيل الدخول من هذا الجهاز حصراً في المرات القادمة.\n\nفي حال مواجهة أي مشكلة في الدخول، يرجى التواصل مع الإدارة."
+                    msg: "⚠️ لقد تم ربط حسابك بهذا المتصفح بنجاح.\n\nلا يمكن فتح هذا الحساب من متصفح آخر فيجب الحفاظ على هذا الجهاز لتسجيل الدخول بنجاح في كل مرة."
                 },
                 fr: {
                     title: "Alerte de Sécurité",
-                    msg: "⚠️ Note importante : Votre compte a été lié à cet appareil avec succès.\n\nPour garantir la sécurité de votre compte, vous devrez utiliser cet appareil exclusivement pour vos prochaines connexions.\n\nEn cas de problème, veuillez contacter l'administration."
+                    msg: "⚠️ Votre compte a été lié à ce navigateur avec succès.\n\nCe compte ne peut pas être ouvert depuis un autre navigateur. Vous devez conserver cet appareil pour vous connecter avec succès à chaque fois."
                 },
                 en: {
                     title: "Security Alert",
-                    msg: "⚠️ Important Note: Your account has been successfully linked to this device.\n\nTo ensure your account security, you must use this specific device exclusively for all future logins.\n\nIf you encounter any issues, please contact administration."
+                    msg: "⚠️ Your account has been successfully linked to this browser.\n\nThis account cannot be opened from another browser. You must maintain this device to log in successfully every time."
                 }
             };
             const sl = securityLabels[appLanguage] || securityLabels.fr;
@@ -147,10 +137,12 @@ export default function AuthForm({ type = 'login' }) {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setErrorMessage('');
+        setIsLoading(true);
 
         // A. قواعد التحقق (Validation Rules)
         if (!email || !password) {
             setErrorMessage("Veuillez remplir tous les champs obligatoires.");
+            setIsLoading(false);
             return;
         }
 
@@ -178,6 +170,7 @@ export default function AuthForm({ type = 'login' }) {
             const loginCredentials = {
                 mail: email,
                 mot_de_pass: password,
+                fingerprint: getCookie('_device_session_key') // 🕵️‍♂️ Envoi du code chiffré caché
             };
 
             try {
@@ -212,11 +205,13 @@ export default function AuthForm({ type = 'login' }) {
                     } else {
                         setErrorMessage(errorData.error || "E-mail ou mot de passe incorrect. Veuillez réessayer.");
                     }
+                    setIsLoading(false);
                 }
 
             } catch (error) {
                 console.error("Erreur de communication avec le serveur lors de la connexion:", error);
                 setErrorMessage("Échec de la communication avec le serveur.");
+                setIsLoading(false);
             }
         }
     };
@@ -299,7 +294,7 @@ export default function AuthForm({ type = 'login' }) {
 
                                 <></>
 
-                                {isLogin && (
+                                {/* {isLogin && (
                                     <div className="auth-footer-options">
                                         <label className="checkbox-container">
                                             <input type="checkbox" />
@@ -310,15 +305,24 @@ export default function AuthForm({ type = 'login' }) {
                                             Mot de passe oublié ?
                                         </Link>
                                     </div>
-                                )}
+                                )} */}
 
-                                <button type="submit" className="glam-submit-btn" disabled={!email || !password}>
-                                    <span>{isLogin ? "Se Connecter" : "Créer mon Compte"}</span>
-                                    <FaChevronRight className="arrow-icon" />
+                                <button type="submit" className="glam-submit-btn" disabled={!email || !password || isLoading}>
+                                    {isLoading ? (
+                                        <>
+                                            <FaSpinner className="btn-spinner" />
+                                            <span>{isLogin ? "Connexion..." : "Création..."}</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <span>{isLogin ? "Se Connecter" : "Créer mon Compte"}</span>
+                                            <FaChevronRight className="arrow-icon" />
+                                        </>
+                                    )}
                                 </button>
 
                                 <div className="auth-switch-box">
-                                     Mot de passe requis pour accéder à l'atelier.
+                                    Mot de passe requis pour accéder à l'atelier.
                                 </div>
                             </form>
                         </div>

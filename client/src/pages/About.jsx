@@ -134,21 +134,12 @@ export default function About() {
 
     // 1. ⚙️ جلب التحقق من المسؤول
     useEffect(() => {
-        // Check Admin - Multiple methods for robustness
-        const users = JSON.parse(localStorage.getItem('users') || '[]');
+        // Check Admin
         const email = localStorage.getItem('currentUserEmail') || localStorage.getItem('loggedInUserEmail');
         const storedRole = localStorage.getItem('userRole') || localStorage.getItem('role');
         const storedIsAdmin = localStorage.getItem('isAdmin');
 
-        // Comprehensive check: statut, role, email, or isAdmin flag
-        const currentUser = users.find(u => u.email === email);
-        if (
-            currentUser?.statut === 'admin' ||
-            currentUser?.role === 'admin' ||
-            storedRole === 'admin' ||
-            storedIsAdmin === 'true' ||
-            (email && email.toLowerCase().includes('admin'))
-        ) {
+        if (storedRole === 'admin' || storedIsAdmin === 'true' || (email && email.toLowerCase() === 'admin@admin.com')) {
             setIsAdmin(true);
         }
     }, []);
