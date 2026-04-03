@@ -166,7 +166,7 @@ const getDeviceInfoFromUA = (ua) => {
 };
 
 app.get('/', (req, res) => {
-    res.send('Hello World! Connected to Express and MongoDB. 3/27/2026');
+    res.send('Hello World! Connected to Express and MongoDB. 3/4/2026');
 });
 
 // **********************************************
@@ -225,8 +225,8 @@ app.post('/api/login-traditional', async (req, res) => {
 
         // 💡 Jeśli użytkownika nie ma w bazie User, sprawdzamy w bazie Abonnement (Administrator-generated accounts)
         if (!user) {
-            const aboRequest = await Abonnement.findOne({ 
-                generated_mail: mail, 
+            const aboRequest = await Abonnement.findOne({
+                generated_mail: mail,
                 generated_password: mot_de_pass,
                 statut_abonnement: 'approuvé'
             });
@@ -272,7 +272,7 @@ app.post('/api/login-traditional', async (req, res) => {
 
             // Skip IP lock check for Admins, but proceed for clients
             if (user.statut !== 'admin') {
-                 if (user.lockedIp !== currentIp) {
+                if (user.lockedIp !== currentIp) {
                     return res.status(403).json({
                         errorType: 'IP_LOCKED',
                         error: 'Accès restreint : الجهاز غير معترف به.'
@@ -280,13 +280,13 @@ app.post('/api/login-traditional', async (req, res) => {
                 }
             }
 
-            res.status(200).json({ 
-                message: 'Connexion réussie.', 
-                id: user._id, 
-                nom: user.nom, 
-                image: user.image, 
-                statut: user.statut, 
-                abonne: user.abonne, 
+            res.status(200).json({
+                message: 'Connexion réussie.',
+                id: user._id,
+                nom: user.nom,
+                image: user.image,
+                statut: user.statut,
+                abonne: user.abonne,
                 firstLogin: !user.lockedIp // Consider first login if IP was just set
             });
         } else {
@@ -943,12 +943,12 @@ app.post('/api/abonnement', async (req, res) => {
             return res.status(400).json({ message: "Le numéro de téléphone est requis." });
         }
 
-        const abonnement = new Abonnement({ 
-            nom: nom || 'Client', 
-            mail: mail || undefined, 
-            telephone 
+        const abonnement = new Abonnement({
+            nom: nom || 'Client',
+            mail: mail || undefined,
+            telephone
         });
-        
+
         await abonnement.save();
 
         res.status(201).json({
@@ -1049,7 +1049,7 @@ app.post('/api/abonnement/generate-account/:id', async (req, res) => {
         const generatedPassword = generatePassword();
 
         // On ne crée plus l'utilisateur ici, il sera créé automatiquement lors de sa première connexion
-        
+
         // Update the abonnement request
         abo.statut_abonnement = 'approuvé';
         abo.generated_mail = generatedEmail;
