@@ -652,7 +652,7 @@ html[dir="rtl"] .new-product-badge,
     }
 }
 
-@media (max-width: 400px) {
+@media (max-width: 450px) {
     .product-grid-container {
         grid-template-columns: 1fr;
     }
