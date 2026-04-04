@@ -1497,13 +1497,11 @@ form {
     inset: -3px;
     padding: 3px;
     border-radius: 50px;
-    background: linear-gradient(
-        45deg,
-        #ff0000, #ff7300, #fffb00, #48ff00, #00ffd5, #002bff, #7a00ff, #ff00c8, #ff0000
-    );
+    background: linear-gradient(45deg,
+            #ff0000, #ff7300, #fffb00, #48ff00, #00ffd5, #002bff, #7a00ff, #ff00c8, #ff0000);
     background-size: 400%;
     z-index: -1;
-    animation: chromatic-move 12s linear infinite;
+    animation: chromatic-move 5s linear infinite;
     mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     mask-composite: exclude;
@@ -1512,9 +1510,17 @@ form {
 }
 
 @keyframes chromatic-move {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
+    0% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
+
+    100% {
+        background-position: 0% 50%;
+    }
 }
 
 .vip-cta-gold-button:hover {
