@@ -8,7 +8,9 @@ const homeProductSchema = new mongoose.Schema(
     categorie: { type: String, default: 'General' },
     isFeatured: { type: Boolean, default: false },
     order: { type: Number, default: 0 },
-    description: { type: Object, default: {} }
+    description: { type: Object, default: {} },
+    secondaryImages: { type: [String], default: [] },
+    innerImages: { type: [String], default: [] }
   },
   { timestamps: true }
 );

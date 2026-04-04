@@ -364,7 +364,10 @@ app.post('/api/products', async (req, res) => {
             secondaryImages: req.body.secondaryImages || [], // افتراضيًا مصفوفة فارغة
             prix: req.body.prix,
             categorie: req.body.categorie,
-            order: req.body.order || 0
+            order: req.body.order || 0,
+            isNewProduct: req.body.isNewProduct || false,
+            isPromo: req.body.isPromo || false,
+            oldPrice: req.body.oldPrice || null
             // تجاهل الحقول القديمة (image, images)
         };
 
@@ -445,6 +448,17 @@ app.delete('/api/products/:id', async (req, res) => {
     } catch (error) {
         console.error('Error in DELETE /api/products/:id:', error.message);
         res.status(500).json({ error: 'Erreur du serveur lors de la suppression du produit.' });
+    }
+});
+
+// 5. جلب منتج واحد (GET /api/products/:id)
+app.get('/api/products/:id', async (req, res) => {
+    try {
+        const product = await Product.findById(req.params.id);
+        if (!product) return res.status(404).json({ message: 'Produit non trouvé.' });
+        res.status(200).json(product);
+    } catch (error) {
+        res.status(500).json({ error: 'Erreur du serveur.' });
     }
 });
 

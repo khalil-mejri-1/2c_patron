@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { useLanguage } from '../context/LanguageContext';
-import { FaShoppingCart, FaSearch, FaChevronDown, FaTimes, FaUser, FaMapMarkerAlt, FaPhoneAlt, FaMinusCircle, FaPlusCircle, FaSpinner, FaCheckCircle, FaCommentAlt, FaStar, FaRegStar, FaChevronLeft, FaChevronRight, FaEdit, FaSave, FaTrash, FaPlus, FaWhatsapp, FaFacebookMessenger, FaRobot, FaPaperPlane, FaCloudUploadAlt } from 'react-icons/fa';
+import { FaShoppingCart, FaSearch, FaChevronDown, FaTimes, FaUser, FaMapMarkerAlt, FaPhoneAlt, FaMinusCircle, FaPlusCircle, FaSpinner, FaCheckCircle, FaCommentAlt, FaStar, FaRegStar, FaChevronLeft, FaChevronRight, FaEdit, FaSave, FaTrash, FaPlus, FaWhatsapp, FaFacebookMessenger, FaRobot, FaPaperPlane, FaCloudUploadAlt, FaTag } from 'react-icons/fa';
 import Navbar from '../comp/navbar';
 import Footer from '../comp/Footer';
 import { useAlert } from '../context/AlertContext';
@@ -229,7 +229,8 @@ const ImageCarousel = ({ images, direction, height = '320px' }) => {
         setCurrentIndex(newIndex);
     };
 
-    // تأثير للانتقال التلقائي كل 4 ثوانٍ
+    /* 
+    // تأثير للانتقال التلقائي كل 4 ثوانٍ (تم إيقافه بناءً على طلب المستخدم)
     useEffect(() => {
         if (isHovered) return; // Pause on hover
 
@@ -238,6 +239,7 @@ const ImageCarousel = ({ images, direction, height = '320px' }) => {
         }, 4000);
         return () => clearInterval(interval);
     }, [currentIndex, images.length, isHovered]);
+    */
 
     const directionClass = direction === 'ar' ? 'rtl' : 'ltr';
 
@@ -593,15 +595,17 @@ const OrderModalComponent = ({ selectedProduct, quantity, handleQuantityChange, 
                 {/* 🔚 نهاية مربع رفع وإدارة الصور الداخلية */}
 
                 <div className="quantity-control-group">
-                    <label>{t.qtyLabel}</label>
-                    <div className="quantity-controls">
-                        <button type="button" onClick={() => handleQuantityChange(-1)} disabled={quantity <= 1 || isSubmittingOrder}>
-                            <FaMinusCircle />
-                        </button>
-                        <span className="current-qty">{quantity}</span>
-                        <button type="button" onClick={() => handleQuantityChange(1)} disabled={isSubmittingOrder}>
-                            <FaPlusCircle />
-                        </button>
+                    <div className="quantity-selector-mobile-row">
+                        <label>{t.qtyLabel}</label>
+                        <div className="quantity-controls">
+                            <button type="button" onClick={() => handleQuantityChange(-1)} disabled={quantity <= 1 || isSubmittingOrder}>
+                                <FaMinusCircle />
+                            </button>
+                            <span className="current-qty">{quantity}</span>
+                            <button type="button" onClick={() => handleQuantityChange(1)} disabled={isSubmittingOrder}>
+                                <FaPlusCircle />
+                            </button>
+                        </div>
                     </div>
                     <p className="total-price-display">
                         {t.total} <strong>{totalPrice} {selectedProduct.currency}</strong>
@@ -781,7 +785,10 @@ export default function ProductGrid() {
                 innerImages: p.innerImages || [], // 💡 Added to support images exclusively in the Order Modal carousel
                 alt: typeof p.nom === 'object' ? (p.nom[appLanguage] || p.nom.fr) : p.nom,
                 category: p.categorie,
-                order: p.order || 0
+                order: p.order || 0,
+                isNewProduct: p.isNewProduct || false,
+                isPromo: p.isPromo || false,
+                oldPrice: p.oldPrice || null
             }));
 
             setFetchedProducts(mappedProducts);
@@ -896,7 +903,7 @@ export default function ProductGrid() {
 
     // 📦 Product Management State
     const [isManagingProduct, setIsManagingProduct] = useState(false); // false or 'add' or 'edit'
-    const [productForm, setProductForm] = useState({ id: '', nom: '', prix: '', categorie: '', mainImage: '', secondaryImages: [], order: 0 });
+    const [productForm, setProductForm] = useState({ id: '', nom: '', prix: '', oldPrice: '', categorie: '', mainImage: '', secondaryImages: [], order: 0 });
 
     const handleDeleteProduct = async (id) => {
         if (!window.confirm(appLanguage === 'ar' ? 'هل أنت متأكد من حذف هذا المنتج؟' : 'Supprimer ce produit ?')) return;
@@ -912,7 +919,7 @@ export default function ProductGrid() {
         const cat = selectedCategoryKey === 'Tous' ? 'Homme' : selectedCategoryKey;
         const nom = {};
         languages.forEach(l => nom[l.code] = '');
-        setProductForm({ id: '', nom, prix: '', categorie: cat, mainImage: '', secondaryImages: [], order: 0 });
+        setProductForm({ id: '', nom, prix: '', oldPrice: '', categorie: cat, mainImage: '', secondaryImages: [], order: 0 });
         setIsManagingProduct('add');
     };
 
@@ -925,6 +932,7 @@ export default function ProductGrid() {
             id: p.id,
             nom,
             prix: p.price,
+            oldPrice: p.oldPrice || '',
             categorie: p.category,
             mainImage: p.url,
             secondaryImages: p.secondaryImages || [],
@@ -1171,6 +1179,48 @@ export default function ProductGrid() {
             if (res.ok) {
                 showAlert('success', 'Succès', appLanguage === 'ar' ? 'تم تحديث الترتيب' : 'Ordre mis à jour');
                 fetchHomeItems();
+            }
+        } catch (err) {
+            showAlert('error', 'Error', err.message);
+        }
+    };
+
+    const handleToggleNewBadge = async (product) => {
+        const newValue = !product.isNewProduct;
+        try {
+            const res = await fetch(`${API_URL}/${product.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ isNewProduct: newValue })
+            });
+
+            if (res.ok) {
+                setFetchedProducts(prev => prev.map(p => p.id === product.id ? { ...p, isNewProduct: newValue } : p));
+                showAlert('success', 'Succès', appLanguage === 'ar' ? 'تم تحديث حالة المنتج (جديد)' : 'Statut du badge "Nouveau" mis à jour');
+            } else {
+                const data = await res.json();
+                throw new Error(data.message || 'Error updating product');
+            }
+        } catch (err) {
+            showAlert('error', 'Error', err.message);
+        }
+    };
+
+    const handleTogglePromoBadge = async (product) => {
+        const newValue = !product.isPromo;
+        try {
+            const res = await fetch(`${API_URL}/${product.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ isPromo: newValue })
+            });
+
+            if (res.ok) {
+                setFetchedProducts(prev => prev.map(p => p.id === product.id ? { ...p, isPromo: newValue } : p));
+                showAlert('success', 'Succès', appLanguage === 'ar' ? 'تم تحديث منتج (PROMO)' : 'Statut du badge "PROMO" mis à jour');
+            } else {
+                const data = await res.json();
+                throw new Error(data.message || 'Error updating product');
             }
         } catch (err) {
             showAlert('error', 'Error', err.message);
@@ -1525,6 +1575,9 @@ export default function ProductGrid() {
 
                     {/* 2. Barre latérale des filtres */}
                     <aside className={`filter-sidebar ${isFilterOpen ? 'is-open' : ''} ${appLanguage === 'ar' ? 'rtl-sidebar' : ''}`}>
+                        <button className="sidebar-close-btn-mobile" onClick={() => setIsFilterOpen(false)} aria-label="Close filters">
+                            <FaTimes />
+                        </button>
                         <EditBtn field="filters" style={{ position: 'absolute', top: '20px', right: '20px', zIndex: 10 }} />
                         <div style={{ display: 'flex', alignItems: 'center', marginBottom: '15px' }}>
                             <h3 className="sidebar-title" style={{ margin: 0 }}>{getT('sidebar', t.sidebarTitle)}</h3>
@@ -1758,6 +1811,60 @@ export default function ProductGrid() {
                                                         <FaTrash size={14} />
                                                         {appLanguage === 'ar' ? 'حذف' : 'Supprimer'}
                                                     </button>
+                                                    
+                                                    {/* Toggle New Badge Button */}
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); handleToggleNewBadge(product); }}
+                                                        className="hero-edit-title-btn-premium"
+                                                        style={{
+                                                            width: 'auto',
+                                                            height: 'auto',
+                                                            padding: '10px 18px',
+                                                            borderRadius: '12px',
+                                                            background: product.isNewProduct ? '#10b981' : '#ffffff',
+                                                            color: product.isNewProduct ? '#ffffff' : '#f59e0b',
+                                                            boxShadow: '0 8px 25px rgba(0,0,0,0.1)',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            gap: '10px',
+                                                            fontWeight: '700',
+                                                            fontSize: '0.85rem',
+                                                            border: 'none',
+                                                            cursor: 'pointer',
+                                                            transition: 'all 0.3s'
+                                                        }}
+                                                        title="New Badge"
+                                                    >
+                                                        <FaStar size={14} />
+                                                        {appLanguage === 'ar' ? (product.isNewProduct ? 'اخفاء NEW' : 'اظهار NEW') : (product.isNewProduct ? 'Cacher NEW' : 'Afficher NEW')}
+                                                    </button>
+                                                    
+                                                    {/* Toggle Promo Badge Button */}
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); handleTogglePromoBadge(product); }}
+                                                        className="hero-edit-title-btn-premium"
+                                                        style={{
+                                                            width: 'auto',
+                                                            height: 'auto',
+                                                            padding: '10px 18px',
+                                                            borderRadius: '12px',
+                                                            background: product.isPromo ? '#ef4444' : '#ffffff',
+                                                            color: product.isPromo ? '#ffffff' : '#f59e0b',
+                                                            boxShadow: '0 8px 25px rgba(0,0,0,0.1)',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            gap: '10px',
+                                                            fontWeight: '700',
+                                                            fontSize: '0.85rem',
+                                                            border: 'none',
+                                                            cursor: 'pointer',
+                                                            transition: 'all 0.3s'
+                                                        }}
+                                                        title="Promo Badge"
+                                                    >
+                                                        <FaTag size={14} />
+                                                        {appLanguage === 'ar' ? (product.isPromo ? 'اخفاء PROMO' : 'اظهار PROMO') : (product.isPromo ? 'Cacher PROMO' : 'Afficher PROMO')}
+                                                    </button>
                                                 </div>
                                             )}
                                             <div className="category-badge">
@@ -1767,12 +1874,31 @@ export default function ProductGrid() {
                                                     return t.categoryMapping[product.category] || product.category;
                                                 })()}
                                             </div>
+                                            {product.isNewProduct && (
+                                                <img 
+                                                    src="https://png.pngtree.com/png-vector/20220823/ourmid/pngtree-new-icon-logo-stamp-novelty-star-seal-thin-line-symbol-on-png-image_6120851.png" 
+                                                    alt="New Badge" 
+                                                    className="new-product-badge" 
+                                                />
+                                            )}
+                                            {product.isPromo && (
+                                                <img 
+                                                    src="https://png.pngtree.com/png-clipart/20250206/original/pngtree-super-promo-red-badge-vector-png-image_20351407.png" 
+                                                    alt="Promo Badge" 
+                                                    className="promo-product-badge" 
+                                                />
+                                            )}
                                         </div>
 
                                         <div className="product-details-grid">
                                             <h3 className="product-name-grid">{product.name}</h3>
                                             <div className="product-info-row-grid">
                                                 <span className="product-price-grid">
+                                                    {product.isPromo && product.oldPrice && (
+                                                        <span style={{ textDecoration: 'line-through', color: '#94a3b8', fontSize: '0.8em', marginRight: '8px', marginLeft: appLanguage === 'ar' ? '8px' : '0' }}>
+                                                            {Number(product.oldPrice).toFixed(2)} {product.currency}
+                                                        </span>
+                                                    )}
                                                     {product.price.toFixed(2)} {product.currency}
                                                 </span>
                                                 <button
@@ -2034,6 +2160,26 @@ export default function ProductGrid() {
                                 </div>
                                 <div className="input-field-group">
                                     <label style={{ display: 'block', marginBottom: '10px', fontSize: '0.75rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                                        {appLanguage === 'ar' ? 'السعر القديم (DT)' : 'Ancien Prix (DT)'}
+                                    </label>
+                                    <input
+                                        type="number"
+                                        placeholder="0.00"
+                                        value={productForm.oldPrice}
+                                        onChange={e => setProductForm({ ...productForm, oldPrice: e.target.value })}
+                                        style={{
+                                            width: '100%',
+                                            padding: '16px 20px',
+                                            borderRadius: '16px',
+                                            border: '2px solid #f1f5f9',
+                                            fontSize: '1rem',
+                                            outline: 'none',
+                                            background: '#f8fafc'
+                                        }}
+                                    />
+                                </div>
+                                <div className="input-field-group">
+                                    <label style={{ display: 'block', marginBottom: '10px', fontSize: '0.75rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
                                         {appLanguage === 'ar' ? 'الفئة' : 'Catégorie'}
                                     </label>
                                     <select
@@ -2220,19 +2366,27 @@ export default function ProductGrid() {
             )}
 
             {/* 📱 Contact Floating Buttons */}
-            <div className="contact-floating-container" style={{ position: 'fixed', bottom: '30px', left: '30px', zIndex: 1000, display: 'flex', flexDirection: 'column', gap: '15px' }}>
+            <div className={`contact-floating-container ${appLanguage === 'ar' ? 'rtl-floating' : ''}`} style={{ 
+                position: 'fixed', 
+                bottom: '30px', 
+                right: '30px', 
+                zIndex: 1000, 
+                display: 'flex', 
+                flexDirection: 'column', 
+                gap: '15px' 
+            }}>
                 {contactSettings.whatsapp && (
-                    <a href={`https://wa.me/${contactSettings.whatsapp.replace(/\+/g, '')}`} target="_blank" rel="noopener noreferrer" style={{ background: '#25D366', color: 'white', width: '50px', height: '50px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', boxShadow: '0 4px 10px rgba(0,0,0,0.3)', transition: 'transform 0.3s' }} onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.1)'} onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>
+                    <a href={`https://wa.me/${contactSettings.whatsapp.replace(/\+/g, '')}`} target="_blank" rel="noopener noreferrer" className="floating-btn whatsapp-btn">
                         <FaWhatsapp />
                     </a>
                 )}
                 {contactSettings.messenger && (
-                    <a href={contactSettings.messenger} target="_blank" rel="noopener noreferrer" style={{ background: '#0084FF', color: 'white', width: '50px', height: '50px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', boxShadow: '0 4px 10px rgba(0,0,0,0.3)', transition: 'transform 0.3s' }} onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.1)'} onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>
+                    <a href={contactSettings.messenger} target="_blank" rel="noopener noreferrer" className="floating-btn messenger-btn">
                         <FaFacebookMessenger />
                     </a>
                 )}
                 {isAdmin && (
-                    <button onClick={() => { setEditContactForm(contactSettings); setIsEditingContact(true); }} style={{ background: '#333', color: 'white', width: '40px', height: '40px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', border: 'none', cursor: 'pointer', boxShadow: '0 4px 10px rgba(0,0,0,0.3)' }}>
+                    <button onClick={() => { setEditContactForm(contactSettings); setIsEditingContact(true); }} className="floating-btn admin-btn">
                         <FaEdit />
                     </button>
                 )}

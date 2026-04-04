@@ -118,6 +118,21 @@ export default function Navbar({ initialCartCount = 0 }) {
 
     // --- Fonction de Retour ---
     const handleGoBack = () => {
+        // Sélectionner tous les liens du fil d'Ariane
+        const breadcrumbLinks = document.querySelectorAll('.breadcrumb-container .breadcrumb-link');
+        
+        if (breadcrumbLinks.length > 0) {
+            // Aller au dernier lien trouvé dans le fil d'Ariane (la page parente)
+            const lastLink = breadcrumbLinks[breadcrumbLinks.length - 1];
+            const targetUrl = lastLink.getAttribute('href');
+            
+            if (targetUrl) {
+                navigate(targetUrl);
+                return;
+            }
+        }
+
+        // Si aucun fil d'Ariane n'est trouvé, retour classique
         navigate(-1);
     };
 
@@ -380,79 +395,6 @@ export default function Navbar({ initialCartCount = 0 }) {
                         </li>
                     ))}
 
-                    <li className="mobile-language-menu">
-                        <div className="language-selector-mobile">
-                            {languages.map(({ code, label, icon, emoji }) => (
-                                <div key={code} style={{ position: 'relative' }}>
-                                    <button
-                                        className={`flag-btn ${appLanguage === code ? 'active-flag' : ''}`}
-                                        onClick={() => { handleLanguageChange(code); setIsOpen(false); }}
-                                    >
-                                        <img src={icon} alt={label} className="flag-icon" />
-                                    </button>
-                                    {(isAdmin || userEmail?.includes('admin') || userEmail === '2cparton0011@gmail.com') && (
-                                        <div style={{ position: 'absolute', top: '-10px', right: '-15px', display: 'flex', gap: '2px', zIndex: 10 }}>
-                                            <button
-                                                className="edit-lang-btn-small"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    setEditingLang({ code, label, icon, emoji });
-                                                    setIsEditLanguageModalOpen(true);
-                                                }}
-                                                style={{
-                                                    background: '#D4AF37',
-                                                    color: '#fff',
-                                                    border: 'none',
-                                                    borderRadius: '50%',
-                                                    width: '18px',
-                                                    height: '18px',
-                                                    fontSize: '10px',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    cursor: 'pointer'
-                                                }}
-                                            >
-                                                <FaEdit size={10} />
-                                            </button>
-                                            <button
-                                                className="delete-lang-btn-small"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    if (window.confirm(`Supprimer la langue ${label} ?`)) {
-                                                        deleteLanguage(code);
-                                                    }
-                                                }}
-                                                style={{
-                                                    background: '#ef4444',
-                                                    color: '#fff',
-                                                    border: 'none',
-                                                    borderRadius: '50%',
-                                                    width: '18px',
-                                                    height: '18px',
-                                                    fontSize: '10px',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    cursor: 'pointer'
-                                                }}
-                                            >
-                                                <FaTimes size={10} />
-                                            </button>
-                                        </div>
-                                    )}
-                                </div>
-                            ))}
-                            {(isAdmin || userEmail?.includes('admin') || userEmail === '2cparton0011@gmail.com') && (
-                                <button
-                                    className="flag-btn add-language-btn-mobile"
-                                    onClick={() => setIsAddLanguageModalOpen(true)}
-                                >
-                                    <FaPlus size={16} />
-                                </button>
-                            )}
-                        </div>
-                    </li>
 
 
 

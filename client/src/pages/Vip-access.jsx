@@ -39,6 +39,7 @@ const translations = {
         cancel: "إلغاء",
         adminActions: "إدارة المحتوى",
         breadcrumbHome: "الرئيسية",
+        breadcrumbShop: "الباتيرنات / المتجر",
         breadcrumbCurrent: "دخول VIP"
     },
     fr: {
@@ -66,6 +67,7 @@ const translations = {
         cancel: "Annuler",
         adminActions: "Gestion VIP",
         breadcrumbHome: "Accueil",
+        breadcrumbShop: "Boutique",
         breadcrumbCurrent: "Accès VIP"
     },
     en: {
@@ -93,6 +95,7 @@ const translations = {
         cancel: "Cancel",
         adminActions: "VIP Management",
         breadcrumbHome: "Home",
+        breadcrumbShop: "Shop",
         breadcrumbCurrent: "VIP Access"
     }
 };
@@ -348,6 +351,10 @@ export default function Vipaccess() {
             <nav className="breadcrumb-container">
                 <NavLink to="/" className="breadcrumb-link">
                     {t.breadcrumbHome}
+                </NavLink>
+                <FaChevronRight className="breadcrumb-separator" />
+                <NavLink to="/magasin" className="breadcrumb-link">
+                    {t.breadcrumbShop}
                 </NavLink>
                 <FaChevronRight className="breadcrumb-separator" />
                 <div className="breadcrumb-current">

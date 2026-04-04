@@ -293,10 +293,7 @@ export default function FeaturedProduct() {
                         className="product-cta-button"
                         style={{ border: 'none', cursor: 'pointer' }}
                     >
-                        {isLoggedIn
-                            ? (currentLang === 'ar' ? 'ابدأ الآن' : currentLang === 'en' ? 'Start Now' : 'Commencer')
-                            : t('cta')
-                        }
+                        {t('cta')}
                         {/* عكس اتجاه الأيقونة لـ RTL */}
                         {isRTL ? <FaLongArrowAltRight style={{ transform: 'scaleX(-1)' }} /> : <FaLongArrowAltRight />}
                     </button>

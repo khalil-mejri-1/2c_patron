@@ -301,7 +301,7 @@ export default function About() {
                             </div>
                             <div className="values-grid-lux">
                                 {t.values.map((value, index) => (
-                                    <div key={index} className="value-card-lux" style={{ position: 'relative' }}>
+                                    <div key={index} className="value-card-lux">
                                         <div className="value-icon-wrapper-lux">
                                             <value.icon />
                                         </div>

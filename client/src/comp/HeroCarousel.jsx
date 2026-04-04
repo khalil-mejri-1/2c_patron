@@ -10,6 +10,7 @@ import {
 } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import BASE_URL from '../apiConfig';
+import '../pages/shop_redesign.css';
 
 // 🌟 Translation Data Object 🌟
 const translations = {
@@ -138,6 +139,153 @@ const translations = {
 
 const API_COMMAND_URL = `${BASE_URL}/api/commands`;
 const API_COMMENTAIRE_URL = `${BASE_URL}/api/commentaires`;
+
+// **********************************************
+// ********* 1.5. مكون كاروسيل الصور (Carousel) ****
+// **********************************************
+const ImageCarousel = ({ images, direction, height = "280px" }) => {
+    // Deduplicate images to avoid issues
+    const uniqueImages = Array.from(new Set(images.filter(Boolean)));
+    const [currentIndex, setCurrentIndex] = useState(0);
+
+    if (uniqueImages.length === 0) return null;
+
+    const goToNext = (e) => {
+        e.stopPropagation();
+        setCurrentIndex((prevIndex) => (prevIndex + 1) % uniqueImages.length);
+    };
+
+    const goToPrev = (e) => {
+        e.stopPropagation();
+        setCurrentIndex((prevIndex) => (prevIndex - 1 + uniqueImages.length) % uniqueImages.length);
+    };
+
+    return (
+        <div className="image-carousel-container" style={{
+            position: 'relative',
+            width: '100%',
+            height: height,
+            backgroundColor: '#f8fafc',
+            borderRadius: '24px',
+            overflow: 'hidden',
+            marginBottom: '25px',
+            boxShadow: 'inset 0 0 20px rgba(0,0,0,0.03)',
+            border: '1px solid #f1f5f9'
+        }}>
+            <div className="carousel-inner" dir="ltr" style={{
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                transition: 'transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
+                transform: `translateX(-${currentIndex * 100}%)`
+            }}>
+                {uniqueImages.map((img, index) => (
+                    <div key={index} style={{ 
+                        flex: '0 0 100%', 
+                        width: '100%', 
+                        height: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        background: '#ffffff'
+                    }}>
+                        <img
+                            src={img}
+                            alt={`Product view ${index + 1}`}
+                            style={{
+                                width: '100%',
+                                height: '100%',
+                                objectFit: 'contain',
+                                transition: 'transform 0.5s ease'
+                            }}
+                        />
+                    </div>
+                ))}
+            </div>
+
+            {uniqueImages.length > 1 && (
+                <>
+                    <button
+                        onClick={(e) => goToPrev(e)}
+                        className="carousel-control-btn prev"
+                        style={{
+                            position: 'absolute',
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            left: '15px',
+                            background: 'rgba(255, 255, 255, 0.9)',
+                            border: '1px solid #e2e8f0',
+                            color: '#1a1a1a',
+                            width: '45px',
+                            height: '45px',
+                            cursor: 'pointer',
+                            zIndex: 20,
+                            borderRadius: '50%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
+                            transition: 'all 0.3s ease'
+                        }}
+                    >
+                        <FaChevronLeft size={18} />
+                    </button>
+                    <button
+                        onClick={(e) => goToNext(e)}
+                        className="carousel-control-btn next"
+                        style={{
+                            position: 'absolute',
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            right: '15px',
+                            background: 'rgba(255, 255, 255, 0.9)',
+                            border: '1px solid #e2e8f0',
+                            color: '#1a1a1a',
+                            width: '45px',
+                            height: '45px',
+                            cursor: 'pointer',
+                            zIndex: 20,
+                            borderRadius: '50%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
+                            transition: 'all 0.3s ease'
+                        }}
+                    >
+                        <FaChevronRight size={18} />
+                    </button>
+
+                    <div className="carousel-dots-indicators" style={{ 
+                        position: 'absolute', 
+                        bottom: '20px', 
+                        width: '100%', 
+                        display: 'flex', 
+                        justifyContent: 'center', 
+                        gap: '8px', 
+                        zIndex: 20 
+                    }}>
+                        {uniqueImages.map((_, index) => (
+                            <span
+                                key={index}
+                                style={{
+                                    display: 'inline-block',
+                                    width: index === currentIndex ? '25px' : '8px',
+                                    height: '8px',
+                                    borderRadius: '10px',
+                                    backgroundColor: index === currentIndex ? '#D4AF37' : 'rgba(0,0,0,0.15)',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.4s'
+                                }}
+                                onClick={(e) => { e.stopPropagation(); setCurrentIndex(index); }}
+                            ></span>
+                        ))}
+                    </div>
+                </>
+            )}
+        </div>
+    );
+};
 
 
 // **********************************************
@@ -452,112 +600,98 @@ const OrderModalComponent = ({ selectedProduct, quantity, handleQuantityChange, 
     const direction = appLanguage === 'ar' ? 'rtl' : 'ltr';
 
     return (
-        <div className="premium-modal-backdrop" onClick={closeOrderModal}>
-            <div className="premium-modal-content large" onClick={(e) => e.stopPropagation()} dir={direction}>
-                <button className="premium-modal-close-icon" onClick={closeOrderModal} disabled={isSubmittingOrder}>
+        <div className="modal-overlay">
+            <div className="order-modal-content" dir={direction}>
+                <button className="modal-close-btn" onClick={closeOrderModal} disabled={isSubmittingOrder}>
                     <FaTimes />
                 </button>
 
-                <div className="premium-modal-header" style={{ marginBottom: '25px' }}>
-                    <div className="vip-cert-icon-wrapper" style={{ margin: '0 auto 15px', background: 'rgba(212, 175, 55, 0.1)', color: '#d4af37' }}>
-                        <FaShoppingCart />
-                    </div>
-                    <h2 className="premium-modal-title">
-                        {isLoggedIn ? t.modalTitleUser : t.modalTitleGuest}
-                    </h2>
-                </div>
+                <h2 className="modal-title">
+                    {isLoggedIn ? t.modalTitleUser : t.modalTitleGuest}
+                </h2>
 
-                <div className="product-summary" style={{ display: 'flex', gap: '20px', alignItems: 'center', background: '#f8fafc', padding: '20px', borderRadius: '24px', marginBottom: '25px', textAlign: 'left' }}>
-                    <img src={selectedProduct.url} alt={selectedProduct.alt} style={{ width: '90px', height: '90px', objectFit: 'cover', borderRadius: '16px' }} />
+                <div className="product-summary">
+                    <img src={selectedProduct.url} alt={selectedProduct.alt} className="summary-image" />
                     <div className="summary-details">
-                        <p className="summary-name" style={{ fontWeight: '800', fontSize: '1.2rem', margin: 0 }}>{selectedProduct.name}</p>
-                        <p className="summary-price" style={{ color: '#d4af37', fontWeight: '700', margin: '5px 0 0' }}>{selectedProduct.price.toFixed(2)} {currency} {t.unitPrice}</p>
+                        <p className="summary-name">{selectedProduct.name}</p>
+                        <p className="summary-price">{selectedProduct.price.toFixed(2)} {currency} {t.unitPrice}</p>
                     </div>
                 </div>
 
-                <div className="quantity-control-group" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '30px', marginBottom: '35px', padding: '15px', background: '#fff', border: '1px solid #f1f5f9', borderRadius: '24px' }}>
-                    <label style={{ fontWeight: '800', color: '#64748b', textTransform: 'uppercase', fontSize: '0.8rem' }}>{t.qtyLabel}</label>
-                    <div className="quantity-controls" style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                        <button type="button" onClick={() => handleQuantityChange(-1)} disabled={quantity <= 1 || isSubmittingOrder} style={{ background: 'none', border: 'none', fontSize: '1.5rem', color: '#d4af37', cursor: 'pointer', opacity: quantity <= 1 ? 0.3 : 1 }}>
-                            <FaMinusCircle />
-                        </button>
-                        <span className="current-qty" style={{ fontSize: '1.4rem', fontWeight: '800', minWidth: '35px' }}>{quantity}</span>
-                        <button type="button" onClick={() => handleQuantityChange(1)} disabled={isSubmittingOrder} style={{ background: 'none', border: 'none', fontSize: '1.5rem', color: '#d4af37', cursor: 'pointer' }}>
-                            <FaPlusCircle />
-                        </button>
+                {/* Image Carousel inside Modal */}
+                <ImageCarousel 
+                    images={[selectedProduct.url, ...(selectedProduct.secondaryImages || []), ...(selectedProduct.innerImages || [])].filter(Boolean)}
+                    direction={direction}
+                    height="400px"
+                />
+
+                <div className="quantity-control-group">
+                    <div className="quantity-selector-mobile-row">
+                        <label>{t.qtyLabel}</label>
+                        <div className="quantity-controls">
+                            <button type="button" onClick={() => handleQuantityChange(-1)} disabled={quantity <= 1 || isSubmittingOrder}>
+                                <FaMinusCircle />
+                            </button>
+                            <span className="current-qty">{quantity}</span>
+                            <button type="button" onClick={() => handleQuantityChange(1)} disabled={isSubmittingOrder}>
+                                <FaPlusCircle />
+                            </button>
+                        </div>
                     </div>
-                    <p className="total-price-display" style={{ margin: 0, fontSize: '1.1rem', fontWeight: '600' }}>
-                        {t.total} <strong style={{ color: '#d4af37', fontSize: '1.3rem' }}>{totalPrice} {currency}</strong>
+                    <p className="total-price-display">
+                        {t.total} <strong>{totalPrice} {currency}</strong>
                     </p>
                 </div>
 
                 <form onSubmit={handleConfirmOrder}>
-                    <div style={{ marginBottom: '30px' }}>
-                        <h4 style={{ textAlign: 'left', fontWeight: '800', color: '#1a1a1a', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <span style={{ width: '4px', height: '20px', background: '#d4af37', borderRadius: '10px' }}></span>
-                            {t.contactInfo}
-                        </h4>
-                        <div className="premium-form-grid">
-                            <div className="premium-form-group">
-                                <label>{t.namePlaceholder}</label>
-                                <div style={{ position: 'relative' }}>
-                                    <FaUser style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
-                                    <input
-                                        type="text"
-                                        name="firstName"
-                                        placeholder={t.namePlaceholder}
-                                        value={customerData.firstName}
-                                        onChange={handleCustomerDataChange}
-                                        required
-                                        disabled={isSubmittingOrder}
-                                        style={{ paddingLeft: '45px' }}
-                                    />
-                                </div>
+                    <div className="customer-form-group">
+                        <h4 className="form-subtitle">{t.contactInfo}</h4>
+                        <div className="input-row">
+                            <div className="input-group">
+                                <FaUser className="input-icon" />
+                                <input
+                                    type="text"
+                                    name="firstName"
+                                    placeholder={t.namePlaceholder}
+                                    value={customerData.firstName}
+                                    onChange={handleCustomerDataChange}
+                                    required
+                                    disabled={isSubmittingOrder}
+                                />
                             </div>
 
-                            <div className="premium-form-group">
-                                <label>{t.addressPlaceholder}</label>
-                                <div style={{ position: 'relative' }}>
-                                    <FaMapMarkerAlt style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
-                                    <input
-                                        type="text"
-                                        name="adresse"
-                                        placeholder={t.addressPlaceholder}
-                                        value={customerData.adresse}
-                                        onChange={handleCustomerDataChange}
-                                        required
-                                        disabled={isSubmittingOrder}
-                                        style={{ paddingLeft: '45px' }}
-                                    />
-                                </div>
+                            <div className="input-group">
+                                <FaMapMarkerAlt className="input-icon" />
+                                <input
+                                    type="text"
+                                    name="adresse"
+                                    placeholder={t.addressPlaceholder}
+                                    value={customerData.adresse}
+                                    onChange={handleCustomerDataChange}
+                                    required
+                                    disabled={isSubmittingOrder}
+                                />
                             </div>
 
-                            <div className="premium-form-group">
-                                <label>{t.phonePlaceholder}</label>
-                                <div style={{ position: 'relative' }}>
-                                    <FaPhoneAlt style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
-                                    <input
-                                        type="tel"
-                                        name="phone"
-                                        placeholder={t.phonePlaceholder}
-                                        value={customerData.phone}
-                                        onChange={handleCustomerDataChange}
-                                        required
-                                        disabled={isSubmittingOrder}
-                                        style={{ paddingLeft: '45px' }}
-                                    />
-                                </div>
+                            <div className="input-group">
+                                <FaPhoneAlt className="input-icon" />
+                                <input
+                                    type="tel"
+                                    name="phone"
+                                    placeholder={t.phonePlaceholder}
+                                    value={customerData.phone}
+                                    onChange={handleCustomerDataChange}
+                                    required
+                                    disabled={isSubmittingOrder}
+                                />
                             </div>
                         </div>
                     </div>
 
-                    <div className="premium-btn-group">
-                        <button type="button" onClick={closeOrderModal} className="premium-btn-cta secondary" disabled={isSubmittingOrder}>
-                            {t.cancelBtn}
-                        </button>
+                    <div className="modal-actions-order">
                         <button
                             type="submit"
-                            className="premium-btn-cta gold"
+                            className="confirm-order-btn"
                             disabled={isSubmittingOrder || !customerData.firstName || !customerData.adresse || !customerData.phone}
                         >
                             {isSubmittingOrder ? (
@@ -565,6 +699,9 @@ const OrderModalComponent = ({ selectedProduct, quantity, handleQuantityChange, 
                             ) : (
                                 isLoggedIn ? t.submitBtn : t.submitBtnGuest
                             )}
+                        </button>
+                        <button type="button" onClick={closeOrderModal} className="cancel-order-btn" disabled={isSubmittingOrder}>
+                            {t.cancelBtn}
                         </button>
                     </div>
                 </form>
@@ -728,6 +865,8 @@ export default function HeroSection({ isLoggedIn = false, currentUserEmail = '' 
                     name: addedProduct.nom,
                     url: addedProduct.image,
                     alt: `${addedProduct.nom}`,
+                    secondaryImages: addedProduct.secondaryImages || [],
+                    innerImages: addedProduct.innerImages || [],
                     currency: 'DT'
                 };
                 setProducts(prev => [...prev, mappedProduct]);
@@ -757,6 +896,8 @@ export default function HeroSection({ isLoggedIn = false, currentUserEmail = '' 
                     name: typeof item.nom === 'object' ? (item.nom[currentLanguage] || item.nom.fr) : item.nom,
                     url: item.image,
                     alt: `${texts.products[0].alt} - ${typeof item.nom === 'object' ? (item.nom[currentLanguage] || item.nom.fr) : item.nom}`,
+                    secondaryImages: item.secondaryImages || [],
+                    innerImages: item.innerImages || [],
                     currency: 'DT'
                 }));
                 setProducts(mappedProducts);
@@ -831,11 +972,56 @@ export default function HeroSection({ isLoggedIn = false, currentUserEmail = '' 
     };
 
     // ********* Modals Logic *************
-    const openOrderModal = (product) => {
-        setSelectedProduct(product);
+    const openOrderModal = async (product) => {
+        const productId = product.id;
+        
+        // Modal initially with current info
+        setSelectedProduct({
+            ...product,
+            secondaryImages: product.secondaryImages || [],
+            innerImages: product.innerImages || []
+        });
         setQuantity(1);
         setIsOrderModalOpen(true);
         if (autoPlayRef.current) clearInterval(autoPlayRef.current);
+
+        // Fetch deep details cross-referencing with the general Product collection
+        try {
+            // Because HomeProduct might not have secondaryImages populated correctly
+            // we search the main Product collection by product name (nom)
+            let response = await fetch(`${BASE_URL}/api/products`);
+            
+            if (response.ok) {
+                const allProducts = await response.json();
+                
+                // Find matching product by name (in any language)
+                const matchingProduct = allProducts.find(p => {
+                    if (!p.nom) return false;
+                    const searchName = product.name?.trim()?.toLowerCase();
+                    const pNameFr = (typeof p.nom === 'object' ? p.nom.fr : p.nom)?.trim()?.toLowerCase();
+                    const pNameAr = (typeof p.nom === 'object' ? p.nom.ar : p.nom)?.trim()?.toLowerCase();
+                    const pNameEn = (typeof p.nom === 'object' ? p.nom.en : p.nom)?.trim()?.toLowerCase();
+                    
+                    return pNameFr === searchName || pNameAr === searchName || pNameEn === searchName;
+                });
+
+                if (matchingProduct) {
+                    setSelectedProduct(prev => {
+                        if (prev && prev.id === productId) {
+                            return {
+                                ...prev,
+                                // Support both field naming conventions if they differ
+                                secondaryImages: matchingProduct.secondaryImages || matchingProduct.images || [],
+                                innerImages: matchingProduct.innerImages || []
+                            };
+                        }
+                        return prev;
+                    });
+                }
+            }
+        } catch (err) {
+            console.error("Error fetching full product details:", err);
+        }
     };
 
     const closeOrderModal = () => {
@@ -974,12 +1160,32 @@ export default function HeroSection({ isLoggedIn = false, currentUserEmail = '' 
                                         className={`${cardClass}`}
                                         onClick={() => handleCardClick(index)}
                                     >
-                                        <img
-                                            src={product.url}
-                                            alt={product.alt}
-                                            className="hero-card-image"
-                                            style={{ height: '100%', objectFit: 'cover', cursor: isMain ? 'pointer' : 'default' }}
-                                        />
+                                        <div className="hero-card-image-wrapper">
+                                            <img
+                                                src={product.url}
+                                                alt={product.alt}
+                                                className="hero-card-image"
+                                                style={{ height: '100%', objectFit: 'cover', cursor: isMain ? 'pointer' : 'default' }}
+                                            />
+                                        </div>
+
+                                        {isMain && (
+                                            <div className="hero-card-details-overlay">
+                                                <h3 className="hero-card-title">{product.name}</h3>
+                                                <div className="hero-card-footer">
+                                                    <span className="hero-card-price">{product.price} {product.currency}</span>
+                                                    <button 
+                                                        className="hero-card-order-btn"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            openOrderModal(product);
+                                                        }}
+                                                    >
+                                                        <FaShoppingCart /> {texts.cartButton}
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 );
                             }))}

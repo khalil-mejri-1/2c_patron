@@ -37,6 +37,22 @@ const productSchema = new mongoose.Schema({
         default: []
     },
     
+    // 💡 4. حقل علامة منتج جديد
+    isNewProduct: {
+        type: Boolean,
+        default: false
+    },
+    
+    // 💡 5. حقول التخفيضات (العلامة والسعر القديم)
+    isPromo: {
+        type: Boolean,
+        default: false
+    },
+    oldPrice: {
+        type: Number,
+        required: false
+    },
+    
     prix: {
         type: Number,
         required: [true, 'Le prix est requis'],

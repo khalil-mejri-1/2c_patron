@@ -736,6 +736,10 @@
     }
 }
 
+[dir="rtl"] .breadcrumb-separator {
+    transform: rotate(180deg);
+}
+
 @keyframes fadeInDown {
     from {
         opacity: 0;
@@ -773,11 +777,31 @@
     }
 
     .vip-hero-premium {
-        padding: 140px 20px 80px;
+        padding: 100px 0px 0px;
+
     }
 
     .vip-content-section {
-        padding: 0 10px 60px;
+        padding: 0 00px 00px;
+    }
+}
+
+@media (max-width: 425px) {
+    .vip-main-title-premium {
+        font-size: clamp(2.1rem, 0vw, 0rem);
+    }
+
+    .accent-text {
+        margin-top: 20px;
+    }
+
+    .vip-content-section {
+        padding: 0 0px 0px;
+    }
+
+    .vip-hero-premium {
+        padding: 100px 0px 0px;
+
     }
 }
 
