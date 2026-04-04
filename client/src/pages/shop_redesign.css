@@ -384,38 +384,7 @@ html[dir="rtl"] .new-product-badge,
     right: auto;
 }
 
-.promo-product-badge {
-    position: absolute;
-    top: 40px;
-    /* Positioned just below the NEW badge image */
-    right: 0px;
-    width: 65px;
-    height: 65px;
-    z-index: 10;
-    object-fit: contain;
-    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.15));
-    animation: flashPromoImg 2s infinite;
-}
 
-@keyframes flashPromo {
-
-    0%,
-    100% {
-        opacity: 1;
-        transform: scale(1);
-    }
-
-    50% {
-        opacity: 0.85;
-        transform: scale(1.05);
-    }
-}
-
-html[dir="rtl"] .promo-product-badge,
-[dir="rtl"] .promo-product-badge {
-    left: 10px;
-    right: auto;
-}
 
 .product-grid-image {
     width: 100%;
@@ -1505,7 +1474,7 @@ form {
 }
 
 .vip-cta-gold-button {
-    width: 100%;
+    max-width: 500px;
     background: linear-gradient(90deg, #d4af37 0%, #b45309 100%);
     color: #fff;
     border: none;

@@ -14,6 +14,7 @@ const translations = {
         subtitle: 'Patronage de Pantalons Professionnels',
         description: 'Débloquez les techniques de la coupe parfaite des pantalons de tailleur. Ce cours intensif, étape par étape, vous garantit un ajustement impeccable et une finition digne de la Haute Couture.',
         cta: "S'inscrire Maintenant ",
+        ctaLoggedIn: 'Commencer ',
         imageAlt: 'Cours de Patronage de Pantalons Professionnels',
     },
     'en': {
@@ -22,6 +23,7 @@ const translations = {
         subtitle: 'Professional Trouser Pattern Drafting',
         description: 'Unlock the techniques for the perfect tailoring of dress pants. This intensive, step-by-step course guarantees you an impeccable fit and a finish worthy of Haute Couture.',
         cta: 'Enroll Now ',
+        ctaLoggedIn: 'Start Now ',
         imageAlt: 'Professional Trouser Pattern Drafting Course',
     },
     'ar': {
@@ -29,7 +31,8 @@ const translations = {
         title: 'الدورة الرئيسية:',
         subtitle: 'رسم نماذج السراويل الاحترافية (الباتـرون)',
         description: 'اكتشف تقنيات القص المثالي لسراويل الخياطة. هذه الدورة المكثفة، خطوة بخطوة، تضمن لك مقاسًا لا تشوبه شائبة ولمسة نهائية تليق بالخياطة الراقية (Haute Couture).',
-        cta: ' سجل الآن', // تم حذف المسافة الإضافية في البداية من '  سجل الآن'
+        cta: ' سجل الآن',
+        ctaLoggedIn: ' ابدأ الآن',
         imageAlt: 'دورة رسم نماذج السراويل الاحترافية',
     }
 };
@@ -101,7 +104,8 @@ export default function FeaturedProduct() {
                                 title: translations[lang.code]?.title || translations.fr.title,
                                 subtitle: translations[lang.code]?.subtitle || translations.fr.subtitle,
                                 description: translations[lang.code]?.description || translations.fr.description,
-                                cta: translations[lang.code]?.cta || translations.fr.cta
+                                cta: translations[lang.code]?.cta || translations.fr.cta,
+                                ctaLoggedIn: translations[lang.code]?.ctaLoggedIn || translations.fr.ctaLoggedIn
                             };
                         }
                     });
@@ -268,9 +272,7 @@ export default function FeaturedProduct() {
                     </button>
                 )}
 
-                <span className="product-tag">
-                    {t('tag')}
-                </span>
+
 
                 <h2 className="product-main-title home_titre">
                     {t('title')} <br />
@@ -293,7 +295,8 @@ export default function FeaturedProduct() {
                         className="product-cta-button"
                         style={{ border: 'none', cursor: 'pointer' }}
                     >
-                        {t('cta')}
+                        {/* عرض نص مختلف للزر بحسب حالة تسجيل الدخول */}
+                        {isLoggedIn ? (t('ctaLoggedIn') || t('cta')) : t('cta')}
                         {/* عكس اتجاه الأيقونة لـ RTL */}
                         {isRTL ? <FaLongArrowAltRight style={{ transform: 'scaleX(-1)' }} /> : <FaLongArrowAltRight />}
                     </button>
@@ -504,15 +507,7 @@ export default function FeaturedProduct() {
                             {languages.filter(l => l.code === currentLang).map(lang => (
                                 <div key={lang.code} className="premium-lang-section" style={{ border: 'none', background: 'none' }}>
                                     <h4 className="lang-indicator" style={{ background: '#d4af37' }}>{lang.label}</h4>
-                                    <div className="premium-form-group">
-                                        <label>Tag (Badge)</label>
-                                        <input
-                                            type="text"
-                                            value={editData[lang.code]?.tag || ''}
-                                            onChange={e => setEditData({ ...editData, [lang.code]: { ...editData[lang.code], tag: e.target.value } })}
-                                            dir={lang.code === 'ar' ? 'rtl' : 'ltr'}
-                                        />
-                                    </div>
+
                                     <div className="premium-form-group">
                                         <label>Titre Principal</label>
                                         <input
@@ -532,12 +527,22 @@ export default function FeaturedProduct() {
                                         />
                                     </div>
                                     <div className="premium-form-group">
-                                        <label>Texte du Bouton</label>
+                                        <label>{currentLang === 'ar' ? 'نص الزر (قبل تسجيل الدخول)' : 'Texte du Bouton (Non Connecté)'}</label>
                                         <input
                                             type="text"
                                             value={editData[lang.code]?.cta || ''}
                                             onChange={e => setEditData({ ...editData, [lang.code]: { ...editData[lang.code], cta: e.target.value } })}
                                             dir={lang.code === 'ar' ? 'rtl' : 'ltr'}
+                                        />
+                                    </div>
+                                    <div className="premium-form-group">
+                                        <label style={{ color: '#10b981' }}>{currentLang === 'ar' ? '✓ نص الزر (بعد تسجيل الدخول)' : '✓ Texte du Bouton (Connecté)'}</label>
+                                        <input
+                                            type="text"
+                                            value={editData[lang.code]?.ctaLoggedIn || ''}
+                                            onChange={e => setEditData({ ...editData, [lang.code]: { ...editData[lang.code], ctaLoggedIn: e.target.value } })}
+                                            dir={lang.code === 'ar' ? 'rtl' : 'ltr'}
+                                            style={{ borderColor: '#10b981' }}
                                         />
                                     </div>
                                     <div className="premium-form-group" style={{ gridColumn: '1 / -1' }}>

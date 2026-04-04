@@ -182,8 +182,15 @@
 }
 
 @keyframes slideUpOverlay {
-    from { transform: translateY(100%); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
+    from {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
 }
 
 .hero-card-title {
@@ -548,11 +555,7 @@
     outline: none;
 }
 
-.premium-btn-group {
-    display: flex;
-    gap: 15px;
-    margin-top: 30px;
-}
+
 
 .premium-btn-cta {
     flex: 1;

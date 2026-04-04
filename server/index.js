@@ -68,6 +68,9 @@ const SpecializedCourse = require('./models/SpecializedCourse.js');
 const SpecializedVideo = require('./models/SpecializedVideo.js');
 const SiteSetting = require('./models/SiteSetting.js');
 const ShopCategory = require('./models/ShopCategory.js');
+const Offer = require('./models/Offer.js');
+
+
 
 // 2. إنشاء تطبيق Express
 const app = express();
@@ -111,6 +114,36 @@ app.post('/api/upload', upload.single('image'), async (req, res) => {
     } catch (error) {
         console.error("Erreur d'upload:", error);
         res.status(500).json({ message: 'Échec de l\'upload', error: error.message });
+    }
+});
+
+
+// -------------------- API ROUTES FOR OFFERS --------------------
+app.get('/api/offers', async (req, res) => {
+    try {
+        const offers = await Offer.find({ isActive: true, duration: { $gt: new Date() } }).populate('productIds');
+        res.status(200).json(offers);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
+app.post('/api/offers', async (req, res) => {
+    try {
+        const offer = new Offer(req.body);
+        const saved = await offer.save();
+        res.status(201).json(saved);
+    } catch (err) {
+        res.status(400).json({ message: err.message });
+    }
+});
+
+app.delete('/api/offers/:id', async (req, res) => {
+    try {
+        await Offer.findByIdAndDelete(req.params.id);
+        res.status(200).json({ message: 'Offre supprimée' });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
     }
 });
 
@@ -365,9 +398,7 @@ app.post('/api/products', async (req, res) => {
             prix: req.body.prix,
             categorie: req.body.categorie,
             order: req.body.order || 0,
-            isNewProduct: req.body.isNewProduct || false,
-            isPromo: req.body.isPromo || false,
-            oldPrice: req.body.oldPrice || null
+            isNewProduct: req.body.isNewProduct || false
             // تجاهل الحقول القديمة (image, images)
         };
 
@@ -647,6 +678,16 @@ app.delete('/api/commands/:id', async (req, res) => {
         res.status(200).json({ message: "Commande supprimée avec succès." });
     } catch (error) {
         res.status(500).json({ message: "Échec de la suppression de la commande.", details: error.message });
+    }
+});
+
+// 4. 💡 DELETE ALL (DELETE /api/commands) - حذف جميع الطلبات
+app.delete('/api/commands', async (req, res) => {
+    try {
+        await Command.deleteMany({});
+        res.status(200).json({ message: "Toutes les commandes ont été supprimées avec succès." });
+    } catch (error) {
+        res.status(500).json({ message: "Échec de la suppression de toutes les commandes.", details: error.message });
     }
 });
 

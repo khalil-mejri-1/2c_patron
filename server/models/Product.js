@@ -43,15 +43,7 @@ const productSchema = new mongoose.Schema({
         default: false
     },
     
-    // 💡 5. حقول التخفيضات (العلامة والسعر القديم)
-    isPromo: {
-        type: Boolean,
-        default: false
-    },
-    oldPrice: {
-        type: Number,
-        required: false
-    },
+
     
     prix: {
         type: Number,
