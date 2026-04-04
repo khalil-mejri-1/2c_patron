@@ -808,7 +808,13 @@ export default function ProductGrid() {
                 isNewProduct: p.isNewProduct || false
             }));
 
-            setFetchedProducts(mappedProducts);
+            const sortedProducts = mappedProducts.sort((a, b) => {
+                if (a.isNewProduct && !b.isNewProduct) return -1;
+                if (!a.isNewProduct && b.isNewProduct) return 1;
+                return 0;
+            });
+
+            setFetchedProducts(sortedProducts);
 
         } catch (err) {
             console.error("Échec de la récupération des produits :", err);
