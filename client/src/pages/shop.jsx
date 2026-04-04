@@ -2840,12 +2840,14 @@ export default function ProductGrid() {
                     100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
                 }
                 .premium-offer-card {
-                    padding: 20px !important;
+                    padding: 50px 25px 25px 25px !important;
                     display: flex;
                     flex-direction: column;
-                    gap: 20px;
-                    border: 1px solid rgba(212, 175, 55, 0.2);
-                    background: linear-gradient(135deg, #ffffff 0%, #fff9e6 100%) !important;
+                    justify-content: space-between;
+                    border: 1.5px solid rgba(212, 175, 55, 0.25);
+                    background: linear-gradient(135deg, #ffffff 0%, #fffbf2 100%) !important;
+                    position: relative;
+                    min-height: 520px;
                 }
                 .offer-badge-container {
                     position: absolute;
@@ -2879,24 +2881,35 @@ export default function ProductGrid() {
                     z-index: 10;
                 }
                 .offer-image-bundle {
-                    height: 180px;
+                    height: 200px;
+                    width: 100%;
                     position: relative;
-                    margin-top: 10px;
+                    margin: 20px 0;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
                 }
                 .bundle-img-wrapper {
                     position: absolute;
-                    width: 110px;
-                    height: 110px;
-                    border-radius: 15px;
+                    width: 140px;
+                    height: 140px;
+                    border-radius: 18px;
                     overflow: hidden;
-                    border: 3px solid #fff;
-                    box-shadow: 0 8px 15px rgba(0,0,0,0.1);
-                    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                    border: 4px solid #fff;
+                    box-shadow: 0 15px 35px rgba(0,0,0,0.12);
+                    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+                    background: #fff;
                 }
-                .bundle-img-wrapper img { width: 100%; height: 100%; object-fit: cover; }
-                .item-0 { z-index: 3; top: 10px; left: 10px; transform: rotate(-5deg); }
-                .item-1 { z-index: 2; top: 40px; left: 60px; transform: rotate(5deg); }
-                .item-2 { z-index: 1; top: 20px; left: 110px; transform: rotate(-2deg); }
+                .bundle-img-wrapper img { 
+                    width: 100%; 
+                    height: 100%; 
+                    object-fit: cover;
+                    /* Make images clearer */
+                    filter: brightness(1.02) contrast(1.05);
+                }
+                .item-0 { z-index: 3; transform: translateX(-85px) rotate(-12deg) translateY(5px); }
+                .item-1 { z-index: 4; transform: scale(1.15) rotate(0deg); }
+                .item-2 { z-index: 2; transform: translateX(85px) rotate(12deg) translateY(5px); }
                 .bundle-count {
                     position: absolute;
                     bottom: 0px;
@@ -2910,11 +2923,13 @@ export default function ProductGrid() {
                     letter-spacing: 1px;
                 }
                 .offer-main-title {
-                    font-size: 0.9rem;
-                    color: #1e293b;
-                    font-weight: 800;
-                    margin-bottom: 10px;
+                    font-size: 1.1rem;
+                    color: #0f172a;
+                    font-weight: 900;
+                    margin-bottom: 5px;
                     text-align: center;
+                    line-height: 1.3;
+                    letter-spacing: -0.5px;
                 }
                 .timer-unit-glam {
                     display: flex;
