@@ -382,7 +382,7 @@
 /* --- 🥖 BREADCRUMB NAVIGATION 🥖 --- */
 .breadcrumb-container {
     max-width: 1280px;
-    margin: 30px auto 10px;
+    margin: 30px auto 15px;
     padding: 0 0px;
     display: flex;
     align-items: center;
@@ -897,4 +897,48 @@
     .l-action-btn svg {
         display: none;
     }
+}
+
+/* --- ?? BREACRUMB BACK BUTTON ?? --- */
+.breadcrumb-container {
+    display: flex !important;
+    align-items: center !important;
+    gap: 15px !important;
+}
+
+.breadcrumb-back-btn {
+    background: rgba(212, 175, 55, 0.1);
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    color: #d4af37;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+}
+
+.breadcrumb-back-btn:hover {
+    background: #d4af37;
+    color: #fff;
+    transform: scale(1.1);
+}
+
+.breadcrumb-nav-links {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+    .breadcrumb-back-btn {
+        width: 24px;
+        height: 24px;
+        font-size: 0.7rem;
+    }
+    .breadcrumb-container { gap: 8px !important; }
 }

@@ -25,7 +25,7 @@ const translations = {
         categoryMapping: { 'Tous': 'الكل', 'Homme': 'رجال', 'Famme': 'نساء', 'Enfant': 'أطفال' },
         unitPrice: "/ وحدة",
         modalTitleGuest: "إرسال طلبك (زائر)",
-        modalTitleUser: "تأكيد طلبك (متصل)",
+        modalTitleUser: "تأكيد طلبك",
         qtyLabel: "الكمية :",
         total: "الإجمالي :",
         contactInfo: "بيانات الاتصال الخاصة بك",
@@ -87,7 +87,7 @@ const translations = {
         unitPrice: "/ unité",
         navTitle: "catégorie  ",
         modalTitleGuest: "Passer votre commande (Visiteur)",
-        modalTitleUser: "Confirmer votre commande (Connecté)",
+        modalTitleUser: "Confirmer votre commande ",
         qtyLabel: "Quantité :",
         total: "Total :",
         contactInfo: "Vos informations de contact",
@@ -147,7 +147,7 @@ const translations = {
         categoryMapping: { 'Tous': 'All', 'Homme': 'Men', 'Famme': 'Women', 'Enfant': 'Children' },
         unitPrice: "/ unit",
         modalTitleGuest: "Place Your Order (Guest)",
-        modalTitleUser: "Confirm Your Order (Logged In)",
+        modalTitleUser: "Confirm Your Order",
         qtyLabel: "Quantity :",
         total: "Total :",
         contactInfo: "Your Contact Information",
@@ -477,7 +477,7 @@ const OrderModalComponent = ({ selectedProduct, quantity, handleQuantityChange, 
                     direction={direction}
                     height="400px"
                 />
-                
+
                 {/* 💡 Upload button for Inner Images (Visible to Admin Only) */}
                 {isAdmin && (
                     <div style={{ marginTop: '12px', display: 'flex', justifyContent: 'center' }}>
@@ -490,7 +490,7 @@ const OrderModalComponent = ({ selectedProduct, quantity, handleQuantityChange, 
                             onChange={async (e) => {
                                 const files = Array.from(e.target.files);
                                 if (!files || files.length === 0) return;
-                                
+
                                 setIsUploading(true);
                                 try {
                                     const uploadedUrls = [];
@@ -503,7 +503,7 @@ const OrderModalComponent = ({ selectedProduct, quantity, handleQuantityChange, 
                                             uploadedUrls.push(data.url);
                                         }
                                     }
-                                    
+
                                     if (uploadedUrls.length > 0) {
                                         const newInnerImages = [...innerImages, ...uploadedUrls];
                                         setInnerImages(newInnerImages);
@@ -513,10 +513,10 @@ const OrderModalComponent = ({ selectedProduct, quantity, handleQuantityChange, 
                                             headers: { 'Content-Type': 'application/json' },
                                             body: JSON.stringify({ innerImages: newInnerImages })
                                         }).catch(err => console.error(err));
-                                        
+
                                         // Update selected product object directly to persist before closing
                                         selectedProduct.innerImages = newInnerImages;
-                                        
+
                                         showAlert('success', 'Succès', appLanguage === 'ar' ? `تم إضافة ${uploadedUrls.length} صور بنجاح` : `${uploadedUrls.length} images ajoutées avec succès`);
                                     }
                                 } catch (err) {
@@ -528,7 +528,7 @@ const OrderModalComponent = ({ selectedProduct, quantity, handleQuantityChange, 
                             }}
                             style={{ display: 'none' }}
                         />
-                        <label 
+                        <label
                             htmlFor="premiumInnerUpload"
                             style={{
                                 background: 'linear-gradient(135deg, #1e293b, #0f172a)',
@@ -551,7 +551,7 @@ const OrderModalComponent = ({ selectedProduct, quantity, handleQuantityChange, 
                         </label>
                     </div>
                 )}
-                
+
                 {/* 💡 Exhibition of Inner Images for Admin to Delete/Manage */}
                 {isAdmin && innerImages.length > 0 && (
                     <div style={{ marginTop: '15px', padding: '15px', background: '#f8fafc', borderRadius: '12px' }}>
@@ -1104,13 +1104,13 @@ export default function ProductGrid() {
 
     const handleToggleHero = async (product) => {
         const existingHeroItem = homeItems.find(item => item.image === product.url);
-        
+
         if (existingHeroItem) {
             // REMOVE (OFF)
-            const confirmMsg = appLanguage === 'ar' 
+            const confirmMsg = appLanguage === 'ar'
                 ? `هل أنت متأكد من إزالة "${product.name}" من الصفحة الرئيسية؟`
                 : `Voulez-vous vraiment retirer "${product.name}" de la page d'accueil ?`;
-                
+
             if (!window.confirm(confirmMsg)) return;
 
             try {
@@ -1125,7 +1125,7 @@ export default function ProductGrid() {
         } else {
             // ADD (ON)
             const orderValue = productOrders[product.id] || 0;
-            
+
             try {
                 const postData = {
                     nom: product.fullNom || product.name,
@@ -1141,7 +1141,7 @@ export default function ProductGrid() {
                 });
 
                 if (postRes.ok) {
-                    showAlert('success', 'Succès', 
+                    showAlert('success', 'Succès',
                         appLanguage === 'ar' ? 'تمت الإضافة بنجاح' : 'Produit ajouté avec succès'
                     );
                     fetchHomeItems();
@@ -1673,11 +1673,11 @@ export default function ProductGrid() {
                                                         boxShadow: '0 8px 25px rgba(0,0,0,0.1)',
                                                         zIndex: 11
                                                     }}>
-                                                        <input 
+                                                        <input
                                                             type="number"
                                                             placeholder="#"
                                                             value={productOrders[product.id] || ''}
-                                                            onChange={(e) => setProductOrders({...productOrders, [product.id]: e.target.value})}
+                                                            onChange={(e) => setProductOrders({ ...productOrders, [product.id]: e.target.value })}
                                                             style={{
                                                                 width: '45px',
                                                                 padding: '6px',

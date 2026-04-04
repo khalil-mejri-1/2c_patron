@@ -3065,7 +3065,7 @@ body {
 }
 
 .filter-sidebar {
-  width: 400px;
+  width: 300px;
   padding: 20px;
   background-color: #FFFFFF;
   border-radius: 8px;
@@ -3195,10 +3195,7 @@ body {
 
 /*======================================================*/
 /* 3. شبكة المنتجات الرئيسية (Flex Container)           */
-/*======================================================*/
-.product-grid-main {
-  flex-grow: 1;
-}
+
 
 .grid-info-bar {
   display: flex;
@@ -11813,4 +11810,34 @@ body {
   color: #fff;
   transform: scale(1.1) rotate(15deg);
   box-shadow: 0 15px 30px rgba(212, 175, 55, 0.3);
+}
+
+/* --- ?? RTL SUPPORT FOR button_retour ?? --- */
+[dir='rtl'] .button_retour {
+  left: auto !important;
+  right: 30px !important;
+}
+
+[dir='rtl'] .button_retour svg {
+  transform: rotate(180deg);
+}
+
+[dir='rtl'] .back-btn-label {
+  left: auto !important;
+  right: 60px !important;
+  transform: translateX(10px) !important;
+}
+
+[dir='rtl'] .button_retour:hover {
+  transform: translateX(-5px) scale(1.05) !important;
+}
+
+[dir='rtl'] .button_retour:hover .back-btn-label {
+  transform: translateX(0) !important;
+}
+
+@media (max-width: 1300px) {
+  [dir='rtl'] .button_retour {
+    right: 20px !important;
+  }
 }

@@ -623,7 +623,7 @@ export default function HeroSection({ isLoggedIn = false, currentUserEmail = '' 
                 .then(data => {
                     if (data && data.statut === 'admin') setIsAdmin(true);
                 })
-                .catch(() => {});
+                .catch(() => { });
         }
 
         const fetchHeroSettings = async () => {
@@ -641,7 +641,7 @@ export default function HeroSection({ isLoggedIn = false, currentUserEmail = '' 
 
                 // Pre-initialize edit data
                 setEditHeroData({
-                    titles: initializeAllLanguages(titles || {}, 'mainTitle1'), 
+                    titles: initializeAllLanguages(titles || {}, 'mainTitle1'),
                     sublines: initializeAllLanguages(sublines || {}, 'subline'),
                     intros: initializeAllLanguages(intros || {}, 'introText'),
                     ctaTexts: initializeAllLanguages(cta || {}, 'ctaButton')

@@ -734,19 +734,20 @@ export default function Lessons() {
                     <NavLink to="/" className="breadcrumb-link">
                         {t.breadcrumbHome}
                     </NavLink>
-                    <FaArrowRight className="breadcrumb-separator" style={{ transform: direction === 'rtl' ? 'rotate(180deg)' : 'none', fontSize: '0.8rem', opacity: 0.6 }} />
+                    <FaArrowRight className="breadcrumb-separator" style={{ transform: direction === 'rtl' ? 'rotate(180deg)' : 'none' }} />
                     <NavLink to="/Vip-access" className="breadcrumb-link">
                         {t.breadcrumbVip}
                     </NavLink>
-                    <FaArrowRight className="breadcrumb-separator" style={{ transform: direction === 'rtl' ? 'rotate(180deg)' : 'none', fontSize: '0.8rem', opacity: 0.6 }} />
+                    <FaArrowRight className="breadcrumb-separator" style={{ transform: direction === 'rtl' ? 'rotate(180deg)' : 'none' }} />
                     <NavLink to={`/les_cours/${encodeURIComponent(groupCategoryName || actualTitle)}`} className="breadcrumb-link">
                         {groupCategoryName || actualTitle}
                     </NavLink>
-                    <FaArrowRight className="breadcrumb-separator" style={{ transform: direction === 'rtl' ? 'rotate(180deg)' : 'none', fontSize: '0.8rem', opacity: 0.6 }} />
+                    <FaArrowRight className="breadcrumb-separator" style={{ transform: direction === 'rtl' ? 'rotate(180deg)' : 'none' }} />
                     <div className="breadcrumb-current">
                         {currentVideo?.title || actualTitle}
                     </div>
                 </nav>
+                <br />
 
 
                 {/* --- ACTIVE FOCUS PLAYER (Premium Streaming Style Wrapped) --- */}

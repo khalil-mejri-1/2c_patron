@@ -1,5 +1,5 @@
 /* ========================================= */
-/* 🛍️ Shop Page Redesign - Premium, Elegant & Clean */
+/* ðŸ›ï¸ Shop Page Redesign - Premium, Elegant & Clean */
 /* ========================================= */
 
 
@@ -10,7 +10,7 @@
 
 
 
-/* --- ✨ Grid Header Container - Hero Style ✨ --- */
+/* --- âœ¨ Grid Header Container - Hero Style âœ¨ --- */
 .vip-hero-premium {
     height: 60vh;
     min-height: 450px;
@@ -115,7 +115,7 @@
     margin: 0 auto 25px auto;
 }
 
-/* --- 🔘 Admin Controls Integration --- */
+/* --- ðŸ”˜ Admin Controls Integration --- */
 .hero-edit-title-btn-add {
     margin-top: 10px;
     background: #fff;
@@ -143,7 +143,7 @@
     box-shadow: 0 4px 12px rgba(212, 175, 55, 0.1);
 }
 
-/* --- 💎 Premium Modal Buttons --- */
+/* --- ðŸ’Ž Premium Modal Buttons --- */
 .premium-btn-cancel {
     background: #f1f5f9;
     color: #64748b;
@@ -191,67 +191,13 @@
 
 
 /* ========================================= */
-/* 🔎 Filter Sidebar - Professional & Clean */
+/* ðŸ”Ž Filter Sidebar - Professional & Clean */
 /* ========================================= */
 
-.filter-sidebar {
-    position: sticky;
-    top: 150px;
-    height: fit-content;
-    max-height: calc(100vh - 170px);
-    width: 280px;
-
-    background: #ffffff;
-    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.03);
-    border-radius: 16px;
-    padding: 30px;
-
-    border: 1px solid rgba(0, 0, 0, 0.03);
-    transition: all 0.3s ease;
-    z-index: 90;
-    overflow-y: auto;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-    box-sizing: border-box;
-    /* Ensure padding doesn't widen width */
-}
-
-.filter-sidebar::-webkit-scrollbar {
-    display: none;
-}
-
-/* --- Title Styling --- */
-.sidebar-title {
-    font-family: 'Inter', sans-serif;
-    font-size: 0.9rem;
-    font-weight: 700;
-    color: #333;
-    margin-bottom: 30px;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    display: block;
-    position: relative;
-    padding-bottom: 10px;
-}
-
-.sidebar-title::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 40px;
-    height: 3px;
-    background-color: #D4AF37;
-    border-radius: 2px;
-}
-
-.rtl-sidebar .sidebar-title::after {
-    left: auto;
-    right: 0;
-}
 
 
-/* --- 🔍 Search Filter --- */
+
+/* --- ðŸ” Search Filter --- */
 .search-filter {
     position: relative;
     margin-bottom: 40px;
@@ -282,7 +228,7 @@
 }
 
 
-/* --- 📂 Categories Design --- */
+/* --- ðŸ“‚ Categories Design --- */
 .filter-group-title {
     font-size: 0.75rem;
     font-weight: 700;
@@ -334,22 +280,13 @@
 
 
 
-/* --- 📱 Mobile Toggle & Wrapper Integration --- */
+/* --- ðŸ“± Mobile Toggle & Wrapper Integration --- */
 
 /* Main Layout Grid - PERFECT ALIGNMENT */
-.shop-content-wrapper {
-    display: grid;
-    grid-template-columns: 300px 1fr;
-    gap: 40px;
-    align-items: start;
-    justify-content: center;
-    padding: 60px 40px;
-    box-sizing: border-box;
-}
 
 /* Main Grid Content */
 .product-grid-main {
-    width: 100%;
+    width: 80%;
     min-width: 0;
 }
 
@@ -361,11 +298,7 @@
 }
 
 @media (max-width: 1200px) {
-    .shop-content-wrapper {
-        grid-template-columns: 260px 1fr;
-        gap: 30px;
-        padding: 40px 20px;
-    }
+
 
     .product-grid-container {
         grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
@@ -376,7 +309,7 @@
 
 
 /* ========================================= */
-/* 🏷️ PREMIUM PRODUCT CARD REDESIGN 🏷️ */
+/* ðŸ·ï¸ PREMIUM PRODUCT CARD REDESIGN ðŸ·ï¸ */
 /* ========================================= */
 .product-card {
     background: #ffffff;
@@ -478,23 +411,7 @@
         display: none !important;
     }
 
-    .filter-sidebar {
-        position: static;
-        width: 100%;
-        height: auto;
-        padding: 0;
-        background: transparent;
-        box-shadow: none;
-        display: flex !important;
-        /* Force display */
-        flex-direction: column;
-        z-index: 10;
-        overflow: visible !important;
-        opacity: 1 !important;
-        max-height: none !important;
-        transform: none !important;
-        margin: 0 0 30px 0 !important;
-    }
+
 
     /* Main Grid Content */
     .product-grid-main {
@@ -508,7 +425,7 @@
     /* Hide titles for a cleaner top-bar look */
     .sidebar-title,
     .filter-group-title,
-    .filter-sidebar .edit-btn-minimal-lux {
+    .edit-btn-minimal-lux {
         display: none !important;
     }
 
@@ -648,7 +565,7 @@
 
 
 /* ========================================= */
-/* 💎 ULTRA-PREMIUM ORDER MODAL 💎 */
+/* ðŸ’Ž ULTRA-PREMIUM ORDER MODAL ðŸ’Ž */
 /* ========================================= */
 
 /* Backdrop with heavy blur */
@@ -1206,7 +1123,7 @@ form {
 }
 
 /* ========================================= */
-/* 👑 VIP SUBSCRIPTION PAGE PREMIUM UI 👑 */
+/* ðŸ‘‘ VIP SUBSCRIPTION PAGE PREMIUM UI ðŸ‘‘ */
 /* ========================================= */
 
 .vip-page-wrapper {
@@ -1748,7 +1665,7 @@ form {
 }
 
 /* ========================================= */
-/* ✉️ CONTACT PAGE PREMIUM UI ✉️ */
+/* âœ‰ï¸ CONTACT PAGE PREMIUM UI âœ‰ï¸ */
 /* ========================================= */
 
 .contact-page-wrapper {
@@ -2127,7 +2044,7 @@ form {
 }
 
 /* ========================================= */
-/* 🏠 HOMEPAGE PREMIUM REDESIGN 🏠 */
+/* ðŸ  HOMEPAGE PREMIUM REDESIGN ðŸ  */
 /* ========================================= */
 
 .home-page-wrapper {
@@ -2412,7 +2329,7 @@ form {
 }
 
 /* ========================================= */
-/* 💀 SKELETON LOADER ANIMATION 💀 */
+/* ðŸ’€ SKELETON LOADER ANIMATION ðŸ’€ */
 /* ========================================= */
 @keyframes skeleton-shimmer {
     0% {
@@ -2482,7 +2399,7 @@ form {
 }
 
 /* ========================================= */
-/* 🛠️ ADMIN BUTTONS OVERRIDES (TEXT LABELS) */
+/* ðŸ› ï¸ ADMIN BUTTONS OVERRIDES (TEXT LABELS) */
 /* ========================================= */
 .product-grid-section .edit-btn-minimal-lux {
     width: auto !important;
@@ -2503,12 +2420,12 @@ form {
 }
 
 /* Fix for sidebar edit button position */
-.filter-sidebar .edit-btn-minimal-lux {
+.edit-btn-minimal-lux {
     top: 15px !important;
     right: 15px !important;
 }
 
-[dir="rtl"] .filter-sidebar .edit-btn-minimal-lux {
+[dir="rtl"] .edit-btn-minimal-lux {
     right: auto !important;
     left: 15px !important;
 }
