@@ -896,6 +896,27 @@ export default function HeroSection({ isLoggedIn = false, currentUserEmail = '' 
         }
     };
 
+    const handleDeleteHeroProduct = async (id, e) => {
+        if (e) e.stopPropagation();
+        const confirmMsg = currentLanguage === 'ar' ? "هل أنت متأكد من إزالة هذا المنتج من الواجهة؟" : "Voulez-vous vraiment retirer ce produit de l'accueil ?";
+        if (!window.confirm(confirmMsg)) return;
+
+        try {
+            const response = await fetch(`${BASE_URL}/api/home-products/${id}`, {
+                method: 'DELETE',
+            });
+            if (response.ok) {
+                setProducts(prev => prev.filter(p => p.id !== id));
+                showAlert('success', currentLanguage === 'ar' ? 'تم الحذف' : 'Supprimé', currentLanguage === 'ar' ? 'تمت إزالة المنتج بنجاح' : 'Produit retiré du carousel');
+            } else {
+                showAlert('error', 'Error', 'Failed to delete');
+            }
+        } catch (err) {
+            console.error("Delete Error:", err);
+            showAlert('error', 'Error', 'Connection error');
+        }
+    };
+
     // Fetch Products
     useEffect(() => {
         const fetchProducts = async () => {
@@ -1187,6 +1208,33 @@ export default function HeroSection({ isLoggedIn = false, currentUserEmail = '' 
                                         onClick={() => handleCardClick(index)}
                                     >
                                         <div className="hero-card-image-wrapper">
+                                            {isAdmin && (
+                                                <button
+                                                    className="delete-hero-prod-btn"
+                                                    onClick={(e) => handleDeleteHeroProduct(product.id, e)}
+                                                    style={{
+                                                        position: 'absolute',
+                                                        top: '10px',
+                                                        right: '10px',
+                                                        zIndex: 50,
+                                                        background: 'rgba(255, 255, 255, 0.9)',
+                                                        color: '#ef4444',
+                                                        border: 'none',
+                                                        borderRadius: '50%',
+                                                        width: '32px',
+                                                        height: '32px',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        cursor: 'pointer',
+                                                        boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
+                                                        transition: 'all 0.3s'
+                                                    }}
+                                                    title={currentLanguage === 'ar' ? 'حذف من الواجهة' : 'Retirer du Hero'}
+                                                >
+                                                    <FaTimes />
+                                                </button>
+                                            )}
                                             <img
                                                 src={product.url}
                                                 alt={product.alt}

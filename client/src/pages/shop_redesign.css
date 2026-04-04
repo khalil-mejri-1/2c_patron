@@ -651,18 +651,14 @@ html[dir="rtl"] .new-product-badge,
         padding: 5px;
     }
 }
-
 @media (max-width: 450px) {
     .product-grid-container {
         grid-template-columns: 1fr;
     }
-
     .product-image-wrapper {
         height: 280px;
     }
 }
-
-
 /* ========================================= */
 /* ðŸ’Ž ULTRA-PREMIUM ORDER MODAL ðŸ’Ž */
 /* ========================================= */
