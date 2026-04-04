@@ -180,9 +180,9 @@ const ImageCarousel = ({ images, direction, height = "280px" }) => {
                 transform: `translateX(-${currentIndex * 100}%)`
             }}>
                 {uniqueImages.map((img, index) => (
-                    <div key={index} style={{ 
-                        flex: '0 0 100%', 
-                        width: '100%', 
+                    <div key={index} style={{
+                        flex: '0 0 100%',
+                        width: '100%',
                         height: '100%',
                         display: 'flex',
                         alignItems: 'center',
@@ -256,14 +256,14 @@ const ImageCarousel = ({ images, direction, height = "280px" }) => {
                         <FaChevronRight size={18} />
                     </button>
 
-                    <div className="carousel-dots-indicators" style={{ 
-                        position: 'absolute', 
-                        bottom: '20px', 
-                        width: '100%', 
-                        display: 'flex', 
-                        justifyContent: 'center', 
-                        gap: '8px', 
-                        zIndex: 20 
+                    <div className="carousel-dots-indicators" style={{
+                        position: 'absolute',
+                        bottom: '20px',
+                        width: '100%',
+                        display: 'flex',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        zIndex: 20
                     }}>
                         {uniqueImages.map((_, index) => (
                             <span
@@ -619,7 +619,7 @@ const OrderModalComponent = ({ selectedProduct, quantity, handleQuantityChange, 
                 </div>
 
                 {/* Image Carousel inside Modal */}
-                <ImageCarousel 
+                <ImageCarousel
                     images={[selectedProduct.url, ...(selectedProduct.secondaryImages || []), ...(selectedProduct.innerImages || [])].filter(Boolean)}
                     direction={direction}
                     height="400px"
@@ -988,7 +988,7 @@ export default function HeroSection({ isLoggedIn = false, currentUserEmail = '' 
     // ********* Modals Logic *************
     const openOrderModal = async (product) => {
         const productId = product.id;
-        
+
         // Modal initially with current info
         setSelectedProduct({
             ...product,
@@ -1004,10 +1004,10 @@ export default function HeroSection({ isLoggedIn = false, currentUserEmail = '' 
             // Because HomeProduct might not have secondaryImages populated correctly
             // we search the main Product collection by product name (nom)
             let response = await fetch(`${BASE_URL}/api/products`);
-            
+
             if (response.ok) {
                 const allProducts = await response.json();
-                
+
                 // Find matching product by name (in any language)
                 const matchingProduct = allProducts.find(p => {
                     if (!p.nom) return false;
@@ -1015,7 +1015,7 @@ export default function HeroSection({ isLoggedIn = false, currentUserEmail = '' 
                     const pNameFr = (typeof p.nom === 'object' ? p.nom.fr : p.nom)?.trim()?.toLowerCase();
                     const pNameAr = (typeof p.nom === 'object' ? p.nom.ar : p.nom)?.trim()?.toLowerCase();
                     const pNameEn = (typeof p.nom === 'object' ? p.nom.en : p.nom)?.trim()?.toLowerCase();
-                    
+
                     return pNameFr === searchName || pNameAr === searchName || pNameEn === searchName;
                 });
 
@@ -1128,10 +1128,14 @@ export default function HeroSection({ isLoggedIn = false, currentUserEmail = '' 
                             {currentLanguage === 'ar' && <FaArrowRight style={{ transform: 'rotate(180deg)', marginRight: '10px' }} />}
                         </Link>
 
-                        <Link to="/magasin?category=offre" className="hero-cta-button secondary-cta">
+                        <Link to="/magasin?category=offre" className="secondary-cta">
+                            <img
+                                src="https://png.pngtree.com/png-vector/20250323/ourmid/pngtree-vibrant-special-offer-badge-design-png-image_15855886.png"
+                                alt="OFFER"
+                                className="cta-badge-img"
+                            />
                             {heroSecondaryCtaTexts[currentLanguage] || (currentLanguage === 'ar' ? 'اكتشف العروض' : 'Découvrir les Offres')}
-                            <FaTags style={{ marginLeft: '10px' }} />
-                            <FaHandPointer className="pointing-finger-icon" />
+                            <FaHandPointer className="test" />
                         </Link>
                     </div>
                 </div>
@@ -1196,7 +1200,7 @@ export default function HeroSection({ isLoggedIn = false, currentUserEmail = '' 
                                                 <h3 className="hero-card-title">{product.name}</h3>
                                                 <div className="hero-card-footer">
                                                     <span className="hero-card-price">{product.price} {product.currency}</span>
-                                                    <button 
+                                                    <button
                                                         className="hero-card-order-btn"
                                                         onClick={(e) => {
                                                             e.stopPropagation();

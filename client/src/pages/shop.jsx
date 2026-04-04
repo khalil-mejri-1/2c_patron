@@ -1208,7 +1208,7 @@ export default function ProductGrid() {
         setOfferForm({
             title: offer.title,
             newPrice: offer.newPrice,
-            durationHours: '24' 
+            durationHours: '24'
         });
         setSelectedProductIds(offer.productIds.map(p => p._id || p.id));
         setEditingOfferId(offer._id);
@@ -1702,25 +1702,30 @@ export default function ProductGrid() {
                         </div>
 
                         {activeOffers.length > 0 && (
-                            <div style={{ marginTop: '30px', textAlign: 'center' }}>
-                                <button
-                                    className="vip-cta-gold-button creative-pulsing-btn"
-                                    onClick={() => setSelectedCategory('offre')}
-                                    style={{
-                                        padding: '15px 35px',
-                                        fontSize: '1.2rem',
-                                        borderRadius: '50px',
-                                        textTransform: 'uppercase',
-                                        letterSpacing: '2px',
-                                        display: 'inline-flex',
-                                        alignItems: 'center',
-                                        gap: '10px'
-                                    }}
-                                >
-                                    {shopContent[appLanguage]?.offerCta || (appLanguage === 'ar' ? '🔥 عرض محدود ' : '🔥 OFFRE LIMITÉE')}
-                                    <FaHandPointer className="pointing-finger-icon" />
-                                </button>
-                            </div>
+                            <>
+                                <div style={{ marginTop: '30px', textAlign: 'center' }}>
+                                    <button
+                                        className="vip-cta-gold-button creative-pulsing-btn"
+                                        onClick={() => setSelectedCategory('offre')}
+                                    >
+                                        {shopContent[appLanguage]?.offerCta || (appLanguage === 'ar' ? '🔥 عرض محدود ' : '🔥 OFFRE LIMITÉE')}
+                                        <FaHandPointer className="test" />
+                                    </button>
+                                </div>
+
+
+                                {/* <Link to="/magasin?category=offre" className="secondary-cta">
+                                    <img
+                                        src="https://png.pngtree.com/png-vector/20250323/ourmid/pngtree-vibrant-special-offer-badge-design-png-image_15855886.png"
+                                        alt="OFFER"
+                                        className="cta-badge-img"
+                                    />
+                                    {heroSecondaryCtaTexts[currentLanguage] || (currentLanguage === 'ar' ? 'اكتشف العروض' : 'Découvrir les Offres')}
+                                    <FaHandPointer className="test" />
+                                </Link> */}
+                            </>
+
+
                         )}
                     </div>
                 </header>
@@ -2767,7 +2772,7 @@ export default function ProductGrid() {
                     <div className="premium-modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '500px' }}>
                         <div className="premium-modal-header">
                             <h2 className="premium-modal-title">
-                                {editingOfferId 
+                                {editingOfferId
                                     ? (appLanguage === 'ar' ? 'تعديل تفاصيل العرض' : 'Modifier les détails de l\'offre')
                                     : (appLanguage === 'ar' ? 'تفاصيل العرض الجديد' : 'Détails de la nouvelle offre')
                                 }
@@ -2960,21 +2965,12 @@ export default function ProductGrid() {
                 .offer-cta-btn:hover { transform: translateX(5px); box-shadow: 0 4px 10px rgba(212,175,55,0.3); }
 
                 .creative-pulsing-btn {
-                    background: linear-gradient(135deg, #ef4444 0%, #D4AF37 100%);
                     color: white;
                     border: none;
-                    box-shadow: 0 10px 30px rgba(239, 68, 68, 0.4);
-                    animation: creative-pulse 2s infinite;
                     transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
                 }
                 .creative-pulsing-btn:hover {
                     transform: scale(1.05) translateY(-3px);
-                    box-shadow: 0 15px 40px rgba(239, 68, 68, 0.6);
-                }
-                @keyframes creative-pulse {
-                    0% { transform: scale(1); box-shadow: 0 10px 30px rgba(239, 68, 68, 0.4); }
-                    50% { transform: scale(1.03); box-shadow: 0 15px 45px rgba(239, 68, 68, 0.6); }
-                    100% { transform: scale(1); box-shadow: 0 10px 30px rgba(239, 68, 68, 0.4); }
                 }
 
                 .ripple-effect {

@@ -125,25 +125,63 @@
     font-weight: 300;
 }
 
-.hero-cta-button {
-    display: inline-flex;
-    align-items: center;
-    background: var(--home-slate);
-    color: var(--home-white);
-    padding: 22px 50px;
+
+.secondary-cta {
+    padding: 5px 10px;
     border-radius: 100px;
     text-decoration: none;
     font-weight: 700;
-    font-size: 1.2rem;
+    color: var(--home-white);
+    display: inline-flex;
+    align-items: center;
+    background-color: #ef4444;
+    padding: 5px 20px;
+    font-size: 1rem;
     transition: var(--home-transition);
     box-shadow: 0 20px 40px rgba(15, 23, 42, 0.2);
+    position: relative;
+    overflow: visible;
 }
 
-.hero-cta-button:hover {
+.secondary-cta .test {
+    position: absolute;
+    right: 5px;
+    font-size: 2rem;
+    color: #0f172a;
+    pointer-events: none;
+    animation: fingerMoveEntry 1.8s infinite cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes fingerMoveEntry {
+    0% {
+        transform: translateX(60px) rotate(-90deg);
+        opacity: 0;
+    }
+
+    30% {
+        transform: translateX(0) rotate(-90deg);
+        opacity: 1;
+    }
+
+    70% {
+        transform: translateX(-10px) rotate(-90deg);
+        opacity: 1;
+    }
+
+    100% {
+        transform: translateX(-10px) rotate(-90deg);
+        opacity: 0;
+    }
+}
+
+/* --- Primary Button Hover (Workshop) --- */
+.secondary-cta:hover {
     background: var(--home-gold);
+    color: var(--home-white);
     transform: translateY(-5px) scale(1.05);
     box-shadow: 0 30px 60px rgba(212, 175, 55, 0.3);
 }
+
 
 .hero-cta-wrapper {
     display: flex;
@@ -152,21 +190,79 @@
     justify-content: flex-start;
 }
 
-.hero-cta-button.secondary-cta {
+.hero-cta-button {
     color: white;
-    border: 0px solid var(--home-slate);
-    box-shadow: none;
-    background-color: var(--home-slate);
-    padding: 20px 45px;
+    /* Vibrant Red */
+    border: 2px solid #ff3131;
+    box-shadow: 0 10px 25px rgba(255, 49, 49, 0.15);
+    background-color: #ff3131;
+    /* Off-white/yellowish to contrast with red and match badge */
+    padding: 10px 45px 10px 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-radius: 50px;
+    overflow: visible;
+    position: relative;
+    transition: all 0.3s ease;
 }
 
-.hero-cta-button:hover {
-    background: rgba(15, 23, 42, 0.05);
-    border-color: var(--home-gold);
-    color: var(--home-gold);
-    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.05);
-    transform: translateY(-5px);
+.secondary-cta {
+    color: white;
+    /* Vibrant Red */
+    border: 2px solid #ff3131;
+    box-shadow: 0 10px 25px rgba(255, 49, 49, 0.15);
+    background-color: #ff3131;
+    /* Off-white/yellowish to contrast with red and match badge */
+    padding: 10px 45px 10px 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-radius: 50px;
+    overflow: visible;
+    position: relative;
+    transition: all 0.3s ease;
+
 }
+
+.secondary-cta:hover {
+    background-color: #ff3131;
+    color: white;
+    border-color: #ff3131;
+}
+
+.cta-badge-img {
+    height: 65px;
+    width: auto;
+    object-fit: contain;
+    margin-top: -5px;
+    margin-bottom: -5px;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+    animation: ctaBadgeFloat 3s ease-in-out infinite;
+}
+
+@keyframes ctaBadgeFloat {
+
+    0%,
+    100% {
+        transform: translateY(0) rotate(-2deg);
+    }
+
+    50% {
+        transform: translateY(-5px) rotate(2deg);
+    }
+}
+
+[dir="rtl"] .hero-cta-button.secondary-cta {
+    padding: 10px 20px 10px 45px;
+}
+
 
 /* Specific adjustment for RTL if needed */
 [dir="rtl"] .hero-cta-wrapper {
@@ -181,33 +277,35 @@
     }
 }
 
-.pointing-finger-icon {
-    margin-left: 12px;
-    font-size: 1.2rem;
-    color: var(--home-gold);
-    animation: fingerClick 1.5s infinite ease-in-out;
-    filter: drop-shadow(0 2px 4px rgba(212, 175, 55, 0.2));
-}
 
 [dir="rtl"] .pointing-finger-icon {
     margin-left: 0;
-    margin-right: 12px;
+    margin-right: 1px;
     transform: scaleX(-1);
     /* Mirror for Arabic if needed, though pointing up-right is usually fine */
 }
 
+.only_home {
+    position: absolute;
+    font-size: 5rem;
+    color: rgb(51, 51, 51);
+    margin-left: 250px;
+    animation: fingerClick 1.5s infinite ease-in-out;
+    filter: drop-shadow(0 2px 4px rgba(212, 175, 55, 0.2));
+}
+
 @keyframes fingerClick {
     0% {
-        transform: scale(1) translateY(0) rotate(0deg);
+        transform: translateX(0) rotate(180deg);
     }
 
     50% {
-        transform: scale(1.2) translateY(-5px) rotate(-10deg);
+        transform: translateX(-20px) rotate(180deg);
         color: #b45309;
     }
 
     100% {
-        transform: scale(1) translateY(0) rotate(0deg);
+        transform: translateX(0) rotate(90deg);
     }
 }
 
