@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import { useLanguage } from '../context/LanguageContext';
-import { FaQuoteRight, FaChevronLeft, FaChevronRight, FaStar } from 'react-icons/fa';
+import { useAlert } from '../context/AlertContext';
+import { FaQuoteRight, FaChevronLeft, FaChevronRight, FaStar, FaEdit, FaSave, FaTimes } from 'react-icons/fa';
 import BASE_URL from '../apiConfig';
 
 // ⚠️ URL de l'API des commentaires
@@ -102,12 +104,20 @@ const NameAvatar = ({ name }) => {
 };
 
 export default function ClientReviews() {
-    const { appLanguage } = useLanguage();
+    const { appLanguage, languages } = useLanguage();
     const [commentaires, setCommentaires] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [currentIndex, setCurrentIndex] = useState(0);
     const reviewDuration = 5000;
+
+    // 🛑 Admin & Settings State
+    const [isAdmin, setIsAdmin] = useState(false);
+    const [revTitles, setRevTitles] = useState({});
+    const [revSubtitles, setRevSubtitles] = useState({});
+    const [isEditingSection, setIsEditingSection] = useState(false);
+    const [editRevData, setEditRevData] = useState({ titles: {}, subtitles: {} });
+    const { showAlert } = useAlert();
 
 
 
@@ -116,6 +126,37 @@ export default function ClientReviews() {
 
     // 2. ⚙️ Logique de récupération des données de l'API 
     useEffect(() => {
+        // Check Admin
+        const email = localStorage.getItem('currentUserEmail') || localStorage.getItem('loggedInUserEmail');
+        if (email) {
+            fetch(`${BASE_URL}/api/users/${email}`)
+                .then(res => res.ok ? res.json() : null)
+                .then(data => {
+                    if (data && data.statut === 'admin') setIsAdmin(true);
+                })
+                .catch(() => { });
+        }
+
+        const fetchRevSettings = async () => {
+            try {
+                const [titles, subtitles] = await Promise.all([
+                    fetch(`${BASE_URL}/api/settings/rev-titles`).then(res => res.ok ? res.json() : {}),
+                    fetch(`${BASE_URL}/api/settings/rev-subtitles`).then(res => res.ok ? res.json() : {})
+                ]);
+                setRevTitles(titles || {});
+                setRevSubtitles(subtitles || {});
+
+                // Initialize edit data
+                const initData = { titles: {}, subtitles: {} };
+                languages.forEach(lang => {
+                    const fallback = translations[lang.code] || translations.fr;
+                    initData.titles[lang.code] = titles[lang.code] || fallback.mainTitle;
+                    initData.subtitles[lang.code] = subtitles[lang.code] || fallback.subtitle;
+                });
+                setEditRevData(initData);
+            } catch (err) { }
+        };
+
         const fetchCommentaires = async () => {
             setLoading(true);
             setError(null);
@@ -144,8 +185,9 @@ export default function ClientReviews() {
             }
         };
 
+        fetchRevSettings();
         fetchCommentaires();
-    }, [appLanguage, t.anonymous, t.reviewerTitle, t.noComment, t.errorMsg]); // إضافة ت.كمعتمادات لضمان التحديث عند تغيير اللغة
+    }, [appLanguage, t.anonymous, t.reviewerTitle, t.noComment, t.errorMsg, languages]);
 
     // 3. 🔄 Défilement automatique (Inchanggée)
     useEffect(() => {
@@ -166,6 +208,29 @@ export default function ClientReviews() {
     // 5. ➡️ Déplacement manuel vers l' avant (Inchanggée)
     const nextReview = () => {
         setCurrentIndex((prevIndex) => (prevIndex + 1) % totalReviews);
+    };
+
+    const handleSaveRevSettings = async () => {
+        setRevTitles(editRevData.titles);
+        setRevSubtitles(editRevData.subtitles);
+        setIsEditingSection(false);
+        try {
+            await Promise.all([
+                fetch(`${BASE_URL}/api/settings/rev-titles`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ value: editRevData.titles })
+                }),
+                fetch(`${BASE_URL}/api/settings/rev-subtitles`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ value: editRevData.subtitles })
+                })
+            ]);
+            showAlert('success', appLanguage === 'ar' ? 'تم الحفظ' : 'Enregistré', appLanguage === 'ar' ? 'تم تحديث القسم بنجاح' : 'Section mise à jour');
+        } catch (err) {
+            showAlert('error', 'Error', 'Failed to save');
+        }
     };
 
     const transformValue = `translateX(-${currentIndex * 100}%)`;
@@ -201,8 +266,22 @@ export default function ClientReviews() {
     // 7. Rendu du Carrousel avec les données réelles (محدث باللغات)
     return (
         <section className="reviews-section-white" dir={appLanguage === 'ar' ? 'rtl' : 'ltr'}>
-            <h2 className="reviews-title">{t.mainTitle}</h2>
-            <p className="reviews-subtitle">{t.subtitle}</p>
+            {isAdmin && (
+                <button
+                    onClick={() => setIsEditingSection(true)}
+                    className="admin-edit-master-btn"
+                    style={{
+                        position: 'absolute',
+                        top: '25px',
+                        right: '35px',
+                        zIndex: 100
+                    }}
+                >
+                    <FaEdit /> {appLanguage === 'ar' ? 'تعديل القسم' : 'Modifier Section'}
+                </button>
+            )}
+            <h2 className="reviews-title">{revTitles[appLanguage] || t.mainTitle}</h2>
+            <p className="reviews-subtitle">{revSubtitles[appLanguage] || t.subtitle}</p>
 
             <div className="carousel-container-wrapper">
 
@@ -257,6 +336,56 @@ export default function ClientReviews() {
                     />
                 ))}
             </div>
+
+            {/* 🛑 Admin Edit Modal */}
+            {isEditingSection && ReactDOM.createPortal(
+                <div className="premium-modal-backdrop" onClick={() => setIsEditingSection(false)}>
+                    <div className="premium-modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '600px' }}>
+                        <button className="premium-modal-close-icon" onClick={() => setIsEditingSection(false)}>
+                            <FaTimes />
+                        </button>
+                        <h2 className="premium-modal-title">
+                            {appLanguage === 'ar' ? 'تعديل قسم الآراء' : 'Modifier Section Avis'}
+                        </h2>
+
+                        <div className="premium-lang-tabs" style={{ marginBottom: '20px' }}>
+                            {languages.filter(l => l.code === appLanguage).map(lang => (
+                                <div key={lang.code} className="premium-lang-section" style={{ border: 'none', background: 'none' }}>
+                                    <h4 className="lang-indicator" style={{ background: '#d4af37' }}>{lang.label}</h4>
+                                    <div className="premium-form-group">
+                                        <label>Titre Principal</label>
+                                        <input
+                                            type="text"
+                                            value={editRevData.titles[lang.code] || ''}
+                                            onChange={e => setEditRevData({ ...editRevData, titles: { ...editRevData.titles, [lang.code]: e.target.value } })}
+                                            dir={lang.code === 'ar' ? 'rtl' : 'ltr'}
+                                        />
+                                    </div>
+                                    <div className="premium-form-group">
+                                        <label>Sous-Titre</label>
+                                        <input
+                                            type="text"
+                                            value={editRevData.subtitles[lang.code] || ''}
+                                            onChange={e => setEditRevData({ ...editRevData, subtitles: { ...editRevData.subtitles, [lang.code]: e.target.value } })}
+                                            dir={lang.code === 'ar' ? 'rtl' : 'ltr'}
+                                        />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="premium-btn-group">
+                            <button className="premium-btn-cta secondary" onClick={() => setIsEditingSection(false)}>
+                                {appLanguage === 'ar' ? 'إلغاء' : 'Annuler'}
+                            </button>
+                            <button className="premium-btn-cta gold" onClick={handleSaveRevSettings}>
+                                <FaSave /> {appLanguage === 'ar' ? 'حفظ التغييرات' : 'Enregistrer tout'}
+                            </button>
+                        </div>
+                    </div>
+                </div>,
+                document.body
+            )}
         </section>
     );
 }

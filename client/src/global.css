@@ -9311,17 +9311,7 @@ body {
   margin-bottom: 20px;
 }
 
-.rating-stars {}
 
-[dir='rtl'] .rating-stars {
-  margin-top: -20px;
-  margin-left: -20px;
-}
-
-[dir='ltr'] .rating-stars {
-  margin-top: -20px;
-  margin-left: -5px;
-}
 
 .star {
   margin: 0 3px;

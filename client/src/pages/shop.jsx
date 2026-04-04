@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { useLanguage } from '../context/LanguageContext';
-import { FaShoppingCart, FaSearch, FaChevronDown, FaTimes, FaUser, FaMapMarkerAlt, FaPhoneAlt, FaMinusCircle, FaPlusCircle, FaSpinner, FaCheckCircle, FaCommentAlt, FaStar, FaRegStar, FaChevronLeft, FaChevronRight, FaEdit, FaSave, FaTrash, FaPlus, FaWhatsapp, FaFacebookMessenger, FaRobot, FaPaperPlane, FaCloudUploadAlt, FaLayerGroup, FaCheck, FaLongArrowAltRight } from 'react-icons/fa';
+import { useLocation } from 'react-router-dom';
+import { FaShoppingCart, FaSearch, FaChevronDown, FaTimes, FaUser, FaMapMarkerAlt, FaPhoneAlt, FaMinusCircle, FaPlusCircle, FaSpinner, FaCheckCircle, FaCommentAlt, FaStar, FaRegStar, FaChevronLeft, FaChevronRight, FaEdit, FaSave, FaTrash, FaPlus, FaWhatsapp, FaFacebookMessenger, FaRobot, FaPaperPlane, FaCloudUploadAlt, FaLayerGroup, FaCheck, FaLongArrowAltRight, FaTags, FaHandPointer } from 'react-icons/fa';
 import Navbar from '../comp/navbar';
 import Footer from '../comp/Footer';
 import { useAlert } from '../context/AlertContext';
@@ -692,6 +693,7 @@ const OrderModalComponent = ({ selectedProduct, quantity, handleQuantityChange, 
 // ====================================================================
 
 export default function ProductGrid() {
+    const location = useLocation();
     const { appLanguage, languages } = useLanguage();
     const { showAlert } = useAlert();
 
@@ -731,7 +733,8 @@ export default function ProductGrid() {
     const defaultStructure = {
         colTitle: '', colAccent: '',
         sidebar: '', reset: '', navTitle: '', searchPlaceholder: '',
-        info: '', cartBtn: '', heroImage: ''
+        info: '', cartBtn: '', heroImage: '',
+        offerCta: ''
     };
 
     const [shopContent, setShopContent] = useState({});
@@ -750,6 +753,7 @@ export default function ProductGrid() {
     const [isSelectionMode, setIsSelectionMode] = useState(false);
     const [selectedProductIds, setSelectedProductIds] = useState([]);
     const [isOfferModalOpen, setIsOfferModalOpen] = useState(false);
+    const [editingOfferId, setEditingOfferId] = useState(null);
     const [offerForm, setOfferForm] = useState({
         title: { fr: '', ar: '', en: '' },
         newPrice: '',
@@ -857,6 +861,16 @@ export default function ProductGrid() {
         fetchCategories();
         fetchOffers();
     }, [appLanguage]); // Re-fetch on lang change and check if products are in hero carousel 
+
+    // ✅ Handle Category from URL
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const cat = params.get('category');
+        if (cat) {
+            setSelectedCategory(cat);
+            // Scroll to top or grid? Maybe just ensure it's selected
+        }
+    }, [location]);
 
     // ✅ Match and Sync orders whenever fetchedProducts or homeItems change
     useEffect(() => {
@@ -1159,15 +1173,19 @@ export default function ProductGrid() {
         };
 
         try {
-            const res = await fetch(`${BASE_URL}/api/offers`, {
-                method: 'POST',
+            const method = editingOfferId ? 'PUT' : 'POST';
+            const url = editingOfferId ? `${BASE_URL}/api/offers/${editingOfferId}` : `${BASE_URL}/api/offers`;
+
+            const res = await fetch(url, {
+                method,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(offerData)
             });
 
             if (res.ok) {
-                showAlert('success', 'Succès', appLanguage === 'ar' ? 'تم إنشاء العرض بنجاح!' : 'Offre créée avec succès !');
+                showAlert('success', 'Succès', editingOfferId ? (appLanguage === 'ar' ? 'تم تحديث العرض بنجاح!' : 'Offre mise à jour !') : (appLanguage === 'ar' ? 'تم إنشاء العرض بنجاح!' : 'Offre créée avec succès !'));
                 setIsOfferModalOpen(false);
+                setEditingOfferId(null);
                 setIsSelectionMode(false);
                 setSelectedProductIds([]);
                 fetchOffers();
@@ -1176,8 +1194,19 @@ export default function ProductGrid() {
                 showAlert('error', 'Erreur', err.message);
             }
         } catch (error) {
-            showAlert('error', 'Erreur', 'Impossible de créer l\'offre.');
+            showAlert('error', 'Erreur', editingOfferId ? 'Impossible de modifier l\'offre.' : 'Impossible de créer l\'offre.');
         }
+    };
+
+    const handleOpenEditOffer = (offer) => {
+        setOfferForm({
+            title: offer.title,
+            newPrice: offer.newPrice,
+            durationHours: '24' 
+        });
+        setSelectedProductIds(offer.productIds.map(p => p._id || p.id));
+        setEditingOfferId(offer._id);
+        setIsOfferModalOpen(true);
     };
 
     const deleteOffer = async (id) => {
@@ -1648,6 +1677,7 @@ export default function ProductGrid() {
                                             onClick={() => {
                                                 const selectedProds = productsToFilter.filter(p => selectedProductIds.includes(p.id));
                                                 const combinedTitle = selectedProds.map(p => p.name).join(' + ');
+                                                setEditingOfferId(null);
                                                 setOfferForm({
                                                     title: { fr: combinedTitle, ar: combinedTitle, en: combinedTitle },
                                                     newPrice: '',
@@ -1675,10 +1705,14 @@ export default function ProductGrid() {
                                         fontSize: '1.2rem',
                                         borderRadius: '50px',
                                         textTransform: 'uppercase',
-                                        letterSpacing: '2px'
+                                        letterSpacing: '2px',
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '10px'
                                     }}
                                 >
-                                    {appLanguage === 'ar' ? '🔥 عرض محدود ' : '🔥 OFFRE LIMITÉE'}
+                                    {shopContent[appLanguage]?.offerCta || (appLanguage === 'ar' ? '🔥 عرض محدود ' : '🔥 OFFRE LIMITÉE')}
+                                    <FaHandPointer className="pointing-finger-icon" />
                                 </button>
                             </div>
                         )}
@@ -1812,7 +1846,48 @@ export default function ProductGrid() {
                             {selectedCategory === 'offre' ? (
                                 activeOffers.map(offer => (
                                     <div key={offer._id} className="product-card premium-offer-card">
-                                        {isAdmin && <button className="delete-offer-mini-btn" onClick={() => deleteOffer(offer._id)}><FaTimes /></button>}
+                                        {isAdmin && (
+                                            <div style={{ position: 'absolute', top: '10px', right: '10px', display: 'flex', gap: '8px', zIndex: 10 }}>
+                                                <button
+                                                    className="edit-offer-mini-btn"
+                                                    onClick={() => handleOpenEditOffer(offer)}
+                                                    style={{
+                                                        background: '#fff',
+                                                        color: '#D4AF37',
+                                                        border: '1px solid #D4AF37',
+                                                        width: '30px',
+                                                        height: '30px',
+                                                        borderRadius: '50%',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        cursor: 'pointer',
+                                                        boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
+                                                    }}
+                                                >
+                                                    <FaEdit size={14} />
+                                                </button>
+                                                <button
+                                                    className="delete-offer-mini-btn"
+                                                    onClick={() => deleteOffer(offer._id)}
+                                                    style={{
+                                                        background: '#fff',
+                                                        color: '#ef4444',
+                                                        border: '1px solid #ef4444',
+                                                        width: '30px',
+                                                        height: '30px',
+                                                        borderRadius: '50%',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        cursor: 'pointer',
+                                                        boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
+                                                    }}
+                                                >
+                                                    <FaTimes size={14} />
+                                                </button>
+                                            </div>
+                                        )}
                                         <div className="offer-badge-container"><img src="https://cdn-icons-png.flaticon.com/512/726/726454.png" className="promo-badge-img" alt="Promo" /></div>
                                         <h4 className="offer-main-title">{offer.title[appLanguage] || offer.title.fr}</h4>
                                         <div className="offer-image-bundle">
@@ -2149,6 +2224,15 @@ export default function ProductGrid() {
                                                         value={editShopContent[lang.code]?.heroImage || ''}
                                                         onChange={e => setEditShopContent({ ...editShopContent, [lang.code]: { ...editShopContent[lang.code], heroImage: e.target.value } })}
                                                         placeholder="https://..."
+                                                    />
+                                                </div>
+                                                <div className="premium-form-group">
+                                                    <label>Texte Bouton Offre</label>
+                                                    <input
+                                                        type="text"
+                                                        value={editShopContent[lang.code]?.offerCta || ''}
+                                                        onChange={e => setEditShopContent({ ...editShopContent, [lang.code]: { ...editShopContent[lang.code], offerCta: e.target.value } })}
+                                                        placeholder="Ex: 🔥 OFFRE LIMITÉE"
                                                     />
                                                 </div>
                                             </>
@@ -2667,20 +2751,22 @@ export default function ProductGrid() {
                             </div>
                         </div>
                     </div>
-                </div>,
-                document.body
+                </div>
             )}
 
             <Footer />
             {/* 🎁 Offer Creation Modal */}
             {isOfferModalOpen && ReactDOM.createPortal(
-                <div className="premium-modal-backdrop" onClick={() => setIsOfferModalOpen(false)}>
+                <div className="premium-modal-backdrop" onClick={() => { setIsOfferModalOpen(false); setEditingOfferId(null); }}>
                     <div className="premium-modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '500px' }}>
                         <div className="premium-modal-header">
                             <h2 className="premium-modal-title">
-                                {appLanguage === 'ar' ? 'تفاصيل العرض الجديد' : 'Détails de la nouvelle offre'}
+                                {editingOfferId 
+                                    ? (appLanguage === 'ar' ? 'تعديل تفاصيل العرض' : 'Modifier les détails de l\'offre')
+                                    : (appLanguage === 'ar' ? 'تفاصيل العرض الجديد' : 'Détails de la nouvelle offre')
+                                }
                             </h2>
-                            <button className="premium-modal-close-icon" onClick={() => setIsOfferModalOpen(false)}>
+                            <button className="premium-modal-close-icon" onClick={() => { setIsOfferModalOpen(false); setEditingOfferId(null); }}>
                                 <FaTimes />
                             </button>
                         </div>

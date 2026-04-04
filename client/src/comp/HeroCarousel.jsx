@@ -6,7 +6,7 @@ import {
     FaArrowRight, FaShoppingCart, FaTimes, FaPlusCircle, FaMinusCircle,
     FaUser, FaMapMarkerAlt, FaPhoneAlt, FaSpinner, FaCheckCircle,
     FaStar, FaRegStar, FaCommentAlt, FaChevronLeft, FaChevronRight,
-    FaEdit, FaSave, FaTachometerAlt
+    FaEdit, FaSave, FaTachometerAlt, FaTags, FaHandPointer
 } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import BASE_URL from '../apiConfig';
@@ -738,13 +738,15 @@ export default function HeroSection({ isLoggedIn = false, currentUserEmail = '' 
     const [heroSublines, setHeroSublines] = useState({});
     const [heroIntros, setHeroIntros] = useState({});
     const [heroCtaTexts, setHeroCtaTexts] = useState({});
+    const [heroSecondaryCtaTexts, setHeroSecondaryCtaTexts] = useState({});
 
     const [isEditingHero, setIsEditingHero] = useState(false);
     const [editHeroData, setEditHeroData] = useState({
         titles: {},
         sublines: {},
         intros: {},
-        ctaTexts: {}
+        ctaTexts: {},
+        secondaryCtaTexts: {}
     });
 
     const [isAddingProduct, setIsAddingProduct] = useState(false);
@@ -765,23 +767,26 @@ export default function HeroSection({ isLoggedIn = false, currentUserEmail = '' 
 
         const fetchHeroSettings = async () => {
             try {
-                const [titles, sublines, intros, cta] = await Promise.all([
+                const [titles, sublines, intros, cta, secondaryCta] = await Promise.all([
                     fetch(`${BASE_URL}/api/settings/hero-titles`).then(res => res.ok ? res.json() : {}),
                     fetch(`${BASE_URL}/api/settings/hero-sublines`).then(res => res.ok ? res.json() : {}),
                     fetch(`${BASE_URL}/api/settings/hero-intros`).then(res => res.ok ? res.json() : {}),
-                    fetch(`${BASE_URL}/api/settings/hero-cta`).then(res => res.ok ? res.json() : {})
+                    fetch(`${BASE_URL}/api/settings/hero-cta`).then(res => res.ok ? res.json() : {}),
+                    fetch(`${BASE_URL}/api/settings/hero-secondary-cta`).then(res => res.ok ? res.json() : {})
                 ]);
                 setHeroTitles(titles || {});
                 setHeroSublines(sublines || {});
                 setHeroIntros(intros || {});
                 setHeroCtaTexts(cta || {});
+                setHeroSecondaryCtaTexts(secondaryCta || {});
 
                 // Pre-initialize edit data
                 setEditHeroData({
                     titles: initializeAllLanguages(titles || {}, 'mainTitle1'),
                     sublines: initializeAllLanguages(sublines || {}, 'subline'),
                     intros: initializeAllLanguages(intros || {}, 'introText'),
-                    ctaTexts: initializeAllLanguages(cta || {}, 'ctaButton')
+                    ctaTexts: initializeAllLanguages(cta || {}, 'ctaButton'),
+                    secondaryCtaTexts: initializeAllLanguages(secondaryCta || {}, 'secondaryCta')
                 });
             } catch (err) { }
         };
@@ -797,6 +802,9 @@ export default function HeroSection({ isLoggedIn = false, currentUserEmail = '' 
             if (fallbackKey === 'mainTitle1' && fallback.mainTitle1 && fallback.mainTitle2) {
                 fallbackVal = `${fallback.mainTitle1} <br/> <span class="accent-text">${fallback.mainTitle2}</span>`;
             }
+            if (fallbackKey === 'secondaryCta') {
+                fallbackVal = lang.code === 'ar' ? 'اكتشف العروض' : 'Découvrir les Offres';
+            }
             initialized[lang.code] = currentValues[lang.code] || fallbackVal;
         });
         return initialized;
@@ -808,6 +816,7 @@ export default function HeroSection({ isLoggedIn = false, currentUserEmail = '' 
         setHeroSublines(editHeroData.sublines);
         setHeroIntros(editHeroData.intros);
         setHeroCtaTexts(editHeroData.ctaTexts);
+        setHeroSecondaryCtaTexts(editHeroData.secondaryCtaTexts);
         setIsEditingHero(false);
 
         try {
@@ -834,6 +843,11 @@ export default function HeroSection({ isLoggedIn = false, currentUserEmail = '' 
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ value: editHeroData.ctaTexts })
+                }),
+                fetch(`${BASE_URL}/api/settings/hero-secondary-cta`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ value: editHeroData.secondaryCtaTexts })
                 })
             ]);
             showAlert('success', appLanguage === 'ar' ? 'تم الحفظ' : 'Enregistré', appLanguage === 'ar' ? 'تم تحديث إعدادات الواجهة بنجاح' : 'Paramètres mis à jour');
@@ -1107,11 +1121,19 @@ export default function HeroSection({ isLoggedIn = false, currentUserEmail = '' 
                         {heroIntros[currentLanguage] || texts.introText}
                     </p>
 
-                    <Link to="/magasin" className="hero-cta-button">
-                        {heroCtaTexts[currentLanguage] || texts.ctaButton}
-                        {currentLanguage !== 'ar' && <FaArrowRight style={{ marginLeft: '10px' }} />}
-                        {currentLanguage === 'ar' && <FaArrowRight style={{ transform: 'rotate(180deg)', marginRight: '10px' }} />}
-                    </Link>
+                    <div className="hero-cta-wrapper">
+                        <Link to="/magasin" className="hero-cta-button">
+                            {heroCtaTexts[currentLanguage] || texts.ctaButton}
+                            {currentLanguage !== 'ar' && <FaArrowRight style={{ marginLeft: '10px' }} />}
+                            {currentLanguage === 'ar' && <FaArrowRight style={{ transform: 'rotate(180deg)', marginRight: '10px' }} />}
+                        </Link>
+
+                        <Link to="/magasin?category=offre" className="hero-cta-button secondary-cta">
+                            {heroSecondaryCtaTexts[currentLanguage] || (currentLanguage === 'ar' ? 'اكتشف العروض' : 'Découvrir les Offres')}
+                            <FaTags style={{ marginLeft: '10px' }} />
+                            <FaHandPointer className="pointing-finger-icon" />
+                        </Link>
+                    </div>
                 </div>
 
                 <div className="hero-3d-container">
@@ -1260,11 +1282,20 @@ export default function HeroSection({ isLoggedIn = false, currentUserEmail = '' 
                                         />
                                     </div>
                                     <div className="premium-form-group">
-                                        <label>Texte du Bouton</label>
+                                        <label>Texte du Bouton (Principal)</label>
                                         <input
                                             type="text"
                                             value={editHeroData.ctaTexts[lang.code] || ''}
                                             onChange={e => setEditHeroData({ ...editHeroData, ctaTexts: { ...editHeroData.ctaTexts, [lang.code]: e.target.value } })}
+                                            dir={lang.code === 'ar' ? 'rtl' : 'ltr'}
+                                        />
+                                    </div>
+                                    <div className="premium-form-group">
+                                        <label>Texte du Bouton (Offres)</label>
+                                        <input
+                                            type="text"
+                                            value={editHeroData.secondaryCtaTexts[lang.code] || ''}
+                                            onChange={e => setEditHeroData({ ...editHeroData, secondaryCtaTexts: { ...editHeroData.secondaryCtaTexts, [lang.code]: e.target.value } })}
                                             dir={lang.code === 'ar' ? 'rtl' : 'ltr'}
                                         />
                                     </div>

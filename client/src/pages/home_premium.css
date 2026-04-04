@@ -145,6 +145,72 @@
     box-shadow: 0 30px 60px rgba(212, 175, 55, 0.3);
 }
 
+.hero-cta-wrapper {
+    display: flex;
+    gap: 20px;
+    margin-top: 20px;
+    justify-content: flex-start;
+}
+
+.hero-cta-button.secondary-cta {
+    color: white;
+    border: 0px solid var(--home-slate);
+    box-shadow: none;
+    background-color: var(--home-slate);
+    padding: 20px 45px;
+}
+
+.hero-cta-button:hover {
+    background: rgba(15, 23, 42, 0.05);
+    border-color: var(--home-gold);
+    color: var(--home-gold);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.05);
+    transform: translateY(-5px);
+}
+
+/* Specific adjustment for RTL if needed */
+[dir="rtl"] .hero-cta-wrapper {
+    justify-content: flex-start;
+}
+
+@media (max-width: 768px) {
+    .hero-cta-wrapper {
+        flex-direction: column;
+        align-items: center;
+        gap: 15px;
+    }
+}
+
+.pointing-finger-icon {
+    margin-left: 12px;
+    font-size: 1.2rem;
+    color: var(--home-gold);
+    animation: fingerClick 1.5s infinite ease-in-out;
+    filter: drop-shadow(0 2px 4px rgba(212, 175, 55, 0.2));
+}
+
+[dir="rtl"] .pointing-finger-icon {
+    margin-left: 0;
+    margin-right: 12px;
+    transform: scaleX(-1);
+    /* Mirror for Arabic if needed, though pointing up-right is usually fine */
+}
+
+@keyframes fingerClick {
+    0% {
+        transform: scale(1) translateY(0) rotate(0deg);
+    }
+
+    50% {
+        transform: scale(1.2) translateY(-5px) rotate(-10deg);
+        color: #b45309;
+    }
+
+    100% {
+        transform: scale(1) translateY(0) rotate(0deg);
+    }
+}
+
 /* --- 3D CAROUSEL ENHANCEMENTS --- */
 .hero-card {
     position: relative;

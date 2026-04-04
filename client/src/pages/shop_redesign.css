@@ -203,11 +203,6 @@
 }
 
 
-/* ========================================= */
-/* ðŸ”Ž Filter Sidebar - Professional & Clean */
-/* ========================================= */
-
-
 
 
 /* --- ðŸ” Search Filter --- */
@@ -1492,6 +1487,34 @@ form {
     box-shadow: 0 25px 50px rgba(180, 83, 9, 0.35);
 }
 
+.pointing-finger-icon {
+    margin-left: 12px;
+    font-size: 1.2rem;
+    color: #fff;
+    animation: fingerClick 1.5s infinite ease-in-out;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+[dir="rtl"] .pointing-finger-icon {
+    margin-left: 0;
+    margin-right: 12px;
+}
+
+@keyframes fingerClick {
+    0% {
+        transform: scale(1) translateY(0) rotate(0deg);
+    }
+
+    50% {
+        transform: scale(1.2) translateY(-5px) rotate(-10deg);
+        filter: brightness(1.2);
+    }
+
+    100% {
+        transform: scale(1) translateY(0) rotate(0deg);
+    }
+}
+
 .secure-payment-hint {
     margin-top: 20px;
     font-size: 0.85rem;
@@ -2361,9 +2384,11 @@ form {
     border-radius: 100px !important;
     text-decoration: none !important;
     font-weight: 700 !important;
+    width: 100%;
     font-size: 1.1rem !important;
     display: inline-flex !important;
     align-items: center !important;
+    justify-content: center !important;
     gap: 15px !important;
     transition: all 0.4s !important;
     box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1) !important;

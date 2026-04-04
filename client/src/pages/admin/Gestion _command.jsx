@@ -63,6 +63,19 @@ export default function Gestion_de_Command() {
         });
     };
 
+    const handleDeleteAll = () => {
+        showAlert('confirm', 'Supprimer Tout', 'Voulez-vous supprimer TOUTES les commandes ? Cette action est irréversible.', async () => {
+            try {
+                const response = await fetch(API_BASE_URL, { method: 'DELETE' });
+                if (!response.ok) throw new Error('Erreur de suppression.');
+                setCommands([]);
+                showAlert('success', 'Succès', 'Toutes les commandes ont été supprimées.');
+            } catch (err) {
+                showAlert('error', 'Erreur', err.message);
+            }
+        });
+    };
+
     const handleUpdateStatus = async (e) => {
         e.preventDefault();
         try {
@@ -92,11 +105,23 @@ export default function Gestion_de_Command() {
             <NavbarAdmin />
 
             <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '100px 20px' }}>
-                <div style={{ marginBottom: '40px' }}>
-                    <h1 style={{ fontSize: '2.2rem', color: '#1e293b', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '15px' }}>
-                        <FaShoppingBag style={{ color: '#D4AF37' }} /> Gestion des Commandes
-                    </h1>
-                    <p style={{ color: '#64748b', marginTop: '10px' }}>Suivez et gérez les commandes de vos clients.</p>
+                <div style={{ marginBottom: '40px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px' }}>
+                    <div>
+                        <h1 style={{ fontSize: '2.2rem', color: '#1e293b', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '15px' }}>
+                            <FaShoppingBag style={{ color: '#D4AF37' }} /> Gestion des Commandes
+                        </h1>
+                        <p style={{ color: '#64748b', marginTop: '10px' }}>Suivez et gérez les commandes de vos clients.</p>
+                    </div>
+
+                    {commands.length > 0 && (
+                        <button
+                            onClick={handleDeleteAll}
+                            className="premium-btn-cta secondary"
+                            style={{ padding: '12px 25px', color: '#ef4444', borderColor: '#fecaca', background: '#fff' }}
+                        >
+                            <FaTrash /> Supprimer Tout
+                        </button>
+                    )}
                 </div>
 
                 {loading ? (

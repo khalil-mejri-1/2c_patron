@@ -147,6 +147,15 @@ app.delete('/api/offers/:id', async (req, res) => {
     }
 });
 
+app.put('/api/offers/:id', async (req, res) => {
+    try {
+        const updated = await Offer.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        res.status(200).json(updated);
+    } catch (err) {
+        res.status(400).json({ message: err.message });
+    }
+});
+
 
 // --- B. MONGODB CONNECTION SETUP ---
 const MONGODB_URI = 'mongodb+srv://2cparton0011:nYdiX2GXYnduOmyG@cluster0.07ov0j7.mongodb.net/?appName=Cluster0';
