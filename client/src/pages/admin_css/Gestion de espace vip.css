@@ -1,0 +1,158 @@
+
+
+
+
+
+
+
+
+/* Styles pour le bouton de gestion des cours à côté du titre principal */
+.vip-header-with-button {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.manage-cours-button {
+    background-color: #007bff; /* Bleu */
+    color: white;
+    padding: 8px 15px;
+    border-radius: 5px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    transition: background-color 0.3s;
+}
+
+.manage-cours-button:hover {
+    background-color: #0056b3;
+}
+
+/* Style du bouton "Gérer les cours liés" dans le tableau */
+.cours-button {
+    background-color: #28a745; /* Vert */
+    color: white;
+    margin-right: 5px; /* Pour séparer du bouton Edit/Save */
+}
+
+.cours-button:hover {
+    background-color: #1e7e34;
+}
+
+/* ------------------- Styles Modale (Fenetre) ------------------- */
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    width: 90%;
+    max-width: 1000px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    position: relative;
+}
+
+.modal-header-cours {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+}
+
+.modal-title-cours {
+    font-size: 1.5rem;
+    color: #333;
+    display: flex;
+    align-items: center;
+}
+
+.modal-close-button {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #aaa;
+    transition: color 0.2s;
+}
+
+.modal-close-button:hover {
+    color: #333;
+}
+
+/* Formulaire d'ajout de cours */
+.add-cours-form {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+}
+
+.add-cours-form input,
+.add-cours-form button {
+    padding: 10px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    font-size: 1rem;
+}
+
+.add-cours-form button {
+    background-color: #28a745;
+    color: white;
+    cursor: pointer;
+    border: none;
+    grid-column: span 2; /* Le bouton prend toute la largeur */
+}
+
+/* Liste des Cours */
+.cours-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.cours-table th, .cours-table td {
+    border: 1px solid #ddd;
+    padding: 10px;
+    text-align: left;
+    vertical-align: middle;
+}
+
+.cours-image-thumb {
+    width: 60px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 3px;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+/* AJOUTS DANS votre fichier CSS (Gestion de espace vip.css) */
