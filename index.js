@@ -1,0 +1,2097 @@
+
+
+
+require('dotenv').config();
+const express = require('express');
+const mongoose = require('mongoose');
+const cors = require('cors');
+const path = require('path');
+const fs = require('fs');
+const multer = require('multer');
+const cloudinary = require('cloudinary').v2;
+const { GoogleGenAI } = require("@google/genai");
+const crypto = require('crypto');
+
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const genAI = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
+
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME || 'dzxxqr90c', // يجب تبديل هذا باسم الكلاود الخاص بك
+    api_key: process.env.CLOUDINARY_API_KEY || '675683535499862',
+    api_secret: process.env.CLOUDINARY_API_SECRET || 'xwaWkEPrTyGmd-2Amq3_9319uYY'
+});
+
+const Command = require('./models/command.js');
+// استيراد النماذج
+const HomeProduct = require("./models/HomeProduct.js");
+
+const Commentaire = require("./models/Commentaire.js");
+const Abonnement = require('./models/Abonnement.js');
+const Video = require('./models/Video.js');
+const User = require("./models/user.js");
+const Product = require("./models/Product.js");
+
+// Cleanup: Drop unique index on mail in abonnements if it exists (one-time)
+Abonnement.collection.dropIndex('mail_1').catch(() => { });
+const Message = require("./models/message.js");
+const VipCategory = require('./models/VipCategory');
+const SpecializedCourse = require('./models/SpecializedCourse.js');
+const SpecializedVideo = require('./models/SpecializedVideo.js');
+const SiteSetting = require('./models/SiteSetting.js');
+const ShopCategory = require('./models/ShopCategory.js');
+const Offer = require('./models/Offer.js');
+
+
+
+// 2. إنشاء تطبيق Express
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+
+// -------------------- A. MIDDLEWARE SETUP --------------------
+app.set('trust proxy', true);
+
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true })); // ✅ ضروري لقراءة form-data
+
+// 🛡️ SECURITY LAYER: Validation du Proxy (Évite l'accès direct via l'URL API)
+// Ce middleware s'assure que toutes les requêtes passent par le proxy autorisé de l'application
+app.use((req, res, next) => {
+    // Autoriser le favicon et la racine pour les tests de santé (Health checks)
+    if (req.path === '/' || req.path === '/favicon.ico') return next();
+
+    const proxySecret = req.headers['x-proxy-secure-access'];
+    if (proxySecret === 'CPATRON_ADVANCED_SECURITY_KEY_2026') {
+        next();
+    } else {
+        // Bloquer tout accès direct à l'API via l'URL réelle du serveur
+        res.status(403).json({
+            error: "Security Alert: Direct API access is forbidden. Use official application gateway."
+        });
+    }
+});
+
+
+// -------------------- Multer Configuration --------------------
+// نستعمل memoryStorage بدلاً من diskStorage لتفادي خطأ read-only system في Vercel
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
+
+// Serve uploads directory
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// -------------------- Cloudinary Upload Route --------------------
+app.post('/api/upload', upload.single('image'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ message: 'Aucun fichier fourni' });
+        }
+        // استخدام upload_stream لرفع الملف من الذاكرة مباشرة دون الحاجة لحفظه على قرص الخادم (Vercel يمنع ذلك)
+        const stream = cloudinary.uploader.upload_stream(
+            { resource_type: 'auto', folder: 'magasin' },
+            (error, result) => {
+                if (error) {
+                    console.error("Erreur d'upload Cloudinary:", error);
+                    return res.status(500).json({ message: 'Échec de l\'upload de l\'image', error: error.message });
+                }
+                res.status(200).json({ url: result.secure_url });
+            }
+        );
+        stream.end(req.file.buffer);
+    } catch (error) {
+        console.error("Erreur d'upload:", error);
+        res.status(500).json({ message: 'Échec de l\'upload', error: error.message });
+    }
+});
+
+
+// -------------------- API ROUTES FOR OFFERS --------------------
+app.get('/api/offers', async (req, res) => {
+    try {
+        const offers = await Offer.find({ isActive: true, duration: { $gt: new Date() } }).populate('productIds');
+        res.status(200).json(offers);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
+app.get('/api/offers/:id', async (req, res) => {
+    try {
+        const offer = await Offer.findById(req.params.id).populate('productIds');
+        if (!offer) return res.status(404).json({ message: 'Offre non trouvée' });
+        res.status(200).json(offer);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
+// 🔎 Unified route to fetch either a product or an offer by ID without causing 404 noise
+app.get('/api/catalog/:id', async (req, res) => {
+    try {
+        // Try product first
+        let item = await Product.findById(req.params.id);
+        if (item) {
+            return res.status(200).json({ type: 'product', data: item });
+        }
+
+        // Try offer if product not found
+        item = await Offer.findById(req.params.id).populate('productIds');
+        if (item) {
+            return res.status(200).json({ type: 'offer', data: item });
+        }
+
+        res.status(404).json({ message: 'Item non trouvé' });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
+app.post('/api/offers', async (req, res) => {
+    try {
+        const offer = new Offer(req.body);
+        const saved = await offer.save();
+        res.status(201).json(saved);
+    } catch (err) {
+        res.status(400).json({ message: err.message });
+    }
+});
+
+app.delete('/api/offers/:id', async (req, res) => {
+    try {
+        await Offer.findByIdAndDelete(req.params.id);
+        res.status(200).json({ message: 'Offre supprimée' });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
+app.put('/api/offers/:id', async (req, res) => {
+    try {
+        const updated = await Offer.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        res.status(200).json(updated);
+    } catch (err) {
+        res.status(400).json({ message: err.message });
+    }
+});
+
+// 🎠 Mettre à jour le filtre du carousel pour les OFFRES
+app.patch('/api/offers/:id/carousel-filter', async (req, res) => {
+    try {
+        const { visibleCarouselImages } = req.body;
+        if (!Array.isArray(visibleCarouselImages)) {
+            return res.status(400).json({ message: 'visibleCarouselImages must be an array.' });
+        }
+        const updated = await Offer.findByIdAndUpdate(
+            req.params.id,
+            { visibleCarouselImages },
+            { new: true, runValidators: false }
+        );
+        if (!updated) return res.status(404).json({ message: 'Offre non trouvée.' });
+        res.status(200).json({ message: 'Filtre carousel mis à jour.', visibleCarouselImages: updated.visibleCarouselImages });
+    } catch (error) {
+        console.error('Error in PATCH /api/offers/:id/carousel-filter:', error.message);
+        res.status(500).json({ error: 'Erreur du serveur.', details: error.message });
+    }
+});
+
+
+
+// --- B. MONGODB CONNECTION SETUP ---
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://2cparton0011:nYdiX2GXYnduOmyG@cluster0.07ov0j7.mongodb.net/?appName=Cluster0';
+
+// Connection logic moved to the bottom of the file
+
+
+
+// -------------------- C. ROUTES --------------------
+app.get('/favicon.ico', (req, res) => res.status(204).end());
+
+
+app.get('/', (req, res) => {
+    res.send('Hello World! Connected to Express and MongoDB v2. 4/20/2026');
+});
+
+// **********************************************
+// مسار بث الفيديو القديم (تم الإبقاء عليه كما هو للملفات المرفوعة سابقاً)
+// **********************************************
+// ⚠️ ملاحظة: هذا المسار سيعمل فقط مع الفيديوهات التي تم رفعها بالطريقة القديمة.
+// الفيديوهات الجديدة التي تستخدم روابط URL يجب تشغيلها مباشرةً على الواجهة الأمامية.
+app.get('/api/videos/stream/:id', async (req, res) => {
+    try {
+        // 1. جلب معلومات الفيديو من قاعدة البيانات
+        const video = await Video.findById(req.params.id);
+
+        if (!video || !video.fileName) { // إذا لم يكن هناك fileName (يعني رابط خارجي الآن)
+            return res.status(404).send('الفيديو غير موجود أو يستخدم رابط خارجي.');
+        }
+
+        // ⛔ باقي الكود هنا يتطلب استيراد fs و path الذي تم حذفه
+        // لن يعمل هذا المسار الآن حتى تعيد استيراد path و fs،
+        // لكنني أبقيت عليه في الكود لأنه قد تكون لديك ملفات قديمة تحتاج بثها.
+        // لتشغيل الكود بنجاح، يجب أن تستبدل هذا المسار بـ:
+        return res.status(501).send('غير مدعوم: تحتاج لإعادة path و fs لتشغيل مسار البث القديم.');
+
+        /* // إذا كنت تريد تشغيله، أعد استيراد path و fs وأزل السطر 501
+        const filePath = path.join(__dirname, 'uploads', 'videos', video.fileName);
+        if (!fs.existsSync(filePath)) {
+          console.error(`الملف غير موجود في المسار: ${filePath}`);
+          return res.status(404).send('لم يتم العثور على الملف الفيزيائي.');
+        }
+        const stat = fs.statSync(filePath);
+        // ... (بقية كود البث)
+        */
+
+    } catch (error) {
+        console.error("خطأ في بث الفيديو:", error);
+        res.status(500).send("خطأ داخلي في الخادم.");
+    }
+});
+
+
+// ----------------------------------------------------
+// ⚠️ تم حذف دالة isAdmin لأنها لم تعد مطلوبة في مسار البث
+// ----------------------------------------------------
+
+
+// **********************************************
+// مسارات المستخدمين (User Routes) - (دون تغيير)
+// **********************************************
+
+// ... (جميع مسارات المستخدمين هنا دون تغيير) ...
+// Public registration and Google login removed. Login only available via admin-generated accounts.
+
+app.post('/api/login-traditional', async (req, res) => {
+    try {
+        const { mail, mot_de_pass } = req.body;
+        let user = await User.findOne({ mail: mail });
+
+        // 💡 Jeśli użytkownika nie ma w bazie User, sprawdzamy w bazie Abonnement (Administrator-generated accounts)
+        if (!user) {
+            const aboRequest = await Abonnement.findOne({
+                generated_mail: mail,
+                generated_password: mot_de_pass,
+                statut_abonnement: 'approuvé'
+            });
+
+            if (aboRequest) {
+                // Automatycznie tworzymy użytkownika w tabeli User przy pierwszym logowaniu
+                user = new User({
+                    nom: aboRequest.nom,
+                    mail: aboRequest.generated_mail,
+                    mot_de_pass: aboRequest.generated_password,
+                    abonne: 'oui',
+                    statut: 'client'
+                });
+                await user.save();
+                console.log(`✅ Compte client créé automatiquement lors du premier login pour : ${mail}`);
+            } else {
+                return res.status(401).json({ error: 'E-mail ou mot de passe incorrect. Veuillez réessayer.' });
+            }
+        }
+
+        if (user.mot_de_pass === mot_de_pass) {
+            const { fingerprint } = req.body;
+            let firstLogin = false;
+
+            // Handle Fingerprint logic (Replaces IP/Device Info)
+            if (!user.lockedFingerprint) {
+                // First login: Generate and lock the fingerprint
+                const newFingerprint = crypto.randomBytes(32).toString('hex');
+                user.lockedFingerprint = newFingerprint;
+                await user.save();
+                firstLogin = true;
+                console.log(`🔒 Device locked for user: ${mail}`);
+            } else {
+                // Subsequent login: Check if provided fingerprint matches
+                if (user.statut !== 'admin' && user.lockedFingerprint !== fingerprint) {
+                    return res.status(403).json({
+                        errorType: 'IP_LOCKED', // Keep same error type for frontend compatibility
+                        error: 'Accès restreint : الجهاز غير معترف به.'
+                    });
+                }
+            }
+
+            res.status(200).json({
+                message: 'Connexion réussie.',
+                id: user._id,
+                nom: user.nom,
+                image: user.image,
+                statut: user.statut,
+                abonne: user.abonne,
+                fingerprint: user.lockedFingerprint,
+                firstLogin: firstLogin
+            });
+        } else {
+            res.status(401).json({ error: 'E-mail ou mot de passe incorrect. Veuillez réessayer.' });
+        }
+    } catch (error) {
+        console.error('Error during login:', error.message);
+        res.status(500).json({ error: 'Erreur interne du serveur lors de la connexion.' });
+    }
+});
+
+// 🔍 Check Status by Email (Admin/VIP/Member)
+app.get('/api/users/check-status', async (req, res) => {
+    try {
+        const { email } = req.query;
+        if (!email) return res.status(400).json({ error: 'Email query parameter is required.' });
+
+        const user = await User.findOne({ mail: email });
+        if (!user) return res.status(404).json({ error: 'User not found.' });
+
+        res.status(200).json({
+            id: user._id,
+            nom: user.nom,
+            statut: user.statut,
+            abonne: user.abonne
+        });
+    } catch (error) {
+        console.error('Error checking user status:', error.message);
+        res.status(500).json({ error: 'Internal server error.' });
+    }
+});
+
+app.get('/api/users/clients', async (req, res) => {
+    try {
+        const users = await User.find({}).select('-mot_de_pass');
+        res.status(200).json(users);
+    } catch (error) {
+        console.error('Error fetching users:', error.message);
+        res.status(500).json({ error: 'Échec du chargement des données utilisateurs.' });
+    }
+});
+
+app.put('/api/users/:id/statut', async (req, res) => {
+    try {
+        const { statut } = req.body;
+        const userId = req.params.id;
+        if (!statut || (statut !== 'admin' && statut !== 'client')) return res.status(400).json({ error: 'Statut invalide.' });
+        const updatedUser = await User.findByIdAndUpdate(userId, { statut: statut }, { new: true, runValidators: true }).select('-mot_de_pass');
+        if (!updatedUser) return res.status(404).json({ error: 'Utilisateur non trouvé.' });
+        res.status(200).json({ message: 'Statut mis à jour avec succès.', user: updatedUser });
+    } catch (error) {
+        console.error('Error updating user statut:', error.message);
+        res.status(500).json({ error: 'Échec de la mise à jour du statut.' });
+    }
+});
+
+
+app.delete('/api/users/:id', async (req, res) => {
+    try {
+        const userId = req.params.id;
+
+        // 1. Trouver و supprimer l'utilisateur
+        const deletedUser = await User.findByIdAndDelete(userId);
+
+        // 2. Vérifier si l'utilisateur existait
+        if (!deletedUser) {
+            return res.status(404).json({ error: "Utilisateur non trouvé." });
+        }
+
+        // 3. Répondre avec succès
+        res.status(200).json({ message: "Utilisateur supprimé avec succès." });
+
+    } catch (error) {
+        console.error("Erreur lors de la suppression de l'utilisateur:", error);
+        // 4. Répondre en cas d'erreur serveur
+        res.status(500).json({ error: "Erreur interne du serveur lors de la suppression." });
+    }
+});
+
+
+
+app.put('/api/users/:id/abonne', async (req, res) => {
+    try {
+        const { abonne } = req.body;
+        const userId = req.params.id;
+        if (!abonne || (abonne !== 'oui' && abonne !== 'non')) return res.status(400).json({ error: 'Valeur d\'abonnement invalide (doit être "oui" أو "non").' });
+        const updatedUser = await User.findByIdAndUpdate(userId, { abonne: abonne }, { new: true, runValidators: true }).select('-mot_de_pass');
+        if (!updatedUser) return res.status(404).json({ error: 'Utilisateur non trouvé.' });
+        res.status(200).json({ message: 'Statut d\'abonnement mis à jour avec succès.', user: updatedUser });
+    } catch (error) {
+        console.error('Error updating user abonne status:', error.message);
+        res.status(500).json({ error: 'Échec de la mise à jour de l\'abonnement.' });
+    }
+});
+
+// **********************************************
+// مسارات المنتجات (Product Routes) - (دون تغيير)
+// **********************************************
+
+// ... (جميع مسارات المنتجات هنا دون تغيير) ...
+// Product Model (يجب أن يكون مستوردًا هنا)
+// const Product = require('./models/Product'); 
+
+// 1. إضافة منتج (POST /api/products)
+app.post('/api/products', async (req, res) => {
+    try {
+        // 💡 لا حاجة للتحويل المعقد هنا. المخطط الجديد يتوقع:
+        // - mainImage (String)
+        // - secondaryImages (Array of String, optional)
+
+        // تنظيف البيانات الواردة للتأكد من استخدام الحقول الجديدة
+        const productData = {
+            nom: req.body.nom,
+            mainImage: req.body.mainImage,
+            secondaryImages: req.body.secondaryImages || [], // افتراضيًا مصفوفة فارغة
+            prix: req.body.prix,
+            categorie: req.body.categorie,
+            order: req.body.order || 0,
+            isNewProduct: req.body.isNewProduct || false
+            // تجاهل الحقول القديمة (image, images)
+        };
+
+        const newProduct = new Product(productData);
+        const savedProduct = await newProduct.save();
+        res.status(201).json(savedProduct);
+
+    } catch (error) {
+        if (error.name === 'ValidationError') {
+            const messages = Object.values(error.errors).map(val => val.message);
+            return res.status(400).json({ error: 'Validation failed', details: messages.join('; ') });
+        }
+        console.error('Error in POST /api/products:', error.message);
+        res.status(500).json({ error: 'Erreur du serveur lors de l\'ajout du produit.' });
+    }
+});
+
+// 2. جلب جميع المنتجات (GET /api/products)
+app.get('/api/products', async (req, res) => {
+    try {
+        // سيتم جلب الحقول mainImage و secondaryImages كما هي معرفة في المخطط
+        const products = await Product.find().sort({ order: 1, createdAt: -1 });
+        res.status(200).json(products);
+    } catch (error) {
+        console.error('Error in GET /api/products:', error.message);
+        res.status(500).json({ error: 'Erreur du serveur lors de la récupération des produits.' });
+    }
+});
+
+// 3. تحديث منتج (PUT /api/products/:id)
+app.put('/api/products/:id', async (req, res) => {
+    try {
+        const productId = req.params.id;
+        const updatedData = req.body;
+
+        // التحقق من السعر
+        if (updatedData.prix) {
+            updatedData.prix = parseFloat(updatedData.prix);
+            if (isNaN(updatedData.prix)) return res.status(400).json({ message: "Le prix doit être un nombre صالح." });
+        }
+
+        // 💡 تنظيف بيانات التحديث: لا تسمح بحقول images أو image القديمة
+        delete updatedData.image;
+        delete updatedData.images;
+
+        // إذا تم إرسال secondaryImages، يجب أن تكون مصفوفة
+        if (updatedData.secondaryImages && !Array.isArray(updatedData.secondaryImages)) {
+            updatedData.secondaryImages = [updatedData.secondaryImages].filter(Boolean);
+        }
+
+        // تحديث المنتج، مع تشغيل المدقق (Validators) لضمان صحة mainImage
+        const product = await Product.findByIdAndUpdate(
+            productId,
+            updatedData,
+            { new: true, runValidators: true }
+        );
+
+        if (!product) return res.status(404).json({ message: 'Produit غير موجود للتحديث.' });
+        res.status(200).json(product);
+
+    } catch (error) {
+        if (error.name === 'ValidationError') {
+            const messages = Object.values(error.errors).map(val => val.message);
+            return res.status(400).json({ error: 'Validation failed', details: messages.join('; ') });
+        }
+        console.error('Error in PUT /api/products/:id:', error.message);
+        res.status(500).json({ error: 'Erreur du serveur lors de la mise à jour du produit.', details: error.message });
+    }
+});
+
+// 4. حذف منتج (DELETE /api/products/:id)
+app.delete('/api/products/:id', async (req, res) => {
+    try {
+        const productId = req.params.id;
+        const deletedProduct = await Product.findByIdAndDelete(productId);
+        if (!deletedProduct) return res.status(404).json({ message: 'Produit non trouvé.' });
+        res.status(200).json({ message: 'Produit supprimé avec succès.', _id: productId });
+    } catch (error) {
+        console.error('Error in DELETE /api/products/:id:', error.message);
+        res.status(500).json({ error: 'Erreur du serveur lors de la suppression du produit.' });
+    }
+});
+
+// 5. جلب منتج واحد (GET /api/products/:id)
+app.get('/api/products/:id', async (req, res) => {
+    try {
+        const product = await Product.findById(req.params.id);
+        if (!product) return res.status(404).json({ message: 'Produit non trouvé.' });
+        res.status(200).json(product);
+    } catch (error) {
+        res.status(500).json({ error: 'Erreur du serveur.' });
+    }
+});
+
+// 6. 🎠 Mettre à jour le filtre du carousel (PATCH /api/products/:id/carousel-filter)
+app.patch('/api/products/:id/carousel-filter', async (req, res) => {
+    try {
+        const { visibleCarouselImages } = req.body;
+        // Accept an array of URL strings (empty array = show all)
+        if (!Array.isArray(visibleCarouselImages)) {
+            return res.status(400).json({ message: 'visibleCarouselImages must be an array.' });
+        }
+        const updated = await Product.findByIdAndUpdate(
+            req.params.id,
+            { visibleCarouselImages },
+            { new: true, runValidators: false }
+        );
+        if (!updated) return res.status(404).json({ message: 'Produit non trouvé.' });
+        res.status(200).json({ message: 'Filtre carousel mis à jour.', visibleCarouselImages: updated.visibleCarouselImages });
+    } catch (error) {
+        console.error('Error in PATCH /api/products/:id/carousel-filter:', error.message);
+        res.status(500).json({ error: 'Erreur du serveur.', details: error.message });
+    }
+});
+
+// **********************************************
+// مسارات الفيديوهات (Video Routes) - تم التعديل لإزالة الرفع المحلي
+// **********************************************
+
+// 1. POST: إضافة فيديو جديد (الآن يستخدم 'videoUrl' بدلاً من رفع الملف)
+app.post('/api/videos', async (req, res) => {
+    // 💡 نستبدل Multer بتحقق بسيط من وجود الرابط في الـ body
+    const { titre, description, categorie, videoUrl } = req.body;
+
+    if (!videoUrl) {
+        return res.status(400).json({ message: 'L\'URL de la vidéo est obligatoire.' });
+    }
+
+    try {
+        const newVideo = new Video({
+            titre,
+            description,
+            categorie,
+            // 💡 نستبدل fileName و filePath بـ videoUrl (نفترض أن videoUrl هو الحقل الصحيح في نموذج Video)
+            // إذا كان نموذج Video لا يحتوي على حقل باسم videoUrl أو url، يجب تعديل النموذج
+            // سأفترض أنك ستستخدم الحقل الذي كان يُستخدم للملف الآن للرابط. سأستخدم هنا 'videoUrl'
+            videoUrl: videoUrl,
+            // 💡 يتم تعيين الحقول القديمة (fileName/filePath) إلى قيمة خالية إذا كانت لا تزال موجودة في النموذج
+            fileName: null,
+            filePath: null
+        });
+        const savedVideo = await newVideo.save();
+        res.status(201).json(savedVideo);
+    } catch (error) {
+        console.error("Erreur DB après soumission de l'URL:", error.message);
+        res.status(400).json({ message: 'Échec de l\'ajout de la vidéo DB.', details: error.message });
+    }
+});
+
+// 2. GET: جلب جميع الفيديوهات (دون تغيير)
+app.get('/api/videos', async (req, res) => {
+    try {
+        const videos = await Video.find().sort({ dateAjout: -1 });
+        res.status(200).json(videos);
+    } catch (error) {
+        res.status(500).json({ message: 'Erreur serveur lors de la récupération des vidéos.' });
+    }
+});
+
+// 3. PUT: تحديث البيانات الوصفية للفيديو (دون تغيير - يفترض أن التحديثات لا تشمل ملفاً)
+app.put('/api/videos/:id', async (req, res) => {
+    try {
+        const updatedVideo = await Video.findByIdAndUpdate(
+            req.params.id,
+            req.body, // الآن يمكن تضمين 'videoUrl' هنا
+            { new: true, runValidators: true }
+        );
+        if (!updatedVideo) return res.status(404).json({ message: 'Vidéo non trouvée pour la mise à jour.' });
+        res.status(200).json(updatedVideo);
+    } catch (error) {
+        res.status(400).json({ message: 'Échec de la mise à jour.', details: error.message });
+    }
+});
+
+// 4. DELETE: حذف فيديو (تم إزالة محاولة حذف الملف المحلي)
+app.delete('/api/videos/:id', async (req, res) => {
+    try {
+        const videoId = req.params.id;
+        const video = await Video.findById(videoId);
+
+        if (!video) return res.status(404).json({ message: 'Vidéo non trouvée.' });
+
+        // ❌ تم حذف محاولة حذف الملف من القرص (fs.unlinkSync)
+
+        const deletedVideo = await Video.findByIdAndDelete(videoId);
+        res.status(200).json({ message: 'Vidéo supprimée avec succès (الملف المحلي لم يتم حذفه لأنه لم يُرفع).', _id: videoId });
+
+    } catch (error) {
+        console.error('Error server during deletion:', error.message);
+        res.status(500).json({ message: 'Erreur serveur lors de la suppression.', details: error.message });
+    }
+});
+
+// **********************************************
+// مسارات الطلبات (Commands Routes) - (دون تغيير)
+// **********************************************
+
+// ... (جميع مسارات الطلبات هنا دون تغيير) ...
+app.post('/api/commands', async (req, res) => {
+    try {
+        // 1. Extraction des données، incluant clientEmail (optionnel) et les items avec productImage
+        const { clientName, clientPhone, shippingAddress, items, totalAmount, clientEmail } = req.body;
+
+        // 2. Validation de base des données reçues
+        if (!clientPhone || !shippingAddress || !items || items.length === 0 || totalAmount == null || totalAmount < 0) {
+            return res.status(400).json({ message: 'Données de commande incomplètes ou invalides (téléphone, adresse, articles ou montant manquant).' });
+        }
+
+        // 🚨 NOUVEAU: Validation des items pour s'assurer que productImage est présent si nécessaire
+        // إذا كان productImage هو رابط URL، فإنه يأتي مباشرةً في الـ body، لذا لا حاجة لـ Multer هنا.
+        for (const item of items) {
+            if (!item.productId || !item.productName || item.quantity == null || item.quantity < 1 || item.price == null || item.price < 0) {
+                return res.status(400).json({ message: 'Détails d\'article de commande incomplets ou invalides.' });
+            }
+        }
+
+        // 3. Vérifier s'il existe déjà une commande "En attente" pour ce numéro de téléphone
+        // 🚀 NOUVEAU: On vérifie aussi que la commande existante a été créée APRÈS le dernier "Reset" de l'admin
+        const resetSetting = await SiteSetting.findOne({ key: 'orderGroupingResetTimestamp' });
+        const resetTime = resetSetting ? new Date(resetSetting.value) : new Date(0);
+
+        const existingPendingCommand = await Command.findOne({
+            clientPhone: clientPhone,
+            status: 'En attente',
+            orderDate: { $gt: resetTime }
+        });
+
+        if (existingPendingCommand) {
+            // 🚨 MODIFICATION: Ne plus fusionner les quantités. Ajouter chaque item comme une nouvelle ligne.
+            items.forEach(newItem => {
+                existingPendingCommand.items.push(newItem);
+            });
+
+            // Mettre à jour le montant total global
+            existingPendingCommand.totalAmount += totalAmount;
+
+            // 📦 Ajouter comme un "Sub-Order" séparé. UTILISER UN NOUVEAU TIMESTAMP RÉEL.
+            if (!existingPendingCommand.subOrders) existingPendingCommand.subOrders = [];
+
+            existingPendingCommand.subOrders.push({
+                items: items, // On garde les items tels quels
+                totalAmount: totalAmount,
+                submissionDate: new Date()
+            });
+
+            existingPendingCommand.combinedCount = existingPendingCommand.subOrders.length;
+
+            const updatedCommand = await existingPendingCommand.save();
+
+            return res.status(200).json({
+                message: 'Commande ajoutée à votre commande en attente existante!',
+                commandId: updatedCommand._id,
+            });
+        }
+
+        // 4. Créer une nouvelle instance de commande si aucune commande en attente n'existe
+        const newCommand = new Command({
+            clientName,
+            clientPhone,
+            clientEmail,
+            shippingAddress,
+            totalAmount,
+            items: items,
+            combinedCount: 1,
+            subOrders: [{
+                items: items,
+                totalAmount: totalAmount,
+                submissionDate: new Date()
+            }]
+        });
+
+        const savedCommand = await newCommand.save();
+
+        res.status(201).json({
+            message: 'Commande enregistrée avec succès!',
+            commandId: savedCommand._id,
+        });
+
+    } catch (error) {
+        console.error('Erreur lors de l\'enregistrement de la commande:', error);
+
+        if (error.name === 'ValidationError') {
+            const messages = Object.values(error.errors).map(err => err.message);
+            return res.status(400).json({ message: 'Erreur de validation: ' + messages.join(', ') });
+        }
+
+        res.status(500).json({ message: 'Erreur interne du serveur lors de la soumission de la commande.' });
+    }
+});
+
+
+
+// 1. 💡 AFFICHER (GET /api/commands) - جلب جميع الطلبات
+app.get('/api/commands', async (req, res) => {
+    try {
+        const commands = await Command.find().sort({ orderDate: -1 });
+        res.status(200).json(commands);
+    } catch (error) {
+        res.status(500).json({ message: "Erreur lors de la récupération des commandes.", details: error.message });
+    }
+});
+
+// GET SINGLE COMMAND
+app.get('/api/commands/:id', async (req, res) => {
+    try {
+        const command = await Command.findById(req.params.id);
+        if (!command) return res.status(404).json({ message: "Commande non trouvée." });
+        res.status(200).json(command);
+    } catch (error) {
+        res.status(500).json({ message: "Erreur serveur.", details: error.message });
+    }
+});
+
+// GET COMMANDS BY USER EMAIL
+app.get('/api/commands/user/:email', async (req, res) => {
+    try {
+        const email = req.params.email;
+        if (!email) return res.status(400).json({ message: "Email requis." });
+
+        const commands = await Command.find({ clientEmail: email }).sort({ orderDate: -1 });
+        res.status(200).json(commands);
+    } catch (error) {
+        res.status(500).json({ message: "Erreur serveur.", details: error.message });
+    }
+});
+
+app.delete('/api/commands/:id/sub-order/:subId', async (req, res) => {
+    try {
+        const command = await Command.findById(req.params.id);
+        if (!command) return res.status(404).json({ message: "Commande non trouvée." });
+
+        const subOrderIndex = command.subOrders.findIndex(so => String(so._id) === req.params.subId);
+        if (subOrderIndex === -1) return res.status(404).json({ message: "Sous-commande non trouvée." });
+
+        const subOrder = command.subOrders[subOrderIndex];
+
+        // Mettre à jour le montant total global
+        command.totalAmount -= subOrder.totalAmount;
+
+        // Mettre à jour les items globaux
+        subOrder.items.forEach(subItem => {
+            const itemInGlobal = command.items.find(i => String(i.productId) === String(subItem.productId));
+            if (itemInGlobal) {
+                itemInGlobal.quantity -= subItem.quantity;
+                if (itemInGlobal.quantity <= 0) {
+                    command.items = command.items.filter(i => String(i.productId) !== String(subItem.productId));
+                }
+            }
+        });
+
+        // Supprimer la sous-commande
+        command.subOrders.splice(subOrderIndex, 1);
+        command.combinedCount = command.subOrders.length;
+
+        // Si plus aucune sous-commande, on peut soit supprimer la commande entière, soit la laisser vide.
+        // Optionnel: if (command.subOrders.length === 0) await Command.findByIdAndDelete(req.params.id);
+
+        const updated = await command.save();
+        res.json(updated);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.put('/api/commands/:id/status', async (req, res) => {
+    const { status } = req.body;
+    const commandId = req.params.id;
+    try {
+        const command = await Command.findByIdAndUpdate(commandId, { status }, { new: true });
+        if (!command) return res.status(404).json({ message: "Commande non trouvée." });
+        res.status(200).json(command);
+    } catch (error) {
+        res.status(500).json({ message: "Erreur lors de la mise à jour du statut.", details: error.message });
+    }
+});
+
+// 🔄 Route to reset order grouping (new session)
+app.post('/api/commands/reset-grouping', async (req, res) => {
+    try {
+        const now = new Date();
+        const updatedSetting = await SiteSetting.findOneAndUpdate(
+            { key: 'orderGroupingResetTimestamp' },
+            { value: now },
+            { upsert: true, new: true }
+        );
+        res.status(200).json({ message: 'Order grouping reset successfully', timestamp: now });
+    } catch (error) {
+        console.error('Error resetting order grouping:', error);
+        res.status(500).json({ message: 'Erreur lors du reset du groupement des commandes.' });
+    }
+});
+
+// 🔄 Route to update status of a specific sub-order
+app.put('/api/commands/:id/sub-order/:subId/status', async (req, res) => {
+    try {
+        const { status } = req.body;
+        const command = await Command.findById(req.params.id);
+        if (!command) return res.status(404).json({ message: "Commande non trouvée." });
+
+        const subOrder = command.subOrders.id(req.params.subId);
+        if (!subOrder) return res.status(404).json({ message: "Sous-commande non trouvée." });
+
+        subOrder.status = status;
+        const updated = await command.save();
+        res.status(200).json(updated);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+
+// 3. 💡 DELETE (DELETE /api/commands/:id) - حذف طلب
+app.delete('/api/commands/:id', async (req, res) => {
+    const commandId = req.params.id;
+    try {
+        const result = await Command.findByIdAndDelete(commandId);
+
+        if (!result) {
+            return res.status(404).json({ message: "Commande non trouvée." });
+        }
+
+        res.status(200).json({ message: "Commande supprimée avec succès." });
+    } catch (error) {
+        res.status(500).json({ message: "Échec de la suppression de la commande.", details: error.message });
+    }
+});
+
+// 4. 💡 DELETE ALL (DELETE /api/commands) - حذف جميع الطلبات
+app.delete('/api/commands', async (req, res) => {
+    try {
+        await Command.deleteMany({});
+        res.status(200).json({ message: "Toutes les commandes ont été supprimées avec succès." });
+    } catch (error) {
+        res.status(500).json({ message: "Échec de la suppression de toutes les commandes.", details: error.message });
+    }
+});
+
+
+// ... (بقية مسارات المستخدمين هنا دون تغيير) ...
+app.get("/api/users/:email", async (req, res) => {
+    try {
+        const email = req.params.email.toLowerCase();
+
+        // نبحث عن المستخدم حسب الحقل mail
+        const user = await User.findOne({ mail: email });
+
+        if (!user) {
+            return res.status(200).json({ abonne: "non" });
+        }
+
+        res.status(200).json({ abonne: user.abonne, statut: user.statut });
+    } catch (error) {
+        console.error("Erreur lors de la vérification du VIP:", error);
+        res.status(500).json({ message: "Erreur serveur" });
+    }
+});
+
+
+
+
+
+
+
+app.get('/:userId', async (req, res) => {
+    try {
+        const user = await User.findById(req.params.userId).select('-password'); // عدم إرسال كلمة المرور
+        if (!user) return res.status(404).json({ message: 'Utilisateur non trouvé' });
+        res.json(user);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Erreur serveur' });
+    }
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// 1. POST /api/messages - Créer un nouveau message
+app.post('/api/messages', async (req, res) => {
+    try {
+        const newMessage = new Message(req.body);
+        const savedMessage = await newMessage.save();
+        res.status(201).json(savedMessage);
+    } catch (error) {
+        res.status(400).json({
+            message: "Erreur lors de la création du message.",
+            details: error.message
+        });
+    }
+});
+
+// 2. DELETE /api/messages/:id - Supprimer un message par ID
+app.delete('/api/messages/:id', async (req, res) => {
+    try {
+        const messageId = req.params.id;
+        const deletedMessage = await Message.findByIdAndDelete(messageId);
+
+        if (!deletedMessage) {
+            return res.status(404).json({ message: "Message non trouvé." });
+        }
+
+        // Statut 200 avec le message supprimé ou 204 No Content
+        res.status(200).json({ message: "Message supprimé avec succès.", deleted: deletedMessage });
+    } catch (error) {
+        // Gérer les IDs invalides ou autres erreurs
+        res.status(500).json({ message: "Erreur lors de la suppression du message.", details: error.message });
+    }
+});
+
+// 3. PUT /api/messages/:id/status - Mettre à jour le statut 'estTraite' par ID
+// 3. PUT /api/messages/:id/status - Mettre à jour le statut 'estTraite' par ID
+app.put('/api/messages/:id/status', async (req, res) => {
+    try {
+        const messageId = req.params.id;
+        let { estTraite } = req.body;
+
+        const message = await Message.findById(messageId);
+        if (!message) {
+            return res.status(404).json({ message: "Message non trouvé." });
+        }
+
+        // If body is empty or estTraite is undefined, just toggle
+        if (estTraite === undefined) {
+            message.estTraite = !message.estTraite;
+        } else {
+            message.estTraite = Boolean(estTraite);
+        }
+
+        const updatedMessage = await message.save();
+        res.status(200).json(updatedMessage);
+    } catch (error) {
+        console.error("Error updating message status:", error);
+        res.status(500).json({ message: "Erreur lors de la mise à jour du statut.", details: error.message });
+    }
+});
+
+app.get('/api/messages', async (req, res) => {
+    try {
+        // استرجاع الرسائل مرتبة حسب تاريخ الإنشاء من الأحدث إلى الأقدم
+        const messages = await Message.find().sort({ dateCreation: -1 });
+        res.status(200).json(messages);
+    } catch (error) {
+        res.status(500).json({
+            message: "Erreur lors de la récupération des messages.",
+            details: error.message
+        });
+    }
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+app.get('/api/commentaires/filtre', async (req, res) => {
+    try {
+        const commentaires = await Commentaire.find({ statut: 'Approuvé' }).sort({ date_creation: -1 });
+        res.status(200).json(commentaires);
+    } catch (error) {
+        res.status(500).json({ message: 'Erreur serveur lors de la récupération des commentaires', error: error.message });
+    }
+});
+
+app.get('/api/commentaires', async (req, res) => {
+    try {
+        // ✅ تم إزالة شرط الفلترة { statut: 'Approuvé' } لعرض جميع التعليقات
+        // الترتيب حسب تاريخ الإنشاء التنازلي (-1) ما زال مطبقًا.
+        const commentaires = await Commentaire.find({}).sort({ date_creation: -1 });
+
+        res.status(200).json(commentaires);
+    } catch (error) {
+        res.status(500).json({ message: 'Erreur serveur lors de la récupération des commentaires', error: error.message });
+    }
+});
+// ===================================================
+// Route 2: POST un nouveau commentaire
+// POST /api/commentaires
+// (Pour l'utilisateur non-admin)
+// ===================================================
+app.post('/api/commentaires', async (req, res) => {
+    try {
+        // البيانات القادمة من React هي: { nom, commentaire, rating, productId }
+        const newCommentaire = new Commentaire(req.body);
+
+        // حفظ الكائن الجديد في قاعدة البيانات
+        const savedCommentaire = await newCommentaire.save();
+
+        // إرسال استجابة نجاح
+        res.status(201).json({
+            message: 'Commentaire créé avec succès',
+            commentId: savedCommentaire._id
+        });
+    } catch (error) {
+        // معالجة أخطاء التحقق (Validation Errors) مثل الحقول المفقودة
+        if (error.name === 'ValidationError') {
+            const messages = Object.values(error.errors).map(val => val.message);
+            return res.status(400).json({
+                message: 'Erreur de validation',
+                errors: messages
+            });
+        }
+        // معالجة الأخطاء الأخرى
+        res.status(500).json({ message: 'Erreur serveur lors de l\'enregistrement du commentaire', error: error.message });
+    }
+});
+// ===================================================
+// Route 3: PUT (Modifier) le statut d'un commentaire
+// PUT /api/commentaires/statut/:id
+// (Pour l'administration)
+// ===================================================
+app.put('/api/commentaires/statut/:id', async (req, res) => {
+    const { statut } = req.body;
+
+    // Vérification simple du statut
+    if (!['Approuvé', 'Rejeté', 'En attente'].includes(statut)) {
+        return res.status(400).json({ message: 'Statut invalide.' });
+    }
+
+    try {
+        const commentaire = await Commentaire.findByIdAndUpdate(
+            req.params.id,
+            { statut: statut },
+            { new: true, runValidators: true } // Retourne le doc mis à jour, exécute les validateurs du schéma
+        );
+
+        if (!commentaire) {
+            return res.status(404).json({ message: 'Commentaire non trouvé' });
+        }
+
+        res.status(200).json({ success: true, data: commentaire });
+    } catch (error) {
+        res.status(500).json({ message: 'Erreur serveur lors de la mise à jour du statut', error: error.message });
+    }
+});
+
+// ===================================================
+// Route 4: DELETE un commentaire
+// DELETE /api/commentaires/:id
+// (Pour l'administration)
+// ===================================================
+app.delete('/api/commentaires/:id', async (req, res) => {
+    try {
+        const commentaire = await Commentaire.findByIdAndDelete(req.params.id);
+
+        if (!commentaire) {
+            return res.status(404).json({ message: 'Commentaire non trouvé' });
+        }
+
+        res.status(200).json({ success: true, message: 'Commentaire supprimé avec succès' });
+    } catch (error) {
+        res.status(500).json({ message: 'Erreur serveur lors de la suppression', error: error.message });
+    }
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+app.post('/api/abonnement', async (req, res) => {
+    try {
+        const { nom, mail, telephone } = req.body;
+        console.log("Body reçu:", req.body); // Debug
+
+        if (!telephone) {
+            return res.status(400).json({ message: "Le numéro de téléphone est requis." });
+        }
+
+        const abonnement = new Abonnement({
+            nom: nom || 'Client',
+            mail: mail || undefined,
+            telephone
+        });
+
+        console.log("Instance Abonnement créée:", abonnement); // Debug
+        await abonnement.save();
+
+        res.status(201).json({
+            message: "Abonnement ajouté avec succès.",
+            abonnement
+        });
+    } catch (error) {
+        console.error("ERREUR lors de la création de l'abonnement:", error);
+
+        // Handle Duplicate Email Error (MongoServerError: E11000)
+        if (error.code === 11000 && error.keyPattern && error.keyPattern.mail) {
+            return res.status(409).json({
+                message: "Une demande d'abonnement est déjà en cours pour cette adresse e-mail."
+            });
+        }
+
+        if (error.name === 'ValidationError') {
+            const messages = Object.values(error.errors).map(val => val.message);
+            return res.status(400).json({
+                message: 'Erreur de validation',
+                errors: messages
+            });
+        }
+
+        res.status(500).json({
+            message: "Erreur serveur lors de la demande d'accès VIP.",
+            error: error.message
+        });
+    }
+});
+
+
+
+app.get('/api/abonnement', async (req, res) => {
+    try {
+        const abonnements = await Abonnement.find().sort({ date: -1 });
+        res.json(abonnements);
+    } catch (error) {
+        res.status(500).json({ message: 'Erreur serveur' });
+    }
+});
+
+
+
+app.put('/api/abonnement/:id', async (req, res) => {
+    try {
+        const { statut_abonnement } = req.body;
+
+        const abonnement = await Abonnement.findByIdAndUpdate(
+            req.params.id,
+            { statut_abonnement },
+            { new: true }
+        );
+
+        if (!abonnement) return res.status(404).json({ message: 'Abonnement introuvable.' });
+
+        res.json({ message: 'Statut mis à jour.', abonnement });
+    } catch (error) {
+        console.error('Erreur PUT abonnement:', error);
+        res.status(500).json({ message: 'Erreur serveur.' });
+    }
+});
+
+app.delete('/api/abonnement/:id', async (req, res) => {
+    try {
+        const abonnement = await Abonnement.findById(req.params.id);
+
+        if (!abonnement) return res.status(404).json({ message: 'Abonnement introuvable.' });
+
+        // ❌ تم حذف محاولة حذف الصورة من السيرفر (fs.unlinkSync)
+
+
+        await Abonnement.findByIdAndDelete(req.params.id);
+        res.json({ message: 'Abonnement supprimé avec succès.' });
+    } catch (error) {
+        console.error('Erreur DELETE abonnement:', error);
+        res.status(500).json({ message: 'Erreur serveur.' });
+    }
+});
+
+
+
+// Helpers for generating credentials
+const generatePassword = (length = 8) => {
+    const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
+    let password = "";
+    for (let i = 0; i < length; i++) {
+        password += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return password;
+};
+
+const generateEmail = async (name) => {
+    const cleanName = name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, '');
+    let email = "";
+    let isUnique = false;
+    while (!isUnique) {
+        const randomDigits = Math.floor(100 + Math.random() * 9000); // 3 or 4 digits
+        email = `${cleanName}${randomDigits}@cpatron.com`;
+        const exists = await User.findOne({ mail: email });
+        if (!exists) isUnique = true;
+    }
+    return email;
+};
+
+app.post('/api/abonnement/generate-account/:id', async (req, res) => {
+    try {
+        const abonnementId = req.params.id;
+        const abo = await Abonnement.findById(abonnementId);
+        if (!abo) return res.status(404).json({ message: "Demande non trouvée." });
+
+        if (abo.statut_abonnement === 'approuvé') {
+            return res.status(400).json({ message: "Ce compte a déjà été approuvé." });
+        }
+
+        const generatedEmail = await generateEmail(abo.nom);
+        const generatedPassword = generatePassword();
+
+        // On ne crée plus l'utilisateur ici, il sera créé automatiquement lors de sa première connexion
+
+        // Update the abonnement request
+        abo.statut_abonnement = 'approuvé';
+        abo.generated_mail = generatedEmail;
+        abo.generated_password = generatedPassword;
+        await abo.save();
+
+        res.status(201).json({
+            message: "Compte généré avec succès.",
+            email: generatedEmail,
+            password: generatedPassword
+        });
+    } catch (error) {
+        console.error("Error generating account:", error);
+        res.status(500).json({ message: "Erreur lors de la génération du compte.", error: error.message });
+    }
+});
+
+// ... (بقية المسارات دون تغيير) ...
+app.get('/api/users', async (req, res) => {
+    try {
+        const { email } = req.query;
+        if (!email) return res.status(400).json({ message: "Email requis" });
+
+        const user = await User.findOne({ mail: email }); // لاحظ الحقل mail في DB
+        if (!user) return res.status(404).json({ message: "Utilisateur non trouvé" });
+
+        res.json({ nom: user.nom, mail: user.mail });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Erreur serveur" });
+    }
+});
+
+
+
+
+
+
+
+
+
+
+app.put('/api/user/abonne', async (req, res) => {
+    console.log("Body reçu:", req.body); // Debug
+    const { email } = req.body;
+
+    if (!email) {
+        return res.status(400).json({ error: 'Email requis pour mettre à jour l\'abonnement.' });
+    }
+
+    try {
+        const user = await User.findOne({ mail: email }); // تأكد استخدام 'mail' وليس 'email'
+
+        if (!user) {
+            return res.status(404).json({ error: 'Utilisateur non trouvé.' });
+        }
+
+        user.abonne = 'oui';
+        await user.save();
+
+        res.json({ message: `L'utilisateur ${email} est maintenant abonné.` });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Erreur serveur lors de la mise à jour de l\'abonnement.' });
+    }
+});
+
+
+
+// Utilisez هذه version si vos emails dans la DB sont stockés de manière incohérente (espaces, casse)
+// Assurez-vous d'avoir importé Mongoose et votre modèle Command
+// const Command = require('./models/Command'); // Exemple d'importation
+app.get('/api/commands_user', async (req, res) => {
+    try {
+        const { email } = req.query;
+
+        if (!email) {
+            return res.status(400).json({ message: 'Email du client requis' });
+        }
+
+        // جلب جميع الأوامر المطابقة للبريد الإلكتروني مع تجاهل حالة الأحرف
+        const commands = await Command.find({
+            clientEmail: { $regex: `^${email.trim()}$`, $options: 'i' } // ^ و $ لضمان التطابق الكامل
+        }).sort({ orderDate: -1 }); // ترتيب من الأحدث للأقدم
+
+        if (commands.length === 0) {
+            return res.status(404).json({ message: 'لا توجد أوامر لهذا البريد' });
+        }
+
+        res.json(commands); // يرجع جميع الأوامر المطابقة
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Erreur serveur' });
+    }
+});
+
+
+
+
+
+
+
+
+app.post('/api/vip-categories', async (req, res) => {
+    try {
+        const newCategory = new VipCategory(req.body);
+        const savedCategory = await newCategory.save();
+
+        // --- Cross-System Synchronization ---
+        // 1. If we added a category, ensure a SpecializedCourse group exists for it
+        const catName = savedCategory.title?.fr || savedCategory.title;
+        if (catName) {
+            const existingGroup = await SpecializedCourse.findOne({ vip_category: catName });
+            if (!existingGroup) {
+                const newGroup = new SpecializedCourse({
+                    vip_category: catName,
+                    courses: []
+                });
+                await newGroup.save();
+            }
+        }
+
+        res.status(201).json(savedCategory);
+    } catch (error) {
+        res.status(400).json({ message: "Erreur lors de la création de la catégorie.", error: error.message });
+    }
+});
+
+// -----------------------------------------------------------------
+// 📖 app.get: Get all categories
+// GET /api/vip-categories
+// -----------------------------------------------------------------
+app.get('/api/vip-categories', async (req, res) => {
+    try {
+        const categories = await VipCategory.find().sort({ order: 1, createdAt: -1 });
+        res.status(200).json(categories);
+    } catch (error) {
+        res.status(500).json({ message: "Erreur lors de la récupération des catégories.", error: error.message });
+    }
+});
+
+// -----------------------------------------------------------------
+// ✍️ app.put: Update a category by ID
+// PUT /api/vip-categories/:id
+// -----------------------------------------------------------------
+app.put('/api/vip-categories/:id', async (req, res) => {
+    try {
+        const updatedCategory = await VipCategory.findByIdAndUpdate(
+            req.params.id,
+            req.body,
+            { new: true, runValidators: true } // Return the new document and run schema validation
+        );
+
+        if (!updatedCategory) {
+            return res.status(404).json({ message: "Catégorie non trouvée." });
+        }
+        res.status(200).json(updatedCategory);
+    } catch (error) {
+        res.status(400).json({ message: "Erreur lors de la mise à jour de la catégorie.", error: error.message });
+    }
+});
+
+// 🗑️ app.delete: Delete a category by ID
+// DELETE /api/vip-categories/:id
+// -----------------------------------------------------------------
+app.delete('/api/vip-categories/:id', async (req, res) => {
+    try {
+        const deletedCategory = await VipCategory.findByIdAndDelete(req.params.id);
+
+        if (!deletedCategory) {
+            return res.status(404).json({ message: "Catégorie non trouvée." });
+        }
+
+        // --- Cross-System Cleanup ---
+        // 1. Delete associated course groups (SpecializedCourse) by name
+        const catName = deletedCategory.title?.fr || deletedCategory.title;
+        if (catName) {
+            await SpecializedCourse.deleteMany({ vip_category: catName });
+        }
+
+        // 2. Delete associated videos
+        // (VipCategory might have technical names or just use the main name)
+        await SpecializedVideo.deleteMany({ category: catName });
+
+        res.status(200).json({ message: "Catégorie supprimée avec succès sur tous les systèmes." });
+    } catch (error) {
+        res.status(500).json({ message: "Erreur lors de la suppression de la catégorie.", error: error.message });
+    }
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+// URL: /api/specialized-courses
+
+// 1. GET (Récupérer les cours. Peut filtrer par categoryId via ?category=)
+app.get('/api/specialized-courses', async (req, res) => {
+    try {
+        const query = {};
+
+        if (req.query.category) {
+            const categoryName = req.query.category;
+            query.$or = [
+                { vip_category: categoryName },
+                { 'courses.vip_category': categoryName },
+                { 'hero_content.fr.title': categoryName },
+                { 'hero_content.ar.title': categoryName },
+                { 'hero_content.en.title': categoryName },
+                { 'hero_content.TN.title': categoryName }
+            ];
+        }
+
+        const courses = await SpecializedCourse.find(query).sort({ createdAt: -1 });
+        res.json(courses);
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: err.message });
+    }
+});
+
+// 2. GET by ID
+app.get('/api/specialized-courses/:id', async (req, res) => {
+    try {
+        const course = await SpecializedCourse.findById(req.params.id);
+        if (!course) return res.status(404).json({ message: 'Cours non trouvé' });
+        res.json(course);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
+
+
+// 3. PUT (Mettre à jour un cours)
+app.put('/api/specialized-courses/:id', async (req, res) => {
+    try {
+        const dataToUpdate = { ...req.body };
+
+        // إذا تم تحديث الاسم الرئيسي، نقوم بتحديثه أيضاً داخل مصفوفة الكورسات لضمان التزامن
+        if (dataToUpdate.vip_category) {
+            const group = await SpecializedCourse.findById(req.params.id);
+            if (group && group.courses) {
+                group.courses.forEach(c => {
+                    c.vip_category = dataToUpdate.vip_category;
+                });
+                dataToUpdate.courses = group.courses;
+            }
+        }
+
+        const updatedCourse = await SpecializedCourse.findByIdAndUpdate(
+            req.params.id,
+            dataToUpdate,
+            { new: true, runValidators: true }
+        );
+        if (!updatedCourse) return res.status(404).json({ message: 'Cours non trouvé' });
+        res.json(updatedCourse);
+    } catch (err) {
+        console.error("Error in PUT /api/specialized-courses:", err);
+        res.status(400).json({ message: err.message });
+    }
+});
+
+// 4. DELETE (Supprimer un cours)
+app.delete('/api/specialized-courses/:id', async (req, res) => {
+    try {
+        const deletedCourse = await SpecializedCourse.findByIdAndDelete(req.params.id);
+        if (!deletedCourse) return res.status(404).json({ message: 'Cours non trouvé' });
+
+        // --- Multi-Step Cleanup ---
+        const categoriesToDelete = [deletedCourse.vip_category];
+        if (deletedCourse.courses) {
+            deletedCourse.courses.forEach(c => {
+                const titleStr = typeof c.title === 'object' ? (c.title.fr || c.title.ar) : c.title;
+                const cat = c.technicalName || c.vip_category || titleStr;
+                if (cat && !categoriesToDelete.includes(cat)) {
+                    categoriesToDelete.push(cat);
+                }
+            });
+        }
+
+        // 1. Delete associated videos
+        await SpecializedVideo.deleteMany({ category: { $in: categoriesToDelete } });
+
+        // 2. Sync Deletion with VIP Categories (Public cards)
+        // If this group was the "parent" group matching a public category name, delete it.
+        if (deletedCourse.vip_category) {
+            await VipCategory.deleteMany({
+                $or: [
+                    { title: deletedCourse.vip_category },
+                    { 'title.fr': deletedCourse.vip_category },
+                    { 'title.ar': deletedCourse.vip_category }
+                ]
+            });
+        }
+
+        res.json({ message: 'Cours, vidéos et cartes VIP associées supprimés' });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
+
+
+
+app.post('/api/specialized-courses/group', async (req, res) => {
+    try {
+        const { video_link, courses, vip_category, hero_bg, hero_content } = req.body;
+
+        const vipCategoryName = (courses && courses.length > 0) ? courses[0].vip_category : vip_category;
+
+        if (!vipCategoryName) {
+            return res.status(400).json({ message: 'Catégorie requise.' });
+        }
+
+        // // البحث عن مجموعة موجودة بنفس الاسم (تحقق من المستوى العلوي أو المصفوفة)
+        let existingGroup = await SpecializedCourse.findOne({
+            $or: [
+                { vip_category: vipCategoryName },
+                { 'courses.vip_category': vipCategoryName }
+            ]
+        });
+
+        if (existingGroup) {
+            if (courses && courses.length > 0) {
+                existingGroup.courses.push(...courses);
+            }
+            if (video_link && video_link !== undefined && video_link !== '') {
+                existingGroup.video_link = video_link;
+            }
+            if (hero_bg !== undefined) existingGroup.hero_bg = hero_bg;
+            if (hero_content !== undefined) existingGroup.hero_content = hero_content;
+
+            // ضمان وجود الاسم في المستوى العلوي أيضاً
+            existingGroup.vip_category = vipCategoryName;
+
+            await existingGroup.save();
+            return res.status(200).json({ message: 'Mise à jour réussie.', data: existingGroup });
+        }
+
+        // إنشاء مجموعة جديدة إذا لم توجد
+        const newGroup = new SpecializedCourse({
+            video_link: video_link || {},
+            courses: courses || [],
+            vip_category: vipCategoryName,
+            hero_bg: hero_bg || '',
+            hero_content: hero_content || {}
+        });
+
+        await newGroup.save();
+
+        // --- Cross-System Synchronization ---
+        // Ensure a VipCategory exists for this course group so it shows on the UI
+        try {
+            const existingVip = await VipCategory.findOne({
+                $or: [
+                    { title: vipCategoryName },
+                    { 'title.fr': vipCategoryName }
+                ]
+            });
+            if (!existingVip) {
+                const firstCourse = courses && courses[0];
+                const newVip = new VipCategory({
+                    title: { fr: vipCategoryName, ar: '', tn: '' },
+                    description: { fr: (firstCourse?.description?.fr || firstCourse?.description || "Nouvelle formation"), ar: '', tn: '' },
+                    duration: { fr: (firstCourse?.duration?.fr || firstCourse?.duration || "Access 24/7"), ar: '', tn: '' },
+                    image: firstCourse?.image || '',
+                    order: 99
+                });
+                await newVip.save();
+            }
+        } catch (e) { console.error("Sync error:", e); }
+
+        res.status(201).json({ message: 'Nouvelle catégorie créée avec succès.', data: newGroup });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Erreur serveur.' });
+    }
+});
+
+
+
+
+
+
+
+
+
+
+
+app.post('/api/specialized-videos', upload.fields([
+    { name: 'video_fr', maxCount: 1 },
+    { name: 'video_ar', maxCount: 1 },
+    { name: 'video_en', maxCount: 1 },
+    { name: 'video', maxCount: 1 }
+]), async (req, res) => {
+    try {
+        const { title, description, category, subCategory, videoUrl, title_lang, status_lang, url_lang, order, thumbnail } = req.body;
+
+        // 1. Handle Main URL
+        let finalUrl = videoUrl;
+        if (req.files['video']) {
+            finalUrl = `/uploads/specialized-videos/${req.files['video'][0].filename}`;
+        }
+
+        // 2. Handle Multi-lang URLs
+        let finalUrlLang = typeof url_lang === 'string' ? JSON.parse(url_lang) : (url_lang || {});
+        ['fr', 'ar', 'en'].forEach(lang => {
+            if (req.files[`video_${lang}`]) {
+                finalUrlLang[lang] = `/uploads/specialized-videos/${req.files[`video_${lang}`][0].filename}`;
+            }
+        });
+
+        if (!finalUrl && !finalUrlLang.fr && !finalUrlLang.ar && !finalUrlLang.en && !title && !category) {
+            return res.status(400).json({ message: "Les données sont incomplètes." });
+        }
+
+        const newVideo = new SpecializedVideo({
+            url: finalUrl || finalUrlLang.fr || finalUrlLang.ar || finalUrlLang.en || "",
+            url_lang: finalUrlLang,
+            title,
+            description,
+            thumbnail,
+            category,
+            subCategory: subCategory || '',
+            title_lang: typeof title_lang === 'string' ? JSON.parse(title_lang) : title_lang,
+            status_lang: typeof status_lang === 'string' ? JSON.parse(status_lang) : status_lang,
+            order: Number(order) || 0
+        });
+
+        await newVideo.save();
+        res.status(201).json({ message: "Vidéo ajoutée avec succès.", data: newVideo });
+    } catch (err) {
+        console.error("Erreur lors de l'ajout de la vidéo :", err);
+        res.status(500).json({ message: "Erreur serveur." });
+    }
+});
+
+// Optional: A dedicated upload route if needed, but the above POST handles it.
+app.post('/api/specialized-videos/upload', upload.single('video'), (req, res) => {
+    if (!req.file) {
+        return res.status(400).json({ message: "Aucun fichier n'a été téléchargé." });
+    }
+    res.status(200).json({
+        message: "Fichier téléchargé avec succès.",
+        filePath: `/uploads/specialized-videos/${req.file.filename}`
+    });
+});
+
+
+// 📋 Récupérer toutes les vidéos ou filtrer par catégorie
+
+
+app.get('/api/specialized-videos', async (req, res) => {
+    try {
+        const query = {};
+        const queryCategory = req.query.category || req.query['category[]'];
+        if (queryCategory) {
+            const matchArr = Array.isArray(queryCategory) ? queryCategory : [queryCategory];
+
+            // Check both category (for backwards compatibility/main category) 
+            // and subCategory (for the new hierarchical architecture)
+            query.$or = [
+                { category: { $in: matchArr } },
+                { subCategory: { $in: matchArr } }
+            ];
+        }
+        const videos = await SpecializedVideo.find(query).sort({ order: 1, createdAt: -1 });
+        res.json(videos);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: "Erreur serveur." });
+    }
+});
+
+// 🗑️ Delete all videos matching a specific category
+app.delete('/api/specialized-videos/by-category', async (req, res) => {
+    try {
+        const queryCategory = req.query.category || req.query['category[]'];
+        if (!queryCategory) {
+            return res.status(400).json({ message: "Catégorie requise." });
+        }
+
+        let categoriesToDelete = [];
+        if (Array.isArray(queryCategory)) {
+            categoriesToDelete = queryCategory;
+        } else {
+            categoriesToDelete = [queryCategory];
+        }
+
+        const result = await SpecializedVideo.deleteMany({ category: { $in: categoriesToDelete } });
+        res.json({ message: "Vidéos supprimées", deletedCount: result.deletedCount });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: "Erreur lors de la suppression par catégorie." });
+    }
+});
+
+// ✅ Mettre à jour une vidéo spécialisée par ID
+app.put('/api/specialized-videos/:id', upload.fields([
+    { name: 'video_fr', maxCount: 1 },
+    { name: 'video_ar', maxCount: 1 },
+    { name: 'video_en', maxCount: 1 },
+    { name: 'video', maxCount: 1 }
+]), async (req, res) => {
+    try {
+        const { title, description, category, subCategory, videoUrl, title_lang, status_lang, url_lang, order, thumbnail } = req.body;
+
+        const videoId = req.params.id;
+        if (!videoId.match(/^[0-9a-fA-F]{24}$/)) {
+            return res.status(400).json({ message: "ID de vidéo invalide." });
+        }
+
+        const updateData = {};
+
+        if (title !== undefined) updateData.title = title.trim();
+        if (description !== undefined) updateData.description = description.trim();
+        if (category !== undefined) updateData.category = category.trim();
+        if (order !== undefined) updateData.order = Number(order);
+        if (thumbnail !== undefined) updateData.thumbnail = thumbnail;
+
+        if (title_lang !== undefined) {
+            updateData.title_lang = typeof title_lang === 'string' ? JSON.parse(title_lang) : title_lang;
+        }
+        if (status_lang !== undefined) {
+            updateData.status_lang = typeof status_lang === 'string' ? JSON.parse(status_lang) : status_lang;
+        }
+
+        if (subCategory !== undefined) {
+            updateData.subCategory = subCategory.trim() || '';
+        }
+
+        // Handle Main URL
+        if (req.files && req.files['video']) {
+            updateData.url = `/uploads/specialized-videos/${req.files['video'][0].filename}`;
+        } else if (videoUrl) {
+            updateData.url = videoUrl;
+        }
+
+        // Handle Multi-lang URLs
+        if (url_lang !== undefined || (req.files && Object.keys(req.files).some(k => k.startsWith('video_')))) {
+            let finalUrlLang = typeof url_lang === 'string' ? JSON.parse(url_lang) : (url_lang || {});
+            ['fr', 'ar', 'en'].forEach(lang => {
+                if (req.files && req.files[`video_${lang}`]) {
+                    finalUrlLang[lang] = `/uploads/specialized-videos/${req.files[`video_${lang}`][0].filename}`;
+                }
+            });
+            updateData.url_lang = finalUrlLang;
+        }
+
+        const updatedVideo = await SpecializedVideo.findByIdAndUpdate(
+            videoId,
+            { $set: updateData },
+            { new: true, runValidators: true }
+        );
+
+        if (!updatedVideo) {
+            return res.status(404).json({ message: "Vidéo non trouvée." });
+        }
+
+        res.json({ message: "✅ Vidéo mise à jour avec succès.", data: updatedVideo });
+    } catch (error) {
+        console.error("Erreur lors de la mise à jour :", error);
+        res.status(500).json({ message: "Erreur serveur." });
+    }
+});
+
+// ✅ Mettre à jour les miniatures en masse par TITRE (Update thumbnails in bulk by TITLE)
+app.patch('/api/specialized-videos/bulk-thumbnail', async (req, res) => {
+    try {
+        const { title, thumbnail } = req.body;
+        if (!title || !thumbnail) {
+            return res.status(400).json({ message: "Titre et miniature requis." });
+        }
+
+        // Use case-insensitive match to be safe
+        const result = await SpecializedVideo.updateMany(
+            { title: { $regex: new RegExp(`^${title.trim()}$`, 'i') } },
+            { $set: { thumbnail } }
+        );
+
+        res.json({
+            message: `✅ ${result.modifiedCount} vidéos mises à jour avec succès.`,
+            modifiedCount: result.modifiedCount
+        });
+    } catch (error) {
+        console.error("Bulk thumbnail update error:", error);
+        res.status(500).json({ message: "Erreur serveur." });
+    }
+});
+
+
+
+
+// ❌ Supprimer une vidéo par ID (دون تغيير، لكن لا يوجد ملف محلي للحذف)
+app.delete('/api/specialized-videos/:id', async (req, res) => {
+    try {
+        const deletedVideo = await SpecializedVideo.findByIdAndDelete(req.params.id);
+        if (!deletedVideo) return res.status(404).json({ message: "Vidéo non trouvée." });
+
+        res.json({ message: "Vidéo محذوفة (الملف المحلي لم يُحذف لأنه لم يُرفع).", data: deletedVideo });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: "Erreur serveur." });
+    }
+});
+
+
+
+
+
+// ------------------------- POST (ADD) -------------------------
+app.post("/api/home-products", async (req, res) => {
+    try {
+        const newProduct = new HomeProduct(req.body);
+        const saved = await newProduct.save();
+        res.status(201).json(saved);
+    } catch (err) {
+        res.status(400).json({ message: "Erreur lors de l'ajout.", error: err.message });
+    }
+});
+
+
+app.get("/api/home-products", async (req, res) => {
+    try {
+        const products = await HomeProduct.find().sort({ createdAt: -1 });
+        res.json(products);
+    } catch (err) {
+        res.status(500).json({ message: "Erreur lors de la récupération." });
+    }
+});
+
+// ------------------------- GET ONE -------------------------
+app.get("/api/home-products/:id", async (req, res) => {
+    try {
+        const product = await HomeProduct.findById(req.params.id);
+
+        if (!product) return res.status(404).json({ message: "Produit introuvable." });
+
+        res.json(product);
+    } catch (err) {
+        res.status(500).json({ message: "Erreur serveur." });
+    }
+});
+
+
+
+// ------------------------- PUT (UPDATE) -------------------------
+app.put("/api/home-products/:id", async (req, res) => {
+    try {
+        const updatedProduct = await HomeProduct.findByIdAndUpdate(
+            req.params.id,
+            req.body,
+            { new: true }
+        );
+
+        if (!updatedProduct)
+            return res.status(404).json({ message: "Produit introuvable." });
+
+        res.json(updatedProduct);
+    } catch (err) {
+        res.status(400).json({ message: "Erreur de mise à jour." });
+    }
+});
+
+// ------------------------- SHOP CATEGORIES -------------------------
+app.get('/api/shop-categories', async (req, res) => {
+    try {
+        const categories = await ShopCategory.find().sort({ order: 1 });
+        res.json(categories);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/shop-categories', async (req, res) => {
+    try {
+        const newCategory = new ShopCategory(req.body);
+        await newCategory.save();
+        res.status(201).json(newCategory);
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+});
+
+app.put('/api/shop-categories/:id', async (req, res) => {
+    try {
+        const updated = await ShopCategory.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        res.json(updated);
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+});
+
+app.delete('/api/shop-categories/:id', async (req, res) => {
+    try {
+        await ShopCategory.findByIdAndDelete(req.params.id);
+        res.json({ message: 'Category deleted' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+
+// ------------------------- DELETE -------------------------
+app.delete("/api/home-products/:id", async (req, res) => {
+    try {
+        const deleted = await HomeProduct.findByIdAndDelete(req.params.id);
+
+        if (!deleted)
+            return res.status(404).json({ message: "Produit introuvable." });
+
+        res.json({ message: "Produit supprimé avec succès !" });
+    } catch (err) {
+        res.status(500).json({ message: "Erreur lors de la suppression." });
+    }
+});
+
+
+// ------------------------- SITE SETTINGS -------------------------
+app.get('/api/settings/:key', async (req, res) => {
+    try {
+        const setting = await SiteSetting.findOne({ key: req.params.key });
+        res.json(setting ? setting.value : null);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.put('/api/settings/:key', async (req, res) => {
+    try {
+        const setting = await SiteSetting.findOneAndUpdate(
+            { key: req.params.key },
+            { value: req.body.value },
+            { new: true, upsert: true }
+        );
+        res.json(setting);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ------------------------- BULK RESET (SPECIALIZED) -------------------------
+// Delete all specialized videos
+app.delete('/api/specialized-videos-all/reset-now', async (req, res) => {
+    try {
+        await SpecializedVideo.deleteMany({});
+        res.json({ message: 'Tous les vidéos spécialisées ont été supprimées' });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
+// Delete all specialized courses
+app.delete('/api/specialized-courses-all/reset-now', async (req, res) => {
+    try {
+        await SpecializedCourse.deleteMany({});
+        res.json({ message: 'Tous les cours spécialisés ont été supprimés' });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
+// ------------------------- AI CHAT ASSISTANT -------------------------
+app.post('/api/ai-chat', async (req, res) => {
+    const { message, language } = req.body;
+    if (!message) return res.status(400).json({ error: 'Message is required' });
+
+    try {
+        const prompt = `
+            You are a professional assistant specialized ONLY in sewing, clothing, fashion design, and patterns (مجال الخياطة والملابس).
+            Your name is "Assistant Atelier Sfax".
+            
+            RULES:
+            1. If the user asks about ANYTHING outside the field of sewing, clothing, or fashion (food, sports, politics, math, general info), you MUST answer EXACTLY with:
+               "أسف، لا يمكنني الإجابة خارج مجال الخياطة والملابس." (if the question is in Arabic)
+               or "Désolé, je ne peux pas répondre en dehors du domaine de la couture et de l'habillement." (if the question is in French).
+            2. Be professional and helpful for sewing tasks.
+            3. Use the language: ${language === 'ar' ? 'Arabic' : 'French'}.
+            4. Keep responses concise and practical.
+
+            User message: ${message}
+        `;
+
+        const result = await genAI.models.generateContent({
+            model: "models/gemini-2.5-flash",
+            contents: prompt
+        });
+
+        const responseText = result.text || result.response?.text();
+        res.status(200).json({ reply: responseText });
+    } catch (error) {
+        console.error("Gemini AI Error:", error);
+        res.status(500).json({ error: 'AI Assistant Error' });
+    }
+});
+
+// Serve React App (Vite build folder: dist)
+app.use(express.static(path.join(__dirname, '../client/dist')));
+
+// Fallback to index.html for SPA routing
+app.get(/(.*)/, (req, res) => {
+    res.sendFile(path.join(__dirname, '../client/dist', 'index.html'));
+});
+
+mongoose.connect(MONGODB_URI)
+    .then(() => {
+        console.log('🎉 Successfully connected to MongoDB!');
+        app.listen(PORT, () => {
+            console.log(`🚀 Server is running on port ${PORT}`);
+        });
+    })
+    .catch((err) => {
+        console.error('❌ MongoDB connection error:', err);
+        process.exit(1);
+    });
