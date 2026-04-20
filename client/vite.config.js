@@ -6,24 +6,11 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      // 🛡️ Pro-Security Proxy Logic
       '/api': {
-        target: 'http://localhost:3000', // Root backend URL
+        target: 'https://2c-patron.vercel.app/',
         changeOrigin: true,
         secure: false,
-        // Rewrite can be used if you want to hide the /api prefix too
-        // rewrite: (path) => path.replace(/^\/api/, ''), 
-        
-        // Add custom security headers
-        headers: {
-          'X-Proxy-Secure-Access': 'CPATRON_ADVANCED_SECURITY_KEY_2026',
-        },
       },
-      // Proxy for uploads if needed
-      '/uploads': {
-        target: 'http://localhost:3000',
-        changeOrigin: true,
-      }
     },
   },
 });

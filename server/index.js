@@ -55,23 +55,6 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true })); // ✅ ضروري لقراءة form-data
 
-// 🛡️ SECURITY LAYER: Validation du Proxy (Évite l'accès direct via l'URL API)
-// Ce middleware s'assure que toutes les requêtes passent par le proxy autorisé de l'application
-app.use((req, res, next) => {
-    // Autoriser le favicon et la racine pour les tests de santé (Health checks)
-    if (req.path === '/' || req.path === '/favicon.ico') return next();
-
-    const proxySecret = req.headers['x-proxy-secure-access'];
-    if (proxySecret === 'CPATRON_ADVANCED_SECURITY_KEY_2026') {
-        next();
-    } else {
-        // Bloquer tout accès direct à l'API via l'URL réelle du serveur
-        res.status(403).json({
-            error: "Security Alert: Direct API access is forbidden. Use official application gateway."
-        });
-    }
-});
-
 
 // -------------------- Multer Configuration --------------------
 // نستعمل memoryStorage بدلاً من diskStorage لتفادي خطأ read-only system في Vercel
@@ -209,7 +192,7 @@ app.get('/favicon.ico', (req, res) => res.status(204).end());
 
 
 app.get('/', (req, res) => {
-    res.send('Hello World! Connected to Express and MongoDB v2. 4/20/2026');
+    res.send('Hello World! Connected to Express and MongoDB. 4/20/2026');
 });
 
 // **********************************************
