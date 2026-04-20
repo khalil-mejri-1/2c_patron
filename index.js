@@ -192,7 +192,7 @@ app.get('/favicon.ico', (req, res) => res.status(204).end());
 
 
 app.get('/', (req, res) => {
-    res.send('Hello World! Connected to Express and MongoDB. 4/20/2026');
+    res.send('Hello World! Connected to Express and MongoDB v2. 4/20/2026');
 });
 
 // **********************************************
