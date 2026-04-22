@@ -22,9 +22,15 @@ const VipCategorySchema = new mongoose.Schema({
     },
     // URL of the category image
     image: {
-        type: String,
-        required: [true, "L'URL de l'image est obligatoire."]
+        type: Object,
+        required: [true, "L'URL de l'image est obligatoire."],
+        default: {}
     },
+    technicalName: {
+        type: String,
+        default: ''
+    },
+
     // Order for displaying the category
     order: {
         type: Number,
@@ -44,6 +50,6 @@ const VipCategorySchema = new mongoose.Schema({
         type: Date,
         default: Date.now
     }
-});
+}, { minimize: false }); // Added minimize: false to preserve empty objects if needed
 
 module.exports = mongoose.model('VipCategory', VipCategorySchema);
