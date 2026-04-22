@@ -1,3 +1,4 @@
+import React from 'react'
 import { BrowserRouter, Routes, Route, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState } from 'react';
 import BASE_URL from './apiConfig';
