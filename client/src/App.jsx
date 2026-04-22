@@ -51,28 +51,42 @@ function AppContent() {
     const restrictedPathsForAuthenticated = ['/login', '/register', '/logintest'];
     const vipRequiredPaths = ['/vip-access', '/Vip-access', '/les_cours', '/Leçons'];
 
-    // 🛡️ Logic for Right-Click Protection
+    // 🛡️ Logic for Right-Click & DevTools Protection
     useEffect(() => {
         const handleContextMenu = (e) => e.preventDefault();
+        const handleKeyDown = (e) => {
+            // Block F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+Shift+C, Ctrl+U
+            if (
+                e.key === 'F12' || 
+                (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.key === 'J' || e.key === 'j' || e.key === 'C' || e.key === 'c')) ||
+                (e.ctrlKey && (e.key === 'U' || e.key === 'u'))
+            ) {
+                e.preventDefault();
+                return false;
+            }
+        };
         
-        const fetchRightClickSettings = async () => {
+        const fetchSettings = async () => {
             try {
                 const response = await fetch(`${BASE_URL}/api/settings/disable_right_click`);
                 const value = await response.json();
                 if (value === true) {
                     document.addEventListener('contextmenu', handleContextMenu);
+                    document.addEventListener('keydown', handleKeyDown);
                 } else {
                     document.removeEventListener('contextmenu', handleContextMenu);
+                    document.removeEventListener('keydown', handleKeyDown);
                 }
             } catch (err) {
                 console.error("Erreur settings:", err);
             }
         };
 
-        fetchRightClickSettings();
+        fetchSettings();
 
         return () => {
             document.removeEventListener('contextmenu', handleContextMenu);
+            document.removeEventListener('keydown', handleKeyDown);
         };
     }, [location.pathname]);
 

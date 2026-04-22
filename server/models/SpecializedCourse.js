@@ -15,6 +15,8 @@ const specializedCourseSchema = new mongoose.Schema({
     hero_bg: { type: String, required: false },
     hero_content: { type: Object, default: {} }, // Multi-language object
     vip_category: { type: String, required: false }, // Top-level category name
+    technicalName: { type: String, default: '' }, // Technical identifier for URLs
+
     courses: [courseItemSchema],
     createdAt: { type: Date, default: Date.now },
 });

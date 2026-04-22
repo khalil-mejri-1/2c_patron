@@ -1360,17 +1360,30 @@ app.post('/api/vip-categories', async (req, res) => {
         const newCategory = new VipCategory(req.body);
         const savedCategory = await newCategory.save();
 
-        // --- Cross-System Synchronization ---
-        // 1. If we added a category, ensure a SpecializedCourse group exists for it
         const catName = savedCategory.title?.fr || savedCategory.title;
-        if (catName) {
-            const existingGroup = await SpecializedCourse.findOne({ vip_category: catName });
+        const technicalName = savedCategory.technicalName;
+
+        if (catName || technicalName) {
+            // Try to find by technicalName first, then by title
+            let existingGroup = null;
+            if (technicalName) {
+                existingGroup = await SpecializedCourse.findOne({ technicalName: technicalName });
+            }
+            if (!existingGroup && catName) {
+                existingGroup = await SpecializedCourse.findOne({ vip_category: catName });
+            }
+
             if (!existingGroup) {
                 const newGroup = new SpecializedCourse({
                     vip_category: catName,
+                    technicalName: technicalName || '',
                     courses: []
                 });
                 await newGroup.save();
+            } else if (technicalName && !existingGroup.technicalName) {
+                // Link existing group to technical name if not already linked
+                existingGroup.technicalName = technicalName;
+                await existingGroup.save();
             }
         }
 
@@ -1408,6 +1421,28 @@ app.put('/api/vip-categories/:id', async (req, res) => {
         if (!updatedCategory) {
             return res.status(404).json({ message: "Catégorie non trouvée." });
         }
+
+        // --- Cross-System Synchronization ---
+        const catName = updatedCategory.title?.fr || updatedCategory.title;
+        const technicalName = updatedCategory.technicalName;
+
+        if (catName || technicalName) {
+            // Find the group and update its identifiers
+            let group = null;
+            if (technicalName) {
+                group = await SpecializedCourse.findOne({ technicalName: technicalName });
+            }
+            if (!group && catName) {
+                group = await SpecializedCourse.findOne({ vip_category: catName });
+            }
+
+            if (group) {
+                group.vip_category = catName;
+                group.technicalName = technicalName || '';
+                await group.save();
+            }
+        }
+
         res.status(200).json(updatedCategory);
     } catch (error) {
         res.status(400).json({ message: "Erreur lors de la mise à jour de la catégorie.", error: error.message });
@@ -1464,8 +1499,10 @@ app.get('/api/specialized-courses', async (req, res) => {
         if (req.query.category) {
             const categoryName = req.query.category;
             query.$or = [
+                { technicalName: categoryName },
                 { vip_category: categoryName },
                 { 'courses.vip_category': categoryName },
+                { 'courses.technicalName': categoryName },
                 { 'hero_content.fr.title': categoryName },
                 { 'hero_content.ar.title': categoryName },
                 { 'hero_content.en.title': categoryName },

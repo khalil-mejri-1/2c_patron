@@ -185,7 +185,7 @@ export default function Vipaccess() {
 
 
 
-    const handleModalFileUpload = async (e) => {
+    const handleModalFileUpload = async (e, langCode = null) => {
         const file = e.target.files[0];
         if (!file) return;
 
@@ -197,7 +197,17 @@ export default function Vipaccess() {
             const uploadRes = await axios.post(`${BASE_URL}/api/upload`, formData);
             const imageUrl = uploadRes.data.url;
 
-            setCategoryFormData(prev => ({ ...prev, image: imageUrl }));
+            if (langCode) {
+                setCategoryFormData(prev => ({
+                    ...prev,
+                    image: {
+                        ...(typeof prev.image === 'object' ? prev.image : { fr: prev.image || '' }),
+                        [langCode]: imageUrl
+                    }
+                }));
+            } else {
+                setCategoryFormData(prev => ({ ...prev, image: imageUrl }));
+            }
             showAlert('success', 'Succès', 'Image téléchargée !');
         } catch (err) {
             console.error("Upload error:", err);
@@ -276,18 +286,21 @@ export default function Vipaccess() {
         const title = typeof data.title === 'object' ? { ...data.title } : { fr: data.title || '' };
         const description = typeof data.description === 'object' ? { ...data.description } : { fr: data.description || '' };
         const duration = typeof data.duration === 'object' ? { ...data.duration } : { fr: data.duration || '' };
+        const image = typeof data.image === 'object' ? { ...data.image } : { fr: data.image || '' };
 
         languages.forEach(lang => {
             if (!title[lang.code]) title[lang.code] = title.fr || '';
             if (!description[lang.code]) description[lang.code] = description.fr || '';
             if (!duration[lang.code]) duration[lang.code] = duration.fr || '';
+            if (!image[lang.code]) image[lang.code] = image.fr || '';
         });
 
         return {
             title,
             description,
-            image: data.image || '',
-            duration: duration,
+            image,
+            technicalName: data.technicalName || '',
+            duration,
             order: data.order || 0,
             accessType: data.accessType || 'vip',
             imageFit: data.imageFit || 'cover'
@@ -471,6 +484,11 @@ export default function Vipaccess() {
                             {vipCategories.map((course, index) => {
                                 const actualAccessType = course.accessType || 'vip';
                                 const isLocked = actualAccessType === 'vip' && !isLoggedIn;
+                                
+                                // Logic for title and image per language
+                                const displayTitle = typeof course.title === 'object' ? (course.title[appLanguage] || course.title.fr) : course.title;
+                                const displayImage = typeof course.image === 'object' ? (course.image[appLanguage] || course.image.fr || course.image['fr']) : (course.image || '');
+                                const technicalLink = course.technicalName ? encodeURIComponent(course.technicalName) : encodeURIComponent(typeof course.title === 'object' ? (course.title.fr || course.title[Object.keys(course.title)[0]]) : course.title);
 
                                 return (
                                     <div
@@ -484,7 +502,7 @@ export default function Vipaccess() {
                                         }}
                                         onClick={() => {
                                             if (!isLocked) {
-                                                navigate(`/les_cours/${encodeURIComponent(typeof course.title === 'object' ? (course.title.fr || course.title[Object.keys(course.title)[0]]) : course.title)}`);
+                                                navigate(`/les_cours/${technicalLink}`);
                                             } else {
                                                 setShowVipModal(true);
                                             }
@@ -492,10 +510,7 @@ export default function Vipaccess() {
 
                                     >
                                         <div className="vip-card-img-wrapper">
-                                            {/* <div className="vip-card-tag" style={{ background: actualAccessType === 'gratuit' ? '#10b981' : 'rgba(212, 175, 55, 0.9)', color: actualAccessType === 'gratuit' ? 'white' : 'black' }}>
-                                                {actualAccessType === 'gratuit' ? (appLanguage === 'ar' ? 'مجاني' : 'GRATUIT') : (appLanguage === 'ar' ? 'دورة VIP' : 'COURS VIP')}
-                                            </div> */}
-                                            <img src={course.image} alt={course.title} className="vip-card-img" style={{ objectFit: course.imageFit || 'cover' }} />
+                                            <img src={displayImage} alt={displayTitle} className="vip-card-img" style={{ objectFit: course.imageFit || 'cover' }} />
                                             <div className="vip-card-overlay">
                                                 {isAdmin && (
                                                     <div className="admin-card-controls" onClick={(e) => e.stopPropagation()}>
@@ -507,7 +522,7 @@ export default function Vipaccess() {
                                         </div>
                                         <div className="vip-card-body">
                                             <h3 className="vip-card-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                {typeof course.title === 'object' ? (course.title[appLanguage] || course.title.fr) : course.title}
+                                                {displayTitle}
                                                 {isLocked && <FaLock style={{ color: '#ef4444', fontSize: '1rem' }} />}
                                                 {!isLocked && actualAccessType === 'gratuit' && <FaUnlock style={{ color: '#10b981', fontSize: '1rem' }} />}
                                             </h3>
@@ -537,119 +552,52 @@ export default function Vipaccess() {
 
                 <Footer />
 
-                {/* 🛑 Modal Accès Limité (Creative Design - Synced with Home) */}
+                {/* 🛑 Modal Accès Limité */}
                 {showVipModal && (
                     <div className="premium-modal-backdrop" onClick={() => !isSubmittingVip && setShowVipModal(false)}>
                         <div className="creative-modal-content" onClick={(e) => e.stopPropagation()} style={{ overflow: 'visible' }}>
-                            {/* ABSOLUTE CROWN */}
                             <div className="creative-crown-wrapper">
                                 <FaCrown />
                             </div>
 
-                            {/* Top Header Section */}
                             <div className="creative-modal-header">
-                                <button
-                                    className="creative-close-btn"
-                                    onClick={() => setShowVipModal(false)}
-                                >
-                                    <FaTimes />
-                                </button>
-
-                                <h2 className="creative-title">
-                                    {t.limitedAccess}
-                                </h2>
+                                <button className="creative-close-btn" onClick={() => setShowVipModal(false)}><FaTimes /></button>
+                                <h2 className="creative-title">{t.limitedAccess}</h2>
                             </div>
 
-                            {/* Body Section */}
                             <div className="creative-modal-body">
                                 {!vipRequestSuccess ? (
                                     <>
-                                        <p className="creative-subtitle">
-                                            {t.vipMessage}
-                                        </p>
-
-                                        <div className="creative-benefit-pill">
-                                            {t.vipBenefits}
-                                        </div>
-
+                                        <p className="creative-subtitle">{t.vipMessage}</p>
+                                        <div className="creative-benefit-pill">{t.vipBenefits}</div>
                                         <form onSubmit={handleVipRequest} style={{ width: '100%' }}>
                                             <div className="creative-input-group">
                                                 <label>{appLanguage === 'ar' ? 'رقم الهاتف' : 'Numéro de Téléphone'}</label>
                                                 <div className="creative-input-wrapper">
                                                     <FaPhoneAlt />
-                                                    <input
-                                                        type="tel"
-                                                        placeholder="Ex: 22 222 222"
-                                                        value={vipPhone}
-                                                        onChange={(e) => setVipPhone(e.target.value.replace(/\D/g, ''))}
-                                                        minLength={8}
-                                                        required
-                                                        className="creative-input"
-                                                    />
+                                                    <input type="tel" placeholder="Ex: 22 222 222" value={vipPhone} onChange={(e) => setVipPhone(e.target.value.replace(/\D/g, ''))} minLength={8} required className="creative-input" />
                                                 </div>
                                             </div>
-
                                             <div className="creative-input-group">
                                                 <label>{appLanguage === 'ar' ? 'الاسم الكامل' : 'Nom Complet'}</label>
                                                 <div className="creative-input-wrapper">
                                                     <FaUser />
-                                                    <input
-                                                        type="text"
-                                                        placeholder={appLanguage === 'ar' ? 'اسمك الكامل' : 'Votre Nom et Prénom'}
-                                                        value={vipFullName}
-                                                        onChange={(e) => setVipFullName(e.target.value.replace(/[^a-zA-Z\s\u0600-\u06FF]/g, ''))}
-                                                        required
-                                                        className="creative-input"
-                                                    />
+                                                    <input type="text" placeholder={appLanguage === 'ar' ? 'اسمك الكامل' : 'Votre Nom et Prénom'} value={vipFullName} onChange={(e) => setVipFullName(e.target.value.replace(/[^a-zA-Z\s\u0600-\u06FF]/g, ''))} required className="creative-input" />
                                                 </div>
                                             </div>
-
                                             <button type="submit" className="creative-submit-btn" disabled={isSubmittingVip}>
                                                 {isSubmittingVip ? (appLanguage === 'ar' ? 'جاري الإرسال...' : 'Envoi...') : (appLanguage === 'ar' ? 'إرسال الطلب' : 'Envoyer la demande')}
                                             </button>
-
-                                            <button
-                                                type="button"
-                                                className="creative-later-btn"
-                                                onClick={() => setShowVipModal(false)}
-                                                style={{
-                                                    background: 'none',
-                                                    border: 'none',
-                                                    color: '#b5bac1',
-                                                    marginTop: '15px',
-                                                    cursor: 'pointer',
-                                                    fontWeight: '800',
-                                                    fontSize: '0.85rem',
-                                                    textTransform: 'uppercase'
-                                                }}
-                                            >
+                                            <button type="button" className="creative-later-btn" onClick={() => setShowVipModal(false)}>
                                                 {t.later}
                                             </button>
                                         </form>
                                     </>
                                 ) : (
                                     <div style={{ padding: '15px 0' }}>
-                                        <div style={{
-                                            width: '70px',
-                                            height: '70px',
-                                            background: '#ecfdf5',
-                                            color: '#34d399',
-                                            borderRadius: '50%',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            fontSize: '2.5rem',
-                                            margin: '0 auto 20px',
-                                            boxShadow: '0 15px 35px rgba(52, 211, 153, 0.15)'
-                                        }}>
-                                            <FaCheckCircle />
-                                        </div>
-                                        <h3 style={{ color: '#0f172a', fontSize: '1.6rem', marginBottom: '10px', fontWeight: '900' }}>
-                                            {t.requestSentTitle}
-                                        </h3>
-                                        <p style={{ color: '#64748b', fontSize: '1rem', lineHeight: '1.6', maxWidth: '300px', margin: '0 auto' }}>
-                                            {t.requestSentMsg}
-                                        </p>
+                                        <div className="success-icon-badge"><FaCheckCircle /></div>
+                                        <h3 style={{ color: '#0f172a', fontSize: '1.6rem', marginBottom: '10px', fontWeight: '900' }}>{t.requestSentTitle}</h3>
+                                        <p style={{ color: '#64748b', fontSize: '1rem', lineHeight: '1.6', maxWidth: '300px', margin: '0 auto' }}>{t.requestSentMsg}</p>
                                     </div>
                                 )}
                             </div>
@@ -657,42 +605,60 @@ export default function Vipaccess() {
                     </div>
                 )}
 
-                {/* --- 🏅 CERTIFICATION MODAL PREMIUM 🏅 --- */}
+                {/* 🏅 CERTIFICATION MODAL PREMIUM */}
                 {showCertifModal && (
                     <div className="premium-modal-backdrop">
                         <div className="premium-modal-content">
                             <button className="premium-modal-close-icon" onClick={handleCloseCertifModal}><FaTimes /></button>
-                            <div className="vip-cert-icon-wrapper">
-                                <FaCertificate />
-                            </div>
+                            <div className="vip-cert-icon-wrapper"><FaCertificate /></div>
                             <h2 className="premium-modal-title">{t.modalTitle}</h2>
                             <p className="vip-modal-text">{t.modalText(true)}</p>
-
                             <div className="vip-modal-whatsapp">
                                 <span className="whatsapp-label">{t.modalSmallText}</span>
                                 <span className="whatsapp-value">{t.whatsappNum}</span>
                             </div>
-
-                            <button className="premium-btn-cta gold" onClick={handleCloseCertifModal}>
-                                {t.modalBtn}
-                            </button>
+                            <button className="premium-btn-cta gold" onClick={handleCloseCertifModal}>{t.modalBtn}</button>
                         </div>
                     </div>
                 )}
 
-                {/* --- 📝 MANAGE CATEGORY MODAL 📝 --- */}
+                {/* 📝 MANAGE CATEGORY MODAL */}
                 {showCategoryModal && (
                     <div className="premium-modal-backdrop" onClick={() => setShowCategoryModal(false)}>
-                        <div className="premium-modal-content" onClick={(e) => e.stopPropagation()}>
+                        <div className="premium-modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '800px', maxHeight: '90vh', overflowY: 'auto' }}>
                             <button className="premium-modal-close-icon" onClick={() => setShowCategoryModal(false)}><FaTimes /></button>
                             <h2 className="premium-modal-title">
                                 {categoryMode === 'add' ? t.addCategory : t.editCategory}
                             </h2>
 
                             <div className="premium-form-grid" style={{ gridTemplateColumns: '1fr' }}>
+
+                                {/* --- Shared Technical Name Field --- */}
+                                <div className="premium-form-group" style={{ marginBottom: '25px' }}>
+                                    <label style={{ fontWeight: 'bold', color: '#1e293b' }}>
+                                        {appLanguage === 'ar' ? 'الاسم التقني (يستخدم في الرابط)' : 'Nom Technique (Utilisé dans le lien)'}
+                                    </label>
+                                    <div style={{ position: 'relative' }}>
+                                        <input
+                                            type="text"
+                                            placeholder="ex: Master Corsage"
+                                            value={categoryFormData.technicalName || ''}
+                                            onChange={(e) => setCategoryFormData({ ...categoryFormData, technicalName: e.target.value })}
+                                            style={{ paddingLeft: appLanguage === 'ar' ? '12px' : '35px', paddingRight: appLanguage === 'ar' ? '35px' : '12px' }}
+                                        />
+                                    </div>
+                                    <small style={{ color: '#64748b', fontSize: '0.75rem', marginTop: '4px', display: 'block' }}>
+                                        {appLanguage === 'ar' ? 'هذا الاسم مشترك بين جميع اللغات ولا يسمح بالرموز الخاصة.' : 'Ce nom est partagé entre toutes les langues. Pas de caractères spéciaux.'}
+                                    </small>
+                                </div>
+
+                                {/* --- Language Specific Fields (Filtered by current appLanguage) --- */}
                                 {languages.filter(l => l.code === appLanguage).map(lang => (
-                                    <div key={lang.code} className="premium-lang-section" style={{ border: '1px solid #e2e8f0', borderRadius: '12px', padding: '15px', marginBottom: '15px' }}>
-                                        <h4 className="lang-indicator" style={{ background: '#d4af37', display: 'inline-block', marginBottom: '10px' }}>{lang.label}</h4>
+                                    <div key={lang.code} className="premium-lang-section" style={{ border: 'none', background: '#f8fafc', borderRadius: '15px', padding: '20px', marginBottom: '20px' }}>
+                                        <h4 className="lang-indicator" style={{ background: '#d4af37', display: 'inline-block', marginBottom: '15px', color: 'white', padding: '4px 12px', borderRadius: '8px', fontSize: '0.85rem' }}>
+                                            {appLanguage === 'ar' ? `البيانات باللغة: ${lang.label}` : `Données en : ${lang.label}`}
+                                        </h4>
+                                        
                                         <div className="premium-form-group">
                                             <label>{t.categoryTitle}</label>
                                             <input
@@ -705,6 +671,7 @@ export default function Vipaccess() {
                                                 dir={lang.code === 'ar' ? 'rtl' : 'ltr'}
                                             />
                                         </div>
+
                                         <div className="premium-form-group">
                                             <label>{t.categoryDesc}</label>
                                             <textarea
@@ -714,8 +681,10 @@ export default function Vipaccess() {
                                                     setCategoryFormData({ ...categoryFormData, description: newDesc });
                                                 }}
                                                 dir={lang.code === 'ar' ? 'rtl' : 'ltr'}
+                                                rows="3"
                                             />
                                         </div>
+
                                         <div className="premium-form-group">
                                             <label>{t.categoryDuration}</label>
                                             <input
@@ -728,72 +697,71 @@ export default function Vipaccess() {
                                                 dir={lang.code === 'ar' ? 'rtl' : 'ltr'}
                                             />
                                         </div>
+
+                                        <div className="premium-form-group">
+                                            <label>{appLanguage === 'ar' ? 'صورة الكارت' : 'Image de la carte'}</label>
+                                            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                                                <input
+                                                    type="text"
+                                                    placeholder="URL"
+                                                    value={typeof categoryFormData.image === 'object' ? (categoryFormData.image[lang.code] || '') : (lang.code === 'fr' ? categoryFormData.image : '')}
+                                                    readOnly
+                                                    style={{ flex: 1 }}
+                                                />
+                                                <input
+                                                    type="file"
+                                                    id={`file-${lang.code}`}
+                                                    onChange={(e) => handleModalFileUpload(e, lang.code)}
+                                                    style={{ display: 'none' }}
+                                                    accept="image/*"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => document.getElementById(`file-${lang.code}`).click()}
+                                                    className="premium-btn-cta gold"
+                                                    style={{ padding: '8px 12px', minWidth: 'auto' }}
+                                                    disabled={isModalUploading}
+                                                >
+                                                    {isModalUploading ? <FaSpinner className="spinner" /> : <FaUpload />}
+                                                </button>
+                                            </div>
+                                            {(typeof categoryFormData.image === 'object' ? categoryFormData.image[lang.code] : (lang.code === 'fr' ? categoryFormData.image : null)) && (
+                                                <div style={{ marginTop: '12px' }}>
+                                                    <img 
+                                                        src={typeof categoryFormData.image === 'object' ? categoryFormData.image[lang.code] : categoryFormData.image} 
+                                                        alt="Preview" 
+                                                        style={{ width: '100%', height: '150px', objectFit: 'cover', borderRadius: '12px', border: '1px solid #e2e8f0' }} 
+                                                    />
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 ))}
 
-                                <div className="premium-form-group">
-                                    <label>{t.categoryImg}</label>
-                                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                                <div className="premium-form-grid" style={{ gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                                    <div className="premium-form-group">
+                                        <label>{appLanguage === 'ar' ? 'الترتيب' : 'Ordre'}</label>
                                         <input
-                                            type="text"
-                                            placeholder="URL de l'image"
-                                            value={categoryFormData.image}
-                                            readOnly
-                                            style={{ flex: 1 }}
+                                            type="number"
+                                            value={categoryFormData.order}
+                                            onChange={(e) => setCategoryFormData({ ...categoryFormData, order: Number(e.target.value) })}
                                         />
-                                        <input
-                                            type="file"
-                                            ref={modalFileInputRef}
-                                            onChange={handleModalFileUpload}
-                                            style={{ display: 'none' }}
-                                            accept="image/*"
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => modalFileInputRef.current.click()}
-                                            className="premium-btn-cta gold"
-                                            style={{ padding: '8px 12px', minWidth: 'auto' }}
-                                            disabled={isModalUploading}
-                                        >
-                                            {isModalUploading ? <FaSpinner className="spinner" /> : <FaUpload />}
-                                        </button>
                                     </div>
-                                    {categoryFormData.image && (
-                                        <div style={{ marginTop: '10px', background: '#f8fafc', padding: '10px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-                                            <label style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '8px', display: 'block', fontWeight: 'bold' }}>
-                                                Aperçu / العرض الفعلي في الكارد (العرض: 360px | الطول: 260px)
-                                            </label>
-                                            <div style={{ width: '100%', maxWidth: '360px', height: '260px', overflow: 'hidden', borderRadius: '8px', border: '1px solid #cbd5e1', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
-                                                <img src={categoryFormData.image} alt="Preview" style={{ width: '100%', height: '100%', objectFit: categoryFormData.imageFit || 'cover' }} />
-                                            </div>
-                                        </div>
-                                    )}
+                                    <div className="premium-form-group">
+                                        <label>{appLanguage === 'ar' ? 'نوع الورشة' : 'Type d\'accès'}</label>
+                                        <select
+                                            value={categoryFormData.accessType || 'vip'}
+                                            onChange={(e) => setCategoryFormData({ ...categoryFormData, accessType: e.target.value })}
+                                        >
+                                            <option value="vip">VIP (Premium)</option>
+                                            <option value="gratuit">Gratuit (Libre)</option>
+                                        </select>
+                                    </div>
                                 </div>
-                                <div className="premium-form-group">
-                                    <label>{appLanguage === 'ar' ? 'الترتيب' : 'Ordre'}</label>
-                                    <input
-                                        type="number"
-                                        placeholder="e.g. 1"
-                                        value={categoryFormData.order}
-                                        onChange={(e) => setCategoryFormData({ ...categoryFormData, order: Number(e.target.value) })}
-                                    />
-                                </div>
+
                             </div>
 
-                            <div className="premium-form-grid" style={{ marginTop: '20px' }}>
-                                <div className="premium-form-group" style={{ gridColumn: 'span 3' }}>
-                                    <label>{appLanguage === 'ar' ? 'نوع الورشة (VIP أو مجاني)' : 'Type d\'accès'}</label>
-                                    <select
-                                        value={categoryFormData.accessType || 'vip'}
-                                        onChange={(e) => setCategoryFormData({ ...categoryFormData, accessType: e.target.value })}
-                                    >
-                                        <option value="vip">VIP (Accès premium/connecté)</option>
-                                        <option value="gratuit">Gratuit (Accès libre)</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div className="premium-btn-group">
+                            <div className="premium-btn-group" style={{ marginTop: '30px' }}>
                                 <button className="premium-btn-cta secondary" onClick={() => setShowCategoryModal(false)}>
                                     {t.cancel}
                                 </button>
@@ -804,6 +772,7 @@ export default function Vipaccess() {
                         </div>
                     </div>
                 )}
+
 
                 {/* --- 📝 EDIT HERO MODAL 📝 --- */}
                 {isEditingVipHero && (
@@ -868,3 +837,4 @@ export default function Vipaccess() {
         </div>
     );
 }
+
