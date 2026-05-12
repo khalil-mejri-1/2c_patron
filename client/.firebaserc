@@ -1,0 +1,9 @@
+{
+  "projects": {
+    "default": "cpatron-66929",
+    "cpatron-66929": "cpatron-66929",
+    "c-patron": "c-patron"
+  },
+  "targets": {},
+  "etags": {}
+}

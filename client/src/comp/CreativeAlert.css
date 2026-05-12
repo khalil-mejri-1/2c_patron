@@ -1,0 +1,304 @@
+/* ========================================= */
+/* 🕊️ MINIMALIST TOP-RIGHT TOAST REDESIGN   🕊️ */
+/* Elegant, Small & Precise Positioning      */
+/* ========================================= */
+
+:root {
+    --toast-bg: rgba(28, 28, 30, 0.95);
+    --toast-dark: #ffffff;
+    --toast-gold: #d4af37;
+    --toast-border: rgba(255, 255, 255, 0.1);
+    --toast-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    --font-sans: 'Tajawal', 'Inter', sans-serif;
+
+    /* Dark Glass Theme for Modals */
+    --glass-dark: rgba(20, 20, 22, 0.98);
+    --glass-border: rgba(212, 175, 55, 0.2);
+}
+
+/* --- 🌫️ Overlay --- */
+.creative-alert-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    display: flex;
+    justify-content: flex-end;
+    align-items: flex-start;
+    z-index: 100000;
+    padding: 30px;
+}
+
+[dir="rtl"] .creative-alert-overlay {
+    justify-content: flex-start;
+}
+
+/* Confirm modal stays centered and blocking - Dark & Professional */
+.creative-alert-overlay.has-confirm {
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(12px);
+    pointer-events: auto;
+    justify-content: center;
+    align-items: center;
+    padding: 0;
+}
+
+/* --- 📦 Main Container (Toasts) --- */
+.creative-alert-box {
+    background: var(--toast-bg);
+    backdrop-filter: blur(20px);
+    width: 380px;
+    max-width: 90vw;
+    border-radius: 20px;
+    padding: 16px 22px;
+    position: relative;
+    box-shadow: var(--toast-shadow);
+    border: 1px solid var(--toast-border);
+    pointer-events: auto;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    animation: toastFloatIn 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+    overflow: hidden;
+}
+
+/* Type Specific Accents */
+.creative-alert-box::before {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: transparent;
+    border-radius: 0 4px 4px 0;
+}
+
+[dir="rtl"] .creative-alert-box::before {
+    right: auto;
+    left: 0;
+    border-radius: 4px 0 0 4px;
+}
+
+.creative-alert-box.success::before {
+    background: #10b981;
+}
+
+.creative-alert-box.error::before {
+    background: #ef4444;
+}
+
+.creative-alert-box.warning::before {
+    background: #f59e0b;
+}
+
+.creative-alert-box.info::before {
+    background: #3b82f6;
+}
+
+.creative-alert-box.confirm::before {
+    background: var(--toast-gold);
+}
+
+/* --- 🔔 Icons --- */
+.alert-icon-container {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+}
+
+.alert-icon-container.success {
+    color: #10b981;
+}
+
+.alert-icon-container.error {
+    color: #ef4444;
+}
+
+.alert-icon-container.warning {
+    color: #f59e0b;
+}
+
+.alert-icon-container.info {
+    color: #3b82f6;
+}
+
+.alert-icon-container.confirm {
+    color: var(--toast-gold);
+}
+
+/* --- 📝 Content --- */
+.alert-content {
+    flex: 1;
+}
+
+.alert-title {
+    font-family: "Lora", serif;
+    font-size: 1rem;
+    font-weight: 800;
+    color: #fff;
+    margin: 0 0 4px 0;
+    letter-spacing: 0.5px;
+}
+
+.alert-message {
+    font-family: "Lora", serif;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.7);
+    margin: 0;
+}
+
+/* --- ⏳ Progress Bar (Hidden as requested) --- */
+.alert-progress {
+    display: none;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: rgba(0, 0, 0, 0.02);
+    overflow: hidden;
+}
+
+.alert-progress-fill {
+    height: 100%;
+    background: var(--toast-gold);
+    transition: width 0.1s linear;
+}
+
+/* --- 🎬 Animations --- */
+@keyframes toastFloatIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.95);
+        filter: blur(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        filter: blur(0);
+    }
+}
+
+.creative-alert-box.closing {
+    animation: toastFadeOut 0.3s forwards ease-in;
+}
+
+@keyframes toastFadeOut {
+    from {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    to {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+}
+
+/* --- 🛡️ CONFIRMATION MODAL DESIGN (Professional & Friendly) --- */
+.creative-alert-box.confirm {
+    width: 440px;
+    background: var(--glass-dark);
+    backdrop-filter: blur(25px);
+    border: 1px solid var(--glass-border);
+    padding: 50px 40px;
+    flex-direction: column;
+    gap: 25px;
+    border-radius: 32px;
+    color: #fff;
+    animation: confirmPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes confirmPop {
+    from {
+        opacity: 0;
+        transform: scale(0.8) translateY(40px);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.creative-alert-box.confirm .alert-icon-container {
+    width: 80px;
+    height: 80px;
+    font-size: 2.22rem;
+    background: rgba(212, 175, 55, 0.1);
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    border-radius: 50%;
+    margin-bottom: 10px;
+}
+
+.creative-alert-box.confirm .alert-title {
+    font-size: 1.6rem;
+    color: #fff;
+    font-weight: 800;
+    text-align: center;
+    font-family: "Lora", serif;
+}
+
+.creative-alert-box.confirm .alert-message {
+    font-size: 1.15rem;
+    color: rgba(255, 255, 255, 0.8);
+    text-align: center;
+    line-height: 1.7;
+    font-weight: 500;
+}
+
+.creative-alert-box.confirm .alert-footer {
+    display: flex;
+    gap: 15px;
+    width: 100%;
+    justify-content: center;
+    margin-top: 15px;
+}
+
+.creative-alert-box.confirm .alert-btn {
+    padding: 14px 35px;
+    border-radius: 16px;
+    font-size: 1rem;
+    font-weight: 800;
+    cursor: pointer;
+    border: none;
+    transition: all 0.3s;
+}
+
+.creative-alert-box.confirm .confirm-btn {
+    background: #d4af37;
+    color: #fff;
+    box-shadow: 0 10px 25px rgba(212, 175, 55, 0.3);
+}
+
+.creative-alert-box.confirm .confirm-btn:hover {
+    transform: translateY(-3px) scale(1.05);
+    background: #e5c04a;
+}
+
+.creative-alert-box.confirm .cancel-btn {
+    background: rgba(255, 255, 255, 0.05);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.creative-alert-box.confirm .cancel-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Mobile Adjustments */
+@media (max-width: 480px) {
+    .creative-alert-box.confirm {
+        width: 90%;
+        padding: 40px 25px;
+    }
+}

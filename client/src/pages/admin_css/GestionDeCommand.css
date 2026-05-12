@@ -1,0 +1,534 @@
+/* -------------------- 1. VARIABLES & RESET BASIQUE -------------------- */
+:root {
+    --primary-color: #007bff; /* Bleu standard */
+    --secondary-color: #6c757d; /* Gris للحواف */
+    --success-color: #28a74654; /* أخضر للنجاح */
+    --danger-color: #dc354650; /* أحمر للخطر/الحذف */
+    --warning-color: #ffc10736; /* أصفر للتنبيه */
+    --info-color: #17a3b83a; /* أزرق فاتح للمعلومات */
+    --bg-light: #f8f9fa; /* خلفية خفيفة */
+    --bg-white: #ffffff;
+    --border-radius: 8px;
+    --box-shadow-light: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+
+/* -------------------- 2. CONTENEUR PRINCIPAL & TITRE -------------------- */
+.command-management-container {
+    max-width: 1400px;
+    margin: 40px auto;
+    padding: 20px;
+    background-color: var(--bg-white);
+    border-radius: 12px;
+    box-shadow: var(--box-shadow-light);
+}
+
+.client-title {
+    color: var(--primary-color);
+    font-size: 2.2em;
+    font-weight: 600;
+    margin-bottom: 20px;
+    border-bottom: 3px solid var(--primary-color);
+    padding-bottom: 10px;
+    text-align: center;
+}
+
+/* -------------------- 3. TABLEAU DES COMMANDES (SHIK) -------------------- */
+.commands-table {
+    width: 100%;
+    border-collapse: separate; /* لفصل الحواف */
+    border-spacing: 0 10px; /* لإضافة مسافة بين الصفوف */
+    text-align: left;
+    margin-top: 20px;
+}
+
+.commands-table thead th {
+    background-color: var(--primary-color);
+    color: var(--bg-white);
+    padding: 15px 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.9em;
+    letter-spacing: 0.5px;
+}
+
+/* حواف دائرية لرأس الجدول */
+.commands-table thead th:first-child { border-top-left-radius: var(--border-radius); }
+.commands-table thead th:last-child { border-top-right-radius: var(--border-radius); }
+
+.commands-table tbody tr {
+    background-color: var(--bg-white);
+    border: 1px solid #dee2e6;
+    transition: all 0.2s ease-in-out;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.commands-table tbody tr:hover {
+    background-color: #e9ecef;
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.commands-table td {
+    padding: 12px;
+    border: none; /* إزالة حواف الخلايا الفردية */
+    vertical-align: middle;
+}
+
+/* -------------------- 4. تمييز حالات الطلب (STATUS) -------------------- */
+.status-enattente {
+    font-weight: bold;
+    color: #212529; /* أسود */
+    background-color: var(--warning-color); /* أصفر */
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.9em;
+}
+
+.status-encoursdetraitement {
+    font-weight: bold;
+    color: var(--bg-white);
+    background-color: var(--info-color); /* أزرق سماوي */
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.9em;
+}
+
+.status-expédiée {
+    font-weight: bold;
+    color: #09a816;
+    background-color: #09a8164d; /* برتقالي داكن */
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.9em;
+}
+
+.status-livrée {
+    font-weight: bold;
+    color: var(--bg-white);
+    background-color: var(--success-color); /* أخضر */
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.9em;
+}
+
+.status-annulée {
+    font-weight: bold;
+    color: var(--bg-white);
+    background-color: var(--danger-color); /* أحمر */
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.9em;
+}
+
+/* -------------------- 5. أزرار الإجراءات -------------------- */
+.action-btn {
+    padding: 8px 12px;
+    margin-right: 8px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.2s, transform 0.2s;
+}
+
+.edit-btn {
+    background-color: var(--primary-color);
+    color: var(--bg-white);
+}
+
+.edit-btn:hover {
+    background-color: #0056b3;
+    transform: translateY(-1px);
+}
+
+.delete-btn {
+    background-color: var(--danger-color);
+    color: var(--bg-white);
+}
+
+.delete-btn:hover {
+    background-color: #c82333;
+    transform: translateY(-1px);
+}
+
+/* -------------------- 6. MODALS (التعديل والحذف) -------------------- */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background-color: var(--bg-white);
+    padding: 30px;
+    border-radius: var(--border-radius);
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+    animation: fadeIn 0.3s ease-out;
+}
+
+.modal-content h3 {
+    color: var(--primary-color);
+    margin-top: 0;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #495057;
+}
+
+.modal-content select {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 20px;
+    border: 1px solid #ced4da;
+    border-radius: 5px;
+    box-sizing: border-box;
+    font-size: 1em;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.submit-button {
+    background-color: var(--success-color);
+    color: var(--bg-white);
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.submit-button:hover {
+    background-color: #218838;
+}
+
+.cancel-button {
+    background-color: var(--secondary-color);
+    color: var(--bg-white);
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.cancel-button:hover {
+    background-color: #5a6268;
+}
+
+.confirmation-modal .confirmation-message {
+    font-size: 1.1em;
+    margin: 20px 0;
+    text-align: center;
+}
+
+
+/* -------------------- 7. RESPONSIVENESS (التجاوبية) -------------------- */
+
+/* للأجهزة اللوحية (Tablet - شاشات أصغر من 992px) */
+@media (max-width: 992px) {
+    .commands-table {
+        font-size: 0.9em;
+    }
+    .commands-table th, .commands-table td {
+        padding: 10px 8px;
+    }
+    .action-btn {
+        padding: 6px 10px;
+        font-size: 0.8em;
+        margin-right: 5px;
+    }
+}
+
+/* للأجهزة المحمولة (Mobile - شاشات أصغر من 600px) */
+@media (max-width: 600px) {
+    .command-management-container {
+        margin: 20px 10px;
+        padding: 15px;
+    }
+    
+    .client-title {
+        font-size: 1.8em;
+    }
+
+    /* تحويل الجدول إلى عرض قائم (List View) لسهولة القراءة */
+    .commands-table, .commands-table thead, .commands-table tbody, .commands-table th, .commands-table td, .commands-table tr {
+        display: block;
+    }
+
+    .commands-table thead tr {
+        position: absolute;
+        top: -9999px; /* إخفاء رأس الجدول الأصلي */
+        left: -9999px;
+    }
+
+    .commands-table tbody tr {
+        margin-bottom: 20px;
+        display: block;
+        padding: 15px;
+        border-radius: var(--border-radius);
+    }
+    
+    .commands-table td {
+        border: none;
+        position: relative;
+        padding-left: 50%; /* لإضافة تسمية الحقل */
+        text-align: right;
+        border-bottom: 1px dotted #ccc;
+    }
+
+    .commands-table td::before {
+        content: attr(data-label); /* استخدم خاصية data-label لعرض اسم الحقل */
+        position: absolute;
+        left: 10px;
+        width: 45%;
+        padding-right: 10px;
+        white-space: nowrap;
+        font-weight: bold;
+        text-align: left;
+    }
+
+    /* تخصيص عرض خلية الإجراءات لملء العرض */
+    .commands-table td:last-child {
+        text-align: center;
+        padding-left: 10px;
+        border-bottom: none;
+    }
+}
+
+
+/* --- إضافة أنماط الصورة المصغرة في الجدول --- */
+
+.product-thumbnail {
+    width: 100px; /* تحديد عرض صغير للصورة */
+    height: 100px; /* تحديد ارتفاع صغير للصورة */
+    object-fit: cover; /* لضمان ظهور الصورة بشكل جيد داخل الإطار */
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.product-thumbnail-placeholder {
+    width: 50px;
+    height: 50px;
+    border-radius: 4px;
+    border: 1px dashed #ccc; /* حدود منقطة للـ placeholder */
+    background-color: #f9f9f9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* لتجنب الانحياز في الجدول */
+    margin: auto; 
+}
+
+/* --- أنماط حالة الطلب (لجعلها ملونة وواضحة) --- */
+
+.status-enattente {
+    font-weight: bold;
+    color: #f39c12; /* برتقالي */
+}
+
+.status-encoursdetraitement {
+    font-weight: bold;
+    color: #3498db; /* أزرق */
+}
+
+.status-expediée {
+    font-weight: bold;
+    color: #2ecc71; /* أخضر */
+}
+
+.status-livrée {
+    font-weight: bold;
+    color: #1abc9c; /* أخضر فاتح */
+}
+
+.status-annulée {
+    font-weight: bold;
+    color: #e74c3c; /* أحمر */
+    text-decoration: line-through;
+}
+
+/* --- أنماط الجدول (تحسين) --- */
+
+.commands-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    background-color: #ffffff;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+}
+
+.commands-table th, .commands-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #eeeeee;
+}
+
+.commands-table th {
+    background-color: #f2f2f2;
+    color: #333333;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.9em;
+}
+
+.commands-table tr:hover {
+    background-color: #f5f5f5;
+}
+
+/* --- أنماط الأزرار (تحسين) --- */
+
+.action-btn {
+    padding: 8px 12px;
+    margin-right: 5px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85em;
+    transition: background-color 0.3s;
+}
+
+.edit-btn {
+    background-color: #007bff;
+    color: white;
+}
+
+.edit-btn:hover {
+    background-color: #0056b3;
+}
+
+.delete-btn {
+    background-color: #dc3545;
+    color: white;
+}
+
+.delete-btn:hover {
+    background-color: #c82333;
+}
+
+/* --- أنماط المودال (تحسين) --- */
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: white;
+    padding: 30px;
+    border-radius: 8px;
+    max-width: 500px;
+    width: 90%;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.modal-content h3 {
+    margin-top: 0;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+.form-group select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.submit-button {
+    background-color: #28a745;
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.cancel-button {
+    background-color: #6c757d;
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.confirmation-modal .confirmation-message {
+    font-size: 1.1em;
+    margin-bottom: 25px;
+    color: #555;
+}
+
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 15px;
+    border-radius: 5px;
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    z-index: 1001;
+}
+
+.notification.success {
+    background-color: #28a745;
+}
+
+.notification.error {
+    background-color: #dc3545;
+}
+
+.notification button {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.2em;
+    margin-left: 10px;
+    cursor: pointer;
+}
