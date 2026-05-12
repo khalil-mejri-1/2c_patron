@@ -5,7 +5,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { FaPlay, FaLongArrowAltRight, FaEdit, FaSave, FaTimes, FaVideo, FaSpinner, FaCrown, FaPhoneAlt, FaUser, FaCheckCircle } from 'react-icons/fa';
 
 import BASE_URL from '../apiConfig';
-import UniversalVideoPlayer from './UniversalVideoPlayer';
 
 // 1. كائن الترجمات (Localization Object)
 const translations = {
@@ -279,12 +278,34 @@ export default function FeaturedProduct() {
                 )}
 
                 <div className="video-container-responsive">
-                    <div style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0 }}>
-                        <UniversalVideoPlayer 
-                            url={featuredData.videoUrl || "https://streamable.com/e/4k6x0z?"} 
-                            autoPlay={true} 
+                    {featuredData.videoType === 'local' ? (
+                        <video
+                            src={featuredData.videoUrl.startsWith('http') ? featuredData.videoUrl : `${BASE_URL}${featuredData.videoUrl}`}
+                            controls
+                            autoPlay
+                            muted
+                            loop
+                            style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', top: 0, left: 0 }}
                         />
-                    </div>
+                    ) : (
+                        <iframe
+                            allow="fullscreen"
+                            allowFullScreen
+                            height="100%"
+                            src={featuredData.videoUrl || "https://streamable.com/e/4k6x0z?"}
+                            width="100%"
+                            style={{
+                                border: 'none',
+                                width: '100%',
+                                height: '100%',
+                                position: 'absolute',
+                                left: 0,
+                                top: 0,
+                                overflow: 'hidden'
+                            }}
+                            title={t('imageAlt') || "Featured Product Video"}
+                        />
+                    )}
                 </div>
             </div>
 
