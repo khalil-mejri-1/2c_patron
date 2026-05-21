@@ -4,7 +4,6 @@ import '../pages/lessons_premium.css';
 import '../comp/PremiumSkeleton.css';
 import Navbar from '../comp/navbar';
 import Footer from '../comp/Footer';
-import UniversalVideoPlayer from '../comp/UniversalVideoPlayer';
 import { useParams, useLocation, NavLink } from 'react-router-dom';
 import axios from 'axios';
 import BASE_URL from '../apiConfig';
@@ -116,8 +115,6 @@ const translations = {
     }
 };
 
-
-
 const getThumbnailUrl = (url, fallbackTitle) => {
     const youtubeRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
     const matchYoutube = url?.match(youtubeRegex);
@@ -203,6 +200,86 @@ const LessonCard = ({ video, isActive, onSelect, lang, isAdmin, onEdit, onDelete
                     <span className="l-meta-duration"><FaPlayCircle size={14} style={{ marginRight: '5px' }} /> 24/7 Access</span>
                 </div>
             </div>
+        </div>
+    );
+};
+
+const SimpleVideoPlayer = ({ url, title }) => {
+    const [useIframeFallback, setUseIframeFallback] = useState(false);
+    let type = 'iframe';
+    let src = url?.startsWith('http') ? url : `${BASE_URL}${url}`;
+
+    useEffect(() => {
+        setUseIframeFallback(false);
+    }, [url]);
+
+    if (!src) return <div style={{ background: '#000', width: '100%', height: '100%' }} />;
+
+    const driveRegex = /(?:drive\.google\.com\/file\/d\/|drive\.google\.com\/open\?id=|drive\.google\.com\/uc\?id=)([^\/\?&]+)/;
+    const matchDrive = src.match(driveRegex);
+    if (matchDrive) {
+        if (useIframeFallback) {
+            src = `https://drive.google.com/file/d/${matchDrive[1]}/preview`;
+            type = 'iframe';
+        } else {
+            src = `https://drive.google.com/uc?export=download&id=${matchDrive[1]}`;
+            type = 'video';
+        }
+    }
+
+    const youtubeRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+    const matchYoutube = src.match(youtubeRegex);
+    if (matchYoutube) {
+        src = `https://www.youtube.com/embed/${matchYoutube[1]}?autoplay=0&rel=0&playsinline=1`;
+        type = 'iframe';
+    }
+
+    const isVideoFile = src.match(/\.(mp4|webm|ogg)$/i) || src.includes("res.cloudinary.com") || src.startsWith("/uploads");
+    if (isVideoFile && !matchDrive) {
+        type = 'video';
+    }
+
+    return (
+        <div style={{ position: 'relative', width: '100%', height: '100%', backgroundColor: '#000', borderRadius: 'inherit', overflow: 'hidden' }}>
+            {type === 'video' ? (
+                <video
+                    src={src}
+                    controls
+                    autoPlay
+                    muted
+                    playsInline
+                    onError={() => {
+                        if (matchDrive) setUseIframeFallback(true);
+                    }}
+                    style={{ 
+                        maxWidth: '100%', 
+                        maxHeight: '100%', 
+                        width: 'auto', 
+                        height: 'auto', 
+                        margin: 'auto',
+                        position: 'absolute',
+                        top: 0,
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        display: 'block'
+                    }}
+                    controlsList="nodownload"
+                />
+            ) : (
+                <div className="google-drive-iframe-wrapper">
+                    <iframe
+                        src={src}
+                        title={title}
+                        width="100%"
+                        height="100%"
+                        frameBorder="0"
+                        allow="autoplay; fullscreen; accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                        style={{ border: 0, width: '100%', height: '100%', position: 'absolute', top: 0, left: 0 }}
+                    />
+                </div>
+            )}
         </div>
     );
 };
@@ -397,12 +474,12 @@ export default function Lessons() {
                 };
             });
             setVideos(preparedVideos);
-            
+
             if (preparedVideos.length > 0) {
                 const firstVideo = preparedVideos[0];
-                const isLessonFree = firstVideo.status_lang?.[appLanguage]?.toLowerCase().includes('free') || 
-                                     firstVideo.status_lang?.[appLanguage]?.toLowerCase().includes('مجاني') || 
-                                     !firstVideo.isVip;
+                const isLessonFree = firstVideo.status_lang?.[appLanguage]?.toLowerCase().includes('free') ||
+                    firstVideo.status_lang?.[appLanguage]?.toLowerCase().includes('مجاني') ||
+                    !firstVideo.isVip;
 
                 if (isLoggedIn || isLessonFree) {
                     setCurrentVideo(firstVideo);
@@ -701,9 +778,9 @@ export default function Lessons() {
     }, [actualTitle]);
 
     const handleSelectVideo = (video) => {
-        const isLessonFree = video.status_lang?.[appLanguage]?.toLowerCase().includes('free') || 
-                             video.status_lang?.[appLanguage]?.toLowerCase().includes('مجاني') || 
-                             !video.isVip;
+        const isLessonFree = video.status_lang?.[appLanguage]?.toLowerCase().includes('free') ||
+            video.status_lang?.[appLanguage]?.toLowerCase().includes('مجاني') ||
+            !video.isVip;
 
         if (!isLoggedIn && !isLessonFree) {
             setShowVipModal(true);
@@ -719,7 +796,7 @@ export default function Lessons() {
     const handleVipRequest = async (e) => {
         e.preventDefault();
         const userEmail = localStorage.getItem('loggedInUserEmail') || localStorage.getItem('currentUserEmail') || 'invite@ateliersfax.com';
-        
+
         if (!vipPhone) return;
         setIsSubmittingVip(true);
         try {
@@ -855,10 +932,9 @@ export default function Lessons() {
                 {currentVideo && (
                     <section className="active-video-wrapper">
                         <div className="active-focus-cinema" ref={topRef}>
-                            <UniversalVideoPlayer
+                            <SimpleVideoPlayer
                                 url={currentVideo.url}
                                 title={currentVideo.title}
-                                autoPlay={true}
                             />
                             {/* Transparent shield to hide/block the Google Drive pop-out button */}
                             <div className="video-player-shield"></div>
@@ -979,15 +1055,15 @@ export default function Lessons() {
                                                 readOnly
                                                 style={{ flex: 1, backgroundColor: '#f1f5f9' }}
                                             />
-                                            <input 
+                                            <input
                                                 type="file"
                                                 ref={(el) => (heroFileInputRefs.current[lang.code] = el)}
                                                 onChange={(e) => handleHeroFileUpload(e, lang.code)}
                                                 style={{ display: 'none' }}
                                                 accept="image/*"
                                             />
-                                            <button 
-                                                type="button" 
+                                            <button
+                                                type="button"
                                                 onClick={() => heroFileInputRefs.current[lang.code].click()}
                                                 className="premium-btn-cta gold"
                                                 style={{ padding: '8px 12px', minWidth: '70px', height: '45px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}

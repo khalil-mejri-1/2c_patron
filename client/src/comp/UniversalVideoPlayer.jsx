@@ -83,18 +83,15 @@ const UniversalVideoPlayer = ({ url, title = 'Video Player', autoPlay = false, c
     }
 
     return (
-        <div 
-            className={`universal-video-container ${className}`} 
-            style={{ 
-                position: 'relative', 
-                width: '100%', 
-                height: '100%', 
-                backgroundColor: '#000', 
-                borderRadius: 'inherit', 
-                overflow: 'hidden',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
+        <div
+            className={`universal-video-container ${className}`}
+            style={{
+                position: 'relative',
+                width: '100%',
+                height: '100%',
+                backgroundColor: '#000',
+                borderRadius: 'inherit',
+                overflow: 'hidden'
             }}
         >
 
@@ -102,10 +99,21 @@ const UniversalVideoPlayer = ({ url, title = 'Video Player', autoPlay = false, c
                 @keyframes player-spin { 100% { transform: rotate(360deg); } }
                 .player-spinner { animation: player-spin 1s linear infinite; }
             `}</style>
-            
+
             {/* Loading Indicator */}
             {isLoading && !hasError && (
-                <div style={{ position: 'absolute', zIndex: 10, color: '#D4AF37', display: 'flex', flexDirection: 'column', alignItems: 'center', pointerEvents: 'none' }}>
+                <div style={{
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    zIndex: 10,
+                    color: '#D4AF37',
+                    display: 'none',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    pointerEvents: 'none'
+                }}>
                     <FaSpinner className="player-spinner" size={34} style={{ marginBottom: '10px' }} />
                     <span style={{ fontSize: '0.9rem', color: '#fff', fontWeight: '500', letterSpacing: '1px' }}>Chargement...</span>
                 </div>
@@ -131,31 +139,36 @@ const UniversalVideoPlayer = ({ url, title = 'Video Player', autoPlay = false, c
                     onWaiting={() => setIsLoading(true)}
                     onPlaying={() => setIsLoading(false)}
                     onError={handleVideoError}
-                    style={{ 
-                        width: '100%', height: '100%', objectFit: 'cover', 
-                        display: hasError ? 'none' : 'block'
+                    style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'contain',
+                        display: hasError ? 'none' : 'block',
+                        position: 'absolute',
+                        top: 0,
+                        left: 0
                     }}
                     controlsList="nodownload"
                 />
             ) : (
-                <div style={{ width: '100%', height: '100%', position: 'relative', flex: 1, display: hasError ? 'none' : 'block' }}>
-                    <iframe
-                        src={config.src}
-                        title={title}
-                        width="100%"
-                        height="100%"
-                        frameBorder="0"
-                        allow="autoplay; fullscreen; accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen
-                        onLoad={handleVideoReady}
-                        onError={handleVideoError}
-                        style={{
-                            border: 0,
-                            width: '100%',
-                            height: '100%'
-                        }}
-                    ></iframe>
-                </div>
+                <iframe
+                    src={config.src}
+                    title={title}
+                    width="100%"
+                    height="100%"
+                    allow="autoplay; fullscreen; accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    onLoad={handleVideoReady}
+                    onError={handleVideoError}
+                    style={{
+                        width: '100%',
+                        height: '100%',
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        display: hasError ? 'none' : 'block'
+                    }}
+                ></iframe>
             )}
         </div>
     );
