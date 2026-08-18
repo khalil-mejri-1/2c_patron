@@ -10,8 +10,10 @@ import {
 } from 'react-icons/fa';
 import { Link, useNavigate } from 'react-router-dom';
 import BASE_URL from '../apiConfig';
+import { trackAddToCart, trackInitiateCheckout, trackPurchase, sanitizePrice, sanitizeQuantity } from '../services/metaPixel';
 import '../pages/shop_redesign.css';
 import './PremiumSkeleton.css';
+import { PremiumErrorState } from './Skeletons';
 
 // 🌟 Translation Data Object 🌟
 const translations = {
@@ -542,8 +544,6 @@ const OrderModalComponent = ({ selectedProduct, quantity, handleQuantityChange, 
 
         if (!selectedProduct) return;
 
-        const calculatedTotal = selectedProduct.price * quantity;
-
         const clientName = customerData.firstName;
         const clientPhone = customerData.phone;
         const shippingAddress = customerData.adresse;
@@ -555,14 +555,30 @@ const OrderModalComponent = ({ selectedProduct, quantity, handleQuantityChange, 
 
         setIsSubmittingOrder(true);
 
+        const prodId = String(selectedProduct.id || selectedProduct._id);
+        const prodPrice = sanitizePrice(selectedProduct.price || selectedProduct.prix);
+        const cleanQty = sanitizeQuantity(quantity);
+        const calculatedTotal = Math.round(prodPrice * cleanQty * 100) / 100;
+        const prodName = typeof selectedProduct.name === 'object' ? (selectedProduct.name[appLanguage] || selectedProduct.name.fr || selectedProduct.name.ar || '') : (selectedProduct.name || '');
+
+        trackInitiateCheckout({
+            name: prodName,
+            category: 'HeroCarousel',
+            ids: [prodId],
+            numItems: cleanQty,
+            value: calculatedTotal,
+            currency: 'TND',
+            contents: [{ id: prodId, quantity: cleanQty, item_price: prodPrice }]
+        });
+
         const orderData = {
             totalAmount: calculatedTotal,
             items: [{
-                productId: selectedProduct.id,
-                productName: selectedProduct.name,
+                productId: prodId,
+                productName: prodName,
                 productImage: selectedProduct.url,
-                quantity: quantity,
-                price: selectedProduct.price,
+                quantity: cleanQty,
+                price: prodPrice,
             }],
             clientName: clientName,
             clientPhone: clientPhone,
@@ -582,6 +598,15 @@ const OrderModalComponent = ({ selectedProduct, quantity, handleQuantityChange, 
             const result = await response.json();
 
             if (response.ok) {
+                trackPurchase({
+                    value: calculatedTotal,
+                    ids: [prodId],
+                    name: prodName,
+                    numItems: cleanQty,
+                    currency: 'TND',
+                    contents: [{ id: prodId, quantity: cleanQty, item_price: prodPrice }]
+                });
+
                 onOrderSuccess(result.commandId);
             } else {
                 console.error("Échec de l'enregistrement de la commande:", result);
@@ -597,7 +622,7 @@ const OrderModalComponent = ({ selectedProduct, quantity, handleQuantityChange, 
     };
 
     const currency = selectedProduct.currency || 'DT';
-    const totalPrice = (selectedProduct.price * quantity).toFixed(2);
+    const totalPrice = (sanitizePrice(selectedProduct.price || selectedProduct.prix) * sanitizeQuantity(quantity)).toFixed(2);
     const direction = appLanguage === 'ar' ? 'rtl' : 'ltr';
 
     return (
@@ -1185,9 +1210,25 @@ export default function HeroSection({ isLoggedIn = false, currentUserEmail = '' 
                         {heroSublines[currentLanguage] || texts.subline}
                     </span>
 
-                    <p className="hero-intro-text">
-                        {heroIntros[currentLanguage] || texts.introText}
-                    </p>
+                    <div className="hero-intro-text" style={{ marginBottom: '40px' }}>
+                        {(heroIntros[currentLanguage] || texts.introText) ? (
+                            <ul className="product-description-list" style={{ listStyleType: 'none', padding: 0, margin: 0 }}>
+                                {(heroIntros[currentLanguage] || texts.introText).split('\n').map((line, idx) => {
+                                    const trimmed = line.trim();
+                                    if (!trimmed) return null;
+                                    const cleanText = trimmed.replace(/^[-\u2022•]\s*/, '').trim();
+                                    return (
+                                        <li key={idx} className="desc-bullet-item">
+                                            <span className="desc-bullet-icon">
+                                                <FaCheckCircle />
+                                            </span>
+                                            <span className="desc-bullet-text">{cleanText}</span>
+                                        </li>
+                                    );
+                                })}
+                            </ul>
+                        ) : null}
+                    </div>
                     {windowWidth > 1024 && (
                         <div className="hero-cta-wrapper small-cta1024">
                             <Link to="/magasin" className="hero-cta-button">
@@ -1243,9 +1284,10 @@ export default function HeroSection({ isLoggedIn = false, currentUserEmail = '' 
                                 </div>
                             </>
                         ) : (error || products.length === 0) ? (
-                            <div style={{ color: 'red', marginTop: '20px', background: 'rgba(255,255,255,0.9)', padding: '20px', borderRadius: '10px' }}>
-                                {currentLanguage === 'ar' ? '❌ عذراً، لا يمكن عرض المنتجات حالياً. ' : '❌ Sorry, products cannot be displayed currently.'}
-                            </div>
+                            <PremiumErrorState
+                                message={error || (currentLanguage === 'ar' ? 'تعذر جلب المنتجات من الخادم حالياً.' : 'Unable to fetch products currently.')}
+                                onRetry={() => window.location.reload()}
+                            />
                         ) : (
                             products.map((product, index) => {
                                 const cardClass = getCardClass(index);
@@ -1406,8 +1448,15 @@ export default function HeroSection({ isLoggedIn = false, currentUserEmail = '' 
                                         <textarea
                                             value={editHeroData.intros[lang.code] || ''}
                                             onChange={e => setEditHeroData({ ...editHeroData, intros: { ...editHeroData.intros, [lang.code]: e.target.value } })}
+                                            rows="6"
                                             dir={lang.code === 'ar' ? 'rtl' : 'ltr'}
+                                            placeholder={lang.code === 'ar' ? "- الجملة الأولى\n- الجملة الثانية" : "- Première phrase\n- Deuxième phrase"}
                                         />
+                                        <span style={{ fontSize: '0.8rem', color: '#888', marginTop: '4px', display: 'block', textAlign: lang.code === 'ar' ? 'right' : 'left' }}>
+                                            {lang.code === 'ar' 
+                                                ? '💡 اكتب كل جملة في سطر جديد (وابدأها بـ -) لتظهر على شكل مطات.' 
+                                                : '💡 Écrivez chaque phrase sur une nouvelle ligne (commencez par -) pour l\'afficher sous forme de puces.'}
+                                        </span>
                                     </div>
                                 </div>
                             ))}

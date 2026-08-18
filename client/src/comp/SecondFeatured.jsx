@@ -5,6 +5,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { FaPlay, FaLongArrowAltRight, FaEdit, FaSave, FaTimes, FaVideo, FaSpinner, FaCrown, FaPhoneAlt, FaUser, FaCheckCircle } from 'react-icons/fa';
 
 import BASE_URL from '../apiConfig';
+import UniversalVideoPlayer from './UniversalVideoPlayer';
+import { syncAuthSession } from '../utils/authSession';
 
 // 1. كائن الترجمات (Localization Object)
 const translations = {
@@ -77,17 +79,29 @@ export default function FeaturedProduct() {
     const navigate = useNavigate();
 
 
+    const [isVipExpired, setIsVipExpired] = useState(false);
+
     useEffect(() => {
-        // Check Admin
+        // 🍎 iOS Safari Fix: Restore session from cookies before checking auth
+        syncAuthSession();
+
+        // Check Admin & Expiration Status
         const email = localStorage.getItem('currentUserEmail') || localStorage.getItem('loggedInUserEmail');
         if (email) {
             fetch(`${BASE_URL}/api/users/${email}`)
                 .then(res => res.ok ? res.json() : null)
                 .then(data => {
-                    if (data && data.statut === 'admin') {
-                        setIsAdmin(true);
-                    } else {
-                        setIsAdmin(false);
+                    if (data) {
+                        if (data.statut === 'admin') {
+                            setIsAdmin(true);
+                        } else {
+                            setIsAdmin(false);
+                        }
+                        if (data.isExpired) {
+                            setIsVipExpired(true);
+                        } else {
+                            setIsVipExpired(false);
+                        }
                     }
                 })
                 .catch(() => { setIsAdmin(false); });
@@ -233,20 +247,27 @@ export default function FeaturedProduct() {
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
                     <button
-                        onClick={() => {
+                        onClick={!isVipExpired ? () => {
                             if (!isLoggedIn) {
                                 setShowLimitedAccessModal(true);
                             } else {
                                 navigate('/Vip-access');
                             }
-                        }}
+                        } : undefined}
                         className="product-cta-button"
-                        style={{ border: 'none', cursor: 'pointer' }}
+                        disabled={isVipExpired}
+                        style={{
+                            border: 'none',
+                            cursor: isVipExpired ? 'not-allowed' : 'pointer',
+                            opacity: isVipExpired ? 0.6 : 1,
+                            background: isVipExpired ? '#dc2626' : undefined,
+                            color: isVipExpired ? '#ffffff' : undefined
+                        }}
                     >
-                        {/* عرض نص مختلف للزر بحسب حالة تسجيل الدخول */}
-                        {isLoggedIn ? (t('ctaLoggedIn') || t('cta')) : t('cta')}
-                        {/* عكس اتجاه الأيقونة لـ RTL */}
-                        {isRTL ? <FaLongArrowAltRight style={{ transform: 'scaleX(-1)' }} /> : <FaLongArrowAltRight />}
+                        {isVipExpired
+                            ? (currentLang === 'ar' ? 'منتهي (تم حظر الوصول)' : 'Expiré (Accès VIP Bloqué)')
+                            : (isLoggedIn ? (t('ctaLoggedIn') || t('cta')) : t('cta'))}
+                        {!isVipExpired && (isRTL ? <FaLongArrowAltRight style={{ transform: 'scaleX(-1)' }} /> : <FaLongArrowAltRight />)}
                     </button>
                     {!isLoggedIn && (
                         <button
@@ -300,36 +321,81 @@ export default function FeaturedProduct() {
                     </button>
                 )}
 
-                <div className="video-container-responsive">
-                    {featuredData.videoType === 'local' ? (
-                        <video
-                            src={featuredData.videoUrl.startsWith('http') ? featuredData.videoUrl : `${BASE_URL}${featuredData.videoUrl}`}
-                            controls
-                            autoPlay
-                            muted
-                            loop
-                            style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', top: 0, left: 0 }}
-                        />
-                    ) : (
-                        <iframe
-                            allow="fullscreen"
-                            allowFullScreen
-                            height="100%"
-                            src={featuredData.videoUrl || "https://streamable.com/e/4k6x0z?"}
-                            width="100%"
-                            style={{
-                                border: 'none',
-                                width: '100%',
-                                height: '100%',
-                                position: 'absolute',
-                                left: 0,
-                                top: 0,
-                                overflow: 'hidden'
-                            }}
-                            title={t('imageAlt') || "Featured Product Video"}
-                        />
-                    )}
-                </div>
+                {/* 🎬 Video Player — same approach as Lessons.jsx */}
+                {(() => {
+                    const videoUrl = featuredData?.videoUrl || "https://iframe.mediadelivery.net/embed/722726/504d21cf-5b01-4eb7-aaa7-d3530ab47b5e";
+
+                    let resolvedUrl = videoUrl;
+                    if (videoUrl.includes('<iframe')) {
+                        const srcMatch = videoUrl.match(/src=["']([^"']+)["']/);
+                        if (srcMatch && srcMatch[1]) resolvedUrl = srcMatch[1];
+                    }
+
+                    const isYouTube = resolvedUrl.includes('youtube.com') || resolvedUrl.includes('youtu.be');
+                    let youtubeSrc = '';
+                    if (isYouTube) {
+                        const ytMatch = resolvedUrl.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+                        if (ytMatch) youtubeSrc = `https://www.youtube.com/embed/${ytMatch[1]}?rel=0`;
+                    }
+
+                    let streamableSrc = resolvedUrl;
+                    if (resolvedUrl.includes('streamable.com')) {
+                        const smMatch = resolvedUrl.match(/streamable\.com\/(?:e\/)?([a-zA-Z0-9]+)/);
+                        if (smMatch) streamableSrc = `https://streamable.com/e/${smMatch[1]}`;
+                    }
+
+                    let bunnySrc = resolvedUrl;
+                    if (resolvedUrl.includes('mediadelivery.net') || resolvedUrl.includes('bunny.net')) {
+                        bunnySrc = bunnySrc.replace('/play/', '/embed/');
+                        bunnySrc = bunnySrc.replace(/([?&])auto_?play=(?:0|1|true|false)/gi, '');
+                        bunnySrc = bunnySrc.replace(/[?&]$/, '');
+                        const sep = bunnySrc.includes('?') ? '&' : '?';
+                        bunnySrc = `${bunnySrc}${sep}autoplay=false&loop=false&muted=false&preload=true&responsive=true`;
+                    }
+
+                    const isIframe = resolvedUrl.includes('mediadelivery.net') ||
+                        resolvedUrl.includes('bunny.net') ||
+                        resolvedUrl.includes('player.') ||
+                        resolvedUrl.includes('streamable.com') ||
+                        isYouTube;
+
+                    const iframeSrc = isYouTube ? youtubeSrc
+                        : resolvedUrl.includes('streamable.com') ? streamableSrc
+                        : (resolvedUrl.includes('mediadelivery.net') || resolvedUrl.includes('bunny.net')) ? bunnySrc
+                        : resolvedUrl;
+
+                    if (isIframe) {
+                        return (
+                            <div style={{ position: 'relative', paddingTop: '56.25%', width: '100%' }}>
+                                <iframe
+                                    key={iframeSrc}
+                                    src={iframeSrc}
+                                    loading="lazy"
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+                                    allowFullScreen={true}
+                                    referrerPolicy="no-referrer-when-downgrade"
+                                    style={{
+                                        border: 0,
+                                        position: 'absolute',
+                                        top: 0, left: 0,
+                                        height: '100%', width: '100%',
+                                    }}
+                                />
+                            </div>
+                        );
+                    }
+
+                    return (
+                        <div style={{ position: 'relative', paddingTop: '56.25%', width: '100%' }}>
+                            <div style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}>
+                                <UniversalVideoPlayer
+                                    url={resolvedUrl}
+                                    title={t('imageAlt') || "Featured Product Video"}
+                                />
+                            </div>
+                        </div>
+                    );
+                })()}
             </div>
 
             {/* 🛑 Modal Accès Limité */}

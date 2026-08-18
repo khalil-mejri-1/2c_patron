@@ -8,6 +8,7 @@ import Footer from '../comp/Footer';
 import { useAlert } from '../context/AlertContext';
 import './shop_redesign.css';
 import BASE_URL from '../apiConfig';
+import { trackAddToCart, trackInitiateCheckout, trackPurchase, sanitizePrice, sanitizeQuantity } from '../services/metaPixel';
 
 const API_OFFERS_URL = `${BASE_URL}/api/offers`;
 const API_COMMAND_URL = `${BASE_URL}/api/commands`;
@@ -22,6 +23,7 @@ const CountdownTimer = ({ expirationDate, appLanguage }) => {
 
             if (distance < 0) {
                 clearInterval(timer);
+                window.location.reload();
                 return;
             }
 
@@ -98,10 +100,26 @@ const OrderModalComponent = ({ selectedProduct, quantity, handleQuantityChange, 
     const handleConfirmOrder = async (e) => {
         e.preventDefault();
         setIsSubmittingOrder(true);
+        const prodId = String(selectedProduct.id || selectedProduct._id);
+        const prodPrice = sanitizePrice(selectedProduct.price || selectedProduct.newPrice);
+        const cleanQty = sanitizeQuantity(quantity);
+        const totalVal = Math.round(prodPrice * cleanQty * 100) / 100;
+        const prodName = typeof selectedProduct.name === 'object' ? (selectedProduct.name[appLanguage] || selectedProduct.name.fr || selectedProduct.name.ar || '') : (selectedProduct.name || '');
+
+        trackInitiateCheckout({
+            name: prodName,
+            category: 'Offers',
+            ids: [prodId],
+            numItems: cleanQty,
+            value: totalVal,
+            currency: 'TND',
+            contents: [{ id: prodId, quantity: cleanQty, item_price: prodPrice }]
+        });
+
         try {
             const orderData = {
-                totalAmount: selectedProduct.price * quantity,
-                items: [{ productId: selectedProduct.id, productName: selectedProduct.name, productImage: selectedProduct.url, quantity, price: selectedProduct.price }],
+                totalAmount: totalVal,
+                items: [{ productId: prodId, productName: prodName, productImage: selectedProduct.url, quantity: cleanQty, price: prodPrice }],
                 clientName: customerData.firstName,
                 clientPhone: customerData.phone,
                 shippingAddress: customerData.adresse,
@@ -110,6 +128,16 @@ const OrderModalComponent = ({ selectedProduct, quantity, handleQuantityChange, 
             const res = await fetch(API_COMMAND_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(orderData) });
             if (res.ok) {
                 const result = await res.json();
+
+                trackPurchase({
+                    value: totalVal,
+                    ids: [prodId],
+                    name: prodName,
+                    numItems: cleanQty,
+                    currency: 'TND',
+                    contents: [{ id: prodId, quantity: cleanQty, item_price: prodPrice }]
+                });
+
                 onOrderSuccess(result.commandId);
             } else {
                 showAlert('error', 'Error', 'Failed to place order');
@@ -268,40 +296,36 @@ export default function OffersPage() {
 
     const direction = appLanguage === 'ar' ? 'rtl' : 'ltr';
 
-    const HeroSection = () => (
-        <header className="about-hero-premium" style={{
-            backgroundImage: `linear-gradient(rgba(15, 23, 42, 0.6), rgba(15, 23, 42, 0.4)), url(${getT('heroImage', 'https://images.unsplash.com/photo-1556015048-4ded3446a160?q=80&w=2560&auto=format&fit=crop')})`
-        }}>
-            <div className="about-hero-overlay"></div>
-            <div className="container about-container" style={{ position: 'relative', zIndex: 10 }}>
-                <div className="about-badge-lux">
-                    {getT('heroBadge', appLanguage === 'ar' ? 'عروض حصرية' : 'Offres Exclusives')}
-                </div>
-                <h1 className="about-main-title">
-                    {appLanguage === 'en' ? getT('heroAccent', 'Special') : getT('heroTitle', appLanguage === 'ar' ? 'عروض' : 'Offres')}
-                    <span className="about-accent"> {appLanguage === 'en' ? getT('heroTitle', 'Offers') : getT('heroAccent', appLanguage === 'ar' ? 'استثنائية' : 'Exceptionnelles')}</span>
-                </h1>
-                <p className="about-sub-text">
-                    {getT('heroSub', appLanguage === 'ar' ? 'اكتشف أفضل الخصومات على مجموعتنا المختارة بعناية.' : 'Découvrez nos meilleures réductions sur une sélection unique.')}
-                </p>
-                {isAdmin && (
-                    <div style={{ marginTop: '25px', display: 'flex', justifyContent: 'center', gap: '15px' }}>
-                        <EditBtn field="hero">
-                            <FaEdit /> {appLanguage === 'ar' ? 'تعديل النصوص' : 'Modifier les textes'}
-                        </EditBtn>
-                        <EditBtn field="heroImage">
-                            <FaImage /> {appLanguage === 'ar' ? 'تغيير الخلفية' : 'Changer l\'image'}
-                        </EditBtn>
-                    </div>
-                )}
-            </div>
-        </header>
-    );
-
     if (loading) return (
         <div className="offers-page-wrapper" dir={direction}>
             <Navbar />
-            <HeroSection />
+            <header className="about-hero-premium" style={{
+                backgroundImage: `linear-gradient(rgba(15, 23, 42, 0.6), rgba(15, 23, 42, 0.4)), url(${getT('heroImage', 'https://images.unsplash.com/photo-1556015048-4ded3446a160?q=80&w=2560&auto=format&fit=crop')})`
+            }}>
+                <div className="about-hero-overlay"></div>
+                <div className="container about-container" style={{ position: 'relative', zIndex: 10 }}>
+                    <div className="about-badge-lux">
+                        {getT('heroBadge', appLanguage === 'ar' ? 'عروض حصرية' : 'Offres Exclusives')}
+                    </div>
+                    <h1 className="about-main-title">
+                        {appLanguage === 'en' ? getT('heroAccent', 'Special') : getT('heroTitle', appLanguage === 'ar' ? 'عروض' : 'Offres')}
+                        <span className="about-accent"> {appLanguage === 'en' ? getT('heroTitle', 'Offers') : getT('heroAccent', appLanguage === 'ar' ? 'استثنائية' : 'Exceptionnelles')}</span>
+                    </h1>
+                    <p className="about-sub-text">
+                        {getT('heroSub', appLanguage === 'ar' ? 'اكتشف أفضل الخصومات على مجموعتنا المختارة بعناية.' : 'Découvrez nos meilleures réductions sur une sélection unique.')}
+                    </p>
+                    {isAdmin && (
+                        <div style={{ marginTop: '25px', display: 'flex', justifyContent: 'center', gap: '15px' }}>
+                            <EditBtn field="hero">
+                                <FaEdit /> {appLanguage === 'ar' ? 'تعديل النصوص' : 'Modifier les textes'}
+                            </EditBtn>
+                            <EditBtn field="heroImage">
+                                <FaImage /> {appLanguage === 'ar' ? 'تغيير الخلفية' : 'Changer l\'image'}
+                            </EditBtn>
+                        </div>
+                    )}
+                </div>
+            </header>
             <main className="container luxury-grid-container">
                 <div className="offers-grid">
                     {[1, 2, 3, 4, 5, 6].map((i) => (
@@ -336,7 +360,33 @@ export default function OffersPage() {
     return (
         <div className="offers-page-wrapper" dir={direction}>
             <Navbar />
-            <HeroSection />
+            <header className="about-hero-premium" style={{
+                backgroundImage: `linear-gradient(rgba(15, 23, 42, 0.6), rgba(15, 23, 42, 0.4)), url(${getT('heroImage', 'https://images.unsplash.com/photo-1556015048-4ded3446a160?q=80&w=2560&auto=format&fit=crop')})`
+            }}>
+                <div className="about-hero-overlay"></div>
+                <div className="container about-container" style={{ position: 'relative', zIndex: 10 }}>
+                    <div className="about-badge-lux">
+                        {getT('heroBadge', appLanguage === 'ar' ? 'عروض حصرية' : 'Offres Exclusives')}
+                    </div>
+                    <h1 className="about-main-title">
+                        {appLanguage === 'en' ? getT('heroAccent', 'Special') : getT('heroTitle', appLanguage === 'ar' ? 'عروض' : 'Offres')}
+                        <span className="about-accent"> {appLanguage === 'en' ? getT('heroTitle', 'Offers') : getT('heroAccent', appLanguage === 'ar' ? 'استثنائية' : 'Exceptionnelles')}</span>
+                    </h1>
+                    <p className="about-sub-text">
+                        {getT('heroSub', appLanguage === 'ar' ? 'اكتشف أفضل الخصومات على مجموعتنا المختارة بعناية.' : 'Découvrez nos meilleures réductions sur une sélection unique.')}
+                    </p>
+                    {isAdmin && (
+                        <div style={{ marginTop: '25px', display: 'flex', justifyContent: 'center', gap: '15px' }}>
+                            <EditBtn field="hero">
+                                <FaEdit /> {appLanguage === 'ar' ? 'تعديل النصوص' : 'Modifier les textes'}
+                            </EditBtn>
+                            <EditBtn field="heroImage">
+                                <FaImage /> {appLanguage === 'ar' ? 'تغيير الخلفية' : 'Changer l\'image'}
+                            </EditBtn>
+                        </div>
+                    )}
+                </div>
+            </header>
 
             <main className="container luxury-grid-container">
                 <div className="offers-grid">
@@ -350,7 +400,21 @@ export default function OffersPage() {
                             <div className="offer-badge-container">
                                 <img src="https://cdn-icons-png.flaticon.com/512/726/726454.png" className="promo-badge-img" alt="Promo" />
                             </div>
-                            <h4 className="offer-main-title">{offer.title[appLanguage] || offer.title.fr}</h4>
+                            {(() => {
+                                const rawTitle = offer.title[appLanguage] || offer.title.fr || '';
+                                const titleParts = rawTitle.includes('+') ? rawTitle.split('+').map(p => p.trim()) : [rawTitle];
+                                return titleParts.length > 1 ? (
+                                    <div className="offer-title-tags">
+                                        {titleParts.map((part, idx) => (
+                                            <span key={idx} className="offer-title-tag">
+                                                {part}
+                                            </span>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <h4 className="offer-main-title">{rawTitle}</h4>
+                                );
+                            })()}
 
                             <div className="offer-image-bundle">
                                 {offer.productIds.slice(0, 3).map((p, i) => (
@@ -360,8 +424,6 @@ export default function OffersPage() {
                                 ))}
                                 {offer.productIds.length > 3 && <div className="bundle-count">+{offer.productIds.length - 3}</div>}
                             </div>
-
-                            <CountdownTimer expirationDate={offer.duration} appLanguage={appLanguage} />
 
                             <div className="offer-price-footer">
                                 <div className="price-stack">

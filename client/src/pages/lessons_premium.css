@@ -81,32 +81,62 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    color: #64748b;
+    padding: 8px 16px;
+    background: #ffffff;
+    color: #1a1a1a;
     text-decoration: none;
-    font-weight: 600;
+    border-radius: 12px;
+    font-weight: 700;
     font-size: 0.85rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
     transition: all 0.3s ease;
-    max-width: 150px;
+    border: 1px solid rgba(0, 0, 0, 0.03);
+    white-space: nowrap;
+    max-width: 180px;
     overflow: hidden;
     text-overflow: ellipsis;
-    white-space: nowrap;
-    display: inline-block;
 }
 
 .breadcrumb-link:hover {
-    color: #f8f8f8;
+    background: #d4af37;
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(212, 175, 55, 0.2);
+    border-color: #d4af37;
 }
 
 .breadcrumb-separator {
-    color: #cbd5e1;
-    font-size: 0.65rem;
-    opacity: 0.8;
+    color: #94a3b8;
+    font-size: 0.7rem;
+    opacity: 0.6;
+}
+
+.breadcrumb-current-parent {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: #ffffff;
+    color: #1a1a1a;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(0, 0, 0, 0.03);
+    white-space: nowrap;
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .breadcrumb-current {
+    padding: 8px 16px;
+    background: rgba(212, 175, 55, 0.1);
     color: #d4af37;
+    border-radius: 12px;
     font-weight: 800;
     font-size: 0.85rem;
+    border: 1px solid rgba(212, 175, 55, 0.3);
     white-space: nowrap;
     max-width: 200px;
     overflow: hidden;
@@ -170,56 +200,186 @@
     z-index: 100;
 }
 
-.active-video-wrapper {
-    background: #fff;
-    padding: 30px;
-    border-radius: 40px;
-    box-shadow: 0 30px 60px rgba(15, 23, 42, 0.08);
-    margin-bottom: 40px;
-    margin-top: 0;
+/* Native Iframe Fullscreen Interceptor Lock */
+iframe:fullscreen,
+iframe:-webkit-full-screen,
+iframe:-moz-full-screen,
+iframe:-ms-fullscreen {
+    width: 2400px !important;
+    height: 1350px !important;
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) scale(min(calc(100vw / 2400), calc(100vh / 1350))) !important;
+    transform-origin: center center !important;
+    background: #000 !important;
+    border: none !important;
+}
+
+/* --- 🎬 NEW SIMPLE & ELEGANT VIDEO CARD 🎬 --- */
+.premium-video-card-section {
+    max-width: 1100px;
+    margin: 20px auto 40px auto;
+    padding: 0 15px;
     position: relative;
     z-index: 100;
-    transition: all 0.4s ease;
 }
 
-.active-focus-cinema {
-    width: 100%;
-    margin: 0 auto;
-    aspect-ratio: 16 / 9;
+.premium-video-card {
+    background: #ffffff;
+    border-radius: 24px;
+    padding: 24px;
+    border: 1px solid rgba(212, 175, 55, 0.15);
+    box-shadow: 0 20px 40px rgba(15, 23, 42, 0.06);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.premium-video-card:hover {
+    box-shadow: 0 25px 50px rgba(212, 175, 55, 0.12);
+}
+
+/* Header Inside Card */
+.video-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.card-fullscreen-toggle {
+    background: rgba(212, 175, 55, 0.1);
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    color: #d4af37;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.card-fullscreen-toggle:hover {
+    background: #d4af37;
+    color: #fff;
+    transform: scale(1.1);
+}
+
+/* Pseudo Fullscreen Mode for Video Card */
+.premium-video-card-section.is-fullscreen {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    max-width: 100vw !important;
+    z-index: 999999 !important;
+    background: #000 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+.premium-video-card-section.is-fullscreen .premium-video-card {
+    height: 100vh;
+    border-radius: 0;
+    border: none;
+    padding: 0;
+    gap: 0;
     background: #000;
-    border-radius: 32px;
-    overflow: hidden;
-    position: relative;
-
-    z-index: 10;
 }
 
-.active-video-title {
-    margin-top: 25px;
-    text-align: center;
+.premium-video-card-section.is-fullscreen .video-card-header {
+    position: absolute;
+    top: 15px;
+    left: 20px;
+    right: 20px;
+    z-index: 110;
+    background: rgba(15, 23, 42, 0.75);
+    backdrop-filter: blur(10px);
+    padding: 10px 18px;
+    border-radius: 30px;
+    border: 1px solid rgba(212, 175, 55, 0.3);
+}
+
+.premium-video-card-section.is-fullscreen .video-card-title {
+    color: #fff;
+}
+
+.premium-video-card-section.is-fullscreen .video-card-screen {
+    width: 100vw !important;
+    height: 100vh !important;
+    aspect-ratio: auto !important;
+    border-radius: 0 !important;
+}
+
+.video-card-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(212, 175, 55, 0.1);
+    color: #d4af37;
+    font-size: 0.82rem;
+    font-weight: 700;
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1px solid rgba(212, 175, 55, 0.25);
+}
+
+.badge-pulse {
+    width: 8px;
+    height: 8px;
+    background-color: #d4af37;
+    border-radius: 50%;
+    box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.7);
+    animation: badgePulse 2s infinite;
+}
+
+@keyframes badgePulse {
+    0% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.7);
+    }
+
+    70% {
+        transform: scale(1);
+        box-shadow: 0 0 0 8px rgba(212, 175, 55, 0);
+    }
+
+    100% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(212, 175, 55, 0);
+    }
+}
+
+.video-card-title {
     font-family: "Lora", serif;
-    font-size: 1.6rem;
+    font-size: 1.35rem;
     font-weight: 700;
     color: #1e293b;
+    margin: 0;
 }
 
-.active-focus-cinema iframe,
-.active-focus-cinema video {
+/* Screen Area inside Card */
+.video-card-screen {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: #0f172a;
+    border-radius: 16px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.2);
+}
+
+.video-card-screen iframe,
+.video-card-screen video {
     width: 100%;
     height: 100%;
-}
-
-/* Shield to block Google Drive's pop-out button */
-.video-player-shield {
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 80px;
-    height: 80px;
-    z-index: 100;
-    background: transparent;
-    cursor: default;
-    pointer-events: auto;
+    border: none;
 }
 
 /* --- 📚 CURRICULUM SECTION 📚 --- */
@@ -467,46 +627,18 @@
         margin-top: -100px !important;
     }
 
-    .active-video-wrapper {
-        background: #fff;
-        padding: 40px 20px;
-        margin-top: 0 !important;
-        margin-bottom: 30px;
-        border-radius: 32px;
-        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.08);
-        margin-left: 0;
-        margin-right: 0;
-        width: 100%;
-        max-width: 1000px;
-        margin-left: auto;
-        margin-right: auto;
-        border: none;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
+    .premium-video-card {
+        padding: 16px;
+        border-radius: 18px;
+        gap: 14px;
     }
 
-    .active-focus-cinema {
-        aspect-ratio: 16 / 9;
-        width: 100%;
-        border-radius: 20px;
-        background: #000;
-        overflow: hidden;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-        order: 2;
-        /* Video comes AFTER title now */
+    .video-card-title {
+        font-size: 1.15rem;
     }
 
-    .active-video-title {
-        order: 1;
-        /* Title comes FIRST */
-        font-size: 1.8rem;
-        margin-top: 0;
-        margin-bottom: 30px;
-        color: #1e293b;
-        font-weight: 800;
-        text-align: center;
-        width: 100%;
+    .video-card-screen {
+        border-radius: 12px;
     }
 
     .lessons-certificate-box-lux {
@@ -609,25 +741,102 @@
     .google-drive-iframe-wrapper {
         width: 200%;
         height: 200%;
-        transform: scale(0.5);
+        transform: scale(0.6);
         transform-origin: top left;
     }
 }
 
 @media (max-width: 488px) {
     .google-drive-iframe-wrapper {
-        width: 20000%;
-        height: 20000%;
-        transform: scale(0.005);
+        width: 275%;
+        height: 275%;
+        transform: scale(0.365);
         transform-origin: top left;
     }
 }
 
-/* @media (max-width: 488px) {
+@media (max-width: 370px) {
     .google-drive-iframe-wrapper {
-        width: 20000%;
-        height: 20000%;
-        transform: scale(0.005);
+        width: 333.33%;
+        height: 333.33%;
+        transform: scale(0.3);
         transform-origin: top left;
     }
-} */
+}
+
+/* ======================================================== */
+/* 🔄 ROTATE SCREEN & FULLSCREEN LANDSCAPE VIDEO STYLES 🔄 */
+/* ======================================================== */
+
+.rotate-screen-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(212, 175, 55, 0.25) !important;
+    border-color: #d4af37 !important;
+}
+
+.rotate-screen-btn:active {
+    transform: scale(0.97);
+}
+
+.premium-video-card-section.is-landscape-fullscreen {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    max-width: 100vw !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    z-index: 999999 !important;
+    background: #000000 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: center !important;
+}
+
+.premium-video-card-section.is-landscape-fullscreen .video-rotate-toolbar {
+    position: absolute !important;
+    top: 16px !important;
+    right: 20px !important;
+    z-index: 1000000 !important;
+}
+
+[dir="rtl"] .premium-video-card-section.is-landscape-fullscreen .video-rotate-toolbar {
+    right: auto !important;
+    left: 20px !important;
+}
+
+.premium-video-card-section.is-landscape-fullscreen .premium-video-card {
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    background: #000000 !important;
+    border: none !important;
+    box-shadow: none !important;
+    justify-content: center !important;
+    gap: 0 !important;
+}
+
+.premium-video-card-section.is-landscape-fullscreen .video-card-screen {
+    width: 100% !important;
+    height: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: #000000 !important;
+    border-radius: 0 !important;
+}
+
+.premium-video-card-section.is-landscape-fullscreen iframe,
+.premium-video-card-section.is-landscape-fullscreen video {
+    width: 100% !important;
+    height: 100% !important;
+    max-height: 100vh !important;
+    object-fit: contain !important;
+}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { FaPlayCircle, FaCheckCircle, FaSpinner, FaCertificate, FaTimes, FaChevronRight, FaEdit, FaPlus, FaTrash, FaUpload, FaLock, FaUnlock, FaUser, FaPhoneAlt, FaCrown } from 'react-icons/fa';
+import { FaPlayCircle, FaCheckCircle, FaSpinner, FaCertificate, FaTimes, FaChevronRight, FaEdit, FaPlus, FaTrash, FaUpload, FaLock, FaUnlock, FaUser, FaPhoneAlt, FaCrown, FaWhatsapp } from 'react-icons/fa';
 import Navbar from '../comp/navbar';
 import Footer from '../comp/Footer';
 import { NavLink, useNavigate } from 'react-router-dom';
@@ -7,7 +7,11 @@ import axios from 'axios';
 import BASE_URL from '../apiConfig';
 import { useAlert } from '../context/AlertContext';
 import { useLanguage } from '../context/LanguageContext';
+import { trackLead } from '../services/metaPixel';
+import { ProductGridSkeleton, PremiumErrorState } from '../comp/Skeletons';
 import './vip_premium.css';
+import './lessons_premium.css';
+import { syncAuthSession } from '../utils/authSession';
 
 // Clé de localStorage pour mémoriser l'état
 const CERTIF_MODAL_KEY = 'hasSeenVipCertifModal';
@@ -56,7 +60,7 @@ const translations = {
         error: "Échec du chargement. Veuillez réessayer plus tard.",
         button: "Commencer",
         modalTitle: "Félicitations !",
-        modalText: (certif) => `Après avoir terminé cette formation, vous obtiendrez un **Certificat Agréé** ${certif ? ' VIP' : ''} pour valoriser vos compétences.`,
+        modalText: (certif) => `Après avoir terminé cette formation, vous obtiendrez un Certificat Agréé ${certif ? ' VIP' : ''} pour valoriser vos compétences.`,
         modalSmallText: "Pour plus de détails, contactez l’administrateur sur WhatsApp :",
         modalBtn: "J'ai Compris",
         whatsappNum: "26 123 456",
@@ -141,6 +145,22 @@ export default function Vipaccess() {
     const [vipHeroSettings, setVipHeroSettings] = useState({});
     const [isEditingVipHero, setIsEditingVipHero] = useState(false);
     const [editVipHeroData, setEditVipHeroData] = useState({});
+    const [navTranslations, setNavTranslations] = useState({});
+    const [breadcrumbTranslations, setBreadcrumbTranslations] = useState({
+        ar: { home: 'الرئيسية', shop: 'الباتيرنات / المتجر', vip: 'دخول VIP' },
+        fr: { home: 'Accueil', shop: 'Boutique', vip: 'Accès VIP' },
+        en: { home: 'Home', shop: 'Shop', vip: 'VIP Access' }
+    });
+    const [isEditingBreadcrumbs, setIsEditingBreadcrumbs] = useState(false);
+    const [editBreadcrumbsData, setEditBreadcrumbsData] = useState({});
+    const [certInfo, setCertInfo] = useState({});
+    const [isEditingCert, setIsEditingCert] = useState(false);
+    const [editCertData, setEditCertData] = useState({});
+
+    // Félicitations Modal Admin Customization State
+    const [felicitationsData, setFelicitationsData] = useState({});
+    const [isEditingFelicitations, setIsEditingFelicitations] = useState(false);
+    const [editFelicitationsData, setEditFelicitationsData] = useState({});
 
     // Categories Management State
     const [showCategoryModal, setShowCategoryModal] = useState(false);
@@ -220,6 +240,9 @@ export default function Vipaccess() {
 
 
     useEffect(() => {
+        // 🍎 iOS Safari Fix: Restore session from cookies before checking auth
+        syncAuthSession();
+
         // Auth Check
         setIsLoggedIn(localStorage.getItem('login') === 'true');
 
@@ -237,6 +260,11 @@ export default function Vipaccess() {
                         setIsAdmin(true);
                     } else {
                         setIsAdmin(false);
+                        // 🔒 Strict VIP Expiration check: If expired or not abonne, block access immediately to home page
+                        if (data && (data.abonne !== 'oui' || data.isExpired)) {
+                            console.warn("VIP Access expired for user:", email);
+                            navigate('/', { replace: true });
+                        }
                     }
                 })
                 .catch(() => { setIsAdmin(false); });
@@ -264,8 +292,123 @@ export default function Vipaccess() {
             })
             .catch(() => { });
 
+        // Fetch Navbar Translations
+        fetch(`${BASE_URL}/api/settings/navbar_translations`)
+            .then(res => res.ok ? res.json() : null)
+            .then(data => {
+                if (data) setNavTranslations(data);
+            })
+            .catch(() => {});
+
+        // Fetch Breadcrumb Translations
+        fetch(`${BASE_URL}/api/settings/breadcrumb_translations`)
+            .then(res => res.ok ? res.json() : null)
+            .then(data => {
+                if (data) setBreadcrumbTranslations(prev => ({ ...prev, ...data }));
+            })
+            .catch(() => {});
+
+        // Fetch Certificate Info
+        fetch(`${BASE_URL}/api/settings/certificate-info`)
+            .then(res => res.ok ? res.json() : null)
+            .then(data => {
+                if (data) {
+                    setCertInfo(data);
+                    const initCert = {};
+                    languages.forEach(l => {
+                        initCert[l.code] = {
+                            title: data[l.code]?.title || (l.code === 'ar' ? "احصل على شهادتك المعتمدة" : "Obtenez votre Certificat"),
+                            desc: data[l.code]?.desc || (l.code === 'ar' ? "بمجرد إكمال المنهج بالكامل، يمكنك الحصول على شهادة معتمدة من مشغل صفاقس تعزز ملفك المهني." : "Après avoir complété tout le cursus, vous êtes éligible pour recevoir un certificat de complétion officiel de l'Atelier Sfax."),
+                            whatsapp: data[l.code]?.whatsapp || "26 123 456",
+                            btn: data[l.code]?.btn || (l.code === 'ar' ? "اطلب شهادتك الآن" : "Demander mon certificat")
+                        };
+                    });
+                    setEditCertData(initCert);
+                } else {
+                    const initCert = {};
+                    languages.forEach(l => {
+                        initCert[l.code] = {
+                            title: l.code === 'ar' ? "احصل على شهادتك المعتمدة" : "Obtenez votre Certificat",
+                            desc: l.code === 'ar' ? "بمجرد إكمال المنهج بالكامل، يمكنك الحصول على شهادة معتمدة من مشغل صفاقس تعزز ملفك المهني." : "Après avoir complété tout le cursus, vous êtes éligible pour recevoir un certificat de complétion officiel de l'Atelier Sfax.",
+                            whatsapp: "26 123 456",
+                            btn: l.code === 'ar' ? "اطلب شهادتك الآن" : "Demander mon certificat"
+                        };
+                    });
+                    setEditCertData(initCert);
+                }
+            })
+            .catch(() => {});
+
+        // Fetch Félicitations Modal Info
+        fetch(`${BASE_URL}/api/settings/felicitations_modal`)
+            .then(res => res.ok ? res.json() : null)
+            .then(data => {
+                if (data) {
+                    setFelicitationsData(data);
+                    setEditFelicitationsData(data);
+                } else {
+                    const initFelicitation = {};
+                    languages.forEach(l => {
+                        const langTrans = translations[l.code] || translations.fr;
+                        initFelicitation[l.code] = {
+                            title: langTrans.modalTitle || "Félicitations !",
+                            text: typeof langTrans.modalText === 'function' ? langTrans.modalText(true) : "Après avoir terminé cette formation, vous obtiendrez un Certificat Agréé VIP pour valoriser vos compétences.",
+                            smallText: langTrans.modalSmallText || "Pour plus de détails, contactez l’administrateur sur WhatsApp :",
+                            whatsappNum: langTrans.whatsappNum || "26 123 456",
+                            btn: langTrans.modalBtn || "J'ai Compris"
+                        };
+                    });
+                    setFelicitationsData(initFelicitation);
+                    setEditFelicitationsData(initFelicitation);
+                }
+            })
+            .catch(() => {});
+
         fetchCategories();
     }, [t.error, languages]);
+
+    const handleSaveFelicitations = async () => {
+        try {
+            await fetch(`${BASE_URL}/api/settings/felicitations_modal`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ value: editFelicitationsData })
+            });
+            setFelicitationsData(editFelicitationsData);
+            setIsEditingFelicitations(false);
+            showAlert('success', appLanguage === 'ar' ? 'تم الحفظ' : 'Succès', appLanguage === 'ar' ? 'تم تحديث نافذة التهاني بنجاح' : 'Contenu mis à jour !');
+        } catch (e) {
+            showAlert('error', appLanguage === 'ar' ? 'خطأ' : 'Erreur', appLanguage === 'ar' ? 'فشل حفظ التغييرات' : 'Échec de la sauvegarde');
+        }
+    };
+
+    const handleSaveCert = async () => {
+        try {
+            await fetch(`${BASE_URL}/api/settings/certificate-info`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ value: editCertData })
+            });
+            setCertInfo(editCertData);
+            setIsEditingCert(false);
+            showAlert('success', 'Success', 'Certificate updated');
+        } catch (e) { showAlert('error', 'Error', 'Save failed'); }
+    };
+
+    const handleSaveBreadcrumbs = async () => {
+        setBreadcrumbTranslations(editBreadcrumbsData);
+        setIsEditingBreadcrumbs(false);
+        try {
+            await fetch(`${BASE_URL}/api/settings/breadcrumb_translations`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ value: editBreadcrumbsData })
+            });
+            showAlert('success', appLanguage === 'ar' ? 'تم الحفظ' : 'Enregistré', appLanguage === 'ar' ? 'تم تحديث مسار التنقل بنجاح' : 'Navigation mise à jour');
+        } catch (err) {
+            showAlert('error', 'Error', 'Failed to save');
+        }
+    };
 
     const handleSaveVipHero = async () => {
         setVipHeroSettings(editVipHeroData);
@@ -352,7 +495,7 @@ export default function Vipaccess() {
     const handleVipRequest = async (e) => {
         e.preventDefault();
         const userEmail = localStorage.getItem('loggedInUserEmail') || localStorage.getItem('currentUserEmail') || 'invite@ateliersfax.com';
-        
+
         if (!vipPhone) return;
         setIsSubmittingVip(true);
         try {
@@ -366,6 +509,14 @@ export default function Vipaccess() {
                 })
             });
             if (res.ok) {
+                // 📊 Meta Pixel: Track Lead
+                trackLead({
+                    name: 'VIP Access Request',
+                    category: 'VIP Membership',
+                    value: 0,
+                    currency: 'TND'
+                });
+
                 setVipRequestSuccess(true);
                 setTimeout(() => {
                     setShowVipModal(false);
@@ -405,7 +556,12 @@ export default function Vipaccess() {
                     <div className="container" style={{ position: 'relative', zIndex: 10 }}>
                         <div className="vip-badge-premium">{currentHero.badge}</div>
                         <h1 className="vip-main-title-premium vip-main-title-premium-mobile">
-                            {appLanguage === 'en' ? currentHero.accent : currentHero.title} <span className="accent-text">{appLanguage === 'en' ? currentHero.title : currentHero.accent}</span>
+                            <span className="title-white-text">
+                                {appLanguage === 'en' ? currentHero.accent : currentHero.title}
+                            </span>
+                            <span className="accent-text">
+                                {appLanguage === 'en' ? currentHero.title : currentHero.accent}
+                            </span>
                         </h1>
 
                         <div style={{ marginTop: '25px', display: 'flex', justifyContent: 'center', gap: '20px', position: 'relative', zIndex: 20, flexWrap: 'wrap' }}>
@@ -433,17 +589,38 @@ export default function Vipaccess() {
                 </header>
 
                 {/* --- 🥖 BREADCRUMB NAVIGATION 🥖 --- */}
-                <nav className="breadcrumb-container">
+                <nav className="breadcrumb-container" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                    {isAdmin && (
+                        <button 
+                            onClick={() => {
+                                setEditBreadcrumbsData({ ...breadcrumbTranslations });
+                                setIsEditingBreadcrumbs(true);
+                            }}
+                            style={{
+                                padding: '4px',
+                                background: 'transparent',
+                                border: 'none',
+                                color: '#d4af37',
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                            }}
+                            title={appLanguage === 'ar' ? 'تعديل مسار التنقل' : 'Modifier les boutons'}
+                        >
+                            <FaEdit size={14} />
+                        </button>
+                    )}
                     <NavLink to="/" className="breadcrumb-link">
-                        {t.breadcrumbHome}
+                        {breadcrumbTranslations[appLanguage]?.home || t.breadcrumbHome}
                     </NavLink>
                     <FaChevronRight className="breadcrumb-separator" />
                     <NavLink to="/magasin" className="breadcrumb-link">
-                        {t.breadcrumbShop}
+                        {breadcrumbTranslations[appLanguage]?.shop || t.breadcrumbShop}
                     </NavLink>
                     <FaChevronRight className="breadcrumb-separator" />
                     <div className="breadcrumb-current">
-                        {t.breadcrumbCurrent}
+                        {breadcrumbTranslations[appLanguage]?.vip || navTranslations[appLanguage]?.vip || t.breadcrumbCurrent}
                     </div>
                 </nav>
 
@@ -458,33 +635,19 @@ export default function Vipaccess() {
                     )}
 
                     {loading ? (
-                        <div className="vip-courses-grid">
-                            {[1, 2, 3].map((n) => (
-                                <div key={n} className="skeleton-card">
-                                    <div className="skeleton-img-box skeleton-shimmer"></div>
-                                    <div className="skeleton-body">
-                                        <div className="skeleton-line skeleton-title-line skeleton-shimmer"></div>
-                                        <div className="skeleton-line skeleton-desc-line skeleton-shimmer"></div>
-                                        <div className="skeleton-line skeleton-desc-line skeleton-shimmer"></div>
-                                        <div className="skeleton-line skeleton-desc-line short skeleton-shimmer"></div>
-                                        <div className="skeleton-footer-grid">
-                                            <div className="skeleton-meta skeleton-shimmer"></div>
-                                            <div className="skeleton-btn skeleton-shimmer"></div>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
+                        <div style={{ marginTop: '30px' }}>
+                            <ProductGridSkeleton count={6} />
                         </div>
                     ) : error ? (
-                        <div className="error-container" style={{ textAlign: 'center', padding: '100px 0', color: '#e11d48' }}>
-                            <p>{error}</p>
+                        <div style={{ padding: '40px 0' }}>
+                            <PremiumErrorState message={error} onRetry={() => window.location.reload()} />
                         </div>
                     ) : (
                         <div className="vip-courses-grid">
                             {vipCategories.map((course, index) => {
                                 const actualAccessType = course.accessType || 'vip';
-                                const isLocked = actualAccessType === 'vip' && !isLoggedIn;
-                                
+                                const isLocked = !isLoggedIn;
+
                                 // Logic for title and image per language
                                 const displayTitle = typeof course.title === 'object' ? (course.title[appLanguage] || course.title.fr) : course.title;
                                 const displayImage = typeof course.image === 'object' ? (course.image[appLanguage] || course.image.fr || course.image['fr']) : (course.image || '');
@@ -504,7 +667,7 @@ export default function Vipaccess() {
                                             if (!isLocked) {
                                                 navigate(`/les_cours/${technicalLink}`);
                                             } else {
-                                                setShowVipModal(true);
+                                                navigate('/login');
                                             }
                                         }}
 
@@ -526,18 +689,32 @@ export default function Vipaccess() {
                                                 {isLocked && <FaLock style={{ color: '#ef4444', fontSize: '1rem' }} />}
                                                 {!isLocked && actualAccessType === 'gratuit' && <FaUnlock style={{ color: '#10b981', fontSize: '1rem' }} />}
                                             </h3>
-                                            <p className="vip-card-desc">
-                                                {typeof course.description === 'object' ? (course.description[appLanguage] || course.description.fr) : course.description}
-                                            </p>
+                                            <div className="vip-card-desc">
+                                                {(() => {
+                                                    const descText = typeof course.description === 'object' ? (course.description[appLanguage] || course.description.fr) : course.description;
+                                                    const descLines = descText ? descText.split('\n').map(line => line.trim()).filter(line => line.length > 0) : [];
+                                                    
+                                                    if (descLines.length > 0) {
+                                                        return (
+                                                            <ul className="vip-desc-list">
+                                                                {descLines.map((line, idx) => {
+                                                                    const cleanLine = line.replace(/^[-*•✦✓]\s*/, '');
+                                                                    return (
+                                                                        <li key={idx} className="vip-desc-item">
+                                                                            <span className="vip-desc-icon">✦</span>
+                                                                            <span className="vip-desc-text">{cleanLine}</span>
+                                                                        </li>
+                                                                    );
+                                                                })}
+                                                            </ul>
+                                                        );
+                                                    }
+                                                    return null;
+                                                })()}
+                                            </div>
 
-                                            <div className="vip-card-footer">
-                                                <div className="vip-meta-item">
-                                                    <FaPlayCircle />
-                                                    <span>
-                                                        {typeof course.duration === 'object' ? (course.duration[appLanguage] || course.duration.fr) : (course.duration || 'Access 24/7')}
-                                                    </span>
-                                                </div>
-                                                <button className="vip-access-btn" disabled={isLocked} style={{ opacity: isLocked ? 0.3 : 1 }}>
+                                            <div className="vip-card-footer" style={{ paddingTop: '20px' }}>
+                                                <button className="vip-access-btn" disabled={isLocked} style={{ opacity: isLocked ? 0.3 : 1, width: '100%' }}>
                                                     <span>{t.button}</span>
                                                     <FaChevronRight className="btn-arrow" />
                                                 </button>
@@ -550,60 +727,31 @@ export default function Vipaccess() {
                     )}
                 </section>
 
+                {/* --- CERTIFICATE SECTION --- */}
+                <section className="lessons-certificate-box-lux" style={{ position: 'relative', margin: '60px auto', maxWidth: '1200px', width: '90%' }}>
+                    {isAdmin && (
+                        <button
+                            className="edit-btn-minimal-lux"
+                            style={{ position: 'absolute', top: '20px', right: '20px', zIndex: 10 }}
+                            onClick={() => {
+                                setIsEditingCert(true);
+                            }}
+                        >
+                            <FaEdit /> {appLanguage === 'ar' ? 'تعديل' : 'Modifier'}
+                        </button>
+                    )}
+                    <FaCertificate className="cert-icon-glamor" />
+                    <h2 className="cert-title-lux">{certInfo[appLanguage]?.title || "Obtenez votre Certificat"}</h2>
+                    <p className="cert-desc-lux">{certInfo[appLanguage]?.desc || "Après avoir complété tout le cursus, vous êtes éligible pour recevoir un certificat de complétion officiel de l'Atelier Sfax."}</p>
+                    <a href={`https://wa.me/${(certInfo[appLanguage]?.whatsapp || "26 123 456").replace(/\s/g, '')}`} className="cert-whatsapp-btn" target="_blank" rel="noopener noreferrer">
+                        <FaWhatsapp size={22} />
+                        <span>{certInfo[appLanguage]?.btn || "Demander mon certificat"}</span>
+                    </a>
+                </section>
+
                 <Footer />
 
-                {/* 🛑 Modal Accès Limité */}
-                {showVipModal && (
-                    <div className="premium-modal-backdrop" onClick={() => !isSubmittingVip && setShowVipModal(false)}>
-                        <div className="creative-modal-content" onClick={(e) => e.stopPropagation()} style={{ overflow: 'visible' }}>
-                            <div className="creative-crown-wrapper">
-                                <FaCrown />
-                            </div>
 
-                            <div className="creative-modal-header">
-                                <button className="creative-close-btn" onClick={() => setShowVipModal(false)}><FaTimes /></button>
-                                <h2 className="creative-title">{t.limitedAccess}</h2>
-                            </div>
-
-                            <div className="creative-modal-body">
-                                {!vipRequestSuccess ? (
-                                    <>
-                                        <p className="creative-subtitle">{t.vipMessage}</p>
-                                        <div className="creative-benefit-pill">{t.vipBenefits}</div>
-                                        <form onSubmit={handleVipRequest} style={{ width: '100%' }}>
-                                            <div className="creative-input-group">
-                                                <label>{appLanguage === 'ar' ? 'رقم الهاتف' : 'Numéro de Téléphone'}</label>
-                                                <div className="creative-input-wrapper">
-                                                    <FaPhoneAlt />
-                                                    <input type="tel" placeholder="Ex: 22 222 222" value={vipPhone} onChange={(e) => setVipPhone(e.target.value.replace(/\D/g, ''))} minLength={8} required className="creative-input" />
-                                                </div>
-                                            </div>
-                                            <div className="creative-input-group">
-                                                <label>{appLanguage === 'ar' ? 'الاسم الكامل' : 'Nom Complet'}</label>
-                                                <div className="creative-input-wrapper">
-                                                    <FaUser />
-                                                    <input type="text" placeholder={appLanguage === 'ar' ? 'اسمك الكامل' : 'Votre Nom et Prénom'} value={vipFullName} onChange={(e) => setVipFullName(e.target.value.replace(/[^a-zA-Z\s\u0600-\u06FF]/g, ''))} required className="creative-input" />
-                                                </div>
-                                            </div>
-                                            <button type="submit" className="creative-submit-btn" disabled={isSubmittingVip}>
-                                                {isSubmittingVip ? (appLanguage === 'ar' ? 'جاري الإرسال...' : 'Envoi...') : (appLanguage === 'ar' ? 'إرسال الطلب' : 'Envoyer la demande')}
-                                            </button>
-                                            <button type="button" className="creative-later-btn" onClick={() => setShowVipModal(false)}>
-                                                {t.later}
-                                            </button>
-                                        </form>
-                                    </>
-                                ) : (
-                                    <div style={{ padding: '15px 0' }}>
-                                        <div className="success-icon-badge"><FaCheckCircle /></div>
-                                        <h3 style={{ color: '#0f172a', fontSize: '1.6rem', marginBottom: '10px', fontWeight: '900' }}>{t.requestSentTitle}</h3>
-                                        <p style={{ color: '#64748b', fontSize: '1rem', lineHeight: '1.6', maxWidth: '300px', margin: '0 auto' }}>{t.requestSentMsg}</p>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                )}
 
                 {/* 🏅 CERTIFICATION MODAL PREMIUM */}
                 {showCertifModal && (
@@ -611,13 +759,40 @@ export default function Vipaccess() {
                         <div className="premium-modal-content">
                             <button className="premium-modal-close-icon" onClick={handleCloseCertifModal}><FaTimes /></button>
                             <div className="vip-cert-icon-wrapper"><FaCertificate /></div>
-                            <h2 className="premium-modal-title">{t.modalTitle}</h2>
-                            <p className="vip-modal-text">{t.modalText(true)}</p>
+                            <h2 className="premium-modal-title">
+                                {felicitationsData[appLanguage]?.title || t.modalTitle}
+                            </h2>
+                            <p className="vip-modal-text">
+                                {felicitationsData[appLanguage]?.text || (typeof t.modalText === 'function' ? t.modalText(true) : t.modalText)}
+                            </p>
                             <div className="vip-modal-whatsapp">
-                                <span className="whatsapp-label">{t.modalSmallText}</span>
-                                <span className="whatsapp-value">{t.whatsappNum}</span>
+                                <span className="whatsapp-label">
+                                    {felicitationsData[appLanguage]?.smallText || t.modalSmallText}
+                                </span>
+                                <span className="whatsapp-value">
+                                    {felicitationsData[appLanguage]?.whatsappNum || t.whatsappNum}
+                                </span>
                             </div>
-                            <button className="premium-btn-cta gold" onClick={handleCloseCertifModal}>{t.modalBtn}</button>
+                            <button className="premium-btn-cta gold" onClick={handleCloseCertifModal}>
+                                {felicitationsData[appLanguage]?.btn || t.modalBtn}
+                            </button>
+
+                            {/* 👑 ADMIN EDIT BUTTON */}
+                            {isAdmin && (
+                                <div style={{ marginTop: '18px', textAlign: 'center' }}>
+                                    <button
+                                        type="button"
+                                        className="admin-modal-edit-trigger"
+                                        onClick={() => {
+                                            setEditFelicitationsData(felicitationsData);
+                                            setIsEditingFelicitations(true);
+                                        }}
+                                    >
+                                        <FaEdit style={{ margin: appLanguage === 'ar' ? '0 0 0 6px' : '0 6px 0 0' }} />
+                                        {appLanguage === 'ar' ? 'تعديل محتوى النافذة (أدمن)' : 'Modifier le contenu (Admin)'}
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}
@@ -658,7 +833,7 @@ export default function Vipaccess() {
                                         <h4 className="lang-indicator" style={{ background: '#d4af37', display: 'inline-block', marginBottom: '15px', color: 'white', padding: '4px 12px', borderRadius: '8px', fontSize: '0.85rem' }}>
                                             {appLanguage === 'ar' ? `البيانات باللغة: ${lang.label}` : `Données en : ${lang.label}`}
                                         </h4>
-                                        
+
                                         <div className="premium-form-group">
                                             <label>{t.categoryTitle}</label>
                                             <input
@@ -681,8 +856,15 @@ export default function Vipaccess() {
                                                     setCategoryFormData({ ...categoryFormData, description: newDesc });
                                                 }}
                                                 dir={lang.code === 'ar' ? 'rtl' : 'ltr'}
-                                                rows="3"
+                                                rows="5"
+                                                placeholder={lang.code === 'ar' ? "اكتب كل جملة/ميزة في سطر منفصل لتظهر بتصميم VIP مميز..." : "Écrivez chaque phrase/avantage sur une ligne différente pour un affichage VIP personnalisé..."}
                                             />
+                                            <small style={{ color: '#d4af37', fontSize: '0.85rem', marginTop: '6px', display: 'block', fontWeight: '500' }}>
+                                                {lang.code === 'ar' 
+                                                    ? "✦ اضغط على Enter للانتقال إلى سطر جديد لكل جملة لتظهر بتصميم مميز ومحاذاة ممتازة." 
+                                                    : "✦ Appuyez sur Entrée pour chaque phrase afin qu'elle s'affiche sous forme de liste élégante."
+                                                }
+                                            </small>
                                         </div>
 
                                         <div className="premium-form-group">
@@ -727,10 +909,10 @@ export default function Vipaccess() {
                                             </div>
                                             {(typeof categoryFormData.image === 'object' ? categoryFormData.image[lang.code] : (lang.code === 'fr' ? categoryFormData.image : null)) && (
                                                 <div style={{ marginTop: '12px' }}>
-                                                    <img 
-                                                        src={typeof categoryFormData.image === 'object' ? categoryFormData.image[lang.code] : categoryFormData.image} 
-                                                        alt="Preview" 
-                                                        style={{ width: '100%', height: '150px', objectFit: 'cover', borderRadius: '12px', border: '1px solid #e2e8f0' }} 
+                                                    <img
+                                                        src={typeof categoryFormData.image === 'object' ? categoryFormData.image[lang.code] : categoryFormData.image}
+                                                        alt="Preview"
+                                                        style={{ width: '100%', height: '150px', objectFit: 'cover', borderRadius: '12px', border: '1px solid #e2e8f0' }}
                                                     />
                                                 </div>
                                             )}
@@ -829,6 +1011,233 @@ export default function Vipaccess() {
                                 <button type="button" className="premium-btn-cta gold" onClick={handleSaveVipHero}>
                                     {appLanguage === 'ar' ? 'حفظ التغييرات' : 'Enregistrer'}
                                 </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* --- 📝 EDIT BREADCRUMBS MODAL 📝 --- */}
+                {isEditingBreadcrumbs && (
+                    <div className="premium-modal-backdrop" onClick={() => setIsEditingBreadcrumbs(false)}>
+                        <div className="premium-modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '600px', maxHeight: '95vh', overflowY: 'auto' }}>
+                            <button className="premium-modal-close-icon" onClick={() => setIsEditingBreadcrumbs(false)}><FaTimes /></button>
+                            <h2 className="premium-modal-title">{appLanguage === 'ar' ? 'تعديل نصوص أزرار مسار التنقل' : 'Modifier les libellés du fil d\'ariane'}</h2>
+                            
+                            <div className="premium-form-grid" style={{ gridTemplateColumns: '1fr', gap: '20px' }}>
+                                {languages.map(lang => {
+                                    const langData = editBreadcrumbsData[lang.code] || { home: '', shop: '', vip: '' };
+                                    return (
+                                        <div key={lang.code} className="premium-lang-section" style={{ border: '1px solid #e2e8f0', background: '#f8fafc', borderRadius: '12px', padding: '15px' }}>
+                                            <h4 className="lang-indicator" style={{ background: '#d4af37', display: 'inline-block', marginBottom: '10px', color: '#fff', padding: '2px 8px', borderRadius: '4px', fontSize: '0.8rem' }}>
+                                                {lang.label}
+                                            </h4>
+                                            <div className="premium-form-group" style={{ marginBottom: '10px' }}>
+                                                <label style={{ fontSize: '0.85rem' }}>{appLanguage === 'ar' ? 'الرئيسية' : 'Accueil (Home)'}</label>
+                                                <input 
+                                                    type="text" 
+                                                    value={langData.home || ''} 
+                                                    onChange={(e) => {
+                                                        const updated = { ...editBreadcrumbsData };
+                                                        updated[lang.code] = { ...langData, home: e.target.value };
+                                                        setEditBreadcrumbsData(updated);
+                                                    }}
+                                                    dir={lang.code === 'ar' ? 'rtl' : 'ltr'}
+                                                />
+                                            </div>
+                                            <div className="premium-form-group" style={{ marginBottom: '10px' }}>
+                                                <label style={{ fontSize: '0.85rem' }}>{appLanguage === 'ar' ? 'المتجر / الباتيرنات' : 'Boutique (Shop)'}</label>
+                                                <input 
+                                                    type="text" 
+                                                    value={langData.shop || ''} 
+                                                    onChange={(e) => {
+                                                        const updated = { ...editBreadcrumbsData };
+                                                        updated[lang.code] = { ...langData, shop: e.target.value };
+                                                        setEditBreadcrumbsData(updated);
+                                                    }}
+                                                    dir={lang.code === 'ar' ? 'rtl' : 'ltr'}
+                                                />
+                                            </div>
+                                            <div className="premium-form-group" style={{ marginBottom: '5px' }}>
+                                                <label style={{ fontSize: '0.85rem' }}>{appLanguage === 'ar' ? 'دخول VIP' : 'Accès VIP (VIP)'}</label>
+                                                <input 
+                                                    type="text" 
+                                                    value={langData.vip || ''} 
+                                                    onChange={(e) => {
+                                                        const updated = { ...editBreadcrumbsData };
+                                                        updated[lang.code] = { ...langData, vip: e.target.value };
+                                                        setEditBreadcrumbsData(updated);
+                                                    }}
+                                                    dir={lang.code === 'ar' ? 'rtl' : 'ltr'}
+                                                />
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+
+                            <div className="premium-btn-group" style={{ marginTop: '20px' }}>
+                                <button type="button" className="premium-btn-cta secondary" onClick={() => setIsEditingBreadcrumbs(false)}>
+                                    {appLanguage === 'ar' ? 'إلغاء' : 'Annuler'}
+                                </button>
+                                <button type="button" className="premium-btn-cta gold" onClick={handleSaveBreadcrumbs}>
+                                    {appLanguage === 'ar' ? 'حفظ التغييرات' : 'Enregistrer'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* --- MODAL CERTIFICATE --- */}
+                {isEditingCert && (
+                    <div className="premium-modal-backdrop" onClick={() => setIsEditingCert(false)}>
+                        <div className="premium-modal-content large" onClick={(e) => e.stopPropagation()} style={{ maxHeight: '90vh', overflowY: 'auto', maxWidth: '800px' }}>
+                            <button className="premium-modal-close-icon" onClick={() => setIsEditingCert(false)}><FaTimes /></button>
+                            <h2 className="premium-modal-title">{appLanguage === 'ar' ? 'تعديل قسم الشهادة' : 'Modifier la Section Certificat'}</h2>
+                            <div className="premium-form-grid" style={{ gridTemplateColumns: '1fr' }}>
+                                {languages.map(lang => (
+                                    <div key={lang.code} className="premium-lang-section" style={{ border: '1px solid #e2e8f0', background: '#f8fafc', borderRadius: '12px', padding: '15px', marginBottom: '15px' }}>
+                                        <h4 className="lang-indicator" style={{ background: '#d4af37', display: 'inline-block', marginBottom: '10px', color: '#fff', padding: '2px 8px', borderRadius: '4px', fontSize: '0.8rem' }}>{lang.label}</h4>
+                                        <div className="premium-form-group">
+                                            <label>{appLanguage === 'ar' ? 'العنوان' : 'Titre'}</label>
+                                            <input
+                                                type="text"
+                                                value={editCertData[lang.code]?.title || ''}
+                                                onChange={e => setEditCertData({
+                                                    ...editCertData,
+                                                    [lang.code]: { ...editCertData[lang.code], title: e.target.value }
+                                                })}
+                                                dir={lang.code === 'ar' ? 'rtl' : 'ltr'}
+                                            />
+                                        </div>
+                                        <div className="premium-form-group">
+                                            <label>{appLanguage === 'ar' ? 'الوصف' : 'Description'}</label>
+                                            <textarea
+                                                value={editCertData[lang.code]?.desc || ''}
+                                                onChange={e => setEditCertData({
+                                                    ...editCertData,
+                                                    [lang.code]: { ...editCertData[lang.code], desc: e.target.value }
+                                                })}
+                                                dir={lang.code === 'ar' ? 'rtl' : 'ltr'}
+                                                rows={3}
+                                            />
+                                        </div>
+                                        <div className="premium-form-group">
+                                            <label>{appLanguage === 'ar' ? 'نص الزر' : 'Texte Bouton'}</label>
+                                            <input
+                                                type="text"
+                                                value={editCertData[lang.code]?.btn || ''}
+                                                onChange={e => setEditCertData({
+                                                    ...editCertData,
+                                                    [lang.code]: { ...editCertData[lang.code], btn: e.target.value }
+                                                })}
+                                                dir={lang.code === 'ar' ? 'rtl' : 'ltr'}
+                                            />
+                                        </div>
+                                        <div className="premium-form-group">
+                                            <label>{appLanguage === 'ar' ? 'رقم الواتساب' : 'Numéro WhatsApp'}</label>
+                                            <input
+                                                type="text"
+                                                value={editCertData[lang.code]?.whatsapp || ''}
+                                                onChange={e => setEditCertData({
+                                                    ...editCertData,
+                                                    [lang.code]: { ...editCertData[lang.code], whatsapp: e.target.value }
+                                                })}
+                                                dir={lang.code === 'ar' ? 'rtl' : 'ltr'}
+                                            />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="premium-btn-group" style={{ justifyContent: 'center', marginTop: '30px' }}>
+                                <button type="button" className="premium-btn-cta secondary" onClick={() => setIsEditingCert(false)}>{appLanguage === 'ar' ? 'إلغاء' : 'Annuler'}</button>
+                                <button type="button" className="premium-btn-cta gold" onClick={handleSaveCert}>{appLanguage === 'ar' ? 'حفظ التغييرات' : 'Enregistrer'}</button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+                {/* 📝 EDIT FÉLICITATIONS MODAL FOR ADMIN */}
+                {isEditingFelicitations && (
+                    <div className="premium-modal-backdrop" onClick={() => setIsEditingFelicitations(false)}>
+                        <div className="premium-modal-content large" onClick={(e) => e.stopPropagation()} style={{ maxHeight: '90vh', overflowY: 'auto', maxWidth: '800px' }}>
+                            <button className="premium-modal-close-icon" onClick={() => setIsEditingFelicitations(false)}><FaTimes /></button>
+                            <h2 className="premium-modal-title">
+                                {appLanguage === 'ar' ? 'تعديل محتوى نافذة التهاني (Félicitations !)' : 'Modifier la fenêtre Félicitations !'}
+                            </h2>
+                            <div className="premium-form-grid" style={{ gridTemplateColumns: '1fr' }}>
+                                {languages.map(lang => (
+                                    <div key={lang.code} className="premium-lang-section" style={{ border: '1px solid #e2e8f0', background: '#f8fafc', borderRadius: '12px', padding: '15px', marginBottom: '15px' }}>
+                                        <h4 className="lang-indicator" style={{ background: '#d4af37', display: 'inline-block', marginBottom: '10px', color: '#fff', padding: '2px 8px', borderRadius: '4px', fontSize: '0.8rem' }}>{lang.label}</h4>
+                                        
+                                        <div className="premium-form-group">
+                                            <label style={{ fontWeight: 'bold', color: '#1e293b' }}>{appLanguage === 'ar' ? 'عنوان النافذة' : 'Titre de la fenêtre'}</label>
+                                            <input
+                                                type="text"
+                                                value={editFelicitationsData[lang.code]?.title || ''}
+                                                onChange={e => setEditFelicitationsData({
+                                                    ...editFelicitationsData,
+                                                    [lang.code]: { ...editFelicitationsData[lang.code], title: e.target.value }
+                                                })}
+                                                dir={lang.code === 'ar' ? 'rtl' : 'ltr'}
+                                            />
+                                        </div>
+
+                                        <div className="premium-form-group">
+                                            <label style={{ fontWeight: 'bold', color: '#1e293b' }}>{appLanguage === 'ar' ? 'نص الرسالة / المحتوى' : 'Contenu principal'}</label>
+                                            <textarea
+                                                value={editFelicitationsData[lang.code]?.text || ''}
+                                                onChange={e => setEditFelicitationsData({
+                                                    ...editFelicitationsData,
+                                                    [lang.code]: { ...editFelicitationsData[lang.code], text: e.target.value }
+                                                })}
+                                                dir={lang.code === 'ar' ? 'rtl' : 'ltr'}
+                                                rows={3}
+                                            />
+                                        </div>
+
+                                        <div className="premium-form-group">
+                                            <label style={{ fontWeight: 'bold', color: '#1e293b' }}>{appLanguage === 'ar' ? 'النص التوضيحي للاتصال' : 'Texte WhatsApp / Téléphone'}</label>
+                                            <input
+                                                type="text"
+                                                value={editFelicitationsData[lang.code]?.smallText || ''}
+                                                onChange={e => setEditFelicitationsData({
+                                                    ...editFelicitationsData,
+                                                    [lang.code]: { ...editFelicitationsData[lang.code], smallText: e.target.value }
+                                                })}
+                                                dir={lang.code === 'ar' ? 'rtl' : 'ltr'}
+                                            />
+                                        </div>
+
+                                        <div className="premium-form-group">
+                                            <label style={{ fontWeight: 'bold', color: '#1e293b' }}>{appLanguage === 'ar' ? 'رقم الهاتف / الواتساب' : 'Numéro WhatsApp / Téléphone'}</label>
+                                            <input
+                                                type="text"
+                                                value={editFelicitationsData[lang.code]?.whatsappNum || ''}
+                                                onChange={e => setEditFelicitationsData({
+                                                    ...editFelicitationsData,
+                                                    [lang.code]: { ...editFelicitationsData[lang.code], whatsappNum: e.target.value }
+                                                })}
+                                                dir="ltr"
+                                            />
+                                        </div>
+
+                                        <div className="premium-form-group">
+                                            <label style={{ fontWeight: 'bold', color: '#1e293b' }}>{appLanguage === 'ar' ? 'نص زر الإغلاق' : 'Texte du Bouton'}</label>
+                                            <input
+                                                type="text"
+                                                value={editFelicitationsData[lang.code]?.btn || ''}
+                                                onChange={e => setEditFelicitationsData({
+                                                    ...editFelicitationsData,
+                                                    [lang.code]: { ...editFelicitationsData[lang.code], btn: e.target.value }
+                                                })}
+                                                dir={lang.code === 'ar' ? 'rtl' : 'ltr'}
+                                            />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="premium-btn-group" style={{ justifyContent: 'center', marginTop: '30px' }}>
+                                <button type="button" className="premium-btn-cta secondary" onClick={() => setIsEditingFelicitations(false)}>{appLanguage === 'ar' ? 'إلغاء' : 'Annuler'}</button>
+                                <button type="button" className="premium-btn-cta gold" onClick={handleSaveFelicitations}>{appLanguage === 'ar' ? 'حفظ التغييرات' : 'Enregistrer'}</button>
                             </div>
                         </div>
                     </div>

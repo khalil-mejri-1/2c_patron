@@ -10,6 +10,8 @@ import Footer from '../comp/Footer';
 import { useLanguage } from '../context/LanguageContext';
 import { useAlert } from '../context/AlertContext';
 import BASE_URL from '../apiConfig';
+import { ProductDetailsSkeleton, PremiumErrorState } from '../comp/Skeletons';
+import { trackViewContent, trackPurchase, trackInitiateCheckout, trackAddToCart, sanitizePrice, sanitizeQuantity } from '../services/metaPixel';
 import './shop_redesign.css'; // Reuse existing shop styles
 
 const ProductDetails = () => {
@@ -42,6 +44,7 @@ const ProductDetails = () => {
     const [showEditModal, setShowEditModal] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [showTitleEditModal, setShowTitleEditModal] = useState(false);
+    const [cartToast, setCartToast] = useState(null);
     const [editSettingObj, setEditSettingObj] = useState({ fr: '', ar: '', TN: '' });
     const [isSavingSetting, setIsSavingSetting] = useState(false);
     const [isAutoPlayEnabled, setIsAutoPlayEnabled] = useState(true);
@@ -54,6 +57,7 @@ const ProductDetails = () => {
     const [commentRating, setCommentRating] = useState(5);
     const [commentText, setCommentText] = useState('');
     const [clientNameForComment, setClientNameForComment] = useState('');
+    const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
     const [editForm, setEditForm] = useState({
         nom: {},
         prix: 0,
@@ -231,6 +235,19 @@ const ProductDetails = () => {
 
                     setProduct(data);
 
+                    // 📊 Meta Pixel: Track ViewContent (Vue du contenu)
+                    const prodName = typeof data.nom === 'object' ? (data.nom[appLanguage] || data.nom.fr || data.nom.ar || '') : (data.nom || '');
+                    const prodCat = typeof data.categorie === 'object' ? (data.categorie[appLanguage] || data.categorie.fr || data.categorie.ar || '') : (data.categorie || '');
+                    const prodPrice = sanitizePrice(data.prix);
+                    trackViewContent({
+                        name: prodName,
+                        category: prodCat,
+                        ids: [data._id],
+                        value: prodPrice,
+                        currency: 'TND',
+                        contents: [{ id: String(data._id), quantity: 1, item_price: prodPrice }]
+                    });
+
                     // Restore carousel filter from DB (visibleCarouselImages)
                     const vcImages = data.visibleCarouselImages || [];
                     if (vcImages.length > 0) {
@@ -294,16 +311,23 @@ const ProductDetails = () => {
             return;
         }
 
+        const prodPrice = sanitizePrice(product.prix);
+        const cleanQty = sanitizeQuantity(quantity);
+        const totalVal = Math.round(prodPrice * cleanQty * 100) / 100;
+        const prodId = String(product._id || product.id);
+        const prodName = typeof product.nom === 'object' ? (product.nom[appLanguage] || product.nom.fr || product.nom.ar || '') : (product.nom || '');
+        const prodCat = typeof product.categorie === 'object' ? (product.categorie[appLanguage] || product.categorie.fr || product.categorie.ar || '') : (product.categorie || '');
+
         setIsSubmitting(true);
         try {
             const orderData = {
-                totalAmount: product.prix * quantity,
+                totalAmount: totalVal,
                 items: [{
-                    productId: product._id,
-                    productName: typeof product.nom === 'object' ? (product.nom[appLanguage] || product.nom.fr) : product.nom,
+                    productId: prodId,
+                    productName: prodName,
                     productImage: product.mainImage || product.image,
-                    quantity: quantity,
-                    price: product.prix
+                    quantity: cleanQty,
+                    price: prodPrice
                 }],
                 clientName: customerDetails.name,
                 clientPhone: customerDetails.whatsapp,
@@ -311,6 +335,17 @@ const ProductDetails = () => {
                 shippingAddress: customerDetails.address,
                 note: customerDetails.note
             };
+
+            // 📊 Meta Pixel: Track InitiateCheckout
+            trackInitiateCheckout({
+                name: prodName,
+                category: prodCat,
+                ids: [prodId],
+                numItems: cleanQty,
+                value: totalVal,
+                currency: 'TND',
+                contents: [{ id: prodId, quantity: cleanQty, item_price: prodPrice }]
+            });
 
             const res = await fetch(`${BASE_URL}/api/commands`, {
                 method: 'POST',
@@ -324,19 +359,29 @@ const ProductDetails = () => {
                 setClientNameForComment(customerDetails.name);
                 setShowOrderSuccessModal(true);
 
+                // 📊 Meta Pixel: Track Purchase (Achat)
+                trackPurchase({
+                    value: totalVal,
+                    ids: [prodId],
+                    name: prodName,
+                    numItems: cleanQty,
+                    currency: 'TND',
+                    contents: [{ id: prodId, quantity: cleanQty, item_price: prodPrice }]
+                });
+
                 // Add to local storage "panier"
                 try {
                     const currentPanier = JSON.parse(localStorage.getItem('panier_items') || '[]');
                     const orderDate = new Date().toISOString();
                     const newItem = {
-                        id: product._id,
+                        id: prodId,
                         commandId: data.commandId || data._id || data.id,
-                        name: typeof product.nom === 'object' ? product.nom : { fr: product.nom, ar: product.nom },
+                        name: typeof product.nom === 'object' ? product.nom : { fr: prodName, ar: prodName },
                         image: product.mainImage || product.image,
-                        price: product.prix,
-                        quantity: quantity,
+                        price: prodPrice,
+                        quantity: cleanQty,
                         orderDate: orderDate,
-                        totalAmount: product.prix * quantity,
+                        totalAmount: totalVal,
                         status: 'pending'
                     };
                     localStorage.setItem('panier_items', JSON.stringify([newItem, ...currentPanier]));
@@ -548,72 +593,21 @@ const ProductDetails = () => {
     };
 
     if (loading) return (
-        <div style={{ background: '#f8fafc', minHeight: '100vh', display: 'flex', flexDirection: 'column' }} dir="ltr">
+        <div style={{ background: '#f8fafc', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
             <Navbar />
-            <div className="product-details-container" dir={appLanguage === 'ar' ? 'rtl' : 'ltr'}>
-                <div className="product-details-layout skeleton-pulse" style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: '50px', marginTop: '150px', marginBottom: '50px' }}>
-
-                    {/* Left Column Skeleton */}
-                    <div className="media-section" style={{ display: 'flex', gap: '15px', height: '700px' }}>
-                        <div style={{ flex: 1, borderRadius: '24px', background: '#e2e8f0', boxShadow: '0 20px 40px rgba(0,0,0,0.05)' }}></div>
-                        <div style={{ width: '100px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                            {[1, 2, 3, 4].map(i => (
-                                <div key={i} style={{ width: '100%', height: '90px', borderRadius: '12px', background: '#e2e8f0' }}></div>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Right Column Skeleton */}
-                    <div className="info-section">
-                        <div style={{ marginBottom: '30px' }}>
-                            <div style={{ width: '100px', height: '30px', borderRadius: '30px', background: '#e2e8f0', marginBottom: '20px' }}></div>
-                            <div style={{ width: '90%', height: '40px', borderRadius: '12px', background: '#e2e8f0', marginBottom: '20px' }}></div>
-                            <div style={{ width: '40%', height: '40px', borderRadius: '12px', background: '#e2e8f0', marginBottom: '40px' }}></div>
-
-                            <div style={{ width: '150px', height: '24px', borderRadius: '8px', background: '#e2e8f0', marginBottom: '15px' }}></div>
-                            <div style={{ width: '100%', height: '150px', borderRadius: '20px', background: '#e2e8f0', marginBottom: '40px' }}></div>
-                        </div>
-
-                        <div style={{ background: '#fff', padding: '30px', borderRadius: '32px', boxShadow: '0 20px 60px rgba(0,0,0,0.05)', border: '1px solid rgba(0,0,0,0.02)' }}>
-                            <div style={{ width: '50%', height: '24px', borderRadius: '8px', background: '#e2e8f0', marginBottom: '30px' }}></div>
-
-                            <div className="pd-inputs-grid" style={{ marginBottom: '15px' }}>
-                                <div style={{ height: '55px', borderRadius: '14px', background: '#f8fafc', border: '2px solid #f1f5f9' }}></div>
-                                <div style={{ height: '55px', borderRadius: '14px', background: '#f8fafc', border: '2px solid #f1f5f9' }}></div>
-                            </div>
-                            <div style={{ height: '55px', borderRadius: '14px', background: '#f8fafc', border: '2px solid #f1f5f9', marginBottom: '30px' }}></div>
-
-                            <div style={{ height: '70px', borderRadius: '20px', background: '#f8fafc', marginBottom: '30px' }}></div>
-
-                            <div style={{ height: '65px', width: '100%', borderRadius: '20px', background: '#e2e8f0' }}></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <style>{`
-                .skeleton-pulse .media-section > div, 
-                .skeleton-pulse .info-section > div > div,
-                .skeleton-pulse .info-section .pd-inputs-grid > div {
-                    background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
-                    background-size: 200% 100%;
-                    animation: pdSkeletonLoading 1.5s infinite linear;
-                }
-                @keyframes pdSkeletonLoading {
-                    0% { background-position: 200% 0; }
-                    100% { background-position: -200% 0; }
-                }
-                @media (max-width: 992px) {
-                    .skeleton-pulse { grid-template-columns: 1fr !important; }
-                    .skeleton-pulse .media-section { height: 400px !important; flex-direction: column !important; }
-                    .skeleton-pulse .media-section > div:last-child { width: 100% !important; flex-direction: row !important; height: 80px !important; }
-                    .skeleton-pulse .media-section > div:last-child > div { width: 80px !important; height: 100% !important; }
-                }
-            `}</style>
+            <ProductDetailsSkeleton direction={appLanguage === 'ar' ? 'rtl' : 'ltr'} />
             <Footer />
         </div>
     );
-    if (error || !product) return <div className="error-container" style={{ textAlign: 'center', padding: '100px' }}><p>{error}</p><button onClick={() => navigate('/magasin')}>{t.back}</button></div>;
+    if (error || !product) return (
+        <div style={{ background: '#f8fafc', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+            <Navbar />
+            <div style={{ padding: '140px 20px 80px' }}>
+                <PremiumErrorState message={error || "المنتج غير موجود أو تعذر جلب البيانات من الخادم."} onRetry={() => navigate('/magasin')} />
+            </div>
+            <Footer />
+        </div>
+    );
 
 
 
@@ -923,18 +917,72 @@ const ProductDetails = () => {
                             </div>
 
                             {currentDescription && (
-                                <div style={{
-                                    padding: '20px',
-                                    background: 'rgba(0,0,0,0.02)',
-                                    borderRadius: '20px',
-                                    borderInlineStart: '4px solid #D4AF37',
-                                    marginBottom: '30px',
-                                    fontSize: '0.95rem',
-                                    color: '#475569',
-                                    lineHeight: '1.6',
-                                    whiteSpace: 'pre-line'
-                                }}>
-                                    {currentDescription}
+                                <div style={{ marginBottom: '30px' }}>
+                                    {isDescriptionExpanded && (
+                                        <div style={{
+                                            padding: '20px',
+                                            background: 'rgba(0,0,0,0.02)',
+                                            borderRadius: '20px',
+                                            borderInlineStart: '4px solid #D4AF37',
+                                            fontSize: '0.95rem',
+                                            color: '#475569',
+                                            lineHeight: '1.6',
+                                            whiteSpace: 'pre-line',
+                                            transition: 'all 0.3s ease',
+                                            marginBottom: '15px'
+                                        }}>
+                                            {currentDescription}
+                                        </div>
+                                    )}
+                                    <button
+                                        onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
+                                        style={{
+                                            background: 'rgba(212, 175, 55, 0.06)',
+                                            border: '1px solid rgba(212, 175, 55, 0.3)',
+                                            color: '#aa7c11',
+                                            cursor: 'pointer',
+                                            fontSize: '0.82rem',
+                                            fontWeight: '800',
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: '8px',
+                                            padding: '8px 18px',
+                                            borderRadius: '25px',
+                                            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                                            fontFamily: 'inherit',
+                                            outline: 'none',
+                                            boxShadow: '0 4px 10px rgba(212, 175, 55, 0.04)',
+                                            textTransform: 'uppercase',
+                                            letterSpacing: '0.5px'
+                                        }}
+                                        onMouseEnter={(e) => {
+                                            e.currentTarget.style.background = 'rgba(212, 175, 55, 0.12)';
+                                            e.currentTarget.style.borderColor = '#D4AF37';
+                                            e.currentTarget.style.transform = 'translateY(-2px)';
+                                            e.currentTarget.style.boxShadow = '0 6px 15px rgba(212, 175, 55, 0.1)';
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            e.currentTarget.style.background = 'rgba(212, 175, 55, 0.06)';
+                                            e.currentTarget.style.borderColor = 'rgba(212, 175, 55, 0.3)';
+                                            e.currentTarget.style.transform = 'translateY(0)';
+                                            e.currentTarget.style.boxShadow = '0 4px 10px rgba(212, 175, 55, 0.04)';
+                                        }}
+                                    >
+                                        <span>
+                                            {isDescriptionExpanded 
+                                                ? (appLanguage === 'ar' ? 'أخفِ الوصف كاملًا' : 'Masquer la description') 
+                                                : (appLanguage === 'ar' ? 'عرض الوصف كاملًا' : 'Afficher la description')
+                                            }
+                                        </span>
+                                        <span style={{ 
+                                            fontSize: '0.7rem', 
+                                            display: 'inline-block',
+                                            transform: isDescriptionExpanded ? 'rotate(180deg)' : 'rotate(0deg)', 
+                                            transition: 'transform 0.3s ease' 
+                                        }}>
+                                            ▼
+                                        </span>
+                                    </button>
                                 </div>
                             )}
 
@@ -1085,29 +1133,138 @@ const ProductDetails = () => {
                                     )}
                                 </div>
 
-                                <button
-                                    type="submit"
-                                    className="creative-pulsing-btn"
-                                    disabled={isSubmitting}
-                                    style={{
-                                        width: '100%',
-                                        padding: '20px',
-                                        borderRadius: '20px',
-                                        background: 'linear-gradient(135deg, #D4AF37, #B48A1B)',
-                                        color: '#fff',
-                                        border: 'none',
-                                        fontSize: '1.1rem',
-                                        fontWeight: '900',
-                                        cursor: 'pointer',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        gap: '12px',
-                                        boxShadow: '0 15px 35px rgba(212, 175, 55, 0.3)'
-                                    }}
-                                >
-                                    {isSubmitting ? <div className="loader small"></div> : <><FaShoppingCart /> {t.buy}</>}
-                                </button>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%' }}>
+                                    <button
+                                        type="submit"
+                                        className="creative-pulsing-btn"
+                                        disabled={isSubmitting}
+                                        style={{
+                                            width: '100%',
+                                            padding: '18px',
+                                            borderRadius: '20px',
+                                            background: 'linear-gradient(135deg, #D4AF37, #B48A1B)',
+                                            color: '#fff',
+                                            border: 'none',
+                                            fontSize: '1.1rem',
+                                            fontWeight: '900',
+                                            cursor: 'pointer',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            gap: '12px',
+                                            boxShadow: '0 15px 35px rgba(212, 175, 55, 0.3)'
+                                        }}
+                                    >
+                                        {isSubmitting ? <div className="loader small"></div> : <><FaShoppingCart /> {t.buy}</>}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="creative-add-to-cart-btn"
+                                        style={{
+                                            width: '100%',
+                                            padding: '18px',
+                                            borderRadius: '20px',
+                                            background: 'transparent',
+                                            color: '#D4AF37',
+                                            border: '2px solid #D4AF37',
+                                            fontSize: '1.1rem',
+                                            fontWeight: '900',
+                                            cursor: 'pointer',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            gap: '12px',
+                                            transition: 'all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)',
+                                            boxShadow: '0 4px 15px rgba(212, 175, 55, 0.05)'
+                                        }}
+                                        onMouseEnter={(e) => {
+                                            e.currentTarget.style.background = 'linear-gradient(135deg, #D4AF37, #B48A1B)';
+                                            e.currentTarget.style.color = '#fff';
+                                            e.currentTarget.style.boxShadow = '0 10px 25px rgba(212, 175, 55, 0.25)';
+                                            e.currentTarget.style.transform = 'translateY(-2px)';
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            e.currentTarget.style.background = 'transparent';
+                                            e.currentTarget.style.color = '#D4AF37';
+                                            e.currentTarget.style.boxShadow = '0 4px 15px rgba(212, 175, 55, 0.05)';
+                                            e.currentTarget.style.transform = 'translateY(0)';
+                                        }}
+                                        onMouseDown={(e) => {
+                                            e.currentTarget.style.transform = 'scale(0.97)';
+                                        }}
+                                        onMouseUp={(e) => {
+                                            e.currentTarget.style.transform = 'translateY(-2px)';
+                                        }}
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            try {
+                                                const currentCart = JSON.parse(localStorage.getItem('cartItems') || '[]');
+                                                const prodId = String(product._id || product.id);
+                                                const prodPrice = sanitizePrice(product.prix);
+                                                const cleanQty = sanitizeQuantity(quantity);
+                                                const existingItem = currentCart.find(item => item.id === prodId);
+                                                const pName = typeof product.nom === 'object' ? (product.nom[appLanguage] || product.nom.fr || product.nom.ar || '') : (product.nom || '');
+                                                const pImg = product.mainImage || product.image;
+                                                if (existingItem) {
+                                                    existingItem.quantity += cleanQty;
+                                                } else {
+                                                    currentCart.push({
+                                                        id: prodId,
+                                                        name: pName,
+                                                        price: prodPrice,
+                                                        url: pImg,
+                                                        quantity: cleanQty,
+                                                        currency: 'DT'
+                                                    });
+                                                }
+                                                localStorage.setItem('cartItems', JSON.stringify(currentCart));
+                                                window.dispatchEvent(new Event('cartUpdated'));
+                                                
+                                                // 📊 Meta Pixel: Track AddToCart
+                                                const catName = typeof product.categorie === 'object' ? (product.categorie[appLanguage] || product.categorie.fr || product.categorie.ar || '') : (product.categorie || '');
+                                                trackAddToCart({
+                                                    name: pName,
+                                                    category: catName,
+                                                    ids: [prodId],
+                                                    quantity: cleanQty,
+                                                    value: prodPrice,
+                                                    currency: 'TND',
+                                                    contents: [{ id: prodId, quantity: cleanQty, item_price: prodPrice }]
+                                                });
+
+                                                setCartToast({
+                                                    show: true,
+                                                    hiding: false,
+                                                    product: {
+                                                        id: prodId,
+                                                        name: pName,
+                                                        price: prodPrice,
+                                                        url: pImg,
+                                                        currency: 'DT'
+                                                    }
+                                                });
+
+                                                // Auto hide toast after 4 seconds
+                                                setTimeout(() => {
+                                                    setCartToast(prev => {
+                                                        if (prev) {
+                                                            return { ...prev, hiding: true };
+                                                        }
+                                                        return prev;
+                                                    });
+                                                    setTimeout(() => {
+                                                        setCartToast(null);
+                                                    }, 400);
+                                                }, 4000);
+                                            } catch (err) {
+                                                console.error(err);
+                                                showAlert('error', 'Erreur', 'Failed to add to cart');
+                                            }
+                                        }}
+                                    >
+                                        <FaShoppingCart /> {appLanguage === 'ar' ? 'أضف إلى السلة' : 'Ajouter au panier'}
+                                    </button>
+                                </div>
 
                                 <div style={{ marginTop: '20px', textAlign: 'center' }}>
                                     <a
@@ -1702,9 +1859,64 @@ const ProductDetails = () => {
                 </div>
             )}
 
+            {/* Premium Toast Notification */}
+            {cartToast && (
+                <div className={`premium-cart-toast ${cartToast.hiding ? 'hiding' : ''}`}>
+                    <div className="premium-cart-toast-header">
+                        <span className="premium-cart-toast-title">
+                            <FaCheckCircle />
+                            {appLanguage === 'ar' ? 'تمت إضافة المنتج!' : 'Produit ajouté !'}
+                        </span>
+                        <button
+                            className="premium-cart-toast-close"
+                            onClick={() => {
+                                setCartToast(prev => prev ? { ...prev, hiding: true } : null);
+                                setTimeout(() => setCartToast(null), 400);
+                            }}
+                        >
+                            <FaTimes />
+                        </button>
+                    </div>
+                    <div className="premium-cart-toast-body">
+                        <img src={cartToast.product.url} alt="" className="premium-cart-toast-img" />
+                        <div className="premium-cart-toast-info">
+                            <h4 className="premium-cart-toast-name">{cartToast.product.name}</h4>
+                            <p className="premium-cart-toast-price">
+                                {cartToast.product.price.toFixed(2)} {cartToast.product.currency || 'DT'}
+                            </p>
+                        </div>
+                    </div>
+                    <div className="premium-cart-toast-action">
+                        <button
+                            className="premium-cart-toast-btn secondary"
+                            onClick={() => {
+                                setCartToast(prev => prev ? { ...prev, hiding: true } : null);
+                                setTimeout(() => setCartToast(null), 400);
+                            }}
+                        >
+                            {appLanguage === 'ar' ? 'مواصلة التسوق' : 'Continuer'}
+                        </button>
+                        <button
+                            className="premium-cart-toast-btn primary"
+                            onClick={() => {
+                                navigate('/panier');
+                            }}
+                        >
+                            {appLanguage === 'ar' ? 'عرض السلة' : 'Voir le panier'}
+                        </button>
+                    </div>
+                </div>
+            )}
+
             <style>{`
+                html, body {
+                    height: auto !important;
+                    min-height: 100% !important;
+                    overflow-y: auto !important;
+                    -webkit-overflow-scrolling: touch !important;
+                }
                 .product-details-container {
-                    padding: 40px 5%;
+                    padding: 40px 5% 100px 5%;
                     margin: 0 auto;
                     max-width: 1400px;
                     width: 100%;
@@ -1731,6 +1943,9 @@ const ProductDetails = () => {
                     background: #fff !important;
                 }
                 @media (max-width: 992px) {
+                    .product-details-container { 
+                        padding: 20px 4% 250px 4% !important; 
+                    }
                     .product-details-layout { 
                         grid-template-columns: 1fr !important; 
                         margin-top: 100px !important; 
@@ -1821,7 +2036,7 @@ const ProductDetails = () => {
                         height: 80px !important; 
                     }
                     .info-section h1 { font-size: 1.15rem !important; }
-                    .product-details-container { padding: 20px 3% !important; }
+                    .product-details-container { padding: 20px 3% 250px 3% !important; }
                 }
                 .loader.small {
                     width: 20px;

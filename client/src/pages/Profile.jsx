@@ -4,6 +4,7 @@ import Navbar from '../comp/navbar';
 import Footer from '../comp/Footer';
 import BASE_URL from '../apiConfig';
 import { useLanguage } from '../context/LanguageContext';
+import { clearAuthSession, syncAuthSession } from '../utils/authSession';
 
 const translations = {
     ar: {
@@ -78,6 +79,9 @@ export default function Profile() {
     const [loadingOrders, setLoadingOrders] = useState(true);
 
     useEffect(() => {
+        // 🍎 iOS Safari Fix: Restore session from cookies before checking login
+        syncAuthSession();
+
         const loggedIn = localStorage.getItem('login') === 'true';
         const userEmail = localStorage.getItem('currentUserEmail');
         setIsLoggedIn(loggedIn);
@@ -108,12 +112,9 @@ export default function Profile() {
     }, []);
 
     const handleLogout = () => {
-        localStorage.removeItem('login');
-        localStorage.removeItem('currentUserEmail');
-        localStorage.removeItem('loggedInUserEmail');
-        localStorage.removeItem('userRole');
-        localStorage.removeItem('isAdmin');
-        localStorage.removeItem('role');
+        // 🍎 Clear session from both Cookies AND LocalStorage (fixes Safari iOS)
+        clearAuthSession();
+
         window.location.href = '/';
     };
 

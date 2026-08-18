@@ -9,6 +9,7 @@ import fr from "../img/fr.png";
 import eg from "../img/eg.png";
 import BASE_URL from '../apiConfig';
 import '../pages/home_premium.css';
+import { clearAuthSession, syncAuthSession, setAuthSession } from '../utils/authSession';
 
 const translations = {
     ar: {
@@ -17,7 +18,7 @@ const translations = {
         courses: "الأكاديمية",
         shop: "الباترونات / الاكسسوارات",
         contact: "اتصل بنا",
-        vip: "ماستر أتيليه (VIP)",
+        vip: "دروسنا",
         offre: "العروض الخاصة",
         login: "تسجيل الدخول",
         dashboard: "لوحة التحكم",
@@ -41,7 +42,7 @@ const translations = {
         courses: "L'Académie",
         shop: "Patrons / accessoires",
         contact: "Contact",
-        vip: "Master Atelier (VIP)",
+        vip: "Nos cours",
         offre: "Offres Spéciales",
         login: "Se connecter",
         dashboard: "Tableau de bord",
@@ -65,7 +66,7 @@ const translations = {
         courses: "Academy",
         shop: "Patterns / accessoires",
         contact: "Contact",
-        vip: "Master Atelier (VIP)",
+        vip: "Our Courses",
         offre: "Special Offers",
         login: "Login",
         dashboard: "Dashboard",
@@ -91,11 +92,13 @@ export default function Navbar({ initialCartCount = 0 }) {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [showConfirmModal, setShowConfirmModal] = useState(false);
     const [userEmail, setUserEmail] = useState(() => {
-        return localStorage.getItem('loggedInUserEmail') || localStorage.getItem('currentUserEmail') || null;
+        // 🍎 iOS Safari Fix: sync session from cookie on first render
+        const session = syncAuthSession();
+        return session.email || localStorage.getItem('loggedInUserEmail') || localStorage.getItem('currentUserEmail') || null;
     });
     const [cartItemCount, setCartItemCount] = useState(() => {
         try {
-            const items = JSON.parse(localStorage.getItem('panier_items') || '[]');
+            const items = JSON.parse(localStorage.getItem('cartItems') || '[]');
             return items.length;
         } catch (e) {
             return initialCartCount || 0;
@@ -173,36 +176,24 @@ export default function Navbar({ initialCartCount = 0 }) {
         fetchData();
     }, []);
 
-    // Live Panier Sync (Reads from DB if logged in, else Local Storage)
+    // Live Panier Sync (Reads from Local Storage cartItems)
     useEffect(() => {
-        const updateCartCount = async () => {
+        const updateCartCount = () => {
             try {
-                const userEmail = localStorage.getItem('loggedInUserEmail') || localStorage.getItem('currentUserEmail');
-                
-                if (userEmail) {
-                    const res = await fetch(`${BASE_URL}/api/commands/user/${userEmail}`);
-                    if (res.ok) {
-                        const commands = await res.json();
-                        let totalItems = 0;
-                        commands.forEach(cmd => {
-                            if (cmd.items) totalItems += cmd.items.length;
-                        });
-                        setCartItemCount(totalItems);
-                        return;
-                    }
-                }
-
-                // Fallback for guests
-                const items = JSON.parse(localStorage.getItem('panier_items') || '[]');
+                const items = JSON.parse(localStorage.getItem('cartItems') || '[]');
                 setCartItemCount(items.length);
             } catch (e) {
-                console.error("Error reading panier logic:", e);
+                console.error("Error reading cartItems logic:", e);
             }
         };
         
         updateCartCount(); // Force immediate check on mount
+        window.addEventListener('cartUpdated', updateCartCount);
         window.addEventListener('panierUpdated', updateCartCount);
-        return () => window.removeEventListener('panierUpdated', updateCartCount);
+        return () => {
+            window.removeEventListener('cartUpdated', updateCartCount);
+            window.removeEventListener('panierUpdated', updateCartCount);
+        };
     }, []);
 
     const handleSaveNavbarTranslations = async () => {
@@ -249,21 +240,6 @@ export default function Navbar({ initialCartCount = 0 }) {
 
     // --- Fonction de Retour ---
     const handleGoBack = () => {
-        // Sélectionner tous les liens du fil d'Ariane
-        const breadcrumbLinks = document.querySelectorAll('.breadcrumb-container .breadcrumb-link');
-
-        if (breadcrumbLinks.length > 0) {
-            // Aller au dernier lien trouvé dans le fil d'Ariane (la page parente)
-            const lastLink = breadcrumbLinks[breadcrumbLinks.length - 1];
-            const targetUrl = lastLink.getAttribute('href');
-
-            if (targetUrl) {
-                navigate(targetUrl);
-                return;
-            }
-        }
-
-        // Si aucun fil d'Ariane n'est trouvé, retour classique
         navigate(-1);
     };
 
@@ -284,13 +260,9 @@ export default function Navbar({ initialCartCount = 0 }) {
         setIsLoggedIn(status);
         setUserEmail(email);
         if (status && email) {
-            localStorage.setItem('login', 'true');
-            localStorage.setItem('loggedInUserEmail', email);
+            setAuthSession({ email });
         } else {
-            localStorage.removeItem('login');
-            localStorage.removeItem('loggedInUserEmail');
-            localStorage.removeItem('currentUserEmail');
-            localStorage.removeItem('currentUserEmail');
+            clearAuthSession();
             setIsVip(false);
             setIsAdmin(false);
         }
@@ -310,20 +282,13 @@ export default function Navbar({ initialCartCount = 0 }) {
         // 1. Close modal immediately
         setShowConfirmModal(false);
 
-        // 2. Clear local storage items for all possible keys
-        const emailToRevoke = userEmail; // Keep a reference
+        // 2. Reset auth state
         updateAuthStatus(false, null);
 
-        // Clean up remaining bits
-        localStorage.removeItem('userRole');
-        localStorage.removeItem('isAdmin');
-        localStorage.removeItem('role');
-        localStorage.removeItem('login'); // Just in case
-
-        /* Google revoke removed */
+        // 3. 🍎 Clear ALL session data (Cookies + LocalStorage) for iOS Safari fix
+        clearAuthSession();
 
         // 4. Reset & Redirect immediately
-        // window.location.href = '/' is usually faster/cleaner than reload() for a fresh start
         window.location.href = '/';
     };
 
@@ -455,9 +420,9 @@ export default function Navbar({ initialCartCount = 0 }) {
         shop: { name: t.shop, link: '/magasin' },
         vip: {
             name: t.vip,
-            link: '/Vip-access',
-            className: (isLoggedIn && !isVip) ? 'disabled-vip-link' : '',
-            onClick: handleVipClick
+            link: '/offre-de-cours',
+            className: '',
+            onClick: null
         },
         about: { name: t.about, link: '/about' },
         contact: { name: t.contact, link: '/contact' },
@@ -475,19 +440,56 @@ export default function Navbar({ initialCartCount = 0 }) {
 
 
     const [isScrolled, setIsScrolled] = useState(false);
+    const [isLandscape, setIsLandscape] = useState(false);
+    const [showInLandscape, setShowInLandscape] = useState(false);
+    const lastScrollY = useRef(0);
 
     useEffect(() => {
+        const checkOrientationAndScroll = () => {
+            const currentScrollY = window.scrollY;
+            const isLandscapeMatch = window.matchMedia('(orientation: landscape) and (max-height: 700px)').matches;
+            
+            setIsLandscape(isLandscapeMatch);
+
+            if (isLandscapeMatch) {
+                const diff = currentScrollY - lastScrollY.current;
+                if (diff < -5) {
+                    // Scroll UP -> Show navbar in landscape
+                    setShowInLandscape(true);
+                } else if (diff > 5) {
+                    // Scroll DOWN -> Hide navbar in landscape
+                    setShowInLandscape(false);
+                }
+            } else {
+                setShowInLandscape(false);
+            }
+
+            lastScrollY.current = currentScrollY;
+        };
+
+        checkOrientationAndScroll();
+
         const handleScroll = () => {
             if (window.scrollY > 50) {
                 setIsScrolled(true);
             } else {
                 setIsScrolled(false);
             }
+            checkOrientationAndScroll();
         };
 
-        window.addEventListener('scroll', handleScroll);
+        const handleResize = () => {
+            checkOrientationAndScroll();
+        };
+
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        window.addEventListener('resize', handleResize);
+        window.addEventListener('orientationchange', handleResize);
+
         return () => {
             window.removeEventListener('scroll', handleScroll);
+            window.removeEventListener('resize', handleResize);
+            window.removeEventListener('orientationchange', handleResize);
         };
     }, []);
 
@@ -501,7 +503,7 @@ export default function Navbar({ initialCartCount = 0 }) {
                 </button>
             )}
 
-            <nav className={`navbar-couture ${isScrolled ? 'scrolled-nav' : ''}`} ref={navbarRef} dir="ltr">
+            <nav className={`navbar-couture ${isScrolled ? 'scrolled-nav' : ''} ${isLandscape ? (showInLandscape ? 'landscape-visible' : 'landscape-hidden') : ''} ${isOpen ? 'menu-open' : ''}`} ref={navbarRef} dir="ltr">
                 <div className="navbar-logo">
                     <Link to="/">
                         <img src={logo} className='logo' alt="Logo Atelier Couture" />
@@ -691,6 +693,9 @@ export default function Navbar({ initialCartCount = 0 }) {
                                         <Link to="/profile" className="dropdown-item" onClick={() => setIsDropdownOpen(false)}>
                                             <FaCrown /> {t.manageSub}
                                         </Link>
+                                        <Link to="/mes-achats" className="dropdown-item" onClick={() => setIsDropdownOpen(false)}>
+                                            <FaShoppingBag /> {appLanguage === 'ar' ? 'مشترياتي' : 'Mes Achats'}
+                                        </Link>
                                         <button onClick={handleLogout} className="dropdown-item logout-item">
                                             <FaSignOutAlt /> {t.logout}
                                         </button>
@@ -787,129 +792,7 @@ export default function Navbar({ initialCartCount = 0 }) {
                 </div>
             )}
 
-            {/* 🛑 Modal Accès Limité (Creative Design - Synced with Home) */}
-            {showVipModal && ReactDOM.createPortal(
-                <div className="premium-modal-backdrop" onClick={() => !isSubmittingVip && setShowVipModal(false)}>
-                    <div className="creative-modal-content" onClick={(e) => e.stopPropagation()} style={{ overflow: 'visible' }}>
-                        {/* ABSOLUTE CROWN */}
-                        <div className="creative-crown-wrapper">
-                            <FaCrown />
-                        </div>
 
-                        {/* Top Header Section */}
-                        <div className="creative-modal-header">
-                            <button
-                                className="creative-close-btn"
-                                onClick={() => setShowVipModal(false)}
-                            >
-                                <FaTimes />
-                            </button>
-
-                            <h2 className="creative-title">
-                                {t.limitedAccess}
-                            </h2>
-                        </div>
-
-                        {/* Body Section */}
-                        <div className="creative-modal-body">
-                            {!vipRequestSuccess ? (
-                                <>
-                                    <p className="creative-subtitle">
-                                        {t.vipMessage}
-                                    </p>
-
-                                    <div className="creative-benefit-pill">
-                                        {t.vipBenefits}
-                                    </div>
-
-                                    <form onSubmit={handleVipRequest} style={{ width: '100%' }}>
-                                        <div className="creative-input-group">
-                                            <label>{appLanguage === 'ar' ? 'رقم الهاتف' : 'Numéro de Téléphone'}</label>
-                                            <div className="creative-input-wrapper">
-                                                <FaPhoneAlt />
-                                                <input
-                                                    type="tel"
-                                                    placeholder="Ex: 22 222 222"
-                                                    value={vipPhone}
-                                                    onChange={(e) => setVipPhone(e.target.value.replace(/\D/g, ''))}
-                                                    minLength={8}
-                                                    required
-                                                    className="creative-input"
-                                                />
-                                            </div>
-                                        </div>
-
-                                        <div className="creative-input-group">
-                                            <label>{appLanguage === 'ar' ? 'الاسم الكامل' : 'Nom Complet'}</label>
-                                            <div className="creative-input-wrapper">
-                                                <FaUser />
-                                                <input
-                                                    type="text"
-                                                    placeholder={appLanguage === 'ar' ? 'اسمك الكامل' : 'Votre Nom et Prénom'}
-                                                    value={vipFullName}
-                                                    onChange={(e) => setVipFullName(e.target.value.replace(/[^a-zA-Z\s\u0600-\u06FF]/g, ''))}
-                                                    required
-                                                    className="creative-input"
-                                                />
-                                            </div>
-                                        </div>
-
-                                        <button type="submit" className="creative-submit-btn" disabled={isSubmittingVip}>
-                                            {isSubmittingVip ? (appLanguage === 'ar' ? 'جاري الإرسال...' : 'Envoi...') : (appLanguage === 'ar' ? 'إرسال الطلب' : 'Envoyer la demande')}
-                                        </button>
-
-                                        <button
-                                            type="button"
-                                            className="creative-later-btn"
-                                            onClick={() => setShowVipModal(false)}
-                                            style={{
-                                                background: 'none',
-                                                border: 'none',
-                                                color: '#b5bac1',
-                                                marginTop: '15px',
-                                                cursor: 'pointer',
-                                                fontWeight: '800',
-                                                fontSize: '0.85rem',
-                                                textTransform: 'uppercase'
-                                            }}
-                                        >
-                                            {t.later}
-                                        </button>
-                                    </form>
-                                </>
-                            ) : (
-                                <div style={{ padding: '15px 0' }}>
-                                    <div style={{
-                                        width: '70px',
-                                        height: '70px',
-                                        background: '#ecfdf5',
-                                        color: '#34d399',
-                                        borderRadius: '50%',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        fontSize: '2.5rem',
-                                        margin: '0 auto 20px',
-                                        boxShadow: '0 15px 35px rgba(52, 211, 153, 0.15)'
-                                    }}>
-                                        <FaCheckCircle />
-                                    </div>
-                                    <h3 style={{ color: '#0f172a', fontSize: '1.6rem', marginBottom: '10px', fontWeight: '900' }}>
-                                        {appLanguage === 'ar' ? 'تم استلام طلبك!' : 'Demande Reçue !'}
-                                    </h3>
-                                    <p style={{ color: '#64748b', fontSize: '1rem', lineHeight: '1.6', maxWidth: '300px', margin: '0 auto' }}>
-                                        {appLanguage === 'ar'
-                                            ? "تم إرسال بياناتك بنجاح. سيقوم المسؤول بالاتصال بك في أقرب وقت."
-                                            : "Vos informations ont été envoyées. Un administrateur vous contactera prochainement."
-                                        }
-                                    </p>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>,
-                document.body
-            )}
 
             {/* 🛑 Modal Ajouter une Langue */}
             {isAddLanguageModalOpen && (

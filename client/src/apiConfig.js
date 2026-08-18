@@ -1,6 +1,5 @@
-
-// const BASE_URL = 'https://2c-patron-mw6i.vercel.app';
-// const BASE_URL = 'http://localhost:3000';
-const BASE_URL = 'https://cpatron-api.cpatron.com';
+const BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:3000'
+    : 'https://cpatron-api.cpatron.com';
 
 export default BASE_URL;

@@ -13,28 +13,10 @@ import { useLanguage } from '../context/LanguageContext';
 // دالة لجلب معلومات الجهاز والمتصفح
 // ----------------------------------------------------
 // ----------------------------------------------------
-// Helpers for Cookies (Hidden Logic)
-// ----------------------------------------------------
-const setCookie = (name, value, days = 365) => {
-    let expires = "";
-    if (days) {
-        let date = new Date();
-        date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
-        expires = "; expires=" + date.toUTCString();
-    }
-    document.cookie = name + "=" + (value || "") + expires + "; path=/; SameSite=Lax";
-};
+import { setAuthSession, syncAuthSession, getCookie } from '../utils/authSession';
 
-const getCookie = (name) => {
-    let nameEQ = name + "=";
-    let ca = document.cookie.split(';');
-    for (let i = 0; i < ca.length; i++) {
-        let c = ca[i];
-        while (c.charAt(0) === ' ') c = c.substring(1, c.length);
-        if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
-    }
-    return null;
-};
+// Run session restoration immediately when the module loads
+syncAuthSession();
 
 // ----------------------------------------------------
 // الدوال المساعدة (Users Management)
@@ -81,27 +63,26 @@ export default function AuthForm({ type = 'login' }) {
     const accentText = isLogin ? "Bienvenue de retour" : "Rejoignez l'élite";
 
     // ----------------------------------------------------
-    // دالة لتنفيذ تسجيل الدخول النهائي (تم التعديل)
+    // دالة لتنفيذ تسجيل الدخول النهائي (تم التعديل لصالح iOS Safari & Mobile)
     // ----------------------------------------------------
     const performLogin = async (user) => {
-        const completeRedirection = () => {
-            // 1. حفظ بيانات الدخول العامة
-            localStorage.setItem('login', 'true');
-            localStorage.setItem('currentUserEmail', user.email || user.mail);
-            localStorage.setItem('userRole', user.statut || 'client');
-            // 3. Stocker le code chiffré (Fingerprint)
-            if (user.fingerprint) {
-                setCookie('_device_session_key', user.fingerprint);
-            }
+        const userEmail = user.email || user.mail;
+        const userRole = user.statut || 'client';
+        const isAdmin = (userEmail === 'admin@admin.com' || user.statut === 'admin');
 
-            // 4. التحقق من حالة المستخدم (statut) وإعادة التوجيه بناءً عليها
-            if (user.email === 'admin@admin.com' || user.mail === 'admin@admin.com' || user.statut === 'admin') {
-                localStorage.setItem('userRole', 'admin');
-                localStorage.setItem('isAdmin', 'true');
-                window.location.href = '/Vip-access';
-            } else {
-                window.location.href = '/';
-            }
+        // 🍎 1. Instant Cookie & Storage Session (Fixes Safari iOS & Mobile Browsers)
+        setAuthSession({
+            email: userEmail,
+            role: isAdmin ? 'admin' : userRole,
+            isAdmin: isAdmin,
+            fingerprint: user.fingerprint
+        });
+
+        // 🍎 2. Reset loading state so button stops spinning
+        setIsLoading(false);
+
+        const completeRedirection = () => {
+            window.location.replace('/');
         };
 
         // IF first login, show ONLY the security alert
@@ -122,7 +103,7 @@ export default function AuthForm({ type = 'login' }) {
             };
             const sl = securityLabels[appLanguage] || securityLabels.fr;
 
-            // Show as a Modal Window (type 'confirm' with hidden cancel)
+            // Show as a Modal Window
             showAlert('confirm', sl.title, sl.msg, completeRedirection, null, (appLanguage === 'ar' ? 'فهمت' : 'J\'ai compris'), 'null');
         } else {
             // Regular login - directly redirect

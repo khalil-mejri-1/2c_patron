@@ -106,7 +106,9 @@ export default function NavbarAdmin() {
 
     return (
         <nav className="navbar-admin">
-            <div className="navbar-admin-brand">Atelier Sfax <span style={{ fontSize: '0.6rem', opacity: 0.6 }}>ADMIN</span></div>
+            <div className="navbar-admin-brand">
+                Atelier Sfax <span>ADMIN</span>
+            </div>
 
             <button onClick={toggleMenu} className="menu-toggle-button">
                 {isMenuOpen ? <FaTimes /> : <FaBars />}
@@ -120,9 +122,8 @@ export default function NavbarAdmin() {
                         className={({ isActive }) => `navbar-admin-link ${isActive ? 'active' : ''}`}
                         onClick={() => isMenuOpen && toggleMenu()}
                         end={link.to === "/admin"}
-                        style={{ display: 'flex', alignItems: 'center', position: 'relative' }}
                     >
-                        <span style={{ marginRight: '8px', display: 'flex', alignItems: 'center' }}>{link.icon}</span>
+                        <span>{link.icon}</span>
                         {link.label}
                         {link.badge > 0 && (
                             <span style={getBadgeStyle(link.to)}>
@@ -134,20 +135,8 @@ export default function NavbarAdmin() {
                 <button 
                   onClick={handleLogout} 
                   className="navbar-admin-link logout-btn"
-                  style={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    background: 'none', 
-                    border: 'none', 
-                    cursor: 'pointer',
-                    color: '#ef4444',
-                    width: '100%',
-                    padding: '12px 20px',
-                    textAlign: 'left',
-                    fontWeight: 'bold'
-                  }}
                 >
-                  <span style={{ marginRight: '8px', display: 'flex', alignItems: 'center' }}><FaSignOutAlt /></span>
+                  <span><FaSignOutAlt /></span>
                   Déconnexion
                 </button>
             </div>

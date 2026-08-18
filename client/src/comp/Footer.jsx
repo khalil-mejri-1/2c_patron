@@ -104,7 +104,6 @@ export default function Footer() {
                     setIsAdmin(false);
                 }
             } catch (error) {
-                console.error("Error verifying admin status:", error);
                 setIsAdmin(false);
             }
         };

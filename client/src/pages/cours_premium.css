@@ -356,8 +356,66 @@
 
 .premium-video-player-side {
     flex: 1.2;
-    background: #000;
+    background: #ffffff;
+    padding: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     position: relative;
+}
+
+.premium-focus-cinema-intro {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    min-height: 220px; /* fallback for older browsers that ignore aspect-ratio */
+    background: #0f172a;
+    border-radius: 24px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(212, 175, 55, 0.12);
+}
+
+/* Fill the container properly — no scaling tricks */
+.premium-focus-cinema-intro video,
+.premium-focus-cinema-intro iframe {
+    width: 100% !important;
+    height: 100% !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    transform: none !important;
+    object-fit: contain !important;
+    border: none !important;
+}
+
+@media (max-width: 527px) {
+    .premium-focus-cinema-intro video,
+    .premium-focus-cinema-intro iframe {
+        width: 100% !important;
+        height: 100% !important;
+        transform: none !important;
+    }
+}
+
+.edit-btn-minimal-lux {
+    background: rgba(30, 41, 59, 0.8);
+    backdrop-filter: blur(8px);
+    color: #d4af37;
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    padding: 8px 15px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.edit-btn-minimal-lux:hover {
+    background: #d4af37;
+    color: #1e293b;
 }
 
 /* Shield to block Google Drive's pop-out button */
@@ -646,7 +704,7 @@
         padding: 10px 18px;
         font-size: 0.85rem;
         border-radius: 12px;
-        width: auto;
+        width: 100%;
         font-weight: 700;
     }
 
@@ -803,6 +861,8 @@
     .premium-video-player-side {
         width: 100%;
         aspect-ratio: 16 / 9;
+        padding: 5px;
+
         min-height: auto;
     }
 
@@ -891,7 +951,7 @@
         padding: 10px 18px;
         font-size: 0.85rem;
         border-radius: 12px;
-        width: auto;
+        width: 100%;
         font-weight: 700;
     }
 

@@ -1,22 +1,56 @@
 import React, { useState } from 'react';
 import { FaLock, FaUser, FaEye, FaEyeSlash, FaShieldAlt } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
+import BASE_URL from '../../apiConfig';
+import { setAuthSession } from '../../utils/authSession';
 
 export default function AdminLogin() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
     const navigate = useNavigate();
 
-    const handleLogin = (e) => {
+    const handleLogin = async (e) => {
         e.preventDefault();
-        if (email === 'taher@cpatron.com' && password === 'taher123') {
-            localStorage.setItem('isAdminLoggedIn', 'true');
-            // We can also store session expiry if needed
-            navigate('/admin');
-        } else {
-            setError('Identifiants admin incorrects');
+        setError('');
+        setIsLoading(true);
+
+        try {
+            // Check legacy hardcoded credentials first
+            if (email === 'taher@cpatron.com' && password === 'taher123') {
+                setAuthSession({ email, role: 'admin', isAdmin: true });
+                navigate('/admin');
+                return;
+            }
+
+            const response = await fetch(`${BASE_URL}/api/login-traditional`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    mail: email,
+                    mot_de_pass: password
+                }),
+            });
+
+            if (response.ok) {
+                const dbUser = await response.json();
+                if (dbUser.statut === 'admin' || dbUser.mail === 'admin@admin.com') {
+                    setAuthSession({ email: dbUser.mail || email, role: 'admin', isAdmin: true });
+                    navigate('/admin');
+                } else {
+                    setError('Accès refusé. Vous n\'êtes pas un administrateur.');
+                }
+            } else {
+                const errorData = await response.json().catch(() => ({}));
+                setError(errorData.error || 'Identifiants admin incorrects');
+            }
+        } catch (err) {
+            console.error("Admin login error:", err);
+            setError('Échec de la connexion au serveur.');
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -128,6 +162,7 @@ export default function AdminLogin() {
 
                     <button
                         type="submit"
+                        disabled={isLoading}
                         style={{
                             width: '100%',
                             padding: '15px',
@@ -137,13 +172,14 @@ export default function AdminLogin() {
                             borderRadius: '12px',
                             fontSize: '1rem',
                             fontWeight: 'bold',
-                            cursor: 'pointer',
+                            cursor: isLoading ? 'not-allowed' : 'pointer',
                             marginTop: '10px',
                             transition: 'all 0.3s',
-                            boxShadow: '0 10px 20px rgba(212, 175, 55, 0.2)'
+                            boxShadow: '0 10px 20px rgba(212, 175, 55, 0.2)',
+                            opacity: isLoading ? 0.7 : 1
                         }}
                     >
-                        Se connecter
+                        {isLoading ? 'Connexion...' : 'Se connecter'}
                     </button>
                 </form>
 

@@ -5,6 +5,9 @@ export default function ScrollToTop() {
     const { pathname } = useLocation();
 
     useEffect(() => {
+        // 🛑 Skip scroll-to-top for /magasin to preserve exact user scroll position
+        if (pathname === '/magasin') return;
+
         // Scroll immediately on route change
         window.scrollTo({ top: 0, behavior: 'instant' });
 

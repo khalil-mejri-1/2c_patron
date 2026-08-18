@@ -365,7 +365,7 @@ export default function Gestion_de_Command() {
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
                                                 {/* Compact Total & Date */}
                                                 <div style={{ textAlign: 'right' }}>
-                                                    <div style={{ fontSize: '1.05rem', fontWeight: '900', color: '#D4AF37' }}>{cmd.totalAmount.toFixed(2)} DT</div>
+                                                    <div style={{ fontSize: '1.05rem', fontWeight: '900', color: '#D4AF37' }}>{((cmd.items || []).reduce((sum, item) => sum + ((item.price || 0) * (item.quantity || 0)), 0)).toFixed(2)} DT</div>
                                                     <div style={{ fontSize: '0.7rem', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '5px', justifyContent: 'flex-end', marginTop: '2px' }}>
                                                         <FaCalendarAlt size={10} /> {formatDate(cmd.orderDate)}
                                                     </div>
@@ -534,7 +534,7 @@ export default function Gestion_de_Command() {
                             </div>
                             <div>
                                 <label style={{ fontSize: '0.7rem', fontWeight: '900', color: '#D4AF37', display: 'block', marginBottom: '8px', letterSpacing: '1px' }}>TOTAL GLOBAL</label>
-                                <div style={{ fontWeight: '900', color: '#D4AF37', fontSize: '1.5rem' }}>{currentCommand.totalAmount.toFixed(2)} DT</div>
+                                <div style={{ fontWeight: '900', color: '#D4AF37', fontSize: '1.5rem' }}>{((currentCommand.items || []).reduce((sum, item) => sum + ((item.price || 0) * (item.quantity || 0)), 0)).toFixed(2)} DT</div>
                             </div>
                         </div>
 

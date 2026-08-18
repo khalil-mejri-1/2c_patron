@@ -504,11 +504,13 @@
 }
 
 .product-main-title {
-    font-family: "Lora", serif;
+    font-family: 'Playfair Display', 'Lora', serif;
     font-size: clamp(2.5rem, 5vw, 4.5rem);
     line-height: 1.1;
     font-weight: 900;
-    color: var(--home-slate);
+    background: linear-gradient(135deg, #0f172a 30%, #334155 70%, #c5a028 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
     margin-bottom: 30px !important;
     letter-spacing: -1px;
 }
@@ -533,6 +535,50 @@
     line-height: 1.8;
     margin-bottom: 50px;
     font-weight: 300;
+}
+
+.product-description-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+}
+
+.desc-bullet-item {
+    display: flex;
+    align-items: start;
+    gap: 14px;
+    padding: 16px 20px;
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(15, 23, 42, 0.03);
+    border: 1px solid rgba(212, 175, 55, 0.08);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.desc-bullet-item:hover {
+    transform: translateY(-3px) scale(1.01);
+    box-shadow: 0 12px 30px rgba(212, 175, 55, 0.08);
+    border-color: rgba(212, 175, 55, 0.3);
+}
+
+.desc-bullet-icon {
+    color: var(--home-gold);
+    flex-shrink: 0;
+    font-size: 1.25rem;
+    display: flex;
+    align-items: center;
+    margin-top: 3px;
+    filter: drop-shadow(0 2px 4px rgba(212, 175, 55, 0.2));
+}
+
+.desc-bullet-text {
+    font-size: 1.05rem;
+    line-height: 1.6;
+    font-weight: 500;
+    color: var(--home-slate);
 }
 
 .product-cta-button {
@@ -564,10 +610,12 @@
 }
 
 .reviews-title {
-    font-family: "Lora", serif;
+    font-family: 'Playfair Display', 'Lora', serif;
     font-size: 4rem;
     font-weight: 900;
-    color: var(--home-slate);
+    background: linear-gradient(135deg, #0f172a 30%, #334155 70%, #c5a028 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
     margin-bottom: 20px;
 }
 
@@ -1050,6 +1098,32 @@
     background: #d4af37;
     transform: translateY(-2px);
     box-shadow: 0 15px 35px rgba(212, 175, 55, 0.3);
+}
+
+.creative-later-btn {
+    width: 100%;
+    padding: 12px;
+    background: transparent;
+    color: #64748b;
+    border: 1px dashed #cbd5e1;
+    border-radius: 15px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.creative-later-btn:hover {
+    color: #0f172a;
+    background: rgba(15, 23, 42, 0.05);
+    border-color: #0f172a;
+    transform: translateY(-1px);
 }
 
 .creative-close-btn {

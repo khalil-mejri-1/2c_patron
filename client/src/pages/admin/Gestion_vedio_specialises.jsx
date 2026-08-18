@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { FaTimes, FaPlus, FaTrash, FaEdit, FaVideo, FaSave, FaExclamationTriangle, FaSpinner, FaLink } from 'react-icons/fa';
 import BASE_URL from '../../apiConfig';
+import UniversalVideoPlayer from '../../comp/UniversalVideoPlayer';
 
 const VIDEOS_API_URL = `${BASE_URL}/api/specialized-videos`;
 const COURSES_API_URL = `${BASE_URL}/api/specialized-courses`;
@@ -18,7 +19,7 @@ const getVideoSource = (url) => {
     const matchYoutube = url.match(youtubeRegex);
     if (matchYoutube) return { type: 'iframe', src: `https://www.youtube.com/embed/${matchYoutube[1]}` };
 
-    const driveRegex = /drive\.google\.com\/file\/d\/([^\/\?]+)/;
+    const driveRegex = /(?:drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?(?:export=download&)?id=)|docs\.google\.com\/file\/d\/)([^\/\?&]+)/;
     const matchDrive = url.match(driveRegex);
     if (matchDrive) return { type: 'iframe', src: `https://drive.google.com/file/d/${matchDrive[1]}/preview` };
 
@@ -270,31 +271,8 @@ export default function GestionVedioSpecialises({ onClose }) {
 
                         return (
                             <div key={video._id} className="premium-list-item" style={{ background: '#fff', padding: '15px', borderRadius: '12px', border: '1px solid #e2e8f0', display: 'flex', gap: '20px', alignItems: 'flex-start' }}>
-                                <div style={{ width: '200px', flexShrink: 0 }}>
-                                    {(() => {
-                                        const config = getVideoSource(video.url);
-                                        if (config.type === 'video') {
-                                            return (
-                                                <video
-                                                    controls
-                                                    src={config.src}
-                                                    style={{ width: '100%', borderRadius: '8px', background: '#000', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}
-                                                    controlsList="nodownload"
-                                                    muted
-                                                />
-                                            );
-                                        }
-                                        return (
-                                            <div style={{ position: 'relative', paddingTop: '56.25%', background: '#000', borderRadius: '8px', overflow: 'hidden' }}>
-                                                <iframe
-                                                    src={config.src}
-                                                    style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 0 }}
-                                                    title={video.title}
-                                                    allowFullScreen
-                                                />
-                                            </div>
-                                        );
-                                    })()}
+                                <div style={{ width: '280px', flexShrink: 0, borderRadius: '10px', overflow: 'hidden' }}>
+                                    <UniversalVideoPlayer url={video.url} title={video.title} />
                                 </div>
 
                                 <div style={{ flex: 1 }}>

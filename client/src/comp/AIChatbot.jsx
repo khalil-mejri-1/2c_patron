@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { FaRobot, FaTimes, FaPaperPlane, FaSpinner } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import axios from 'axios';
 import BASE_URL from '../apiConfig';
+import logo from '../img/logo.png';
+import './AIChatbot.css';
 
 export default function AIChatbot() {
     const { appLanguage } = useLanguage();
+    const navigate = useNavigate();
     const [isChatOpen, setIsChatOpen] = useState(false);
     const [chatMessages, setChatMessages] = useState([]);
     const [currentMessage, setCurrentMessage] = useState('');
@@ -39,74 +43,163 @@ export default function AIChatbot() {
         }
     };
 
+    const renderMessageText = (text) => {
+        // Match Markdown links [Text](Route)
+        const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
+        
+        let parts = [];
+        let lastIndex = 0;
+        let match;
+        
+        while ((match = linkRegex.exec(text)) !== null) {
+            if (match.index > lastIndex) {
+                parts.push(text.substring(lastIndex, match.index));
+            }
+            
+            const linkText = match[1];
+            const route = match[2];
+            
+            parts.push(
+                <span key={match.index} style={{ display: 'block', margin: '6px 0' }}>
+                    <button 
+                        onClick={() => {
+                            setIsChatOpen(false);
+                            navigate(route);
+                        }}
+                        style={{
+                            background: 'linear-gradient(135deg, #D4AF37, #AA7C11)',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '10px',
+                            padding: '8px 14px',
+                            fontWeight: 'bold',
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            boxShadow: '0 3px 10px rgba(212, 175, 55, 0.25)',
+                            transition: 'transform 0.2s, box-shadow 0.2s',
+                            fontSize: '0.76rem',
+                            fontFamily: 'inherit'
+                        }}
+                        onMouseEnter={e => {
+                            e.currentTarget.style.transform = 'scale(1.03)';
+                            e.currentTarget.style.boxShadow = '0 5px 14px rgba(212, 175, 55, 0.35)';
+                        }}
+                        onMouseLeave={e => {
+                            e.currentTarget.style.transform = 'scale(1)';
+                            e.currentTarget.style.boxShadow = '0 3px 10px rgba(212, 175, 55, 0.25)';
+                        }}
+                    >
+                        {linkText}
+                    </button>
+                </span>
+            );
+            
+            lastIndex = linkRegex.lastIndex;
+        }
+        
+        if (lastIndex < text.length) {
+            parts.push(text.substring(lastIndex));
+        }
+        
+        if (parts.length === 0) {
+            parts = [text];
+        }
+        
+        // Parse bolding **text** and newlines \n within parts
+        return parts.map((part, index) => {
+            if (typeof part === 'string') {
+                const boldRegex = /\*\*([^*]+)\*\*/g;
+                let subParts = [];
+                let subLastIndex = 0;
+                let subMatch;
+                while ((subMatch = boldRegex.exec(part)) !== null) {
+                    if (subMatch.index > subLastIndex) {
+                        const plainText = part.substring(subLastIndex, subMatch.index);
+                        const textLines = plainText.split('\n');
+                        textLines.forEach((line, lineIdx) => {
+                            if (lineIdx > 0) subParts.push(<br key={`br-${subLastIndex}-${lineIdx}`} />);
+                            subParts.push(line);
+                        });
+                    }
+                    subParts.push(<strong key={subMatch.index} style={{ fontWeight: '700', color: '#0f172a' }}>{subMatch[1]}</strong>);
+                    subLastIndex = boldRegex.lastIndex;
+                }
+                if (subLastIndex < part.length) {
+                    const plainText = part.substring(subLastIndex);
+                    const textLines = plainText.split('\n');
+                    textLines.forEach((line, lineIdx) => {
+                        if (lineIdx > 0) subParts.push(<br key={`br-end-${lineIdx}`} />);
+                        subParts.push(line);
+                    });
+                }
+                return subParts.length > 0 ? <React.Fragment key={index}>{subParts}</React.Fragment> : part;
+            }
+            return part;
+        });
+    };
+
     return (
-        <div style={{ position: 'fixed', bottom: '30px', right: '30px', zIndex: 1000, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', fontFamily: appLanguage === 'ar' ? 'Cairo, sans-serif' : 'inherit' }}>
+        <div className="chatbot-container" style={{ fontFamily: appLanguage === 'ar' ? 'Cairo, sans-serif' : 'inherit' }}>
             {isChatOpen && (
-                <div style={{ background: '#fff', width: '320px', height: '420px', borderRadius: '20px', boxShadow: '0 10px 30px rgba(0,0,0,0.15)', marginBottom: '15px', display: 'flex', flexDirection: 'column', overflow: 'hidden', border: '1px solid #f1f5f9' }}>
-                    <div style={{ background: 'linear-gradient(135deg, #1e293b, #0f172a)', color: 'white', padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <div style={{ background: 'rgba(255,255,255,0.2)', padding: '8px', borderRadius: '50%' }}>
-                                <FaRobot size={20} color="#D4AF37" />
+                <div className="chat-window">
+                    <div className="chat-header">
+                        <div className="chat-header-info">
+                            <div className="chat-header-logo-wrapper">
+                                <img src={logo} alt="Atelier Sfax Logo" />
                             </div>
-                            <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                <span style={{ fontWeight: '700', fontSize: '1.05rem', letterSpacing: '0.05em' }}>{appLanguage === 'ar' ? 'المساعد الذكي' : 'Assistant IA'}</span>
-                                <span style={{ fontSize: '0.75rem', color: '#cbd5e1' }}>{appLanguage === 'ar' ? 'متصل الآن' : 'En ligne'}</span>
+                            <div className="chat-header-title-container">
+                                <span className="chat-header-title">{appLanguage === 'ar' ? 'المساعد الذكي' : 'Assistant IA'}</span>
+                                <span className="chat-header-status">
+                                    <span className="chat-status-dot"></span>
+                                    {appLanguage === 'ar' ? 'متصل الآن' : 'En ligne'}
+                                </span>
                             </div>
                         </div>
-                        <button onClick={() => setIsChatOpen(false)} style={{ background: 'transparent', border: 'none', color: '#cbd5e1', cursor: 'pointer', transition: 'color 0.2s' }} onMouseEnter={e => e.currentTarget.style.color='white'} onMouseLeave={e => e.currentTarget.style.color='#cbd5e1'}><FaTimes size={18} /></button>
+                        <button className="chat-close-btn" onClick={() => setIsChatOpen(false)}>
+                            <FaTimes size={16} />
+                        </button>
                     </div>
-                    <div style={{ flex: 1, padding: '20px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px', background: '#f8fafc' }} dir={appLanguage === 'ar' ? 'rtl' : 'ltr'}>
+
+                    <div className="chat-body" dir={appLanguage === 'ar' ? 'rtl' : 'ltr'}>
                         {chatMessages.map((m, i) => (
-                            <div key={i} style={{ 
-                                alignSelf: m.sender === 'user' ? (appLanguage === 'ar' ? 'flex-start' : 'flex-end') : (appLanguage === 'ar' ? 'flex-end' : 'flex-start'), 
-                                background: m.sender === 'user' ? '#D4AF37' : '#ffffff', 
-                                color: m.sender === 'user' ? 'white' : '#334155', 
-                                padding: '12px 16px', 
-                                borderRadius: '16px', 
-                                borderBottomRightRadius: m.sender === 'user' ? '4px' : '16px',
-                                borderBottomLeftRadius: m.sender !== 'user' ? '4px' : '16px',
-                                maxWidth: '85%', 
-                                fontSize: '0.9rem',
-                                lineHeight: '1.5',
-                                boxShadow: '0 2px 5px rgba(0,0,0,0.05)'
-                            }}>
-                                {m.text}
+                            <div key={i} className={`chat-message ${m.sender}`}>
+                                {renderMessageText(m.text)}
                             </div>
                         ))}
                         {isLoading && (
-                            <div style={{ alignSelf: appLanguage === 'ar' ? 'flex-end' : 'flex-start', background: '#ffffff', color: '#334155', padding: '12px 16px', borderRadius: '16px', borderBottomLeftRadius: appLanguage === 'ar' ? '16px' : '4px', borderBottomRightRadius: appLanguage === 'ar' ? '4px' : '16px', maxWidth: '85%', fontSize: '0.9rem', boxShadow: '0 2px 5px rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <FaSpinner className="spinner" style={{ animation: 'spin 1s linear infinite' }} />
+                            <div className="chat-typing-indicator">
+                                <div className="chat-typing-dots">
+                                    <span className="chat-dot"></span>
+                                    <span className="chat-dot"></span>
+                                    <span className="chat-dot"></span>
+                                </div>
                                 <span>{appLanguage === 'ar' ? 'جاري التفكير...' : 'En train de réfléchir...'}</span>
                             </div>
                         )}
                     </div>
-                    <div style={{ padding: '15px', borderTop: '1px solid #e2e8f0', background: 'white', display: 'flex', gap: '10px' }} dir={appLanguage === 'ar' ? 'rtl' : 'ltr'}>
+
+                    <div className="chat-input-area" dir={appLanguage === 'ar' ? 'rtl' : 'ltr'}>
                         <input 
                             type="text" 
                             value={currentMessage} 
                             onChange={e => setCurrentMessage(e.target.value)} 
                             onKeyPress={e => e.key === 'Enter' && handleSendMessage()}
                             placeholder={appLanguage === 'ar' ? 'اكتب رسالتك هنا...' : 'Écrivez votre message...'} 
-                            style={{ flex: 1, padding: '12px 15px', borderRadius: '12px', border: '1px solid #e2e8f0', outline: 'none', background: '#f8fafc', fontSize: '0.9rem' }} 
+                            className="chat-input-field"
                         />
-                        <button onClick={handleSendMessage} style={{ background: '#1e293b', color: 'white', border: 'none', borderRadius: '12px', width: '45px', height: '45px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'background 0.3s' }} onMouseEnter={e => e.currentTarget.style.background='#0f172a'} onMouseLeave={e => e.currentTarget.style.background='#1e293b'}>
-                            <FaPaperPlane />
+                        <button className="chat-send-btn" onClick={handleSendMessage}>
+                            <FaPaperPlane size={14} />
                         </button>
                     </div>
                 </div>
             )}
-            <button 
-                onClick={() => setIsChatOpen(!isChatOpen)} 
-                style={{ background: '#1e293b', color: '#D4AF37', width: '65px', height: '65px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '30px', boxShadow: '0 8px 20px rgba(0,0,0,0.2)', cursor: 'pointer', border: '3px solid #D4AF37', transition: 'transform 0.3s ease-out' }} 
-                onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.08) translateY(-5px)'} 
-                onMouseLeave={e => e.currentTarget.style.transform = 'scale(1) translateY(0)'}
-            >
-                <FaRobot />
+            
+            <button className="chatbot-trigger" onClick={() => setIsChatOpen(!isChatOpen)}>
+                <span className="chatbot-pulse"></span>
+                <img src={logo} alt="Atelier Sfax Logo" />
             </button>
-            <style dangerouslySetInnerHTML={{ __html: `
-                @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-                .spinner { animation: spin 1s linear infinite; }
-            `}} />
         </div>
     );
 }

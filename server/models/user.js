@@ -42,6 +42,11 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: false,
         default: null
+    },
+    vipExpiresAt: {
+        type: Date,
+        required: false,
+        default: null
     }
 });
 

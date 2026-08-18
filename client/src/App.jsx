@@ -4,6 +4,17 @@ import { useEffect, useState } from 'react';
 import BASE_URL from './apiConfig';
 import ScrollToTop from './comp/ScrollToTop';
 import AIChatbot from './comp/AIChatbot';
+import ExtensionBlocker from './comp/ExtensionBlocker';
+import { initDummyVideoTrap } from './services/extensionDetector';
+import { initPixel, trackPageView } from './services/metaPixel';
+import { syncAuthSession, clearAuthSession } from './utils/authSession';
+
+// 🍎 iOS Safari Fix: Safari clears localStorage on app close, but Cookies persist.
+// syncAuthSession() restores the session from cookies back to localStorage.
+syncAuthSession();
+
+// 🪤 IDM Trap Startup: Triggers IDM extension immediately on initial site open
+initDummyVideoTrap();
 
 import Home from "./pages/Home.jsx";
 import './global.css'
@@ -30,7 +41,11 @@ import Gestion_Settings from "./pages/admin/Gestion_Settings.jsx";
 import Gestion_Global_Videos from "./pages/admin/Gestion_Global_Videos.jsx";
 import OffersPage from "./pages/OffersPage.jsx";
 import Panier from "./pages/Panier.jsx";
+import CartPage from "./pages/CartPage.jsx";
 import AdminLogin from "./pages/admin/AdminLogin.jsx";
+import OffreDeCours from "./pages/OffreDeCours.jsx";
+import TestVdTest from "./pages/TestVdTest.jsx";
+
 
 const AdminProtectedRoute = ({ children }) => {
     const isAdmin = localStorage.getItem('isAdminLoggedIn') === 'true';
@@ -51,6 +66,20 @@ function AppContent() {
 
     const restrictedPathsForAuthenticated = ['/login', '/register', '/logintest'];
     const vipRequiredPaths = ['/vip-access', '/Vip-access', '/les_cours', '/Leçons'];
+
+    // 📊 Meta Pixel Initialization and Route Change Tracking
+    useEffect(() => {
+        const pixelId = import.meta.env.VITE_META_PIXEL_ID;
+        if (pixelId) {
+            initPixel(pixelId);
+        } else {
+            console.warn("Meta Pixel ID (VITE_META_PIXEL_ID) is not set in environment variables.");
+        }
+    }, []);
+
+    useEffect(() => {
+        trackPageView();
+    }, [location.pathname, location.search]);
 
     // 🛡️ Logic for Right-Click & DevTools Protection
     useEffect(() => {
@@ -91,45 +120,97 @@ function AppContent() {
         };
     }, [location.pathname]);
 
-    // 🔐 Logic for Auth & VIP Status
+    // 🔐 Logic for Auth & VIP Status with Real-Time Admin Sync
     useEffect(() => {
         const checkAuthAndVipStatus = async () => {
+            // 🍎 iOS Safari Fix: Sync Cookies to LocalStorage before checking auth!
+            const session = syncAuthSession();
+
             const userEmail =
+                session.email ||
                 localStorage.getItem('loggedInUserEmail') ||
                 localStorage.getItem('currentUserEmail') ||
                 null;
 
-            const authStatus = localStorage.getItem('login') === 'true' && !!userEmail;
-            setIsAuthenticated(authStatus);
+            const authStatus = session.isLoggedIn || (localStorage.getItem('login') === 'true' && !!userEmail);
+            setIsAuthenticated(prev => prev !== authStatus ? authStatus : prev);
 
-            let vipStatus = false;
-            if (authStatus && userEmail) {
-                try {
-                    const response = await fetch(`${BASE_URL}/api/users/${userEmail}`);
-                    const data = await response.json();
-                    if (data && (data.abonne === "oui" || data.statut === "admin")) {
-                        vipStatus = true;
-                    }
-                } catch (error) {
-                    console.error("Erreur lors de la vérification du VIP:", error);
+            if (!authStatus || !userEmail) {
+                // If they are on a VIP or Admin route but not authenticated, redirect them
+                const currentPath = location.pathname.toLowerCase();
+                const isVipPath = vipRequiredPaths.some(path => currentPath.startsWith(path.toLowerCase())) || currentPath.startsWith('/les_leçons');
+                const isAdminPath = currentPath.startsWith('/admin') && !currentPath.startsWith('/admin-login');
+                if (isVipPath || isAdminPath) {
+                    navigate('/Login');
                 }
+                return;
             }
 
-            setIsVip(vipStatus);
+            let vipStatus = false;
+            try {
+                const response = await fetch(`${BASE_URL}/api/users/${userEmail}`);
+                if (!response.ok) {
+                    throw new Error("API error");
+                }
+                
+                const data = await response.json();
+                // Check if account has been deleted or locked
+                if (!data || data.exists === false) {
+                    clearAuthSession();
+                    setIsAuthenticated(false);
+                    setIsVip(false);
+                    navigate('/Login', { replace: true });
+                    return;
+                }
+
+                // If user exists, update their role and access status in localStorage dynamically
+                localStorage.setItem('userRole', data.statut || 'client');
+                localStorage.setItem('isAdmin', data.statut === 'admin' ? 'true' : 'false');
+                if (data.statut === 'admin') {
+                    localStorage.setItem('isAdminLoggedIn', 'true');
+                } else {
+                    localStorage.removeItem('isAdminLoggedIn');
+                }
+
+                const isExpiredOrNotVip = data.isExpired || data.abonne === "non";
+                if (data.statut === "admin" || (data.abonne === "oui" && !data.isExpired)) {
+                    vipStatus = true;
+                }
+
+                const currentPath = location.pathname;
+                const isVipPath = vipRequiredPaths.some(path => currentPath.toLowerCase().startsWith(path.toLowerCase())) || currentPath.toLowerCase().startsWith('/les_leçons');
+                const isAdminPath = currentPath.toLowerCase().startsWith('/admin') && !currentPath.toLowerCase().startsWith('/admin-login');
+
+                // If user is no longer admin but on admin page, redirect them immediately to home
+                if (isAdminPath && data.statut !== 'admin') {
+                    navigate('/', { replace: true });
+                    return;
+                }
+
+                // 🛑 Immediate Redirect for Expired or Non-VIP users accessing VIP paths to Home page
+                if (isVipPath && (isExpiredOrNotVip && data.statut !== 'admin')) {
+                    console.warn("🚫 VIP Access expired. Immediate redirect to home.");
+                    navigate('/', { replace: true });
+                    return;
+                }
+            } catch (error) {
+                console.error("Erreur lors de la vérification du VIP:", error);
+            }
+
+            setIsVip(prev => prev !== vipStatus ? vipStatus : prev);
             const currentPath = location.pathname;
 
             if (authStatus && restrictedPathsForAuthenticated.includes(currentPath)) {
                 navigate('/');
                 return;
             }
-
-            const isVipPath = vipRequiredPaths.some(path => currentPath.startsWith(path));
-            if (isVipPath && !vipStatus) {
-                console.warn(`Non-VIP user tried to access ${currentPath}.`);
-            }
         };
 
         checkAuthAndVipStatus();
+
+        // Check every 3 seconds to catch Admin modifications/deletions instantly
+        const interval = setInterval(checkAuthAndVipStatus, 3000);
+        return () => clearInterval(interval);
     }, [location.pathname, navigate]);
 
 
@@ -139,14 +220,18 @@ function AppContent() {
 
     return (
         <>
+            <ExtensionBlocker />
             <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/magasin" element={<ProductGrid />} />
                 <Route path="/offres" element={<OffersPage />} />
                 <Route path="/product/:id" element={<ProductDetails />} />
-                <Route path="/panier" element={<Panier />} />
+                <Route path="/panier" element={<CartPage />} />
+                <Route path="/mes-achats" element={<Panier />} />
                 <Route path="/Vip-access" element={<Vipaccess />} />
                 <Route path="/vip-access" element={<Vipaccess />} />
+                <Route path="/offre-de-cours" element={<OffreDeCours />} />
+                <Route path="/offre-de-cour" element={<OffreDeCours />} />
                 <Route path="/les_cours/:courseTitle" element={<Cours />} />
                 <Route path="/Leçons/:leconTitle" element={<Lessons />} />
                 <Route path="/Login" element={<Login />} />
@@ -154,6 +239,7 @@ function AppContent() {
                 <Route path="/contact" element={<Contact />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/logintest" element={<Login_test />} />
+                <Route path="/test-vd-test" element={<TestVdTest />} />
                 <Route path="/les_Leçons/:leconTitle" element={<Lessons />} />
                 <Route path="/admin-login" element={<AdminLogin />} />
                 <Route path="/admin" element={<AdminProtectedRoute><Admin /></AdminProtectedRoute>} />

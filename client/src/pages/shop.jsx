@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { FaShoppingCart, FaSearch, FaChevronDown, FaTimes, FaUser, FaMapMarkerAlt, FaPhoneAlt, FaMinusCircle, FaPlusCircle, FaSpinner, FaCheckCircle, FaCommentAlt, FaStar, FaRegStar, FaChevronLeft, FaChevronRight, FaEdit, FaSave, FaTrash, FaPlus, FaWhatsapp, FaFacebookMessenger, FaRobot, FaPaperPlane, FaCloudUploadAlt, FaLayerGroup, FaCheck, FaLongArrowAltRight, FaTags, FaHandPointer, FaEye } from 'react-icons/fa';
+import { FaShoppingCart, FaSearch, FaChevronDown, FaTimes, FaUser, FaMapMarkerAlt, FaPhoneAlt, FaMinusCircle, FaPlusCircle, FaSpinner, FaCheckCircle, FaCommentAlt, FaStar, FaRegStar, FaChevronLeft, FaChevronRight, FaEdit, FaSave, FaTrash, FaPlus, FaWhatsapp, FaFacebookMessenger, FaRobot, FaPaperPlane, FaCloudUploadAlt, FaLayerGroup, FaCheck, FaLongArrowAltRight, FaTags, FaHandPointer, FaEye, FaShoppingBag } from 'react-icons/fa';
 import Navbar from '../comp/navbar';
 import Footer from '../comp/Footer';
 import { useAlert } from '../context/AlertContext';
+import { ProductGridSkeleton, PremiumErrorState } from '../comp/Skeletons';
 import './shop_redesign.css';
 
 // 🚨 قائمة الفئات النهائية بناءً على طلبك
@@ -13,6 +14,7 @@ const categoriesFr = ['Tous', 'Homme', 'Famme', 'Enfant'];
 const categoriesAr = ['الكل', 'رجال', 'نساء', 'أطفال'];
 const categoriesEn = ['All', 'Men', 'Women', 'Children'];
 import BASE_URL from '../apiConfig';
+import { trackAddToCart, trackInitiateCheckout, trackPurchase, trackViewContent, sanitizePrice, sanitizeQuantity } from '../services/metaPixel';
 
 // ⚠️ Assurez-وا أن هذه URL صحيحة
 const API_URL = `${BASE_URL}/api/products`;
@@ -80,6 +82,7 @@ const translations = {
         commentErrorMsg: "حدث خطأ أثناء إرسال التعليق. الرجاء المحاولة مجدداً.",
         sendCommentBtn: "إرسال التعليق",
         skipCommentBtn: "تخطي",
+        ajouterAuPanier: "إضافة إلى السلة",
 
     },
     fr: {
@@ -141,6 +144,7 @@ const translations = {
         commentErrorMsg: "Une erreur est survenue lors de l'envoi du commentaire. Veuillez réessayer.",
         sendCommentBtn: "Soumettre le Commentaire",
         skipCommentBtn: "Ignorer",
+        ajouterAuPanier: "Ajouter au panier",
 
     },
     en: {
@@ -202,6 +206,7 @@ const translations = {
         commentErrorMsg: "An error occurred while submitting the comment. Please try again.",
         sendCommentBtn: "Submit Review",
         skipCommentBtn: "Skip",
+        ajouterAuPanier: "Add to cart",
     }
 };
 
@@ -390,7 +395,9 @@ const OrderModalComponent = ({ selectedProduct, quantity, handleQuantityChange, 
 
         if (!selectedProduct) return;
 
-        const calculatedTotal = selectedProduct.price * quantity;
+        const prodPrice = sanitizePrice(selectedProduct.price || selectedProduct.prix);
+        const cleanQty = sanitizeQuantity(quantity);
+        const calculatedTotal = Math.round(prodPrice * cleanQty * 100) / 100;
 
         const clientName = customerData.firstName;
         const clientPhone = customerData.phone;
@@ -403,15 +410,27 @@ const OrderModalComponent = ({ selectedProduct, quantity, handleQuantityChange, 
 
         setIsSubmittingOrder(true);
 
+        const prodId = String(selectedProduct.id || selectedProduct._id);
+        const prodName = typeof selectedProduct.name === 'object' ? (selectedProduct.name[appLanguage] || selectedProduct.name.fr || selectedProduct.name.ar || '') : (selectedProduct.name || '');
+
+        trackInitiateCheckout({
+            name: prodName,
+            category: 'Shop',
+            ids: [prodId],
+            numItems: cleanQty,
+            value: calculatedTotal,
+            currency: 'TND',
+            contents: [{ id: prodId, quantity: cleanQty, item_price: prodPrice }]
+        });
+
         const orderData = {
             totalAmount: calculatedTotal,
             items: [{
-                productId: selectedProduct.id,
-                productName: selectedProduct.name,
-                // 💡 يستخدم selectedProduct.url الذي يحمل mainImage أو image القديم
+                productId: prodId,
+                productName: prodName,
                 productImage: selectedProduct.url,
-                quantity: quantity,
-                price: selectedProduct.price,
+                quantity: cleanQty,
+                price: prodPrice,
             }],
             clientName: clientName,
             clientPhone: clientPhone,
@@ -431,6 +450,15 @@ const OrderModalComponent = ({ selectedProduct, quantity, handleQuantityChange, 
             const result = await response.json();
 
             if (response.ok) {
+                trackPurchase({
+                    value: calculatedTotal,
+                    ids: [prodId],
+                    name: prodName,
+                    numItems: cleanQty,
+                    currency: 'TND',
+                    contents: [{ id: prodId, quantity: cleanQty, item_price: prodPrice }]
+                });
+
                 onOrderSuccess(result.commandId);
             } else {
                 console.error("Échec de l'enregistrement de la commande:", result);
@@ -700,6 +728,12 @@ export default function ProductGrid() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    // Interactive Cart animations state
+    const [addingProductId, setAddingProductId] = useState(null);
+    const [addedProductIds, setAddedProductIds] = useState({});
+    const [floatingParticles, setFloatingParticles] = useState([]);
+    const [cartToast, setCartToast] = useState(null);
+
     const [selectedCategory, setSelectedCategory] = useState('Tous');
     const [searchTerm, setSearchTerm] = useState('');
     const [priceRange, setPriceRange] = useState(1000);
@@ -727,7 +761,7 @@ export default function ProductGrid() {
     const defaultStructure = {
         colTitle: '', colAccent: '',
         sidebar: '', reset: '', navTitle: '', searchPlaceholder: '',
-        info: '', cartBtn: '', heroImage: '',
+        info: '', cartBtn: '', detailsBtn: '', addToCartBtn: '', heroImage: '',
         offerCta: ''
     };
 
@@ -1104,6 +1138,57 @@ export default function ProductGrid() {
         fetchContactSettings();
     }, []);
 
+    // 📍 Persistent Scroll Position Memory for Shop Page (Restores ONLY after data finishes loading)
+    const isScrollRestored = useRef(false);
+
+    useEffect(() => {
+        if (loading) return; // 🛑 Don't restore while products are still loading/fetching!
+
+        const savedScrollY = sessionStorage.getItem('shop_scroll_position');
+        if (savedScrollY !== null) {
+            const scrollY = parseInt(savedScrollY, 10);
+            if (!isNaN(scrollY) && scrollY > 0) {
+                const scrollToSavedPosition = () => {
+                    window.scrollTo({ top: scrollY, behavior: 'instant' });
+                };
+
+                // 1. Immediately scroll now that products are rendered in the DOM
+                scrollToSavedPosition();
+
+                // 2. Retry at short intervals to account for image layout shifts & async rendering
+                const timer1 = setTimeout(scrollToSavedPosition, 50);
+                const timer2 = setTimeout(scrollToSavedPosition, 150);
+                const timer3 = setTimeout(scrollToSavedPosition, 300);
+                const timer4 = setTimeout(() => {
+                    scrollToSavedPosition();
+                    isScrollRestored.current = true; // Mark scroll restoration complete
+                }, 600);
+
+                return () => {
+                    clearTimeout(timer1);
+                    clearTimeout(timer2);
+                    clearTimeout(timer3);
+                    clearTimeout(timer4);
+                };
+            }
+        }
+        isScrollRestored.current = true;
+    }, [loading]);
+
+    // 💾 Save scroll position ONLY when data is fully loaded & initial restoration has finished
+    useEffect(() => {
+        const handleScroll = () => {
+            if (!loading && isScrollRestored.current) {
+                sessionStorage.setItem('shop_scroll_position', window.scrollY.toString());
+            }
+        };
+
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        return () => {
+            window.removeEventListener('scroll', handleScroll);
+        };
+    }, [loading]);
+
     useEffect(() => {
         // No longer auto-switching to first category on lang change to avoid jumping to 'الكل' if 'Tous' was active
     }, [appLanguage]);
@@ -1125,6 +1210,139 @@ export default function ProductGrid() {
 
     const handleOrderClick = (product) => {
         navigate(`/product/${product.id}`);
+    };
+
+    const handleAddToCart = (e, product) => {
+        e.stopPropagation();
+        if (addedProductIds[product.id]) return;
+
+        try {
+            // 1. Calculate positions for animations
+            const rect = e.currentTarget.getBoundingClientRect();
+            const startX = rect.left + rect.width / 2;
+            const startY = rect.top + rect.height / 2;
+
+            // Find the cart icon in the navbar
+            const cartIcon = document.querySelector('.cart-btn-premium') || document.querySelector('.cart-icon-wrapper');
+            let endX = window.innerWidth - 100;
+            let endY = 50;
+            if (cartIcon) {
+                const cartRect = cartIcon.getBoundingClientRect();
+                endX = cartRect.left + cartRect.width / 2;
+                endY = cartRect.top + cartRect.height / 2;
+            }
+
+            // Spawn floating product particle
+            const particleId = Date.now() + Math.random();
+            const newParticle = {
+                id: particleId,
+                type: 'product',
+                startX: `${startX}px`,
+                startY: `${startY}px`,
+                endX: `${endX}px`,
+                endY: `${endY}px`,
+                image: product.url
+            };
+
+            // Spawn star particles burst (10 stars)
+            const newStars = [];
+            const symbols = ['★', '✦', '✧', '★', '✦'];
+            for (let i = 0; i < 10; i++) {
+                const angle = (i * 2 * Math.PI) / 10 + (Math.random() - 0.5) * 0.4;
+                const distance = 40 + Math.random() * 80;
+                const dx = `${Math.cos(angle) * distance}px`;
+                const dy = `${Math.sin(angle) * distance}px`;
+                const rot = `${Math.random() * 360}deg`;
+                const starId = Date.now() + Math.random() + i;
+                newStars.push({
+                    id: starId,
+                    type: 'star',
+                    startX: `${startX}px`,
+                    startY: `${startY}px`,
+                    dx,
+                    dy,
+                    rot,
+                    symbol: symbols[i % symbols.length]
+                });
+            }
+
+            setFloatingParticles(prev => [...prev, newParticle, ...newStars]);
+
+            // Remove particles after animation duration
+            setTimeout(() => {
+                const allIdsToRemove = [particleId, ...newStars.map(s => s.id)];
+                setFloatingParticles(prev => prev.filter(p => !allIdsToRemove.includes(p.id)));
+            }, 800);
+
+            // 2. Immediate Cart Save & Dispatch
+            const currentCart = JSON.parse(localStorage.getItem('cartItems') || '[]');
+            const existingItem = currentCart.find(item => item.id === product.id);
+            const prodPrice = sanitizePrice(product.price || product.prix);
+            const prodId = String(product.id || product._id);
+            const pName = typeof product.name === 'object' ? (product.name[appLanguage] || product.name.fr || product.name.ar || '') : (product.name || '');
+
+            if (existingItem) {
+                existingItem.quantity += 1;
+            } else {
+                currentCart.push({
+                    id: prodId,
+                    name: pName,
+                    price: prodPrice,
+                    url: product.url,
+                    quantity: 1,
+                    currency: 'DT'
+                });
+            }
+            localStorage.setItem('cartItems', JSON.stringify(currentCart));
+            window.dispatchEvent(new Event('cartUpdated'));
+
+            // 📊 Meta Pixel: Track AddToCart (Ajout au panier)
+            const catName = typeof product.category === 'object' ? (product.category.fr || product.category.ar || '') : (product.category || '');
+            trackAddToCart({
+                name: pName,
+                category: catName,
+                ids: [prodId],
+                quantity: 1,
+                value: prodPrice,
+                currency: 'TND',
+                contents: [{ id: prodId, quantity: 1, item_price: prodPrice }]
+            });
+
+            // Success Feedback State (Instant)
+            setAddedProductIds(prev => ({ ...prev, [product.id]: true }));
+            setTimeout(() => {
+                setAddedProductIds(prev => ({ ...prev, [product.id]: false }));
+            }, 1500);
+
+            // Show premium slide-in toast
+            setCartToast({
+                show: true,
+                hiding: false,
+                product: product
+            });
+
+            // Auto hide toast after 4 seconds
+            setTimeout(() => {
+                setCartToast(prev => {
+                    if (prev && prev.product.id === product.id) {
+                        return { ...prev, hiding: true };
+                    }
+                    return prev;
+                });
+                setTimeout(() => {
+                    setCartToast(prev => {
+                        if (prev && prev.product.id === product.id) {
+                            return null;
+                        }
+                        return prev;
+                    });
+                }, 400);
+            }, 4000);
+
+        } catch (error) {
+            console.error("Failed to add to cart:", error);
+            showAlert('error', 'Erreur', appLanguage === 'ar' ? 'حدث خطأ ما' : 'Une erreur est survenue');
+        }
     };
 
     const closeOrderModal = () => {
@@ -1611,33 +1829,11 @@ export default function ProductGrid() {
         return (
             <>
                 <Navbar />
-                <div className="product-grid-section" dir={direction}>
-                    <div className="vip-hero-premium skeleton-item" style={{ height: '60vh', minHeight: '520px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                        <div className="container" style={{ position: 'relative', zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                            <div className="skeleton-item" style={{ width: '120px', height: '35px', borderRadius: '50px', marginBottom: '25px', opacity: 0.2 }}></div>
-                            <div className="skeleton-item" style={{ width: '60%', height: '60px', borderRadius: '12px', marginBottom: '20px', opacity: 0.2 }}></div>
-                            <div className="skeleton-item" style={{ width: '40%', height: '25px', borderRadius: '6px', opacity: 0.2 }}></div>
-                        </div>
-                    </div>
-
-                    <div className="shop-content-wrapper">
-                        <aside className="filter-sidebar skeleton-item" style={{ height: '600px', borderRadius: '24px', opacity: 0.1 }}></aside>
-
-                        <div className="product-grid-main">
-                            <div className="skeleton-grid">
-                                {[1, 2, 3, 4, 5, 6].map((i) => (
-                                    <div key={i} className="skeleton-card">
-                                        <div className="skeleton-image skeleton-item"></div>
-                                        <div className="skeleton-content">
-                                            <div className="skeleton-title skeleton-item"></div>
-                                            <div className="skeleton-row">
-                                                <div className="skeleton-price skeleton-item"></div>
-                                                <div className="skeleton-btn skeleton-item"></div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
+                <div className="product-grid-section" dir={direction} style={{ paddingTop: '100px' }}>
+                    <div className="shop-content-wrapper container" style={{ display: 'flex', gap: '30px' }}>
+                        <aside className="filter-sidebar shimmer" style={{ width: '280px', height: '650px', borderRadius: '24px', flexShrink: 0 }}></aside>
+                        <div className="product-grid-main" style={{ flexGrow: 1 }}>
+                            <ProductGridSkeleton count={6} />
                         </div>
                     </div>
                 </div>
@@ -1647,9 +1843,13 @@ export default function ProductGrid() {
 
     if (error) {
         return (
-            <div className="error-state" style={{ textAlign: 'center', padding: '100px', color: 'red', fontSize: '18px' }} dir={direction}>
-                <p>{t.error(error)}</p>
-            </div>
+            <>
+                <Navbar />
+                <div style={{ paddingTop: '120px', paddingBottom: '80px' }}>
+                    <PremiumErrorState message={error} onRetry={() => window.location.reload()} />
+                </div>
+                <Footer />
+            </>
         );
     }
 
@@ -1941,7 +2141,6 @@ export default function ProductGrid() {
                                                     onClick={(e) => { e.stopPropagation(); handleOpenEditOffer(offer); }}
                                                     style={{
                                                         background: '#fff',
-                                                        color: '#D4AF37',
                                                         border: '1px solid #D4AF37',
                                                         width: '30px',
                                                         height: '30px',
@@ -1977,14 +2176,28 @@ export default function ProductGrid() {
                                             </div>
                                         )}
                                         <div className="offer-badge-container"><img src="https://cdn-icons-png.flaticon.com/512/726/726454.png" className="promo-badge-img" alt="Promo" /></div>
-                                        <h4 className="offer-main-title">{offer.title[appLanguage] || offer.title.fr}</h4>
+                                         {(() => {
+                                             const rawTitle = offer.title[appLanguage] || offer.title.fr || '';
+                                             const titleParts = rawTitle.includes('+') ? rawTitle.split('+').map(p => p.trim()) : [rawTitle];
+                                             return titleParts.length > 1 ? (
+                                                 <div className="offer-title-tags">
+                                                     {titleParts.map((part, idx) => (
+                                                         <span key={idx} className="offer-title-tag">
+                                                             {part}
+                                                         </span>
+                                                     ))}
+                                                 </div>
+                                             ) : (
+                                                 <h4 className="offer-main-title">{rawTitle}</h4>
+                                             );
+                                         })()}
                                         <div className="offer-image-bundle">
                                             {offer.productIds.slice(0, 3).map((p, i) => (
                                                 <div key={i} className={`bundle-img-wrapper item-${i}`}><img src={p.mainImage || p.image || p.url} alt="" /></div>
                                             ))}
                                             {offer.productIds.length > 3 && <div className="bundle-count">+{offer.productIds.length - 3}</div>}
                                         </div>
-                                        <CountdownTimer expirationDate={offer.duration} appLanguage={appLanguage} />
+                                        
                                         <div className="offer-price-footer">
                                             <div>
                                                 <span className="old-price-total">{offer.productIds.reduce((acc, p) => acc + (p.prix || 0), 0).toFixed(2)} DT</span>
@@ -2204,16 +2417,41 @@ export default function ProductGrid() {
 
                                         <div className="product-details-grid">
                                             <h3 className="product-name-grid">{product.name}</h3>
-                                            <div className="product-info-row-grid">
-                                                <span className="product-price-grid">
+                                            <div className="product-price-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                                                <span className="product-price-grid" style={{ fontSize: '1.25rem', fontWeight: '800', color: '#D4AF37' }}>
                                                     {product.price.toFixed(2)} {product.currency}
                                                 </span>
+                                            </div>
+                                            <div className="product-actions-row">
                                                 <button
                                                     className="add-to-cart-button-grid"
-                                                    style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                                                    style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '10px 8px', fontSize: '0.8rem', whiteSpace: 'nowrap' }}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleOrderClick(product);
+                                                    }}
+                                                    title={getT('detailsBtn', getT('cartBtn', t.addToCart))}
                                                 >
-                                                    <FaEye />
-                                                    {getT('cartBtn', t.addToCart)}
+                                                    <FaShoppingBag />
+                                                    {getT('detailsBtn', getT('cartBtn', t.addToCart))}
+                                                </button>
+                                                <button
+                                                    className={`add-to-cart-button-grid ${addedProductIds[product.id] ? 'is-added' : ''}`}
+                                                    style={{ flex: 1.3, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '10px 8px', fontSize: '0.8rem', backgroundColor: '#D4AF37', color: '#FFFFFF', border: 'none', whiteSpace: 'nowrap' }}
+                                                    onClick={(e) => handleAddToCart(e, product)}
+                                                    disabled={addedProductIds[product.id]}
+                                                >
+                                                    {addedProductIds[product.id] ? (
+                                                        <>
+                                                            <FaCheck />
+                                                            {appLanguage === 'ar' ? 'تمت الإضافة !' : 'Ajouté !'}
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <FaShoppingCart />
+                                                            {getT('addToCartBtn', t.ajouterAuPanier)}
+                                                        </>
+                                                    )}
                                                 </button>
                                             </div>
                                         </div>
@@ -2259,6 +2497,95 @@ export default function ProductGrid() {
 
             {/* 6. Rendu du modal de commentaire */}
             {showFeedbackModal && ReactDOM.createPortal(<FeedbackModal />, document.body)}
+
+            {/* 7. Flying Particles & Premium Toast Notification Portals */}
+            {ReactDOM.createPortal(
+                <>
+                    {/* Flying Particles & Star Bursts */}
+                    {floatingParticles.map(p => {
+                        if (p.type === 'star') {
+                            return (
+                                <div
+                                    key={p.id}
+                                    className="cart-star-particle"
+                                    style={{
+                                        '--start-x': p.startX,
+                                        '--start-y': p.startY,
+                                        '--dx': p.dx,
+                                        '--dy': p.dy,
+                                        '--rot': p.rot
+                                    }}
+                                >
+                                    {p.symbol}
+                                </div>
+                            );
+                        }
+                        return (
+                            <div
+                                key={p.id}
+                                className="cart-flying-particle"
+                                style={{
+                                    '--start-x': p.startX,
+                                    '--start-y': p.startY,
+                                    '--end-x': p.endX,
+                                    '--end-y': p.endY,
+                                    backgroundImage: `url(${p.image})`
+                                }}
+                            />
+                        );
+                    })}
+
+                    {/* Premium Toast Notification */}
+                    {cartToast && (
+                        <div className={`premium-cart-toast ${cartToast.hiding ? 'hiding' : ''}`}>
+                            <div className="premium-cart-toast-header">
+                                <span className="premium-cart-toast-title">
+                                    <FaCheckCircle />
+                                    {appLanguage === 'ar' ? 'تمت إضافة المنتج!' : 'Produit ajouté !'}
+                                </span>
+                                <button
+                                    className="premium-cart-toast-close"
+                                    onClick={() => {
+                                        setCartToast(prev => prev ? { ...prev, hiding: true } : null);
+                                        setTimeout(() => setCartToast(null), 400);
+                                    }}
+                                >
+                                    <FaTimes />
+                                </button>
+                            </div>
+                            <div className="premium-cart-toast-body">
+                                <img src={cartToast.product.url} alt="" className="premium-cart-toast-img" />
+                                <div className="premium-cart-toast-info">
+                                    <h4 className="premium-cart-toast-name">{cartToast.product.name}</h4>
+                                    <p className="premium-cart-toast-price">
+                                        {cartToast.product.price.toFixed(2)} {cartToast.product.currency || 'DT'}
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="premium-cart-toast-action">
+                                <button
+                                    className="premium-cart-toast-btn secondary"
+                                    onClick={() => {
+                                        setCartToast(prev => prev ? { ...prev, hiding: true } : null);
+                                        setTimeout(() => setCartToast(null), 400);
+                                    }}
+                                >
+                                    {appLanguage === 'ar' ? 'مواصلة التسوق' : 'Continuer'}
+                                </button>
+                                <button
+                                    className="premium-cart-toast-btn primary"
+                                    onClick={() => {
+                                        navigate('/panier');
+                                    }}
+                                >
+                                    {appLanguage === 'ar' ? 'عرض السلة' : 'Voir le panier'}
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </>,
+                document.body
+            )}
 
             {/* 🛑 Admin Editing Modal */}
             {
@@ -2376,11 +2703,21 @@ export default function ProductGrid() {
                                                     />
                                                 </div>
                                                 <div className="premium-form-group">
-                                                    <label>Bouton d'achat</label>
+                                                    <label>{lang.code === 'ar' ? 'زر التفاصيل (détails)' : 'Bouton Détails'}</label>
                                                     <input
                                                         type="text"
-                                                        value={editShopContent[lang.code]?.cartBtn || ''}
-                                                        onChange={e => setEditShopContent({ ...editShopContent, [lang.code]: { ...editShopContent[lang.code], cartBtn: e.target.value } })}
+                                                        value={editShopContent[lang.code]?.detailsBtn || ''}
+                                                        onChange={e => setEditShopContent({ ...editShopContent, [lang.code]: { ...editShopContent[lang.code], detailsBtn: e.target.value } })}
+                                                        placeholder="détails"
+                                                    />
+                                                </div>
+                                                <div className="premium-form-group">
+                                                    <label>{lang.code === 'ar' ? 'زر إضافة إلى السلة (Ajouter au panier)' : 'Bouton Ajouter au Panier'}</label>
+                                                    <input
+                                                        type="text"
+                                                        value={editShopContent[lang.code]?.addToCartBtn || ''}
+                                                        onChange={e => setEditShopContent({ ...editShopContent, [lang.code]: { ...editShopContent[lang.code], addToCartBtn: e.target.value } })}
+                                                        placeholder="Ajouter au panier"
                                                     />
                                                 </div>
                                             </>

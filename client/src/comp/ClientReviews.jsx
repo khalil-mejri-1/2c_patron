@@ -4,6 +4,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { useAlert } from '../context/AlertContext';
 import { FaQuoteRight, FaChevronLeft, FaChevronRight, FaStar, FaEdit, FaSave, FaTimes } from 'react-icons/fa';
 import BASE_URL from '../apiConfig';
+import { ClientReviewsSkeleton, PremiumErrorState } from './Skeletons';
 
 // ⚠️ URL de l'API des commentaires
 const API_COMMENTAIRES_URL = `${BASE_URL}/api/commentaires/filtre`;
@@ -243,19 +244,13 @@ export default function ClientReviews() {
 
     // 6. Affichage du statut de chargement/erreur (محدث باللغات)
     if (loading) {
-        return (
-            <section className="reviews-section-white" style={{ textAlign: 'center', padding: '100px 0' }}>
-                <h2 className="reviews-title">{t.loading}</h2>
-                <FaStar className="star active spinner" style={{ animation: 'spin 2s linear infinite' }} />
-            </section>
-        );
+        return <ClientReviewsSkeleton />;
     }
 
     if (error) {
         return (
-            <section className="reviews-section-white" style={{ textAlign: 'center', padding: '50px 0', color: 'red' }}>
-                <h2 className="reviews-title">{t.errorTitle}</h2>
-                <p>{error}</p>
+            <section className="reviews-section-white" style={{ padding: '40px 20px' }}>
+                <PremiumErrorState message={error} onRetry={() => window.location.reload()} />
             </section>
         );
     }

@@ -180,7 +180,10 @@ export default function GestionCoursSpecialises({ onClose }) {
                                             style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid #ced4da', appearance: 'none', background: '#fff' }}
                                         >
                                             <option value="">-- Sélectionnez --</option>
-                                            {categories.map(c => <option key={c._id} value={c.title}>{c.title}</option>)}
+                                            {categories.map(c => {
+                                                const titleStr = typeof c.title === 'object' ? (c.title.fr || c.title.ar || '') : (c.title || '');
+                                                return <option key={c._id} value={titleStr}>{titleStr}</option>;
+                                            })}
                                         </select>
                                         {existingGroups[course.vip_category] && existingGroups[course.vip_category].subCategories.length > 0 && (
                                             <button

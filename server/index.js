@@ -1,6 +1,5 @@
 
 
-
 require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
@@ -40,6 +39,8 @@ const SpecializedVideo = require('./models/SpecializedVideo.js');
 const SiteSetting = require('./models/SiteSetting.js');
 const ShopCategory = require('./models/ShopCategory.js');
 const Offer = require('./models/Offer.js');
+const { sendToConversionsAPI } = require('./conversionsApi.js');
+const googleStream = require('./routes/googleStream');
 
 
 
@@ -50,12 +51,15 @@ const PORT = process.env.PORT || 3000;
 
 // -------------------- A. MIDDLEWARE SETUP --------------------
 app.set('trust proxy', true);
-
-app.use(cors());
+app.use(cors({
+    origin: true,
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin']
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true })); // ✅ ضروري لقراءة form-data
-
-
+app.use('/api/stream', googleStream);
 // -------------------- Multer Configuration --------------------
 // نستعمل memoryStorage بدلاً من diskStorage لتفادي خطأ read-only system في Vercel
 const storage = multer.memoryStorage();
@@ -78,6 +82,99 @@ const uploadVideo = multer({ storage: videoStorage });
 
 // Serve uploads directory
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// -------------------- Google Drive Stream Proxy (Instant Pipeline) --------------------
+app.get('/api/drive-stream/:id', async (req, res) => {
+    try {
+        const fileId = req.params.id;
+        const targetUrl = `https://drive.google.com/uc?export=download&id=${fileId}&confirm=t`;
+
+        const driveRes = await fetch(targetUrl, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            }
+        });
+
+        if (!driveRes.ok || !driveRes.body) {
+            return res.status(driveRes.status || 500).send('Unable to stream video from Google Drive');
+        }
+
+        res.setHeader('Content-Type', driveRes.headers.get('content-type') || 'video/mp4');
+        res.setHeader('Accept-Ranges', 'bytes');
+        res.setHeader('Access-Control-Allow-Origin', '*');
+
+        const { Readable } = require('stream');
+        const nodeStream = Readable.fromWeb(driveRes.body);
+        nodeStream.pipe(res);
+    } catch (err) {
+        console.error('Google Drive stream proxy error:', err);
+        if (!res.headersSent) {
+            res.status(500).send('Video streaming error');
+        }
+    }
+});
+
+// -------------------- Meta Conversions API Route --------------------
+/**
+ * POST /api/meta/event
+ * Receives an event from the browser and forwards it to Facebook
+ * Conversions API for server-side tracking (deduplication via event_id).
+ */
+app.post('/api/meta/event', async (req, res) => {
+    try {
+        const {
+            event_name,
+            event_id,
+            event_source_url,
+            test_event_code,
+            user_data = {},
+            custom_data = {},
+        } = req.body;
+
+        if (!event_name || !event_id) {
+            return res.status(400).json({ success: false, message: 'event_name and event_id are required.' });
+        }
+
+        // Attach real IP and User-Agent from the incoming request
+        const clientIp = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket.remoteAddress;
+        const clientUserAgent = req.headers['user-agent'];
+
+        const enrichedUserData = {
+            ...user_data,
+            client_ip_address: user_data.client_ip_address || clientIp,
+            client_user_agent: user_data.client_user_agent || clientUserAgent,
+        };
+
+        const finalCustomData = {
+            ...custom_data,
+        };
+
+        const finalTestCode = test_event_code || custom_data.test_event_code || process.env.META_TEST_EVENT_CODE;
+        if (finalTestCode) {
+            finalCustomData.test_event_code = finalTestCode;
+        }
+
+        console.log(`[CAPI Route] 📡 Forwarding "${event_name}" (${event_id}) to CAPI with test code: ${finalTestCode || 'none'}`);
+
+        const results = await sendToConversionsAPI({
+            event_name,
+            event_id,
+            event_source_url: event_source_url || req.headers.referer || 'https://cpatron.com/',
+            user_data: enrichedUserData,
+            custom_data: finalCustomData,
+        });
+
+        return res.status(200).json({
+            success: true,
+            message: `Event "${event_name}" sent to Conversions API.`,
+            results
+        });
+    } catch (error) {
+        console.error('[CAPI Route] Error:', error.message);
+        return res.status(500).json({ success: false, message: 'Failed to send event to Conversions API.', error: error.message });
+    }
+});
+
 
 // -------------------- Cloudinary Upload Route --------------------
 app.post('/api/upload', upload.single('image'), async (req, res) => {
@@ -107,8 +204,30 @@ app.post('/api/upload', upload.single('image'), async (req, res) => {
 // -------------------- API ROUTES FOR OFFERS --------------------
 app.get('/api/offers', async (req, res) => {
     try {
-        const offers = await Offer.find({ isActive: true, duration: { $gt: new Date() } }).populate('productIds');
-        res.status(200).json(offers);
+        const allOffers = await Offer.find({ isActive: true }).populate('productIds');
+        const now = Date.now();
+        const updatedOffers = [];
+
+        for (let offer of allOffers) {
+            if (offer.duration && new Date(offer.duration).getTime() <= now) {
+                // The offer has expired! Automatically reset its duration
+                let originalDuration = new Date(offer.duration).getTime() - new Date(offer.createdAt || offer.updatedAt || now).getTime();
+                if (originalDuration <= 0 || isNaN(originalDuration)) {
+                    originalDuration = 24 * 60 * 60 * 1000; // default 24 hours fallback
+                }
+
+                let newTime = new Date(offer.duration).getTime();
+                while (newTime <= now) {
+                    newTime += originalDuration;
+                }
+
+                offer.duration = new Date(newTime);
+                await offer.save();
+            }
+            updatedOffers.push(offer);
+        }
+
+        res.status(200).json(updatedOffers);
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
@@ -118,6 +237,21 @@ app.get('/api/offers/:id', async (req, res) => {
     try {
         const offer = await Offer.findById(req.params.id).populate('productIds');
         if (!offer) return res.status(404).json({ message: 'Offre non trouvée' });
+
+        const now = Date.now();
+        if (offer.isActive && offer.duration && new Date(offer.duration).getTime() <= now) {
+            let originalDuration = new Date(offer.duration).getTime() - new Date(offer.createdAt || now).getTime();
+            if (originalDuration <= 0 || isNaN(originalDuration)) {
+                originalDuration = 24 * 60 * 60 * 1000;
+            }
+            let newTime = new Date(offer.duration).getTime();
+            while (newTime <= now) {
+                newTime += originalDuration;
+            }
+            offer.duration = new Date(newTime);
+            await offer.save();
+        }
+
         res.status(200).json(offer);
     } catch (err) {
         res.status(500).json({ message: err.message });
@@ -134,9 +268,22 @@ app.get('/api/catalog/:id', async (req, res) => {
         }
 
         // Try offer if product not found
-        item = await Offer.findById(req.params.id).populate('productIds');
-        if (item) {
-            return res.status(200).json({ type: 'offer', data: item });
+        let offer = await Offer.findById(req.params.id).populate('productIds');
+        if (offer) {
+            const now = Date.now();
+            if (offer.isActive && offer.duration && new Date(offer.duration).getTime() <= now) {
+                let originalDuration = new Date(offer.duration).getTime() - new Date(offer.createdAt || now).getTime();
+                if (originalDuration <= 0 || isNaN(originalDuration)) {
+                    originalDuration = 24 * 60 * 60 * 1000;
+                }
+                let newTime = new Date(offer.duration).getTime();
+                while (newTime <= now) {
+                    newTime += originalDuration;
+                }
+                offer.duration = new Date(newTime);
+                await offer.save();
+            }
+            return res.status(200).json({ type: 'offer', data: offer });
         }
 
         res.status(404).json({ message: 'Item non trouvé' });
@@ -259,27 +406,57 @@ app.get('/api/videos/stream/:id', async (req, res) => {
 // ... (جميع مسارات المستخدمين هنا دون تغيير) ...
 // Public registration and Google login removed. Login only available via admin-generated accounts.
 
+// Helper to calculate expiration date from duration string (e.g., "1 min", "1 mois", "3 mois", "6 mois", "1 an", "2 jours", "5 heures")
+const parseDurationToExpiration = (durationStr, baseDate = new Date()) => {
+    if (!durationStr) return null;
+    const str = durationStr.toString().toLowerCase().trim();
+    const match = str.match(/(\d+)\s*(min|minute|minutes|h|heure|heures|j|jour|jours|d|day|days|m|mois|month|months|a|an|ans|year|years)/);
+    const now = new Date(baseDate.getTime());
+    
+    if (!match) {
+        now.setMonth(now.getMonth() + 1);
+        return now;
+    }
+
+    const value = parseInt(match[1], 10);
+    const unit = match[2];
+
+    if (unit.startsWith('min')) {
+        now.setMinutes(now.getMinutes() + value);
+    } else if (unit.startsWith('h')) {
+        now.setHours(now.getHours() + value);
+    } else if (unit.startsWith('j') || unit.startsWith('d')) {
+        now.setDate(now.getDate() + value);
+    } else if (unit.startsWith('m')) {
+        now.setMonth(now.getMonth() + value);
+    } else if (unit.startsWith('a') || unit.startsWith('y')) {
+        now.setFullYear(now.getFullYear() + value);
+    } else {
+        now.setMonth(now.getMonth() + 1);
+    }
+    return now;
+};
+
 app.post('/api/login-traditional', async (req, res) => {
     try {
         const { mail, mot_de_pass } = req.body;
-        let user = await User.findOne({ mail: mail });
+        let user = await User.findOne({ mail: { $regex: new RegExp("^" + mail + "$", "i") } });
 
-        // 💡 Jeśli użytkownika nie ma w bazie User, sprawdzamy w bazie Abonnement (Administrator-generated accounts)
         if (!user) {
             const aboRequest = await Abonnement.findOne({
-                generated_mail: mail,
+                generated_mail: { $regex: new RegExp("^" + mail + "$", "i") },
                 generated_password: mot_de_pass,
                 statut_abonnement: 'approuvé'
             });
 
             if (aboRequest) {
-                // Automatycznie tworzymy użytkownika w tabeli User przy pierwszym logowaniu
                 user = new User({
                     nom: aboRequest.nom,
                     mail: aboRequest.generated_mail,
                     mot_de_pass: aboRequest.generated_password,
                     abonne: 'oui',
-                    statut: 'client'
+                    statut: 'client',
+                    vipExpiresAt: aboRequest.vipExpiresAt || null
                 });
                 await user.save();
                 console.log(`✅ Compte client créé automatiquement lors du premier login pour : ${mail}`);
@@ -335,7 +512,17 @@ app.get('/api/users/check-status', async (req, res) => {
         const { email } = req.query;
         if (!email) return res.status(400).json({ error: 'Email query parameter is required.' });
 
-        const user = await User.findOne({ mail: email });
+        const lowercaseEmail = email.toLowerCase();
+        if (lowercaseEmail === 'admin@admin.com' || lowercaseEmail === 'taher@cpatron.com') {
+            return res.status(200).json({
+                id: 'master_admin_id',
+                nom: 'Master Admin',
+                statut: 'admin',
+                abonne: 'oui'
+            });
+        }
+
+        const user = await User.findOne({ mail: { $regex: new RegExp("^" + email + "$", "i") } });
         if (!user) return res.status(404).json({ error: 'User not found.' });
 
         res.status(200).json({
@@ -710,6 +897,39 @@ app.post('/api/commands', async (req, res) => {
 
         const savedCommand = await newCommand.save();
 
+        // 📊 Server-side CAPI Purchase tracking directly on order creation
+        try {
+            const clientIp = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket.remoteAddress;
+            const clientUserAgent = req.headers['user-agent'];
+            const cmdEventId = req.body.event_id || `cmd_${savedCommand._id}`;
+            const testCode = req.body.test_event_code || process.env.META_TEST_EVENT_CODE;
+
+            sendToConversionsAPI({
+                event_name: 'Purchase',
+                event_id: cmdEventId,
+                event_source_url: req.headers.referer || 'https://cpatron.com/checkout',
+                user_data: {
+                    client_ip_address: clientIp,
+                    client_user_agent: clientUserAgent,
+                    em: clientEmail,
+                    ph: clientPhone,
+                    fn: clientName,
+                },
+                custom_data: {
+                    value: totalAmount,
+                    currency: 'TND',
+                    contents: items.map(item => ({
+                        id: String(item.productId || item.id || 'product'),
+                        quantity: Number(item.quantity) || 1,
+                        item_price: Number(item.price) || 0
+                    })),
+                    test_event_code: testCode,
+                }
+            }).catch(e => console.warn('[CAPI Command] Server tracking notice:', e.message));
+        } catch (e) {
+            console.warn('[CAPI Command] Non-blocking tracking error:', e.message);
+        }
+
         res.status(201).json({
             message: 'Commande enregistrée avec succès!',
             commandId: savedCommand._id,
@@ -880,14 +1100,40 @@ app.get("/api/users/:email", async (req, res) => {
     try {
         const email = req.params.email.toLowerCase();
 
-        // نبحث عن المستخدم حسب الحقل mail
-        const user = await User.findOne({ mail: email });
-
-        if (!user) {
-            return res.status(200).json({ abonne: "non" });
+        // Check if it's one of the hardcoded admin accounts
+        if (email === 'admin@admin.com' || email === 'taher@cpatron.com') {
+            return res.status(200).json({ abonne: "oui", exists: true, statut: "admin", isExpired: false });
         }
 
-        res.status(200).json({ abonne: user.abonne, statut: user.statut });
+        // نبحث عن المستخدم حسب الحقل mail
+        let user = await User.findOne({ mail: { $regex: new RegExp("^" + req.params.email + "$", "i") } });
+        let aboRequest = await Abonnement.findOne({ generated_mail: { $regex: new RegExp("^" + req.params.email + "$", "i") }, statut_abonnement: 'approuvé' });
+
+        if (!user && !aboRequest) {
+            return res.status(200).json({ abonne: "non", exists: false, statut: null, isExpired: false });
+        }
+
+        const expiresAt = user?.vipExpiresAt || aboRequest?.vipExpiresAt || null;
+        let isExpired = false;
+
+        if (expiresAt && new Date(expiresAt).getTime() < Date.now()) {
+            isExpired = true;
+            if (user && user.abonne === 'oui') {
+                user.abonne = 'non';
+                await user.save();
+            }
+        }
+
+        const currentAbonneStatus = isExpired ? "non" : (user?.abonne || "oui");
+        const currentStatut = user?.statut || 'client';
+
+        res.status(200).json({
+            abonne: currentAbonneStatus,
+            exists: true,
+            statut: currentStatut,
+            vipExpiresAt: expiresAt,
+            isExpired: isExpired
+        });
     } catch (error) {
         console.error("Erreur lors de la vérification du VIP:", error);
         res.status(500).json({ message: "Erreur serveur" });
@@ -1133,7 +1379,7 @@ app.delete('/api/commentaires/:id', async (req, res) => {
 
 app.post('/api/abonnement', async (req, res) => {
     try {
-        const { nom, mail, telephone } = req.body;
+        const { nom, mail, telephone, duree, prix, offre_nom } = req.body;
         console.log("Body reçu:", req.body); // Debug
 
         if (!telephone) {
@@ -1143,11 +1389,49 @@ app.post('/api/abonnement', async (req, res) => {
         const abonnement = new Abonnement({
             nom: nom || 'Client',
             mail: mail || undefined,
-            telephone
+            telephone,
+            duree,
+            prix,
+            offre_nom
         });
 
         console.log("Instance Abonnement créée:", abonnement); // Debug
         await abonnement.save();
+
+        // 📊 Server-side CAPI Purchase tracking directly on course enrollment
+        try {
+            const clientIp = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket.remoteAddress;
+            const clientUserAgent = req.headers['user-agent'];
+            const subEventId = req.body.event_id || `sub_${abonnement._id}`;
+            const testCode = req.body.test_event_code || process.env.META_TEST_EVENT_CODE;
+            const rawPrice = prix ? String(prix).replace(/,/g, '.').replace(/[^0-9.]/g, '') : '0';
+            const numPrice = parseFloat(rawPrice) || 0;
+
+            sendToConversionsAPI({
+                event_name: 'Purchase',
+                event_id: subEventId,
+                event_source_url: req.headers.referer || 'https://cpatron.com/offre-de-cours',
+                user_data: {
+                    client_ip_address: clientIp,
+                    client_user_agent: clientUserAgent,
+                    em: mail,
+                    ph: telephone,
+                    fn: nom,
+                },
+                custom_data: {
+                    value: numPrice,
+                    currency: 'TND',
+                    contents: [{
+                        id: `course_${String(offre_nom || 'course').replace(/\s+/g, '_')}`,
+                        quantity: 1,
+                        item_price: numPrice
+                    }],
+                    test_event_code: testCode,
+                }
+            }).catch(e => console.warn('[CAPI Abonnement] Server tracking notice:', e.message));
+        } catch (e) {
+            console.warn('[CAPI Abonnement] Non-blocking tracking error:', e.message);
+        }
 
         res.status(201).json({
             message: "Abonnement ajouté avec succès.",
@@ -1193,17 +1477,53 @@ app.get('/api/abonnement', async (req, res) => {
 
 app.put('/api/abonnement/:id', async (req, res) => {
     try {
-        const { statut_abonnement } = req.body;
+        const { statut_abonnement, duree, extendTime } = req.body;
 
-        const abonnement = await Abonnement.findByIdAndUpdate(
-            req.params.id,
-            { statut_abonnement },
-            { new: true }
-        );
-
+        const abonnement = await Abonnement.findById(req.params.id);
         if (!abonnement) return res.status(404).json({ message: 'Abonnement introuvable.' });
 
-        res.json({ message: 'Statut mis à jour.', abonnement });
+        if (statut_abonnement) {
+            abonnement.statut_abonnement = statut_abonnement;
+        }
+
+        if (duree) {
+            abonnement.duree = duree;
+            abonnement.vipExpiresAt = parseDurationToExpiration(duree, abonnement.createdAt || new Date());
+        }
+
+        if (extendTime) {
+            // extendTime object: { amount: Number, unit: 'minutes'|'hours'|'days'|'months' }
+            const currentExpiry = (abonnement.vipExpiresAt && new Date(abonnement.vipExpiresAt).getTime() > Date.now())
+                ? new Date(abonnement.vipExpiresAt)
+                : new Date();
+
+            const amount = parseInt(extendTime.amount, 10) || 0;
+            const unit = extendTime.unit || 'days';
+
+            if (unit === 'minutes') currentExpiry.setMinutes(currentExpiry.getMinutes() + amount);
+            else if (unit === 'hours') currentExpiry.setHours(currentExpiry.getHours() + amount);
+            else if (unit === 'days') currentExpiry.setDate(currentExpiry.getDate() + amount);
+            else if (unit === 'months') currentExpiry.setMonth(currentExpiry.getMonth() + amount);
+
+            abonnement.vipExpiresAt = currentExpiry;
+
+            // Also extend format text in duree for display
+            abonnement.duree = `${abonnement.duree || ''} (+${amount} ${unit})`.trim();
+        }
+
+        await abonnement.save();
+
+        // Also sync User model if user already logged in
+        if (abonnement.generated_mail) {
+            const user = await User.findOne({ mail: { $regex: new RegExp("^" + abonnement.generated_mail + "$", "i") } });
+            if (user) {
+                user.vipExpiresAt = abonnement.vipExpiresAt;
+                user.abonne = (abonnement.vipExpiresAt && new Date(abonnement.vipExpiresAt).getTime() > Date.now()) ? 'oui' : 'non';
+                await user.save();
+            }
+        }
+
+        res.json({ message: 'Abonnement mis à jour avec succès.', abonnement });
     } catch (error) {
         console.error('Erreur PUT abonnement:', error);
         res.status(500).json({ message: 'Erreur serveur.' });
@@ -1264,19 +1584,20 @@ app.post('/api/abonnement/generate-account/:id', async (req, res) => {
 
         const generatedEmail = await generateEmail(abo.nom);
         const generatedPassword = generatePassword();
-
-        // On ne crée plus l'utilisateur ici, il sera créé automatiquement lors de sa première connexion
+        const expiresAt = parseDurationToExpiration(abo.duree, new Date());
 
         // Update the abonnement request
         abo.statut_abonnement = 'approuvé';
         abo.generated_mail = generatedEmail;
         abo.generated_password = generatedPassword;
+        abo.vipExpiresAt = expiresAt;
         await abo.save();
 
         res.status(201).json({
             message: "Compte généré avec succès.",
             email: generatedEmail,
-            password: generatedPassword
+            password: generatedPassword,
+            vipExpiresAt: expiresAt
         });
     } catch (error) {
         console.error("Error generating account:", error);
@@ -1620,7 +1941,7 @@ app.delete('/api/specialized-courses/:id', async (req, res) => {
 
 app.post('/api/specialized-courses/group', async (req, res) => {
     try {
-        const { video_link, courses, vip_category, hero_bg, hero_content } = req.body;
+        const { video_link, courses, vip_category, hero_bg, hero_content, intro_content } = req.body;
 
         const vipCategoryName = (courses && courses.length > 0) ? courses[0].vip_category : vip_category;
 
@@ -1645,6 +1966,7 @@ app.post('/api/specialized-courses/group', async (req, res) => {
             }
             if (hero_bg !== undefined) existingGroup.hero_bg = hero_bg;
             if (hero_content !== undefined) existingGroup.hero_content = hero_content;
+            if (intro_content !== undefined) existingGroup.intro_content = intro_content;
 
             // ضمان وجود الاسم في المستوى العلوي أيضاً
             existingGroup.vip_category = vipCategoryName;
@@ -1659,13 +1981,16 @@ app.post('/api/specialized-courses/group', async (req, res) => {
             courses: courses || [],
             vip_category: vipCategoryName,
             hero_bg: hero_bg || '',
-            hero_content: hero_content || {}
+            hero_content: hero_content || {},
+            intro_content: intro_content || {}
         });
 
         await newGroup.save();
 
         // --- Cross-System Synchronization ---
         // Ensure a VipCategory exists for this course group so it shows on the UI
+        // Commented out to prevent course creation from automatically spawning new VIP categories in the main page
+        /*
         try {
             const existingVip = await VipCategory.findOne({
                 $or: [
@@ -1685,6 +2010,7 @@ app.post('/api/specialized-courses/group', async (req, res) => {
                 await newVip.save();
             }
         } catch (e) { console.error("Sync error:", e); }
+        */
 
         res.status(201).json({ message: 'Nouvelle catégorie créée avec succès.', data: newGroup });
 
@@ -1771,14 +2097,43 @@ app.get('/api/specialized-videos', async (req, res) => {
     try {
         const query = {};
         const queryCategory = req.query.category || req.query['category[]'];
-        if (queryCategory) {
-            const matchArr = Array.isArray(queryCategory) ? queryCategory : [queryCategory];
+        const querySubCategory = req.query.subCategory || req.query['subCategory[]'];
 
-            // Check both category (for backwards compatibility/main category) 
-            // and subCategory (for the new hierarchical architecture)
+        if (querySubCategory && queryCategory) {
+            const catArr = Array.isArray(queryCategory) ? queryCategory : [queryCategory];
+            const subArr = Array.isArray(querySubCategory) ? querySubCategory : [querySubCategory];
+            const catRegex = catArr.map(c => new RegExp(`^${c.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i'));
+            const subRegex = subArr.map(s => new RegExp(`^${s.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i'));
+
             query.$or = [
-                { category: { $in: matchArr } },
-                { subCategory: { $in: matchArr } }
+                { category: { $in: catRegex }, subCategory: { $in: subRegex } },
+                { subCategory: { $in: subRegex } },
+                {
+                    category: { $in: subRegex },
+                    $or: [{ subCategory: { $exists: false } }, { subCategory: null }, { subCategory: "" }]
+                }
+            ];
+        } else if (querySubCategory) {
+            const subArr = Array.isArray(querySubCategory) ? querySubCategory : [querySubCategory];
+            const regexArr = subArr.map(s => new RegExp(`^${s.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i'));
+            query.subCategory = { $in: regexArr };
+        } else if (queryCategory) {
+            const catArr = Array.isArray(queryCategory) ? queryCategory : [queryCategory];
+            const regexArr = catArr.map(c => new RegExp(`^${c.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i'));
+
+            // A video matches if:
+            // 1. Its subCategory matches the requested category/lesson name
+            // 2. OR its category matches AND subCategory is empty/null (legacy or top-level video)
+            query.$or = [
+                { subCategory: { $in: regexArr } },
+                {
+                    category: { $in: regexArr },
+                    $or: [
+                        { subCategory: { $exists: false } },
+                        { subCategory: null },
+                        { subCategory: "" }
+                    ]
+                }
             ];
         }
         const videos = await SpecializedVideo.find(query).sort({ order: 1, createdAt: -1 });
@@ -2077,36 +2432,75 @@ app.delete('/api/specialized-courses-all/reset-now', async (req, res) => {
     }
 });
 
+// Load GPT Knowledge file content
+let gptKnowledge = "";
+try {
+    const knowledgePath = path.join(__dirname, 'gpt_knowledge.txt');
+    if (fs.existsSync(knowledgePath)) {
+        gptKnowledge = fs.readFileSync(knowledgePath, 'utf8');
+    }
+} catch (err) {
+    console.error("Failed to read gpt_knowledge.txt:", err.message);
+}
+
 // ------------------------- AI CHAT ASSISTANT -------------------------
 app.post('/api/ai-chat', async (req, res) => {
     const { message, language } = req.body;
     if (!message) return res.status(400).json({ error: 'Message is required' });
 
     try {
-        const prompt = `
+        const systemPrompt = `
             You are a professional assistant specialized ONLY in sewing, clothing, fashion design, and patterns (مجال الخياطة والملابس).
             Your name is "Assistant Atelier Sfax".
+            
+            KNOWLEDGE BASE (مصدر الإجابة الأساسي):
+            Use the following context from our manual to answer the user's questions accurately and professionally. Extract instructions, steps, measurements, and shapes from this text:
+            """
+            ${gptKnowledge}
+            """
             
             RULES:
             1. If the user asks about ANYTHING outside the field of sewing, clothing, or fashion (food, sports, politics, math, general info), you MUST answer EXACTLY with:
                "أسف، لا يمكنني الإجابة خارج مجال الخياطة والملابس." (if the question is in Arabic)
-               or "Désolé, je ne peux pas répondre en dehors du domaine de la couture et de l'habillement." (if the question is in French).
-            2. Be professional and helpful for sewing tasks.
+               or "Désolé, je ne peux pas    répondre en dehors du domaine de la couture et de l'habillement." (if the question is in French).
+            2. Be professional and helpful for sewing tasks. Always base your sewing steps, formulas, and advice on the provided KNOWLEDGE BASE if relevant.
             3. Use the language: ${language === 'ar' ? 'Arabic' : 'French'}.
             4. Keep responses concise and practical.
-
-            User message: ${message}
         `;
 
-        const result = await genAI.models.generateContent({
-            model: "models/gemini-2.5-flash",
-            contents: prompt
+        const groqApiKey = process.env.GROQ_API_KEY;
+        if (!groqApiKey) {
+            console.error("GROQ_API_KEY is not configured in .env");
+            return res.status(500).json({ error: "AI service configuration error" });
+        }
+
+        const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${groqApiKey}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                model: "llama-3.3-70b-versatile",
+                messages: [
+                    { role: "system", content: systemPrompt },
+                    { role: "user", content: message }
+                ],
+                temperature: 0.7
+            })
         });
 
-        const responseText = result.text || result.response?.text();
+        if (!response.ok) {
+            const errData = await response.json();
+            console.error("Groq API Error details:", errData);
+            throw new Error(`Groq API responded with status ${response.status}`);
+        }
+
+        const data = await response.json();
+        const responseText = data.choices?.[0]?.message?.content || "";
         res.status(200).json({ reply: responseText });
     } catch (error) {
-        console.error("Gemini AI Error:", error);
+        console.error("Groq AI Error:", error);
         res.status(500).json({ error: 'AI Assistant Error' });
     }
 });

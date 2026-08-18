@@ -152,10 +152,22 @@
 
 .vip-main-title-premium {
     font-family: "Lora", serif;
-    font-size: 4rem;
-    line-height: 1.1;
+    font-size: 3.5rem;
+    line-height: 1.25;
     margin-bottom: 20px;
     animation: fadeInUp 1s ease;
+    text-align: center;
+}
+
+.vip-main-title-premium .title-white-text {
+    display: block;
+    color: #ffffff;
+}
+
+.vip-main-title-premium .accent-text {
+    display: block;
+    color: #d4af37;
+    margin-top: 6px;
 }
 
 .vip-sub-text-premium {
@@ -358,6 +370,43 @@
     flex: 1;
 }
 
+.vip-desc-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.vip-desc-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 0.95rem;
+    color: #475569;
+    line-height: 1.5;
+}
+
+[dir="rtl"] .vip-desc-item {
+    text-align: right;
+    flex-direction: row;
+}
+
+.vip-desc-icon {
+    color: #d4af37;
+    font-weight: bold;
+    flex-shrink: 0;
+    font-size: 1.1rem;
+    line-height: 1;
+    margin-top: 2px;
+}
+
+.vip-desc-text {
+    flex: 1;
+    font-family: inherit;
+}
+
 .vip-card-footer {
     display: flex;
     justify-content: space-between;
@@ -413,9 +462,9 @@
     }
 
     .vip-card-img-wrapper {
-        width: 100px;
-        /* Slightly smaller to give text more room */
-        height: 100px;
+        width: 140px;
+        /* Wider image to fit the pattern preview better */
+        height: 90px;
         border-radius: 12px;
         flex-shrink: 0;
         margin-top: 5px;
@@ -475,7 +524,7 @@
     .vip-access-btn {
         padding: 8px 15px;
         font-size: 0.8rem;
-        width: auto;
+        width: 100%;
     }
 
     .btn-arrow {
@@ -539,23 +588,23 @@
 
 .vip-modal-text {
     font-size: 1.15rem;
-    color: rgba(255, 255, 255, 0.8);
+    color: #4b5563;
     line-height: 1.7;
     margin-bottom: 35px;
 }
 
 .vip-modal-whatsapp {
-    background: rgba(255, 255, 255, 0.05);
+    background: #f8fafc;
     padding: 22px;
     border-radius: 20px;
     margin-bottom: 40px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid #e2e8f0;
 }
 
 .whatsapp-label {
     display: block;
     font-size: 0.85rem;
-    color: #f7f7f7;
+    color: #64748b;
     text-transform: uppercase;
     font-weight: 800;
     margin-bottom: 10px;
@@ -564,7 +613,7 @@
 
 .whatsapp-value {
     font-size: 1.4rem;
-    color: #fff;
+    color: #0f172a;
     font-weight: 800;
     letter-spacing: 1px;
 }
@@ -585,6 +634,29 @@
 .vip-modal-close-icon:hover,
 .premium-modal-close-icon:hover {
     color: #d4af37;
+}
+
+.admin-modal-edit-trigger {
+    background: rgba(212, 175, 55, 0.1);
+    color: #d4af37;
+    border: 1px dashed #d4af37;
+    padding: 8px 18px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.admin-modal-edit-trigger:hover {
+    background: #d4af37;
+    color: #ffffff;
+    border-style: solid;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(212, 175, 55, 0.25);
 }
 
 /* --- 🛠️ ADMIN MANAGEMENT STYLES 🛠️ --- */
@@ -800,8 +872,8 @@
         margin-top: -10px;
     }
 
-    .accent-text {
-        margin-top: 20px;
+    .vip-main-title-premium .accent-text {
+        margin-top: 6px;
     }
 
     .vip-content-section {

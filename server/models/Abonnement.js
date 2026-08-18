@@ -20,6 +20,21 @@ const abonnementSchema = new mongoose.Schema({
         trim: true
     },
     
+    duree: {
+        type: String,
+        required: false,
+    },
+    
+    prix: {
+        type: String,
+        required: false,
+    },
+
+    offre_nom: {
+        type: String,
+        required: false,
+    },
+    
     generated_mail: { 
         type: String,
         required: false,
@@ -44,6 +59,11 @@ const abonnementSchema = new mongoose.Schema({
     date_demande: {
         type: Date,
         default: Date.now
+    },
+    vipExpiresAt: {
+        type: Date,
+        required: false,
+        default: null
     }
 }, { 
     timestamps: true 
