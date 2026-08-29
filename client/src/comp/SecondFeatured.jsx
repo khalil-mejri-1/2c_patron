@@ -19,6 +19,8 @@ const translations = {
         ctaLoggedIn: 'Commencer ',
         ctaGratuits: 'Cours Gratuits',
         imageAlt: 'Cours de Patronage de Pantalons Professionnels',
+        videoUrl: "https://iframe.mediadelivery.net/embed/722726/504d21cf-5b01-4eb7-aaa7-d3530ab47b5e",
+        videoType: 'iframe'
     },
     'en': {
         tag: 'FEATURED & BEST-SELLER COURSE',
@@ -29,6 +31,8 @@ const translations = {
         ctaLoggedIn: 'Start Now ',
         ctaGratuits: 'Free Courses',
         imageAlt: 'Professional Trouser Pattern Drafting Course',
+        videoUrl: "https://iframe.mediadelivery.net/embed/722726/504d21cf-5b01-4eb7-aaa7-d3530ab47b5e",
+        videoType: 'iframe'
     },
     'ar': {
         tag: 'الدورة المميزة والأكثر مبيعًا',
@@ -39,19 +43,18 @@ const translations = {
         ctaLoggedIn: ' ابدأ الآن',
         ctaGratuits: 'دروس مجانية',
         imageAlt: 'دورة رسم نماذج السراويل الاحترافية',
+        videoUrl: "https://iframe.mediadelivery.net/embed/722726/504d21cf-5b01-4eb7-aaa7-d3530ab47b5e",
+        videoType: 'iframe'
     }
 };
 
 // 2. دالة الحصول على النص المترجم
 const getLocalizedText = (key) => {
-    // قراءة اللغة من localStorage، والافتراضي هو 'fr'
     const lang = localStorage.getItem('appLanguage') || 'fr';
-
-    // إرجاع النص بلغة المستخدم، أو العودة إلى 'fr' إذا لم تتوفر الترجمة
     return (translations[lang] && translations[lang][key]) || translations['fr'][key];
 };
 
-export default function FeaturedProduct() {
+export default function SecondFeatured() {
     const { appLanguage, languages } = useLanguage();
     const currentLang = appLanguage;
     const isRTL = currentLang === 'ar';
@@ -59,14 +62,12 @@ export default function FeaturedProduct() {
     const [isAdmin, setIsAdmin] = useState(false);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [featuredData, setFeaturedData] = useState({
-        videoUrl: "https://streamable.com/e/4k6x0z?",
+        videoUrl: "https://iframe.mediadelivery.net/embed/722726/504d21cf-5b01-4eb7-aaa7-d3530ab47b5e",
         videoType: 'iframe'
     });
     const [isEditing, setIsEditing] = useState(false);
-    const [editData, setEditData] = useState({
-        videoUrl: '',
-        videoType: 'iframe'
-    });
+    const [activeLangTab, setActiveLangTab] = useState(currentLang || 'fr');
+    const [editData, setEditData] = useState({});
     const [isUploading, setIsUploading] = useState(false);
 
     // Limited Access Modal States
@@ -77,7 +78,6 @@ export default function FeaturedProduct() {
     const [vipRequestSuccess, setVipRequestSuccess] = useState(false);
 
     const navigate = useNavigate();
-
 
     const [isVipExpired, setIsVipExpired] = useState(false);
 
@@ -121,17 +121,18 @@ export default function FeaturedProduct() {
                     // Pre-initialize edit state with fallbacks
                     const initialized = { ...merged };
                     languages.forEach(lang => {
-                        if (!initialized[lang.code]) {
-                            initialized[lang.code] = {
-                                tag: translations[lang.code]?.tag || translations.fr.tag,
-                                title: translations[lang.code]?.title || translations.fr.title,
-                                subtitle: translations[lang.code]?.subtitle || translations.fr.subtitle,
-                                description: translations[lang.code]?.description || translations.fr.description,
-                                cta: translations[lang.code]?.cta || translations.fr.cta,
-                                ctaLoggedIn: translations[lang.code]?.ctaLoggedIn || translations.fr.ctaLoggedIn,
-                                ctaGratuits: translations[lang.code]?.ctaGratuits || translations.fr.ctaGratuits
-                            };
-                        }
+                        const existing = initialized[lang.code] || {};
+                        initialized[lang.code] = {
+                            tag: existing.tag || translations[lang.code]?.tag || translations.fr.tag,
+                            title: existing.title || translations[lang.code]?.title || translations.fr.title,
+                            subtitle: existing.subtitle || translations[lang.code]?.subtitle || translations.fr.subtitle,
+                            description: existing.description || translations[lang.code]?.description || translations.fr.description,
+                            cta: existing.cta || translations[lang.code]?.cta || translations.fr.cta,
+                            ctaLoggedIn: existing.ctaLoggedIn || translations[lang.code]?.ctaLoggedIn || translations.fr.ctaLoggedIn,
+                            ctaGratuits: existing.ctaGratuits || translations[lang.code]?.ctaGratuits || translations.fr.ctaGratuits,
+                            videoUrl: existing.videoUrl !== undefined ? existing.videoUrl : (merged.videoUrl || translations[lang.code]?.videoUrl || translations.fr.videoUrl || "https://iframe.mediadelivery.net/embed/722726/504d21cf-5b01-4eb7-aaa7-d3530ab47b5e"),
+                            videoType: existing.videoType || merged.videoType || 'iframe'
+                        };
                     });
                     setFeaturedData(initialized);
                     setEditData(initialized);
@@ -139,6 +140,27 @@ export default function FeaturedProduct() {
             })
             .catch(() => { });
     }, [languages]);
+
+    const openEditModal = () => {
+        const initialized = { ...featuredData };
+        languages.forEach(lang => {
+            const existing = initialized[lang.code] || {};
+            initialized[lang.code] = {
+                tag: existing.tag || translations[lang.code]?.tag || translations.fr.tag,
+                title: existing.title || translations[lang.code]?.title || translations.fr.title,
+                subtitle: existing.subtitle || translations[lang.code]?.subtitle || translations.fr.subtitle,
+                description: existing.description || translations[lang.code]?.description || translations.fr.description,
+                cta: existing.cta || translations[lang.code]?.cta || translations.fr.cta,
+                ctaLoggedIn: existing.ctaLoggedIn || translations[lang.code]?.ctaLoggedIn || translations.fr.ctaLoggedIn,
+                ctaGratuits: existing.ctaGratuits || translations[lang.code]?.ctaGratuits || translations.fr.ctaGratuits,
+                videoUrl: existing.videoUrl !== undefined ? existing.videoUrl : (initialized.videoUrl || translations[lang.code]?.videoUrl || translations.fr.videoUrl || "https://iframe.mediadelivery.net/embed/722726/504d21cf-5b01-4eb7-aaa7-d3530ab47b5e"),
+                videoType: existing.videoType || initialized.videoType || 'iframe'
+            };
+        });
+        setEditData(initialized);
+        setActiveLangTab(currentLang);
+        setIsEditing(true);
+    };
 
     const handleSave = async () => {
         localStorage.setItem('featured_product_backup', JSON.stringify(editData));
@@ -193,37 +215,16 @@ export default function FeaturedProduct() {
             translations['fr'][key];
     };
 
-
     return (
         <section
             className="featured-product-section"
-            // تعيين اتجاه الكتابة بناءً على اللغة
             dir={isRTL ? 'rtl' : 'ltr'}
         >
-
-            {/* 1. Bloc de Contenu : العناوين و CTA (محدث باللغات) */}
+            {/* 1. Bloc de Contenu : العناوين و CTA */}
             <div className="product-content-block">
-
                 {isAdmin && (
                     <button
-                        onClick={() => {
-                            const initialized = { ...featuredData };
-                            languages.forEach(lang => {
-                                if (!initialized[lang.code]) {
-                                    initialized[lang.code] = {
-                                        tag: translations[lang.code]?.tag || translations.fr.tag,
-                                        title: translations[lang.code]?.title || translations.fr.title,
-                                        subtitle: translations[lang.code]?.subtitle || translations.fr.subtitle,
-                                        description: translations[lang.code]?.description || translations.fr.description,
-                                        cta: translations[lang.code]?.cta || translations.fr.cta,
-                                        ctaLoggedIn: translations[lang.code]?.ctaLoggedIn || translations.fr.ctaLoggedIn,
-                                        ctaGratuits: translations[lang.code]?.ctaGratuits || translations.fr.ctaGratuits
-                                    };
-                                }
-                            });
-                            setEditData(initialized);
-                            setIsEditing(true);
-                        }}
+                        onClick={openEditModal}
                         className="admin-edit-master-btn"
                         style={{
                             marginBottom: '25px',
@@ -234,26 +235,34 @@ export default function FeaturedProduct() {
                     </button>
                 )}
 
-
-
                 <h2 className="product-main-title home_titre">
                     {t('title')} <br />
                     <span className='product-subtitle'>{t('subtitle')}</span>
                 </h2>
 
-                <p className="product-description">
-                    {t('description')}
-                </p>
+                <div className="product-description" style={{ marginBottom: '40px' }}>
+                    {t('description') ? (
+                        <ul className="product-description-list">
+                            {t('description').split('\n').map((line, idx) => {
+                                const trimmed = line.trim();
+                                if (!trimmed) return null;
+                                const cleanText = trimmed.replace(/^[-\u2022•]\s*/, '').trim();
+                                return (
+                                    <li key={idx} className="desc-bullet-item">
+                                        <span className="desc-bullet-icon">
+                                            <FaCheckCircle />
+                                        </span>
+                                        <span className="desc-bullet-text">{cleanText}</span>
+                                    </li>
+                                );
+                            })}
+                        </ul>
+                    ) : null}
+                </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                <div className="product-cta-wrapper-block">
                     <button
-                        onClick={!isVipExpired ? () => {
-                            if (!isLoggedIn) {
-                                setShowLimitedAccessModal(true);
-                            } else {
-                                navigate('/Vip-access');
-                            }
-                        } : undefined}
+                        onClick={!isVipExpired ? () => navigate('/cart') : undefined}
                         className="product-cta-button"
                         disabled={isVipExpired}
                         style={{
@@ -291,24 +300,7 @@ export default function FeaturedProduct() {
             <div className="product-visual-block" style={{ position: 'relative' }}>
                 {isAdmin && (
                     <button
-                        onClick={() => {
-                            const initialized = { ...featuredData };
-                            languages.forEach(lang => {
-                                if (!initialized[lang.code]) {
-                                    initialized[lang.code] = {
-                                        tag: translations[lang.code]?.tag || translations.fr.tag,
-                                        title: translations[lang.code]?.title || translations.fr.title,
-                                        subtitle: translations[lang.code]?.subtitle || translations.fr.subtitle,
-                                        description: translations[lang.code]?.description || translations.fr.description,
-                                        cta: translations[lang.code]?.cta || translations.fr.cta,
-                                        ctaLoggedIn: translations[lang.code]?.ctaLoggedIn || translations.fr.ctaLoggedIn,
-                                        ctaGratuits: translations[lang.code]?.ctaGratuits || translations.fr.ctaGratuits
-                                    };
-                                }
-                            });
-                            setEditData(initialized);
-                            setIsEditing(true);
-                        }}
+                        onClick={openEditModal}
                         className="hero-video-edit-btn"
                         style={{
                             position: 'absolute',
@@ -321,9 +313,10 @@ export default function FeaturedProduct() {
                     </button>
                 )}
 
-                {/* 🎬 Video Player — same approach as Lessons.jsx */}
+                {/* 🎬 Video Player — multi-language aware */}
                 {(() => {
-                    const videoUrl = featuredData?.videoUrl || "https://iframe.mediadelivery.net/embed/722726/504d21cf-5b01-4eb7-aaa7-d3530ab47b5e";
+                    const langData = featuredData[currentLang] || {};
+                    const videoUrl = langData.videoUrl || featuredData?.videoUrl || "https://iframe.mediadelivery.net/embed/722726/504d21cf-5b01-4eb7-aaa7-d3530ab47b5e";
 
                     let resolvedUrl = videoUrl;
                     if (videoUrl.includes('<iframe')) {
@@ -368,7 +361,7 @@ export default function FeaturedProduct() {
                         return (
                             <div style={{ position: 'relative', paddingTop: '56.25%', width: '100%' }}>
                                 <iframe
-                                    key={iframeSrc}
+                                    key={`${currentLang}-${iframeSrc}`}
                                     src={iframeSrc}
                                     loading="lazy"
                                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
@@ -389,6 +382,7 @@ export default function FeaturedProduct() {
                         <div style={{ position: 'relative', paddingTop: '56.25%', width: '100%' }}>
                             <div style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}>
                                 <UniversalVideoPlayer
+                                    key={`${currentLang}-${resolvedUrl}`}
                                     url={resolvedUrl}
                                     title={t('imageAlt') || "Featured Product Video"}
                                 />
@@ -402,12 +396,10 @@ export default function FeaturedProduct() {
             {showLimitedAccessModal && ReactDOM.createPortal(
                 <div className="premium-modal-backdrop" onClick={() => !isSubmittingVip && setShowLimitedAccessModal(false)}>
                     <div className="creative-modal-content" onClick={(e) => e.stopPropagation()} style={{ overflow: 'visible' }}>
-                        {/* ABSOLUTE CROWN */}
                         <div className="creative-crown-wrapper">
                             <FaCrown />
                         </div>
 
-                        {/* Top Header Section */}
                         <div className="creative-modal-header">
                             <button
                                 className="creative-close-btn"
@@ -421,7 +413,6 @@ export default function FeaturedProduct() {
                             </h2>
                         </div>
 
-                        {/* Body Section */}
                         <div className="creative-modal-body">
                             {!vipRequestSuccess ? (
                                 <>
@@ -531,137 +522,217 @@ export default function FeaturedProduct() {
             {/* 🛑 Stylish Edit Modal */}
             {isEditing && ReactDOM.createPortal(
                 <div className="premium-modal-backdrop" onClick={() => setIsEditing(false)}>
-                    <div className="premium-modal-content large" onClick={(e) => e.stopPropagation()}>
+                    <div className="premium-modal-content large" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '850px', maxHeight: '90vh', overflowY: 'auto' }}>
                         <button className="premium-modal-close-icon" onClick={() => setIsEditing(false)}><FaTimes /></button>
                         <h2 className="premium-modal-title">
-                            {currentLang === 'ar' ? 'تعديل المنتج المفضل' : 'Modifier le Produit Vedette'}
+                            {currentLang === 'ar' ? 'تعديل السلعة المميزة والفيديو' : 'Modifier le Produit Vedette & Vidéo'}
                         </h2>
 
-                        <div className="premium-form-grid">
-                            <div className="premium-lang-section" style={{ gridColumn: 'span 3', background: 'rgba(212, 175, 55, 0.05)', padding: '20px', borderRadius: '20px' }}>
-                                <h4 className="lang-indicator" style={{ color: '#d4af37' }}>PROPRIÉTÉS VISUELLES (VIDÉO)</h4>
-                                <div className="premium-form-group">
-                                    <label>Type de Source</label>
-                                    <select
-                                        value={editData.videoType}
-                                        onChange={e => setEditData({ ...editData, videoType: e.target.value })}
-                                    >
-                                        <option value="iframe">Lien Externe (Iframe/Streamable/YouTube)</option>
-                                        <option value="local">Télécharger une vidéo (Fichier MP4/Local)</option>
-                                    </select>
-                                </div>
-
-                                {editData.videoType === 'iframe' ? (
-                                    <div className="premium-form-group">
-                                        <label>Lien du Lecteur (URL Iframe)</label>
-                                        <input
-                                            type="text"
-                                            placeholder="https://streamable.com/e/..."
-                                            value={editData.videoUrl}
-                                            onChange={e => setEditData({ ...editData, videoUrl: e.target.value })}
-                                        />
-                                    </div>
-                                ) : (
-                                    <div className="premium-form-group">
-                                        <label>Télécharger depuis l'ordinateur</label>
-                                        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                                            <input
-                                                type="file"
-                                                accept="video/*"
-                                                onChange={async (e) => {
-                                                    const file = e.target.files[0];
-                                                    if (!file) return;
-                                                    setIsUploading(true);
-                                                    const formData = new FormData();
-                                                    formData.append('video', file);
-                                                    try {
-                                                        const res = await fetch(`${BASE_URL}/api/specialized-videos/upload`, {
-                                                            method: 'POST',
-                                                            body: formData
-                                                        });
-                                                        const data = await res.json();
-                                                        if (res.ok) {
-                                                            setEditData({ ...editData, videoUrl: data.filePath });
-                                                        }
-                                                    } catch (err) {
-                                                        console.error("Upload failed", err);
-                                                    } finally {
-                                                        setIsUploading(false);
-                                                    }
-                                                }}
-                                            />
-                                            {isUploading && <FaSpinner className="spinner" />}
-                                        </div>
-                                        {editData.videoUrl && editData.videoType === 'local' && (
-                                            <p style={{ fontSize: '0.7rem', color: '#10b981', marginTop: '5px' }}>Vidéo prête: {editData.videoUrl}</p>
-                                        )}
-                                    </div>
-                                )}
-                            </div>
-
-                            {languages.filter(l => l.code === currentLang).map(lang => (
-                                <div key={lang.code} className="premium-lang-section" style={{ border: 'none', background: 'none' }}>
-                                    <h4 className="lang-indicator" style={{ background: '#d4af37' }}>{lang.label}</h4>
-
-                                    <div className="premium-form-group">
-                                        <label>Titre Principal</label>
-                                        <input
-                                            type="text"
-                                            value={editData[lang.code]?.title || ''}
-                                            onChange={e => setEditData({ ...editData, [lang.code]: { ...editData[lang.code], title: e.target.value } })}
-                                            dir={lang.code === 'ar' ? 'rtl' : 'ltr'}
-                                        />
-                                    </div>
-                                    <div className="premium-form-group">
-                                        <label>Sous-Titre</label>
-                                        <input
-                                            type="text"
-                                            value={editData[lang.code]?.subtitle || ''}
-                                            onChange={e => setEditData({ ...editData, [lang.code]: { ...editData[lang.code], subtitle: e.target.value } })}
-                                            dir={lang.code === 'ar' ? 'rtl' : 'ltr'}
-                                        />
-                                    </div>
-                                    <div className="premium-form-group">
-                                        <label>{currentLang === 'ar' ? 'نص الزر (قبل تسجيل الدخول)' : 'Texte du Bouton (Non Connecté)'}</label>
-                                        <input
-                                            type="text"
-                                            value={editData[lang.code]?.cta || ''}
-                                            onChange={e => setEditData({ ...editData, [lang.code]: { ...editData[lang.code], cta: e.target.value } })}
-                                            dir={lang.code === 'ar' ? 'rtl' : 'ltr'}
-                                        />
-                                    </div>
-                                    <div className="premium-form-group">
-                                        <label style={{ color: '#10b981' }}>{currentLang === 'ar' ? '✓ نص الزر (بعد تسجيل الدخول)' : '✓ Texte du Bouton (Connecté)'}</label>
-                                        <input
-                                            type="text"
-                                            value={editData[lang.code]?.ctaLoggedIn || ''}
-                                            onChange={e => setEditData({ ...editData, [lang.code]: { ...editData[lang.code], ctaLoggedIn: e.target.value } })}
-                                            dir={lang.code === 'ar' ? 'rtl' : 'ltr'}
-                                            style={{ borderColor: '#10b981' }}
-                                        />
-                                    </div>
-                                    <div className="premium-form-group">
-                                        <label style={{ color: '#3b82f6' }}>{currentLang === 'ar' ? 'نص زر الدروس المجانية (لغير المسجلين)' : 'Texte du Bouton Cours Gratuits (Non Connecté)'}</label>
-                                        <input
-                                            type="text"
-                                            value={editData[lang.code]?.ctaGratuits || ''}
-                                            onChange={e => setEditData({ ...editData, [lang.code]: { ...editData[lang.code], ctaGratuits: e.target.value } })}
-                                            dir={lang.code === 'ar' ? 'rtl' : 'ltr'}
-                                            style={{ borderColor: '#3b82f6' }}
-                                        />
-                                    </div>
-                                    <div className="premium-form-group" style={{ gridColumn: '1 / -1' }}>
-                                        <label>Description</label>
-                                        <textarea
-                                            value={editData[lang.code]?.description || ''}
-                                            onChange={e => setEditData({ ...editData, [lang.code]: { ...editData[lang.code], description: e.target.value } })}
-                                            rows="3"
-                                            dir={lang.code === 'ar' ? 'rtl' : 'ltr'}
-                                        />
-                                    </div>
-                                </div>
+                        {/* 🌐 Language Switcher Tabs in Modal */}
+                        <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap', borderBottom: '1px solid #e2e8f0', paddingBottom: '12px' }}>
+                            {languages.map(lang => (
+                                <button
+                                    key={lang.code}
+                                    type="button"
+                                    onClick={() => setActiveLangTab(lang.code)}
+                                    style={{
+                                        padding: '8px 18px',
+                                        borderRadius: '10px',
+                                        border: activeLangTab === lang.code ? '2px solid #d4af37' : '1px solid #cbd5e1',
+                                        background: activeLangTab === lang.code ? '#d4af37' : '#f8fafc',
+                                        color: activeLangTab === lang.code ? '#0f172a' : '#475569',
+                                        fontWeight: '700',
+                                        fontSize: '0.95rem',
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '8px',
+                                        transition: 'all 0.2s ease',
+                                        boxShadow: activeLangTab === lang.code ? '0 4px 12px rgba(212, 175, 55, 0.25)' : 'none'
+                                    }}
+                                >
+                                    {lang.emoji && <span>{lang.emoji}</span>}
+                                    <span>{lang.label}</span>
+                                </button>
                             ))}
                         </div>
+
+                        {(() => {
+                            const currentEditLang = activeLangTab || currentLang;
+                            const langData = editData[currentEditLang] || {};
+                            const activeLangObj = languages.find(l => l.code === currentEditLang) || { label: currentEditLang, code: currentEditLang };
+                            const isLangRtl = currentEditLang === 'ar';
+
+                            return (
+                                <div className="premium-form-grid" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                                    {/* 🎬 Visual/Video Section for this language */}
+                                    <div className="premium-lang-section" style={{ background: 'rgba(212, 175, 55, 0.06)', padding: '20px', borderRadius: '16px', border: '1px solid rgba(212, 175, 55, 0.2)' }}>
+                                        <h4 className="lang-indicator" style={{ color: '#d4af37', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '15px' }}>
+                                            <FaVideo /> {currentLang === 'ar' ? `فيديو العرض (${activeLangObj.label})` : `PROPRIÉTÉS VIDÉO (${activeLangObj.label})`}
+                                        </h4>
+
+                                        <div className="premium-form-group" style={{ marginBottom: '15px' }}>
+                                            <label>{currentLang === 'ar' ? 'نوع مصدر الفيديو' : 'Type de Source'}</label>
+                                            <select
+                                                value={langData.videoType || 'iframe'}
+                                                onChange={e => setEditData({
+                                                    ...editData,
+                                                    [currentEditLang]: {
+                                                        ...langData,
+                                                        videoType: e.target.value
+                                                    }
+                                                })}
+                                            >
+                                                <option value="iframe">{currentLang === 'ar' ? 'رابط خارجي (Iframe / YouTube / Streamable / Bunny)' : 'Lien Externe (Iframe/Streamable/YouTube/Bunny)'}</option>
+                                                <option value="local">{currentLang === 'ar' ? 'تحميل ملف فيديو (MP4 محلي)' : 'Télécharger une vidéo (Fichier MP4/Local)'}</option>
+                                            </select>
+                                        </div>
+
+                                        {(langData.videoType || 'iframe') === 'iframe' ? (
+                                            <div className="premium-form-group">
+                                                <label>{currentLang === 'ar' ? `رابط الفيديو للغة (${activeLangObj.label})` : `Lien Vidéo (${activeLangObj.label})`}</label>
+                                                <input
+                                                    type="text"
+                                                    placeholder="https://streamable.com/e/... ou https://iframe.mediadelivery.net/embed/..."
+                                                    value={langData.videoUrl || ''}
+                                                    onChange={e => setEditData({
+                                                        ...editData,
+                                                        [currentEditLang]: {
+                                                            ...langData,
+                                                            videoUrl: e.target.value
+                                                        }
+                                                    })}
+                                                    dir="ltr"
+                                                />
+                                            </div>
+                                        ) : (
+                                            <div className="premium-form-group">
+                                                <label>{currentLang === 'ar' ? 'تحميل من الجهاز' : "Télécharger depuis l'ordinateur"}</label>
+                                                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                                                    <input
+                                                        type="file"
+                                                        accept="video/*"
+                                                        onChange={async (e) => {
+                                                            const file = e.target.files[0];
+                                                            if (!file) return;
+                                                            setIsUploading(true);
+                                                            const formData = new FormData();
+                                                            formData.append('video', file);
+                                                            try {
+                                                                const res = await fetch(`${BASE_URL}/api/specialized-videos/upload`, {
+                                                                    method: 'POST',
+                                                                    body: formData
+                                                                });
+                                                                const data = await res.json();
+                                                                if (res.ok) {
+                                                                    setEditData({
+                                                                        ...editData,
+                                                                        [currentEditLang]: {
+                                                                            ...langData,
+                                                                            videoUrl: data.filePath
+                                                                        }
+                                                                    });
+                                                                }
+                                                            } catch (err) {
+                                                                console.error("Upload failed", err);
+                                                            } finally {
+                                                                setIsUploading(false);
+                                                            }
+                                                        }}
+                                                    />
+                                                    {isUploading && <FaSpinner className="spinner" />}
+                                                </div>
+                                                {langData.videoUrl && langData.videoType === 'local' && (
+                                                    <p style={{ fontSize: '0.75rem', color: '#10b981', marginTop: '5px' }}>
+                                                        {currentLang === 'ar' ? 'الفيديو جاهز: ' : 'Vidéo prête: '} {langData.videoUrl}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* 📝 Text Content Section for this language */}
+                                    <div className="premium-lang-section" style={{ border: 'none', background: 'none' }}>
+                                        <h4 className="lang-indicator" style={{ background: '#d4af37', marginBottom: '15px' }}>{activeLangObj.label}</h4>
+
+                                        <div className="premium-form-group">
+                                            <label>{currentLang === 'ar' ? 'العنوان الرئيسي' : 'Titre Principal'}</label>
+                                            <input
+                                                type="text"
+                                                value={langData.title || ''}
+                                                onChange={e => setEditData({
+                                                    ...editData,
+                                                    [currentEditLang]: { ...langData, title: e.target.value }
+                                                })}
+                                                dir={isLangRtl ? 'rtl' : 'ltr'}
+                                            />
+                                        </div>
+                                        <div className="premium-form-group">
+                                            <label>{currentLang === 'ar' ? 'العنوان الفرعي' : 'Sous-Titre'}</label>
+                                            <input
+                                                type="text"
+                                                value={langData.subtitle || ''}
+                                                onChange={e => setEditData({
+                                                    ...editData,
+                                                    [currentEditLang]: { ...langData, subtitle: e.target.value }
+                                                })}
+                                                dir={isLangRtl ? 'rtl' : 'ltr'}
+                                            />
+                                        </div>
+                                        <div className="premium-form-group">
+                                            <label>{currentLang === 'ar' ? 'نص الزر (قبل تسجيل الدخول)' : 'Texte du Bouton (Non Connecté)'}</label>
+                                            <input
+                                                type="text"
+                                                value={langData.cta || ''}
+                                                onChange={e => setEditData({
+                                                    ...editData,
+                                                    [currentEditLang]: { ...langData, cta: e.target.value }
+                                                })}
+                                                dir={isLangRtl ? 'rtl' : 'ltr'}
+                                            />
+                                        </div>
+                                        <div className="premium-form-group">
+                                            <label style={{ color: '#10b981' }}>{currentLang === 'ar' ? '✓ نص الزر (بعد تسجيل الدخول)' : '✓ Texte du Bouton (Connecté)'}</label>
+                                            <input
+                                                type="text"
+                                                value={langData.ctaLoggedIn || ''}
+                                                onChange={e => setEditData({
+                                                    ...editData,
+                                                    [currentEditLang]: { ...langData, ctaLoggedIn: e.target.value }
+                                                })}
+                                                dir={isLangRtl ? 'rtl' : 'ltr'}
+                                                style={{ borderColor: '#10b981' }}
+                                            />
+                                        </div>
+                                        <div className="premium-form-group">
+                                            <label style={{ color: '#3b82f6' }}>{currentLang === 'ar' ? 'نص زر الدروس المجانية (لغير المسجلين)' : 'Texte du Bouton Cours Gratuits (Non Connecté)'}</label>
+                                            <input
+                                                type="text"
+                                                value={langData.ctaGratuits || ''}
+                                                onChange={e => setEditData({
+                                                    ...editData,
+                                                    [currentEditLang]: { ...langData, ctaGratuits: e.target.value }
+                                                })}
+                                                dir={isLangRtl ? 'rtl' : 'ltr'}
+                                                style={{ borderColor: '#3b82f6' }}
+                                            />
+                                        </div>
+                                        <div className="premium-form-group" style={{ gridColumn: '1 / -1' }}>
+                                            <label>{currentLang === 'ar' ? 'الوصف' : 'Description'}</label>
+                                            <textarea
+                                                value={langData.description || ''}
+                                                onChange={e => setEditData({
+                                                    ...editData,
+                                                    [currentEditLang]: { ...langData, description: e.target.value }
+                                                })}
+                                                rows="3"
+                                                dir={isLangRtl ? 'rtl' : 'ltr'}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })()}
 
                         <div className="premium-btn-group">
                             <button className="premium-btn-cta secondary" onClick={() => setIsEditing(false)}>

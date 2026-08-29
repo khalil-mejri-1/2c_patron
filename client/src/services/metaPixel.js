@@ -28,13 +28,180 @@ const generateEventId = () => {
 };
 
 /**
- * Reads the _fbc and _fbp cookies set by the Meta Pixel SDK.
+ * Reads a cookie by name safely.
  * @param {string} name - Cookie name
  * @returns {string|undefined}
  */
 const getCookie = (name) => {
-  const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
-  return match ? match[2] : undefined;
+  if (typeof document === 'undefined') return undefined;
+  try {
+    const match = document.cookie.match(new RegExp('(^|;\\s*)' + name + '=([^;]*)'));
+    if (!match || !match[2]) return undefined;
+    return decodeURIComponent(match[2]).trim();
+  } catch (e) {
+    return undefined;
+  }
+};
+
+/**
+ * Sets a first-party cookie safely with 90-day expiry.
+ * @param {string} name
+ * @param {string} value
+ * @param {number} days
+ */
+const setCookie = (name, value, days = 90) => {
+  if (typeof document === 'undefined' || !name || !value) return;
+  try {
+    const maxAge = days * 24 * 60 * 60;
+    document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=${maxAge}; SameSite=Lax`;
+  } catch (e) {
+    // Ignore cookie write errors
+  }
+};
+
+/**
+ * Generates or retrieves a valid Meta Browser ID (_fbp).
+ * Format: fb.1.<creation_time_ms>.<random_10_digits>
+ * @returns {string}
+ */
+export const getOrCreateFbp = () => {
+  if (typeof window === 'undefined') return undefined;
+
+  // 1. Check existing _fbp cookie
+  const cookieFbp = getCookie('_fbp');
+  if (cookieFbp && /^fb\.[0-9]+\.[0-9]+\.[0-9]+$/.test(cookieFbp)) {
+    try {
+      localStorage.setItem('_fbp', cookieFbp);
+    } catch (e) {}
+    return cookieFbp;
+  }
+
+  // 2. Check localStorage fallback
+  try {
+    const savedFbp = localStorage.getItem('_fbp');
+    if (savedFbp && /^fb\.[0-9]+\.[0-9]+\.[0-9]+$/.test(savedFbp)) {
+      setCookie('_fbp', savedFbp, 90);
+      return savedFbp;
+    }
+  } catch (e) {}
+
+  // 3. Generate a compliant _fbp value
+  const newFbp = `fb.1.${Date.now()}.${Math.floor(1000000000 + Math.random() * 9000000000)}`;
+  setCookie('_fbp', newFbp, 90);
+  try {
+    localStorage.setItem('_fbp', newFbp);
+  } catch (e) {}
+
+  return newFbp;
+};
+
+/**
+ * Captures, formats and stores the Facebook Click ID (_fbc).
+ * Strictly preserves exact case sensitivity of the original fbclid.
+ * Format: fb.1.<creation_time_ms>.<exact_case_sensitive_fbclid>
+ * @returns {string|undefined}
+ */
+export const getOrCreateFbc = () => {
+  if (typeof window === 'undefined') return undefined;
+
+  try {
+    // 1. Check current URL for ?fbclid=
+    const urlParams = new URLSearchParams(window.location.search);
+    const rawFbclid = urlParams.get('fbclid');
+    if (rawFbclid && rawFbclid.trim()) {
+      const cleanFbclid = rawFbclid.trim();
+      const newFbc = `fb.1.${Date.now()}.${cleanFbclid}`;
+      setCookie('_fbc', newFbc, 90);
+      try {
+        localStorage.setItem('_fbc', newFbc);
+        sessionStorage.setItem('fbclid', cleanFbclid);
+      } catch (e) {}
+      return newFbc;
+    }
+  } catch (e) {}
+
+  // 2. Check existing _fbc cookie
+  const cookieFbc = getCookie('_fbc');
+  if (cookieFbc && /^fb\.[0-9]+\.[0-9]+\.[a-zA-Z0-9_\-]+$/.test(cookieFbc)) {
+    return cookieFbc;
+  }
+
+  // 3. Check localStorage / sessionStorage for saved _fbc or fbclid
+  try {
+    const savedFbc = localStorage.getItem('_fbc');
+    if (savedFbc && /^fb\.[0-9]+\.[0-9]+\.[a-zA-Z0-9_\-]+$/.test(savedFbc)) {
+      setCookie('_fbc', savedFbc, 90);
+      return savedFbc;
+    }
+
+    const savedFbclid = sessionStorage.getItem('fbclid') || localStorage.getItem('fbclid');
+    if (savedFbclid && savedFbclid.trim()) {
+      const cleanFbclid = savedFbclid.trim();
+      const generatedFbc = `fb.1.${Date.now()}.${cleanFbclid}`;
+      setCookie('_fbc', generatedFbc, 90);
+      return generatedFbc;
+    }
+  } catch (e) {}
+
+  return undefined;
+};
+
+/**
+ * Aggregates complete user_data object with client_user_agent, cookies, and matching keys.
+ * @param {Object} [customUserData]
+ * @returns {Object}
+ */
+export const getUserData = (customUserData = {}) => {
+  const fbp = getOrCreateFbp();
+  const fbc = getOrCreateFbc();
+
+  let userEmail = customUserData.em;
+  let userPhone = customUserData.ph;
+  let userName = customUserData.fn;
+
+  if (typeof window !== 'undefined') {
+    try {
+      if (!userEmail) {
+        userEmail =
+          localStorage.getItem('loggedInUserEmail') ||
+          localStorage.getItem('currentUserEmail') ||
+          undefined;
+      }
+      if (!userPhone) {
+        userPhone =
+          localStorage.getItem('userPhone') ||
+          localStorage.getItem('user_phone') ||
+          undefined;
+      }
+      if (!userName) {
+        userName =
+          localStorage.getItem('userName') ||
+          localStorage.getItem('user_name') ||
+          undefined;
+      }
+    } catch (e) {}
+  }
+
+  const clientUserAgent = typeof navigator !== 'undefined' ? navigator.userAgent : undefined;
+
+  const result = {
+    client_user_agent: clientUserAgent,
+    fbp: fbp || undefined,
+    fbc: fbc || undefined,
+    em: userEmail || undefined,
+    ph: userPhone || undefined,
+    fn: userName || undefined,
+    ...customUserData,
+  };
+
+  // Clean empty/null/undefined keys
+  Object.keys(result).forEach((k) => {
+    if (result[k] === undefined || result[k] === null || result[k] === '') {
+      delete result[k];
+    }
+  });
+
+  return result;
 };
 
 /**
@@ -165,25 +332,18 @@ export const getActiveTestEventCode = () => {
  * @param {string} eventName
  * @param {string} eventId
  * @param {Object} customData
+ * @param {Object} [customUserData]
  */
-const sendToServerCAPI = (eventName, eventId, customData = {}) => {
-  const userEmail =
-    localStorage.getItem('loggedInUserEmail') ||
-    localStorage.getItem('currentUserEmail') ||
-    undefined;
-
+const sendToServerCAPI = (eventName, eventId, customData = {}, customUserData = {}) => {
+  const userData = getUserData(customUserData);
   const testEventCode = customData.test_event_code || getActiveTestEventCode();
 
   const payload = {
     event_name: eventName,
     event_id: eventId,
-    event_source_url: window.location.href,
+    event_source_url: typeof window !== 'undefined' ? window.location.href : undefined,
     test_event_code: testEventCode,
-    user_data: {
-      em: userEmail,
-      fbc: getCookie('_fbc'),
-      fbp: getCookie('_fbp'),
-    },
+    user_data: userData,
     custom_data: customData,
   };
 
@@ -220,6 +380,10 @@ export const initPixel = (pixelId) => {
     console.error("Meta Pixel ID is missing. Cannot initialize Pixel.");
     return;
   }
+
+  // Pre-seed _fbp and _fbc cookies on initialization
+  getOrCreateFbp();
+  getOrCreateFbc();
 
   // Parse pixelId into an array of IDs
   let ids = [];
@@ -278,8 +442,9 @@ const isLoaded = () => {
  * Uses shared event_id for deduplication.
  * @param {string} eventName - Standard event name (e.g. PageView, ViewContent, Purchase)
  * @param {Object} [params] - Optional parameters for the event
+ * @param {Object} [userData] - Optional user matching parameters (em, ph, fn, etc.)
  */
-export const trackEvent = (eventName, params = {}) => {
+export const trackEvent = (eventName, params = {}, userData = {}) => {
   const eventId = generateEventId();
   const testCode = params.test_event_code || getActiveTestEventCode();
 
@@ -306,7 +471,7 @@ export const trackEvent = (eventName, params = {}) => {
 
   // 2. Send to Server-Side Conversions API (fire-and-forget)
   const { test_event_code, eventID, ...customData } = params;
-  sendToServerCAPI(eventName, eventId, { ...customData, test_event_code: testCode });
+  sendToServerCAPI(eventName, eventId, { ...customData, test_event_code: testCode }, userData);
 };
 
 /**
@@ -314,8 +479,9 @@ export const trackEvent = (eventName, params = {}) => {
  * Sends to BOTH browser pixel AND server-side Conversions API.
  * @param {string} eventName - Custom event name
  * @param {Object} [params] - Custom parameters
+ * @param {Object} [userData] - Optional user matching parameters
  */
-export const trackCustomEvent = (eventName, params = {}) => {
+export const trackCustomEvent = (eventName, params = {}, userData = {}) => {
   const eventId = generateEventId();
   const testCode = params.test_event_code || getActiveTestEventCode();
 
@@ -342,23 +508,25 @@ export const trackCustomEvent = (eventName, params = {}) => {
 
   // 2. Send to Server-Side Conversions API (fire-and-forget)
   const { test_event_code, eventID, ...customData } = params;
-  sendToServerCAPI(eventName, eventId, { ...customData, test_event_code: testCode });
+  sendToServerCAPI(eventName, eventId, { ...customData, test_event_code: testCode }, userData);
 };
 
 // --- Reusable Event Tracking Helpers ---
 
 /**
  * Tracks a PageView event.
+ * @param {Object} [userData]
  */
-export const trackPageView = () => {
-  trackEvent('PageView');
+export const trackPageView = (userData = {}) => {
+  trackEvent('PageView', {}, userData);
 };
 
 /**
  * Tracks a ViewContent event (Meta Catalog compliant).
  * @param {Object} params
+ * @param {Object} [userData]
  */
-export const trackViewContent = ({ name, category, ids, value, currency = 'TND', contents }) => {
+export const trackViewContent = ({ name, category, ids, value, currency = 'TND', contents }, userData = {}) => {
   const singlePrice = sanitizePrice(value);
   const formattedContents = formatMetaContents(contents, ids, singlePrice, 1);
   const contentIds = formattedContents.map((item) => item.id);
@@ -374,50 +542,62 @@ export const trackViewContent = ({ name, category, ids, value, currency = 'TND',
     content_type: 'product',
     value: finalValue,
     currency: normalizeCurrency(currency),
-  });
+  }, userData);
 };
 
 /**
  * Tracks a Search event.
+ * @param {string} searchString
+ * @param {number|string} value
+ * @param {string} currency
+ * @param {Object} [userData]
  */
-export const trackSearch = (searchString, value, currency = 'TND') => {
+export const trackSearch = (searchString, value, currency = 'TND', userData = {}) => {
   const cleanVal = sanitizePrice(value);
   trackEvent('Search', {
     search_string: searchString,
     value: cleanVal,
     currency: normalizeCurrency(currency),
-  });
+  }, userData);
 };
 
 /**
  * Tracks a Lead event.
+ * @param {Object} params
+ * @param {Object} [userData]
  */
-export const trackLead = ({ name, category, value, currency = 'TND' }) => {
+export const trackLead = ({ name, category, value, currency = 'TND' }, userData = {}) => {
   const cleanVal = sanitizePrice(value);
   trackEvent('Lead', {
     content_name: typeof name === 'object' ? (name.fr || name.ar || '') : (name || ''),
     content_category: typeof category === 'object' ? (category.fr || category.ar || '') : (category || ''),
     value: cleanVal,
     currency: normalizeCurrency(currency),
-  });
+  }, userData);
 };
 
 /**
  * Tracks a CompleteRegistration event.
+ * @param {string} status
+ * @param {number|string} value
+ * @param {string} currency
+ * @param {Object} [userData]
  */
-export const trackCompleteRegistration = (status, value, currency = 'TND') => {
+export const trackCompleteRegistration = (status, value, currency = 'TND', userData = {}) => {
   const cleanVal = sanitizePrice(value);
   trackEvent('CompleteRegistration', {
     status: status,
     value: cleanVal,
     currency: normalizeCurrency(currency),
-  });
+  }, userData);
 };
 
 /**
  * Tracks an AddToCart event (Meta Catalog compliant).
+ * @param {Object} params
+ * @param {Object} [userData]
  */
-export const trackAddToCart = ({ name, category, ids, value, quantity = 1, currency = 'TND', contents }) => {
+export const trackAddToCart = ({ name, category, ids, value, quantity = 1, currency = 'TND', contents }, userData = {}) => {
   const numQty = sanitizeQuantity(quantity);
   const singlePrice = sanitizePrice(value);
   const formattedContents = formatMetaContents(contents, ids, singlePrice, numQty);
@@ -437,13 +617,15 @@ export const trackAddToCart = ({ name, category, ids, value, quantity = 1, curre
     content_type: 'product',
     value: totalVal,
     currency: normalizeCurrency(currency),
-  });
+  }, userData);
 };
 
 /**
  * Tracks an InitiateCheckout event (Meta Catalog compliant).
+ * @param {Object} params
+ * @param {Object} [userData]
  */
-export const trackInitiateCheckout = ({ name, category, ids, numItems, value, currency = 'TND', contents }) => {
+export const trackInitiateCheckout = ({ name, category, ids, numItems, value, currency = 'TND', contents }, userData = {}) => {
   const cleanPrice = sanitizePrice(value);
   const formattedContents = formatMetaContents(contents, ids, cleanPrice, 1);
   const contentIds = formattedContents.map((item) => item.id);
@@ -467,14 +649,16 @@ export const trackInitiateCheckout = ({ name, category, ids, numItems, value, cu
     num_items: totalNumItems > 0 ? totalNumItems : 1,
     value: totalVal,
     currency: normalizeCurrency(currency),
-  });
+  }, userData);
 };
 
 /**
  * Tracks a Purchase event (Meta Catalog compliant).
- * Guarantees that real product prices, individual items, and total basket amounts are precisely sent.
+ * Guarantees that real product prices, individual items, total basket amounts, and customer matching keys are sent.
+ * @param {Object} params
+ * @param {Object} [userData]
  */
-export const trackPurchase = ({ value, ids, name, currency = 'TND', numItems, contents }) => {
+export const trackPurchase = ({ value, ids, name, currency = 'TND', numItems, contents, userData }, extraUserData = {}) => {
   const cleanPrice = sanitizePrice(value);
   const formattedContents = formatMetaContents(contents, ids, cleanPrice, 1);
   const contentIds = formattedContents.map((item) => item.id);
@@ -489,6 +673,8 @@ export const trackPurchase = ({ value, ids, name, currency = 'TND', numItems, co
     ? Number(numItems)
     : formattedContents.reduce((acc, item) => acc + item.quantity, 0);
 
+  const finalUserData = { ...userData, ...extraUserData };
+
   trackEvent('Purchase', {
     content_name: typeof name === 'object' ? (name.fr || name.ar || '') : (name || (formattedContents.length === 1 ? 'Product' : 'Order')),
     content_type: 'product',
@@ -497,5 +683,5 @@ export const trackPurchase = ({ value, ids, name, currency = 'TND', numItems, co
     num_items: totalNumItems > 0 ? totalNumItems : 1,
     value: totalVal,
     currency: normalizeCurrency(currency),
-  });
+  }, finalUserData);
 };

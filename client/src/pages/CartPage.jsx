@@ -714,7 +714,12 @@ export default function CartPage() {
                     name: itemNames,
                     numItems: totalQty,
                     currency: 'TND',
-                    contents: contentsArray
+                    contents: contentsArray,
+                    userData: {
+                        em: orderData.clientEmail,
+                        ph: orderData.clientPhone,
+                        fn: orderData.clientName
+                    }
                 });
 
                 // Sync purchases page local storage

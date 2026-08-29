@@ -55,29 +55,132 @@ const sanitizeQuantity = (qty) => {
 };
 
 /**
+ * Normalizes a phone number for Meta CAPI (E.164 without +, digits only).
+ * Automatically prepends Tunisian country code (216) for 8-digit numbers.
+ * @param {string|number} phone
+ * @returns {string|undefined}
+ */
+const normalizePhone = (phone) => {
+  if (!phone) return undefined;
+  let clean = String(phone).replace(/[^0-9]/g, '');
+  if (!clean) return undefined;
+  if (clean.startsWith('00')) clean = clean.substring(2);
+  if (clean.length === 8) {
+    clean = '216' + clean;
+  }
+  return clean;
+};
+
+/**
+ * Normalizes email address.
+ * @param {string} email
+ * @returns {string|undefined}
+ */
+const normalizeEmail = (email) => {
+  if (!email) return undefined;
+  const clean = String(email).trim().toLowerCase();
+  return clean.includes('@') ? clean : undefined;
+};
+
+/**
+ * Validates and safely formats the Facebook Click ID (_fbc).
+ * Strictly preserves exact case sensitivity of the original fbclid.
+ * Format: fb.1.<creation_time_ms>.<exact_case_sensitive_fbclid>
+ * @param {string} rawFbc
+ * @returns {string|undefined}
+ */
+const validateAndFormatFbc = (rawFbc) => {
+  if (!rawFbc || typeof rawFbc !== 'string') return undefined;
+  const trimmed = rawFbc.trim();
+  if (!trimmed || trimmed === 'undefined' || trimmed === 'null') return undefined;
+
+  // Already in valid fb.1.<timestamp>.<fbclid> format (case preserved!)
+  if (/^fb\.[0-9]+\.[0-9]+\.[a-zA-Z0-9_\-]+$/.test(trimmed)) {
+    return trimmed;
+  }
+
+  // If passed raw fbclid (e.g. starting with IwAR... or 15+ char token), wrap in standard format
+  if (/^[a-zA-Z0-9_\-]{15,}$/.test(trimmed) && !trimmed.startsWith('fb.')) {
+    return `fb.1.${Date.now()}.${trimmed}`;
+  }
+
+  return undefined;
+};
+
+/**
+ * Validates and formats the Facebook Browser ID (_fbp).
+ * Format: fb.1.<creation_time_ms>.<random_digits>
+ * @param {string} rawFbp
+ * @returns {string|undefined}
+ */
+const validateAndFormatFbp = (rawFbp) => {
+  if (!rawFbp || typeof rawFbp !== 'string') return undefined;
+  const trimmed = rawFbp.trim();
+  if (!trimmed || trimmed === 'undefined' || trimmed === 'null') return undefined;
+
+  if (/^fb\.[0-9]+\.[0-9]+\.[0-9]+$/.test(trimmed)) {
+    return trimmed;
+  }
+  return undefined;
+};
+
+/**
+ * Sanitizes IP address by stripping IPv6-mapped IPv4 prefix and removing loopback in live mode.
+ * @param {string} ip
+ * @returns {string|undefined}
+ */
+const sanitizeIp = (ip) => {
+  if (!ip || typeof ip !== 'string') return undefined;
+  let clean = ip.trim();
+  if (clean.startsWith('::ffff:')) {
+    clean = clean.replace('::ffff:', '');
+  }
+  if (clean === '::1' || clean === '127.0.0.1' || clean === 'localhost') {
+    return undefined;
+  }
+  return clean;
+};
+
+/**
  * Builds the user_data object with properly hashed PII fields.
+ * Validates fbc, fbp, client_user_agent, and client_ip_address without hashing them.
  * @param {Object} userData - Raw user data from client
- * @returns {Object} - Hashed user data for CAPI
+ * @returns {Object} - Clean, hashed user data for CAPI
  */
 const buildUserData = (userData = {}) => {
   const result = {};
 
-  // Fields that must be hashed
-  if (userData.em) result.em = hashValue(userData.em);           // email
-  if (userData.ph) result.ph = hashValue(userData.ph);           // phone
-  if (userData.fn) result.fn = hashValue(userData.fn);           // first name
-  if (userData.ln) result.ln = hashValue(userData.ln);           // last name
-  if (userData.ct) result.ct = hashValue(userData.ct);           // city
-  if (userData.st) result.st = hashValue(userData.st);           // state
-  if (userData.zp) result.zp = hashValue(userData.zp);           // zip code
-  if (userData.country) result.country = hashValue(userData.country); // country
+  // Fields that must be hashed (PII)
+  const normEmail = normalizeEmail(userData.em);
+  if (normEmail) result.em = hashValue(normEmail);
 
-  // Fields that do NOT need hashing
-  if (userData.client_ip_address) result.client_ip_address = userData.client_ip_address;
-  if (userData.client_user_agent) result.client_user_agent = userData.client_user_agent;
-  if (userData.fbc) result.fbc = userData.fbc;       // _fbc cookie
-  if (userData.fbp) result.fbp = userData.fbp;       // _fbp cookie
-  if (userData.external_id) result.external_id = hashValue(userData.external_id);
+  const normPhone = normalizePhone(userData.ph);
+  if (normPhone) result.ph = hashValue(normPhone);
+
+  if (userData.fn) result.fn = hashValue(String(userData.fn));
+  if (userData.ln) result.ln = hashValue(String(userData.ln));
+  if (userData.ct) result.ct = hashValue(String(userData.ct));
+  if (userData.st) result.st = hashValue(String(userData.st));
+  if (userData.zp) result.zp = hashValue(String(userData.zp));
+  if (userData.country) result.country = hashValue(String(userData.country));
+
+  // Non-hashed matching fields (Strictly validated)
+  const cleanIp = sanitizeIp(userData.client_ip_address);
+  if (cleanIp) result.client_ip_address = cleanIp;
+
+  if (userData.client_user_agent && typeof userData.client_user_agent === 'string' && userData.client_user_agent.trim().length > 5) {
+    result.client_user_agent = userData.client_user_agent.trim();
+  }
+
+  const validFbc = validateAndFormatFbc(userData.fbc);
+  if (validFbc) result.fbc = validFbc;
+
+  const validFbp = validateAndFormatFbp(userData.fbp);
+  if (validFbp) result.fbp = validFbp;
+
+  if (userData.external_id) {
+    result.external_id = hashValue(String(userData.external_id));
+  }
 
   return result;
 };

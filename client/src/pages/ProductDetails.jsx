@@ -366,7 +366,12 @@ const ProductDetails = () => {
                     name: prodName,
                     numItems: cleanQty,
                     currency: 'TND',
-                    contents: [{ id: prodId, quantity: cleanQty, item_price: prodPrice }]
+                    contents: [{ id: prodId, quantity: cleanQty, item_price: prodPrice }],
+                    userData: {
+                        em: orderData.clientEmail,
+                        ph: orderData.clientPhone,
+                        fn: orderData.clientName
+                    }
                 });
 
                 // Add to local storage "panier"

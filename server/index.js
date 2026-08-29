@@ -114,6 +114,20 @@ app.get('/api/drive-stream/:id', async (req, res) => {
     }
 });
 
+// Helper to extract clean client IP address supporting Cloudflare, Nginx & proxies
+const getClientIp = (req) => {
+    const headers = req.headers || {};
+    let ip = headers['cf-connecting-ip'] ||
+             headers['x-real-ip'] ||
+             headers['x-client-ip'] ||
+             headers['x-forwarded-for']?.split(',')[0]?.trim() ||
+             req.socket?.remoteAddress;
+    if (ip && typeof ip === 'string' && ip.startsWith('::ffff:')) {
+        ip = ip.replace('::ffff:', '');
+    }
+    return ip;
+};
+
 // -------------------- Meta Conversions API Route --------------------
 /**
  * POST /api/meta/event
@@ -135,8 +149,8 @@ app.post('/api/meta/event', async (req, res) => {
             return res.status(400).json({ success: false, message: 'event_name and event_id are required.' });
         }
 
-        // Attach real IP and User-Agent from the incoming request
-        const clientIp = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket.remoteAddress;
+        // Attach real IP and User-Agent from incoming request
+        const clientIp = getClientIp(req);
         const clientUserAgent = req.headers['user-agent'];
 
         const enrichedUserData = {
@@ -897,39 +911,6 @@ app.post('/api/commands', async (req, res) => {
 
         const savedCommand = await newCommand.save();
 
-        // 📊 Server-side CAPI Purchase tracking directly on order creation
-        try {
-            const clientIp = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket.remoteAddress;
-            const clientUserAgent = req.headers['user-agent'];
-            const cmdEventId = req.body.event_id || `cmd_${savedCommand._id}`;
-            const testCode = req.body.test_event_code || process.env.META_TEST_EVENT_CODE;
-
-            sendToConversionsAPI({
-                event_name: 'Purchase',
-                event_id: cmdEventId,
-                event_source_url: req.headers.referer || 'https://cpatron.com/checkout',
-                user_data: {
-                    client_ip_address: clientIp,
-                    client_user_agent: clientUserAgent,
-                    em: clientEmail,
-                    ph: clientPhone,
-                    fn: clientName,
-                },
-                custom_data: {
-                    value: totalAmount,
-                    currency: 'TND',
-                    contents: items.map(item => ({
-                        id: String(item.productId || item.id || 'product'),
-                        quantity: Number(item.quantity) || 1,
-                        item_price: Number(item.price) || 0
-                    })),
-                    test_event_code: testCode,
-                }
-            }).catch(e => console.warn('[CAPI Command] Server tracking notice:', e.message));
-        } catch (e) {
-            console.warn('[CAPI Command] Non-blocking tracking error:', e.message);
-        }
-
         res.status(201).json({
             message: 'Commande enregistrée avec succès!',
             commandId: savedCommand._id,
@@ -1397,41 +1378,6 @@ app.post('/api/abonnement', async (req, res) => {
 
         console.log("Instance Abonnement créée:", abonnement); // Debug
         await abonnement.save();
-
-        // 📊 Server-side CAPI Purchase tracking directly on course enrollment
-        try {
-            const clientIp = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket.remoteAddress;
-            const clientUserAgent = req.headers['user-agent'];
-            const subEventId = req.body.event_id || `sub_${abonnement._id}`;
-            const testCode = req.body.test_event_code || process.env.META_TEST_EVENT_CODE;
-            const rawPrice = prix ? String(prix).replace(/,/g, '.').replace(/[^0-9.]/g, '') : '0';
-            const numPrice = parseFloat(rawPrice) || 0;
-
-            sendToConversionsAPI({
-                event_name: 'Purchase',
-                event_id: subEventId,
-                event_source_url: req.headers.referer || 'https://cpatron.com/offre-de-cours',
-                user_data: {
-                    client_ip_address: clientIp,
-                    client_user_agent: clientUserAgent,
-                    em: mail,
-                    ph: telephone,
-                    fn: nom,
-                },
-                custom_data: {
-                    value: numPrice,
-                    currency: 'TND',
-                    contents: [{
-                        id: `course_${String(offre_nom || 'course').replace(/\s+/g, '_')}`,
-                        quantity: 1,
-                        item_price: numPrice
-                    }],
-                    test_event_code: testCode,
-                }
-            }).catch(e => console.warn('[CAPI Abonnement] Server tracking notice:', e.message));
-        } catch (e) {
-            console.warn('[CAPI Abonnement] Non-blocking tracking error:', e.message);
-        }
 
         res.status(201).json({
             message: "Abonnement ajouté avec succès.",

@@ -346,7 +346,12 @@ export default function OffreDeCours() {
                     name: courseTitle,
                     numItems: 1,
                     currency: 'TND',
-                    contents: [{ id: courseId, quantity: 1, item_price: numPrice }]
+                    contents: [{ id: courseId, quantity: 1, item_price: numPrice }],
+                    userData: {
+                        em: userEmail,
+                        ph: vipPhone,
+                        fn: vipFullName
+                    }
                 });
 
                 setVipRequestSuccess(true);
