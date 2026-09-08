@@ -140,6 +140,7 @@ app.post('/api/meta/event', async (req, res) => {
             event_name,
             event_id,
             event_source_url,
+            event_time,
             test_event_code,
             user_data = {},
             custom_data = {},
@@ -164,23 +165,53 @@ app.post('/api/meta/event', async (req, res) => {
         };
 
         const finalTestCode = test_event_code || custom_data.test_event_code || process.env.META_TEST_EVENT_CODE;
+        console.log('finalTestCode', finalTestCode);
         if (finalTestCode) {
             finalCustomData.test_event_code = finalTestCode;
         }
 
         console.log(`[CAPI Route] 📡 Forwarding "${event_name}" (${event_id}) to CAPI with test code: ${finalTestCode || 'none'}`);
 
+        // Honour the browser-stamped event_time so a retried or queued event keeps
+        // the moment the conversion actually happened, which is what deduplication
+        // against the browser pixel keys off. Meta rejects times more than 7 days
+        // old, and anything in the future, so fall back to now when it is unusable.
+        const nowSeconds = Math.floor(Date.now() / 1000);
+        const clientEventTime = Number(event_time);
+        const resolvedEventTime =
+            Number.isFinite(clientEventTime) &&
+            clientEventTime > nowSeconds - 7 * 24 * 60 * 60 &&
+            clientEventTime <= nowSeconds + 60
+                ? Math.floor(clientEventTime)
+                : nowSeconds;
+
         const results = await sendToConversionsAPI({
             event_name,
             event_id,
             event_source_url: event_source_url || req.headers.referer || 'https://cpatron.com/',
+            event_time: resolvedEventTime,
             user_data: enrichedUserData,
             custom_data: finalCustomData,
         });
 
+        const delivered = results.filter((r) => r.status === 'fulfilled').length;
+
+        // results is empty when the pixel/token config is missing, and all-rejected
+        // when every call to Meta failed. Reporting success in either case would let
+        // the browser discard an event that Meta never received.
+        if (delivered === 0) {
+            return res.status(502).json({
+                success: false,
+                message: `Event "${event_name}" reached no pixel.`,
+                errors: results.map((r) => r.reason && r.reason.message).filter(Boolean),
+            });
+        }
+
         return res.status(200).json({
             success: true,
             message: `Event "${event_name}" sent to Conversions API.`,
+            delivered,
+            total: results.length,
             results
         });
     } catch (error) {

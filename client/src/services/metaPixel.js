@@ -319,6 +319,7 @@ export const getActiveTestEventCode = () => {
   }
 
   const rawEnv = import.meta.env.VITE_META_PIXEL_TEST_CODE;
+  console.log('rawEnv', rawEnv);
   if (rawEnv && String(rawEnv).trim()) {
     return String(rawEnv).split(',')[0].trim();
   }
@@ -327,8 +328,174 @@ export const getActiveTestEventCode = () => {
 };
 
 /**
+ * Server-side (Conversions API) delivery.
+ *
+ * This channel is not a redundant copy of the browser pixel. For a visitor
+ * running an ad blocker, connect.facebook.net is blocked but our own API is
+ * not, so this request is the ONLY record Meta gets of their conversion. An
+ * attempt that fails quietly is a Purchase that never happened as far as
+ * reporting is concerned, so failures are retried, then persisted and retried
+ * again on the next page load, rather than swallowed into a console warning.
+ *
+ * Replaying a delivery is safe: Meta deduplicates repeat sends of the same
+ * event_id + event_name, so a retry can never inflate the count.
+ */
+
+const CAPI_ENDPOINT = `${SERVER_BASE_URL}/api/meta/event`;
+const CAPI_QUEUE_KEY = 'meta_capi_queue';
+const CAPI_MAX_ATTEMPTS = 3;
+const CAPI_TIMEOUT_MS = 8000;
+const CAPI_QUEUE_LIMIT = 25;
+// Meta rejects events whose event_time is more than 7 days old.
+const CAPI_MAX_EVENT_AGE_S = 7 * 24 * 60 * 60;
+
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/**
+ * Reads the persisted retry queue.
+ * @returns {Array<Object>}
+ */
+const readQueue = () => {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(CAPI_QUEUE_KEY) || '[]');
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (e) {
+    return [];
+  }
+};
+
+/**
+ * Persists the retry queue, keeping only the most recent entries.
+ * @param {Array<Object>} queue
+ */
+const writeQueue = (queue) => {
+  try {
+    localStorage.setItem(CAPI_QUEUE_KEY, JSON.stringify(queue.slice(-CAPI_QUEUE_LIMIT)));
+  } catch (e) {
+    // Storage unavailable or full — nothing further we can do.
+  }
+};
+
+/**
+ * Persists an undeliverable event so a later page load can retry it.
+ * @param {Object} payload
+ */
+const enqueueEvent = (payload) => {
+  const queue = readQueue();
+  if (queue.some((item) => item && item.event_id === payload.event_id)) return;
+  queue.push(payload);
+  writeQueue(queue);
+};
+
+/**
+ * Performs a single delivery attempt.
+ * @param {Object} payload
+ * @returns {Promise<{ok: boolean, retryable: boolean, detail: string}>}
+ */
+const postEventOnce = async (payload) => {
+  const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+  const timer = controller ? setTimeout(() => controller.abort(), CAPI_TIMEOUT_MS) : null;
+
+  try {
+    const res = await fetch(CAPI_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      // Lets the request outlive the page: a Purchase is routinely followed by
+      // a redirect or the customer closing the tab.
+      keepalive: true,
+      signal: controller ? controller.signal : undefined,
+    });
+
+    let data = {};
+    try {
+      data = await res.json();
+    } catch (e) {
+      // Non-JSON body (gateway error page, empty 502) — the status decides below.
+    }
+
+    if (res.ok && data.success !== false) {
+      return { ok: true, retryable: false, detail: '' };
+    }
+
+    // A 4xx means the payload itself is wrong; replaying it fails identically.
+    // A 2xx carrying success:false means the server took the request but could
+    // not hand it to Meta, which is usually transient, so it is worth retrying.
+    const retryable =
+      res.ok || res.status === 408 || res.status === 429 || res.status >= 500;
+    const suffix = data.message ? ` — ${data.message}` : '';
+    return { ok: false, retryable, detail: `HTTP ${res.status}${suffix}` };
+  } catch (err) {
+    // Network failure, timeout or abort — all worth another attempt.
+    return { ok: false, retryable: true, detail: err.message || 'network error' };
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+};
+
+/**
+ * Delivers one event, retrying transient failures with backoff before falling
+ * back to the persistent queue.
+ * @param {Object} payload
+ * @returns {Promise<boolean>} whether the event reached the server
+ */
+const deliverEvent = async (payload) => {
+  for (let attempt = 1; attempt <= CAPI_MAX_ATTEMPTS; attempt += 1) {
+    const { ok, retryable, detail } = await postEventOnce(payload);
+
+    if (ok) {
+      console.log(`[CAPI] ✅ Event "${payload.event_name}" delivered (attempt ${attempt}).`);
+      return true;
+    }
+
+    if (!retryable) {
+      console.error(`[CAPI] ❌ Event "${payload.event_name}" rejected: ${detail}. Not retrying.`);
+      return false;
+    }
+
+    console.warn(`[CAPI] ⚠️ Attempt ${attempt}/${CAPI_MAX_ATTEMPTS} for "${payload.event_name}" failed: ${detail}`);
+    if (attempt < CAPI_MAX_ATTEMPTS) {
+      await wait(500 * Math.pow(2, attempt - 1));
+    }
+  }
+
+  enqueueEvent(payload);
+  console.error(`[CAPI] ❌ Event "${payload.event_name}" (${payload.event_id}) undelivered after ${CAPI_MAX_ATTEMPTS} attempts. Queued for the next page load.`);
+  return false;
+};
+
+/**
+ * Retries every queued event. Called on pixel initialization.
+ * @returns {Promise<void>}
+ */
+export const flushQueuedEvents = async () => {
+  const queue = readQueue();
+  if (queue.length === 0) return;
+
+  const nowSeconds = Math.floor(Date.now() / 1000);
+  const fresh = queue.filter(
+    (item) => item && nowSeconds - Number(item.event_time || 0) < CAPI_MAX_EVENT_AGE_S
+  );
+
+  if (fresh.length < queue.length) {
+    console.warn(`[CAPI] Dropped ${queue.length - fresh.length} queued event(s) older than 7 days.`);
+  }
+
+  // Cleared before retrying: deliverEvent re-queues whatever fails again, so a
+  // permanently undeliverable event cannot pile up duplicate queue entries.
+  writeQueue([]);
+  if (fresh.length > 0) {
+    console.log(`[CAPI] Retrying ${fresh.length} queued event(s) from a previous visit.`);
+  }
+
+  for (const payload of fresh) {
+    await deliverEvent(payload);
+  }
+};
+
+/**
  * Sends event data to the server-side Conversions API endpoint.
- * Fire-and-forget: errors are logged but do not block the browser pixel.
+ * Does not block the browser pixel; failures are retried, then queued.
  * @param {string} eventName
  * @param {string} eventId
  * @param {Object} customData
@@ -341,28 +508,17 @@ const sendToServerCAPI = (eventName, eventId, customData = {}, customUserData = 
   const payload = {
     event_name: eventName,
     event_id: eventId,
+    // Stamped here rather than on receipt so a retried or queued event keeps
+    // the moment the customer actually converted — which is what attribution
+    // and deduplication against the browser pixel both key off.
+    event_time: Math.floor(Date.now() / 1000),
     event_source_url: typeof window !== 'undefined' ? window.location.href : undefined,
     test_event_code: testEventCode,
     user_data: userData,
     custom_data: customData,
   };
 
-  fetch(`${SERVER_BASE_URL}/api/meta/event`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  })
-    .then((res) => res.json())
-    .then((data) => {
-      if (data.success) {
-        console.log(`[CAPI] ✅ Event "${eventName}" sent successfully via server.`, data);
-      } else {
-        console.warn(`[CAPI] ⚠️ Server warning for "${eventName}":`, data.message);
-      }
-    })
-    .catch((err) => {
-      console.warn('[CAPI] Failed to send server-side event:', err.message);
-    });
+  deliverEvent(payload);
 };
 
 /**
@@ -426,6 +582,9 @@ export const initPixel = (pixelId) => {
   });
 
   isInitialized = true;
+
+  // Deliver anything a previous visit could not get through.
+  flushQueuedEvents();
 };
 
 /**
@@ -452,12 +611,16 @@ export const trackEvent = (eventName, params = {}, userData = {}) => {
   if (isLoaded()) {
     try {
       activePixels.forEach(({ id }) => {
-        const eventParams = { ...params, eventID: eventId };
+        const eventParams = { ...params };
         if (testCode) {
           eventParams.test_event_code = testCode;
         }
         try {
-          window.fbq('trackSingle', id, eventName, eventParams);
+          // eventID must be passed in the trailing options object, NOT inside
+          // eventParams. Meta only reads it from there; placed in the params it
+          // is treated as an ordinary custom field, deduplication against the
+          // Conversions API event never happens, and the event is counted twice.
+          window.fbq('trackSingle', id, eventName, eventParams, { eventID: eventId });
         } catch (err) {
           // Ignore individual pixel errors
         }
@@ -489,12 +652,16 @@ export const trackCustomEvent = (eventName, params = {}, userData = {}) => {
   if (isLoaded()) {
     try {
       activePixels.forEach(({ id }) => {
-        const eventParams = { ...params, eventID: eventId };
+        const eventParams = { ...params };
         if (testCode) {
           eventParams.test_event_code = testCode;
         }
         try {
-          window.fbq('trackSingleCustom', id, eventName, eventParams);
+          // eventID must be passed in the trailing options object, NOT inside
+          // eventParams. Meta only reads it from there; placed in the params it
+          // is treated as an ordinary custom field, deduplication against the
+          // Conversions API event never happens, and the event is counted twice.
+          window.fbq('trackSingleCustom', id, eventName, eventParams, { eventID: eventId });
         } catch (err) {
           // Ignore individual pixel errors
         }
