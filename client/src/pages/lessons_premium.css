@@ -200,20 +200,27 @@
     z-index: 100;
 }
 
-/* Native Iframe Fullscreen Interceptor Lock */
+/* Native Iframe Fullscreen Clean Display (No scaling transforms, direct 100% full screen & touch responsiveness) */
 iframe:fullscreen,
 iframe:-webkit-full-screen,
 iframe:-moz-full-screen,
 iframe:-ms-fullscreen {
-    width: 2400px !important;
-    height: 1350px !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    max-width: 100vw !important;
+    max-height: 100vh !important;
     position: fixed !important;
-    top: 50% !important;
-    left: 50% !important;
-    transform: translate(-50%, -50%) scale(min(calc(100vw / 2400), calc(100vh / 1350))) !important;
-    transform-origin: center center !important;
-    background: #000 !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    transform: none !important;
+    background: #000000 !important;
     border: none !important;
+    pointer-events: auto !important;
+    touch-action: auto !important;
 }
 
 /* --- 🎬 NEW SIMPLE & ELEGANT VIDEO CARD 🎬 --- */
@@ -778,7 +785,9 @@ iframe:-ms-fullscreen {
     transform: scale(0.97);
 }
 
-.premium-video-card-section.is-landscape-fullscreen {
+.premium-video-card-section.is-landscape-fullscreen,
+.premium-video-card-section:fullscreen,
+.premium-video-card-section:-webkit-full-screen {
     position: fixed !important;
     top: 0 !important;
     left: 0 !important;
@@ -787,6 +796,7 @@ iframe:-ms-fullscreen {
     width: 100vw !important;
     height: 100vh !important;
     max-width: 100vw !important;
+    max-height: 100vh !important;
     margin: 0 !important;
     padding: 0 !important;
     z-index: 999999 !important;
@@ -795,48 +805,103 @@ iframe:-ms-fullscreen {
     flex-direction: column !important;
     justify-content: center !important;
     align-items: center !important;
+    overflow: hidden !important;
 }
 
-.premium-video-card-section.is-landscape-fullscreen .video-rotate-toolbar {
+.premium-video-card-section.is-landscape-fullscreen .video-rotate-toolbar,
+.premium-video-card-section:fullscreen .video-rotate-toolbar,
+.premium-video-card-section:-webkit-full-screen .video-rotate-toolbar {
     position: absolute !important;
     top: 16px !important;
     right: 20px !important;
-    z-index: 1000000 !important;
+    z-index: 2147483647 !important;
 }
 
-[dir="rtl"] .premium-video-card-section.is-landscape-fullscreen .video-rotate-toolbar {
+[dir="rtl"] .premium-video-card-section.is-landscape-fullscreen .video-rotate-toolbar,
+[dir="rtl"] .premium-video-card-section:fullscreen .video-rotate-toolbar,
+[dir="rtl"] .premium-video-card-section:-webkit-full-screen .video-rotate-toolbar {
     right: auto !important;
     left: 20px !important;
 }
 
-.premium-video-card-section.is-landscape-fullscreen .premium-video-card {
-    width: 100% !important;
-    height: 100% !important;
-    max-width: 100% !important;
-    max-height: 100% !important;
+.premium-video-card-section.is-landscape-fullscreen .premium-video-card,
+.premium-video-card-section:fullscreen .premium-video-card,
+.premium-video-card-section:-webkit-full-screen .premium-video-card {
+    width: 100vw !important;
+    height: 100vh !important;
+    max-width: 100vw !important;
+    max-height: 100vh !important;
     border-radius: 0 !important;
     padding: 0 !important;
+    margin: 0 !important;
     background: #000000 !important;
     border: none !important;
     box-shadow: none !important;
     justify-content: center !important;
+    align-items: center !important;
     gap: 0 !important;
 }
 
-.premium-video-card-section.is-landscape-fullscreen .video-card-screen {
-    width: 100% !important;
-    height: 100% !important;
+.premium-video-card-section.is-landscape-fullscreen .video-card-screen,
+.premium-video-card-section:fullscreen .video-card-screen,
+.premium-video-card-section:-webkit-full-screen .video-card-screen {
+    width: 100vw !important;
+    height: 100vh !important;
+    max-width: 100vw !important;
+    max-height: 100vh !important;
+    aspect-ratio: auto !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
     background: #000000 !important;
     border-radius: 0 !important;
+    overflow: hidden !important;
+    position: relative !important;
+}
+
+.premium-video-card-section.is-landscape-fullscreen .lesson-video-iframe-wrapper,
+.premium-video-card-section:fullscreen .lesson-video-iframe-wrapper,
+.premium-video-card-section:-webkit-full-screen .lesson-video-iframe-wrapper {
+    width: 100vw !important;
+    height: 100vh !important;
+    max-width: 100vw !important;
+    max-height: 100vh !important;
+    aspect-ratio: auto !important;
+    padding-top: 0 !important;
+    margin: 0 !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    pointer-events: auto !important;
 }
 
 .premium-video-card-section.is-landscape-fullscreen iframe,
-.premium-video-card-section.is-landscape-fullscreen video {
-    width: 100% !important;
-    height: 100% !important;
+.premium-video-card-section.is-landscape-fullscreen video,
+.premium-video-card-section:fullscreen iframe,
+.premium-video-card-section:fullscreen video,
+.premium-video-card-section:-webkit-full-screen iframe,
+.premium-video-card-section:-webkit-full-screen video {
+    width: 100vw !important;
+    height: 100vh !important;
+    max-width: 100vw !important;
     max-height: 100vh !important;
     object-fit: contain !important;
+    border: 0 !important;
+    pointer-events: auto !important;
+    touch-action: auto !important;
+}
+
+.premium-video-card-section.is-landscape-fullscreen .rotate-screen-btn,
+.premium-video-card-section:fullscreen .rotate-screen-btn,
+.premium-video-card-section:-webkit-full-screen .rotate-screen-btn {
+    position: absolute !important;
+    top: 14px !important;
+    z-index: 2147483647 !important;
+    pointer-events: auto !important;
+    touch-action: manipulation !important;
 }

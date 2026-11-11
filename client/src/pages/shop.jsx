@@ -15,6 +15,7 @@ const categoriesAr = ['الكل', 'رجال', 'نساء', 'أطفال'];
 const categoriesEn = ['All', 'Men', 'Women', 'Children'];
 import BASE_URL from '../apiConfig';
 import { trackAddToCart, trackInitiateCheckout, trackPurchase, trackViewContent, sanitizePrice, sanitizeQuantity } from '../services/metaPixel';
+import { resolveImageUrl, handleImageError } from '../utils/imageHelper';
 
 // ⚠️ Assurez-وا أن هذه URL صحيحة
 const API_URL = `${BASE_URL}/api/products`;
@@ -264,7 +265,7 @@ const ImageCarousel = ({ images, direction, height = '320px' }) => {
                 {images.map((url, index) => (
                     <div key={index} className="carousel-item" style={{ width: '100%', height: '100%', flexShrink: 0, background: '#fff' }}>
                         <img
-                            src={url}
+                            src={resolveImageUrl(url)}
                             alt={`Slide ${index + 1}`}
                             className='product-grid-image'
                             style={{
@@ -273,6 +274,7 @@ const ImageCarousel = ({ images, direction, height = '320px' }) => {
                                 objectFit: 'contain',
                                 display: 'block'
                             }}
+                            onError={(e) => handleImageError(e, url)}
                         />
                     </div>
                 ))}
@@ -492,7 +494,7 @@ const OrderModalComponent = ({ selectedProduct, quantity, handleQuantityChange, 
                 </h2>
 
                 <div className="product-summary">
-                    <img src={selectedProduct.url} alt={selectedProduct.alt} className="summary-image" />
+                    <img src={resolveImageUrl(selectedProduct.url)} alt={selectedProduct.alt} className="summary-image" onError={(e) => handleImageError(e, selectedProduct.url)} />
                     <div className="summary-details">
                         <p className="summary-name">{selectedProduct.name}</p>
                         <p className="summary-price">{selectedProduct.price.toFixed(2)} {selectedProduct.currency} {t.unitPrice}</p>
@@ -593,7 +595,7 @@ const OrderModalComponent = ({ selectedProduct, quantity, handleQuantityChange, 
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
                             {innerImages.map((url, idx) => (
                                 <div key={idx} style={{ position: 'relative', width: '70px', height: '70px', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 2px 6px rgba(0,0,0,0.1)' }}>
-                                    <img src={url} alt={`Inner ${idx}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    <img src={resolveImageUrl(url)} alt={`Inner ${idx}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => handleImageError(e, url)} />
                                     <button
                                         type="button"
                                         onClick={() => {
@@ -837,10 +839,10 @@ export default function ProductGrid() {
                 price: p.prix,
                 currency: 'DT',
                 // ✅ التصحيح الأساسي: يختار mainImage (الجديد) أو image (القديم) كصورة رئيسية.
-                url: p.mainImage || p.image,
-                secondaryImages: p.secondaryImages || [],
-                innerImages: p.innerImages || [], // 💡 Added to support images exclusively in the Order Modal carousel
-                visibleCarouselImages: p.visibleCarouselImages || [], // 💡 Holds the selected images allowed for display in the grid carousel
+                url: resolveImageUrl(p.mainImage || p.image),
+                secondaryImages: (p.secondaryImages || []).map(resolveImageUrl),
+                innerImages: (p.innerImages || []).map(resolveImageUrl), // 💡 Added to support images exclusively in the Order Modal carousel
+                visibleCarouselImages: (p.visibleCarouselImages || []).map(resolveImageUrl), // 💡 Holds the selected images allowed for display in the grid carousel
                 alt: getTranslated(p.nom),
                 category: p.categorie,
                 order: p.order || 0,
@@ -2132,8 +2134,8 @@ export default function ProductGrid() {
                                                 id: offer._id,
                                                 name: combinedTitle,
                                                 price: offer.newPrice,
-                                                url: offer.productIds[0]?.mainImage || offer.productIds[0]?.image || '',
-                                                offerImages: offer.productIds.map(p => p.mainImage || p.image || p.url).filter(Boolean),
+                                                url: resolveImageUrl(offer.productIds[0]?.mainImage || offer.productIds[0]?.image || ''),
+                                                offerImages: offer.productIds.map(p => resolveImageUrl(p.mainImage || p.image || p.url)).filter(Boolean),
                                                 isOffer: true,
                                                 currency: 'DT'
                                             });

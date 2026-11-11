@@ -10,7 +10,6 @@ build/
 
 # Uploads and temporary data
 server/uploads/
-*.tmp
 temp_*.txt
 server/temp_step42.txt
 

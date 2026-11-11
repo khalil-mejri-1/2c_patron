@@ -4,16 +4,7 @@
  * global object probing, startup dummy video trap, and real-time DOM mutation watching.
  */
 
-// Known Extension IDs in Chrome / Edge Web Store
-const KNOWN_EXTENSION_IDS = [
-  { name: 'Internet Download Manager (IDM)', id: 'ngpampbgflapdalpjfjbingfbmmoeeed' },
-  { name: 'Internet Download Manager (IDM Alt)', id: 'kgggkbbkmjhflbbjidkgmoioedjhnnfj' },
-  { name: 'Video DownloadHelper', id: 'lmjnegcaflebdoplkejijenmogfljdfa' },
-  { name: 'Video Downloader Professional', id: 'dlmbbnckgjlgjedgdgdfbjeeinoipcaa' },
-  { name: 'CocoCut Video Downloader', id: 'gbdkoigflimegbllehfljjblgahbggji' },
-  { name: 'Video Downloader Plus', id: 'fhbhjhfljlggTableCell' },
-  { name: 'SaveFrom.net helper', id: 'jffbojlgk' },
-];
+
 
 /**
  * 🪤 Startup Dummy Video Trap
@@ -201,28 +192,6 @@ const checkGlobalObjects = () => {
 };
 
 /**
- * Probes Web Accessible Resources (WAR) of known extension IDs
- */
-const probeExtensionResources = async () => {
-  if (typeof fetch === 'undefined') return null;
-
-  const probeTasks = KNOWN_EXTENSION_IDS.map(async (ext) => {
-    try {
-      const res = await fetch(`chrome-extension://${ext.id}/icon16.png`, { method: 'HEAD', mode: 'no-cors' });
-      if (res && (res.type === 'opaque' || res.ok)) {
-        return ext.name;
-      }
-    } catch (err) {
-      // Chrome blocks cross-extension fetch unless extension web_accessible_resources matches
-    }
-    return null;
-  });
-
-  const results = await Promise.all(probeTasks);
-  return results.find(Boolean) || null;
-};
-
-/**
  * Main Detection Function
  * Runs all deep checks and returns detection details if found, or null if clean.
  */
@@ -242,10 +211,6 @@ export const detectVideoDownloaderExtensions = async () => {
   // 4. Check Global Variables
   const globalDetected = checkGlobalObjects();
   if (globalDetected) return { detected: true, name: 'Internet Download Manager (IDM)', detail: globalDetected };
-
-  // 5. Probe Extension Web Accessible Resources
-  const probedExtName = await probeExtensionResources();
-  if (probedExtName) return { detected: true, name: probedExtName, detail: 'Chrome Extension Probed' };
 
   return { detected: false };
 };

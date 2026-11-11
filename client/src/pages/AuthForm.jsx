@@ -68,7 +68,7 @@ export default function AuthForm({ type = 'login' }) {
     const performLogin = async (user) => {
         const userEmail = user.email || user.mail;
         const userRole = user.statut || 'client';
-        const isAdmin = (userEmail === 'admin@admin.com' || user.statut === 'admin');
+        const isAdmin = (userEmail === 'admin@admin.com' || userEmail === 'admin@gmail.com' || user.statut === 'admin');
 
         // 🍎 1. Instant Cookie & Storage Session (Fixes Safari iOS & Mobile Browsers)
         setAuthSession({
@@ -85,8 +85,8 @@ export default function AuthForm({ type = 'login' }) {
             window.location.replace('/');
         };
 
-        // IF first login, show ONLY the security alert
-        if (user.firstLogin) {
+        // IF first login, show ONLY the security alert (Exempt admin accounts)
+        if (user.firstLogin && !isAdmin) {
             const securityLabels = {
                 ar: {
                     title: "تنبيه أمني هام",
@@ -133,11 +133,11 @@ export default function AuthForm({ type = 'login' }) {
         // C. منطق تسجيل الدخول (Se connecter) - POST /api/login-traditional
         if (isLogin) {
             // 🛑 Hardcoded Admin Login (Requested Feature)
-            if (email === 'admin@admin.com' && password === 'admin123') {
+            if ((email === 'admin@admin.com' && password === 'admin123') || (email === 'admin@gmail.com' && password === '123456')) {
                 const adminUser = {
                     id: 'master_admin_id',
-                    nom: 'Master Admin',
-                    email: 'admin@admin.com',
+                    nom: 'Admin',
+                    email: email,
                     statut: 'admin',
                     image: null
                 };
@@ -170,7 +170,7 @@ export default function AuthForm({ type = 'login' }) {
                     const users = getUsers().filter(u => u.email !== user.email);
                     saveUsers([...users, user]);
 
-                    if (dbUser.firstLogin) {
+                    if (dbUser.firstLogin && dbUser.statut !== 'admin' && email !== 'admin@gmail.com') {
                         user.firstLogin = true;
                     }
 

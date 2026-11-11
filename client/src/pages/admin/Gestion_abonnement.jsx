@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import NavbarAdmin from '../../comp/Navbar_admin';
-import { FaUserCheck, FaUserTimes, FaSpinner, FaPhoneAlt, FaTrashAlt, FaCrown, FaCalendarAlt, FaEnvelope, FaIdCard, FaTimes, FaKey, FaCopy, FaCheck, FaClock, FaExclamationTriangle, FaPlusCircle } from 'react-icons/fa';
+import { FaUserCheck, FaUserTimes, FaSpinner, FaPhoneAlt, FaTrashAlt, FaCrown, FaCalendarAlt, FaEnvelope, FaIdCard, FaTimes, FaKey, FaCopy, FaCheck, FaClock, FaExclamationTriangle, FaPlusCircle, FaSyncAlt } from 'react-icons/fa';
 import BASE_URL from '../../apiConfig';
 import { useAlert } from '../../context/AlertContext';
 
@@ -111,6 +111,37 @@ export default function Gestion_abonnement() {
                     password: data.password,
                     vipExpiresAt: data.vipExpiresAt
                 });
+            } catch (err) {
+                showAlert('error', 'Erreur', err.message);
+            }
+        });
+    };
+
+    const handleRegenerateAccount = async (id) => {
+        showAlert('confirm', 'Régénérer Identifiants', `Voulez-vous générer un nouvel Email et Mot de passe pour ce client ? Les anciens identifiants seront définitivement supprimés.`, async () => {
+            try {
+                const response = await fetch(`${BASE_URL}/api/abonnement/regenerate-account/${id}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                });
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.message || 'Erreur lors de la régénération.');
+
+                setAbonnements(prev => prev.map(abo => abo._id === id ? { 
+                    ...abo, 
+                    statut_abonnement: 'approuvé',
+                    generated_mail: data.email,
+                    generated_password: data.password,
+                    vipExpiresAt: data.vipExpiresAt || abo.vipExpiresAt
+                } : abo));
+
+                setGeneratedCreds({
+                    email: data.email,
+                    password: data.password,
+                    vipExpiresAt: data.vipExpiresAt
+                });
+
+                showAlert('success', 'Succès', 'Nouveaux identifiants générés avec succès ! Les anciens ont été supprimés.');
             } catch (err) {
                 showAlert('error', 'Erreur', err.message);
             }
@@ -309,7 +340,30 @@ export default function Gestion_abonnement() {
 
                                         {abo.statut_abonnement === 'approuvé' && (abo.generated_mail || abo.generated_password) && (
                                             <div style={{ background: isExpired ? '#fee2e2' : 'rgba(16, 185, 129, 0.05)', padding: '10px', borderRadius: '10px', border: `1px dashed ${isExpired ? '#ef4444' : '#10b981'}` }}>
-                                                <div style={{ fontSize: '0.65rem', color: isExpired ? '#dc2626' : '#059669', marginBottom: '8px', fontWeight: 'bold', textTransform: 'uppercase' }}>Identifiants VIP</div>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                                                    <div style={{ fontSize: '0.65rem', color: isExpired ? '#dc2626' : '#059669', fontWeight: 'bold', textTransform: 'uppercase' }}>Identifiants VIP</div>
+                                                    <button
+                                                        onClick={() => handleRegenerateAccount(abo._id)}
+                                                        title="Régénérer un nouvel Email et Mot de passe (supprime les anciens)"
+                                                        style={{
+                                                            background: '#fff',
+                                                            border: '1px solid #d4af37',
+                                                            color: '#b39224',
+                                                            padding: '2px 8px',
+                                                            borderRadius: '6px',
+                                                            fontSize: '0.68rem',
+                                                            fontWeight: 'bold',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            gap: '4px',
+                                                            cursor: 'pointer',
+                                                            boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+                                                            transition: 'all 0.2s'
+                                                        }}
+                                                    >
+                                                        <FaSyncAlt size={9} /> Régénérer
+                                                    </button>
+                                                </div>
                                                 {abo.generated_mail && (
                                                     <div style={{ marginBottom: '5px', fontSize: '0.75rem', display: 'flex', justifyContent: 'space-between' }}>
                                                         <span style={{ color: '#64748b' }}>Email:</span>
@@ -334,13 +388,23 @@ export default function Gestion_abonnement() {
                                             </>
                                         )}
                                         {abo.statut_abonnement === 'approuvé' && (
-                                            <button
-                                                onClick={() => setExtendModalAbo(abo)}
-                                                className="premium-btn-cta gold"
-                                                style={{ flex: 1, padding: '6px', fontSize: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
-                                            >
-                                                <FaPlusCircle size={12} /> Prolonger / Rétablir
-                                            </button>
+                                            <>
+                                                <button
+                                                    onClick={() => setExtendModalAbo(abo)}
+                                                    className="premium-btn-cta gold"
+                                                    style={{ flex: 1, padding: '6px', fontSize: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
+                                                >
+                                                    <FaPlusCircle size={12} /> Prolonger / Rétablir
+                                                </button>
+                                                <button
+                                                    onClick={() => handleRegenerateAccount(abo._id)}
+                                                    className="premium-btn-cta secondary"
+                                                    title="Régénérer un nouvel Email & Mot de passe"
+                                                    style={{ padding: '6px 10px', minWidth: 'auto', background: 'rgba(212, 175, 55, 0.1)', color: '#b39224', borderColor: '#d4af37', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                                >
+                                                    <FaSyncAlt size={12} />
+                                                </button>
+                                            </>
                                         )}
                                         <button onClick={() => handleDeleteAbonnement(abo._id)} className="premium-btn-cta secondary" style={{ padding: '6px 10px', minWidth: 'auto', background: '#fee2e2', color: '#ef4444', borderColor: '#fecaca' }}><FaTrashAlt size={12} /></button>
                                     </div>

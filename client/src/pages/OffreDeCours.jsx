@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
     FaGraduationCap, FaCut, FaCrown, FaCheck, FaAward, FaUsers, FaClock, FaEdit, FaTimes,
     FaTshirt, FaHeart, FaStar, FaGem, FaBookOpen, FaMagic, FaRibbon, FaLightbulb, FaCloudUploadAlt,
-    FaPhoneAlt, FaUser, FaCheckCircle, FaPlus, FaTrash
+    FaPhoneAlt, FaUser, FaCheckCircle, FaPlus, FaTrash, FaPlay
 } from 'react-icons/fa';
 import Navbar from '../comp/navbar';
 import Footer from '../comp/Footer';
@@ -63,6 +63,9 @@ const defaultContent = {
         ],
         beginnerBtn: "Découvrir l'Atelier",
         beginnerBtnLogged: "Découvrir l'Atelier",
+        beginnerTrialEnabled: true,
+        beginnerTrialBtnText: "Tester une leçon gratuite",
+        beginnerTrialUrl: "/les_leçons",
 
         interTitle: "Atelier Perfectionnement",
         interSub: "Modélisme & Coupe",
@@ -87,6 +90,9 @@ const defaultContent = {
         ],
         interBtn: "S'inscrire à l'Atelier",
         interBtnLogged: "S'inscrire à l'Atelier",
+        interTrialEnabled: false,
+        interTrialBtnText: "Tester une leçon gratuite",
+        interTrialUrl: "/les_leçons",
         popular: "Populaire",
 
         vipTitle: "Masterclass Haute Couture",
@@ -150,6 +156,9 @@ const defaultContent = {
         ],
         beginnerBtn: "اكتشف الورشة",
         beginnerBtnLogged: "اكتشف الورشة",
+        beginnerTrialEnabled: true,
+        beginnerTrialBtnText: "جرب درسًا مجانًا",
+        beginnerTrialUrl: "/les_leçons",
 
         interTitle: "ورشة الاتقان",
         interSub: "باترونات وقص",
@@ -174,6 +183,9 @@ const defaultContent = {
         ],
         interBtn: "تسجيل في الورشة",
         interBtnLogged: "تسجيل في الورشة",
+        interTrialEnabled: false,
+        interTrialBtnText: "جرب درسًا مجانًا",
+        interTrialUrl: "/les_leçons",
         popular: "الأكثر طلباً",
 
         vipTitle: "الورشة الاحترافية الراقية",
@@ -484,6 +496,14 @@ export default function OffreDeCours() {
         }
     };
 
+    // Handler to open trial lesson (no login required)
+    const handleOpenTrialLesson = (trialUrl) => {
+        if (!trialUrl) return;
+        sessionStorage.setItem('is_trial_mode', 'true');
+        const separator = trialUrl.includes('?') ? '&' : '?';
+        navigate(`${trialUrl}${separator}trial=true`);
+    };
+
     // Helper to update translation field
     const handleFieldChange = (sectionKey, value) => {
         const sharedFields = [
@@ -491,7 +511,9 @@ export default function OffreDeCours() {
             'beginnerStatus', 'interStatus', 'vipStatus',
             'beginnerIcon', 'interIcon', 'vipIcon',
             'beginnerImage', 'interImage', 'vipImage',
-            'beginnerPrice', 'interPrice', 'vipPrice'
+            'beginnerPrice', 'interPrice', 'vipPrice',
+            'beginnerTrialEnabled', 'beginnerTrialUrl',
+            'interTrialEnabled', 'interTrialUrl'
         ];
 
         setEditContent(prev => {
@@ -728,6 +750,17 @@ export default function OffreDeCours() {
                             </div>
                         )}
 
+                        {/* Trial Lesson Button (Admin configurable) - Placed under CHOISIR LA DURÉE */}
+                        {!isVipExpired && t.beginnerTrialEnabled && t.beginnerTrialUrl && (
+                            <button
+                                className="card-trial-btn"
+                                onClick={() => handleOpenTrialLesson(t.beginnerTrialUrl)}
+                            >
+                                <FaPlay className="trial-icon" />
+                                <span>{t.beginnerTrialBtnText || (appLanguage === 'ar' ? 'جرب درساً مجاناً' : 'Tester une leçon gratuite')}</span>
+                            </button>
+                        )}
+
                         <div className="card-price-container">
                             <span className="price-amount">
                                 {t.beginnerPricingOptions && t.beginnerPricingOptions[selectedBegDurationIndex]
@@ -858,6 +891,17 @@ export default function OffreDeCours() {
                                     ))}
                                 </div>
                             </div>
+                        )}
+
+                        {/* Trial Lesson Button (Admin configurable) - Placed under CHOISIR LA DURÉE */}
+                        {!isVipExpired && t.interTrialEnabled && t.interTrialUrl && (
+                            <button
+                                className="card-trial-btn"
+                                onClick={() => handleOpenTrialLesson(t.interTrialUrl)}
+                            >
+                                <FaPlay className="trial-icon" />
+                                <span>{t.interTrialBtnText || (appLanguage === 'ar' ? 'جرب درساً مجاناً' : 'Tester une leçon gratuite')}</span>
+                            </button>
                         )}
 
                         <div className="card-price-container">
@@ -1174,6 +1218,48 @@ export default function OffreDeCours() {
                                             />
                                         ))}
                                     </div>
+
+                                    {/* --- Trial Lesson Settings --- */}
+                                    <div className="offre-edit-form-group" style={{ borderTop: '1px solid rgba(212,175,55,0.2)', paddingTop: '16px', marginTop: '8px' }}>
+                                        <label style={{ color: '#d4af37', fontWeight: 800 }}>
+                                            {appLanguage === 'ar' ? '⚙️ زر الدرس التجريبي المجاني' : '⚙️ Bouton de leçon d\'essai gratuite'}
+                                        </label>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '10px' }}>
+                                            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.9rem', color: '#e2e8f0', fontWeight: 600 }}>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={!!editContent[appLanguage]?.beginnerTrialEnabled}
+                                                    onChange={e => handleFieldChange('beginnerTrialEnabled', e.target.checked)}
+                                                    style={{ width: '18px', height: '18px', accentColor: '#d4af37' }}
+                                                />
+                                                {appLanguage === 'ar' ? 'تفعيل الزر' : 'Activer le bouton'}
+                                            </label>
+                                        </div>
+                                        <label style={{ fontSize: '0.82rem', color: '#94a3b8', marginBottom: '4px' }}>
+                                            {appLanguage === 'ar' ? 'نص الزر' : 'Texte du bouton'}
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={editContent[appLanguage]?.beginnerTrialBtnText || ''}
+                                            onChange={e => handleFieldChange('beginnerTrialBtnText', e.target.value)}
+                                            placeholder={appLanguage === 'ar' ? 'جرب درساً مجاناً' : 'Tester une leçon gratuite'}
+                                            style={{ marginBottom: '8px' }}
+                                        />
+                                        <label style={{ fontSize: '0.82rem', color: '#94a3b8', marginBottom: '4px' }}>
+                                            {appLanguage === 'ar' ? 'رابط الدرس التجريبي' : 'URL de la leçon d\'essai'}
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={editContent[appLanguage]?.beginnerTrialUrl || ''}
+                                            onChange={e => handleFieldChange('beginnerTrialUrl', e.target.value)}
+                                            placeholder="/les_leçons/Nom-Du-Cours"
+                                        />
+                                        <p style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '6px' }}>
+                                            {appLanguage === 'ar'
+                                                ? 'نصيحة: ضع الرابط الكامل لصفحة الدرس، مثل: /les_leçons/اسم-الكورس'
+                                                : 'Conseil : entrez le chemin complet vers la page du cours, ex: /les_leçons/Nom-Du-Cours'}
+                                        </p>
+                                    </div>
                                 </>
                             )}
 
@@ -1361,6 +1447,48 @@ export default function OffreDeCours() {
                                                 onChange={e => handleListFieldChange('interFeatures', idx, e.target.value)}
                                             />
                                         ))}
+                                    </div>
+
+                                    {/* --- Trial Lesson Settings --- */}
+                                    <div className="offre-edit-form-group" style={{ borderTop: '1px solid rgba(212,175,55,0.2)', paddingTop: '16px', marginTop: '8px' }}>
+                                        <label style={{ color: '#d4af37', fontWeight: 800 }}>
+                                            {appLanguage === 'ar' ? '⚙️ زر الدرس التجريبي المجاني' : '⚙️ Bouton de leçon d\'essai gratuite'}
+                                        </label>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '10px' }}>
+                                            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.9rem', color: '#e2e8f0', fontWeight: 600 }}>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={!!editContent[appLanguage]?.interTrialEnabled}
+                                                    onChange={e => handleFieldChange('interTrialEnabled', e.target.checked)}
+                                                    style={{ width: '18px', height: '18px', accentColor: '#d4af37' }}
+                                                />
+                                                {appLanguage === 'ar' ? 'تفعيل الزر' : 'Activer le bouton'}
+                                            </label>
+                                        </div>
+                                        <label style={{ fontSize: '0.82rem', color: '#94a3b8', marginBottom: '4px' }}>
+                                            {appLanguage === 'ar' ? 'نص الزر' : 'Texte du bouton'}
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={editContent[appLanguage]?.interTrialBtnText || ''}
+                                            onChange={e => handleFieldChange('interTrialBtnText', e.target.value)}
+                                            placeholder={appLanguage === 'ar' ? 'جرب درساً مجاناً' : 'Tester une leçon gratuite'}
+                                            style={{ marginBottom: '8px' }}
+                                        />
+                                        <label style={{ fontSize: '0.82rem', color: '#94a3b8', marginBottom: '4px' }}>
+                                            {appLanguage === 'ar' ? 'رابط الدرس التجريبي' : 'URL de la leçon d\'essai'}
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={editContent[appLanguage]?.interTrialUrl || ''}
+                                            onChange={e => handleFieldChange('interTrialUrl', e.target.value)}
+                                            placeholder="/les_leçons/Nom-Du-Cours"
+                                        />
+                                        <p style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '6px' }}>
+                                            {appLanguage === 'ar'
+                                                ? 'نصيحة: ضع الرابط الكامل لصفحة الدرس، مثل: /les_leçons/اسم-الكورس'
+                                                : 'Conseil : entrez le chemin complet vers la page du cours, ex: /les_leçons/Nom-Du-Cours'}
+                                        </p>
                                     </div>
                                 </>
                             )}

@@ -1220,9 +1220,8 @@ body {
 /* The floating cards wrapper */
 .hero-cards-wrapper {
   position: relative;
-  width: 310px;
-  /* Slightly narrower for elegance */
-  height: 460px;
+  width: 375px;
+  height: 475px;
   transform-style: preserve-3d;
   transition: transform 0.5s ease-out;
 }
@@ -1256,7 +1255,7 @@ body {
   /* Softer, deeper shadow */
   overflow: hidden;
   transition: all 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
-  background: #f0f0f0;
+  background: #ffffff;
 }
 
 /* Main Card (Front) */
@@ -1314,12 +1313,12 @@ body {
 .hero-card-image {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   transition: transform 1.5s cubic-bezier(0.19, 1, 0.22, 1);
 }
 
 .hero-card:hover .hero-card-image {
-  transform: scale(1.15);
+  transform: scale(1.04);
 }
 
 /* Glassmorphism Details Overlay */
@@ -1510,13 +1509,13 @@ body {
 }
 
 .hero-nav-btn.prev {
-  left: calc(50% - 250px);
+  left: calc(50% - 295px);
   /* Position next to the card */
   right: auto;
 }
 
 .hero-nav-btn.next {
-  right: calc(50% - 250px);
+  right: calc(50% - 295px);
   left: auto;
 }
 

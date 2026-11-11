@@ -12,6 +12,7 @@ import { useAlert } from '../context/AlertContext';
 import BASE_URL from '../apiConfig';
 import { ProductDetailsSkeleton, PremiumErrorState } from '../comp/Skeletons';
 import { trackViewContent, trackPurchase, trackInitiateCheckout, trackAddToCart, sanitizePrice, sanitizeQuantity } from '../services/metaPixel';
+import { resolveImageUrl, handleImageError } from '../utils/imageHelper';
 import './shop_redesign.css'; // Reuse existing shop styles
 
 const ProductDetails = () => {
@@ -619,7 +620,7 @@ const ProductDetails = () => {
     const currentProductName = getTranslated(product.nom);
     const currentCategory = getTranslated(product.categorie);
     const currentDescription = getTranslated(product.description);
-    const allImages = [product.mainImage || product.image, ...(product.secondaryImages || []), ...(product.innerImages || [])].filter(Boolean);
+    const allImages = [product.mainImage || product.image, ...(product.secondaryImages || []), ...(product.innerImages || [])].filter(Boolean).map(resolveImageUrl);
     // Displayed images = filtered subset chosen by admin (null = show all)
     const displayedImages = selectedImgIndices === null
         ? allImages
@@ -691,9 +692,9 @@ const ProductDetails = () => {
                                     </span>
                                 </button>
                             )}
-                            <div className="carousel-track" style={{ height: '100%', display: 'flex', transition: 'transform 0.5s ease', transform: `translateX(-${activeImageIndex * 100}%)` }}>
+                            <div className="carousel-track" style={{ height: '100%', display: 'flex', transition: 'transform 0.5s ease', transform: `translateX(${appLanguage === 'ar' ? '' : '-'}${activeImageIndex * 100}%)` }}>
                                 {displayedImages.map((img, idx) => (
-                                    <img key={idx} src={img} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain', flexShrink: 0 }} />
+                                    <img key={idx} src={resolveImageUrl(img)} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain', flexShrink: 0 }} onError={(e) => handleImageError(e, img)} />
                                 ))}
                             </div>
 
@@ -730,7 +731,7 @@ const ProductDetails = () => {
                                             boxShadow: '0 4px 10px rgba(0,0,0,0.05)'
                                         }}
                                     >
-                                        <img src={img} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                        <img src={resolveImageUrl(img)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => handleImageError(e, img)} />
                                     </div>
                                     {isAdmin && idx > 0 && ( // Don't delete main image here (idx 0 is main)
                                         <button
@@ -1030,7 +1031,7 @@ const ProductDetails = () => {
                                                 }}
                                             >
                                                 <div style={{ width: '60px', height: '60px', borderRadius: '10px', overflow: 'hidden', flexShrink: 0, border: '1px solid #e2e8f0' }}>
-                                                    <img src={p.mainImage || p.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                    <img src={resolveImageUrl(p.mainImage || p.image)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => handleImageError(e, p.mainImage || p.image)} />
                                                 </div>
                                                 <div style={{ flex: 1 }}>
                                                     <h4 style={{ margin: 0, fontSize: '0.95rem', color: '#0f172a', fontWeight: '700' }}>{typeof p.nom === 'object' ? (p.nom[appLanguage] || p.nom.fr) : p.nom}</h4>

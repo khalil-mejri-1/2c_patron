@@ -11,6 +11,7 @@ import {
 import { Link, useNavigate } from 'react-router-dom';
 import BASE_URL from '../apiConfig';
 import { trackAddToCart, trackInitiateCheckout, trackPurchase, sanitizePrice, sanitizeQuantity } from '../services/metaPixel';
+import { resolveImageUrl, handleImageError } from '../utils/imageHelper';
 import '../pages/shop_redesign.css';
 import './PremiumSkeleton.css';
 import { PremiumErrorState } from './Skeletons';
@@ -193,7 +194,7 @@ const ImageCarousel = ({ images, direction, height = "280px" }) => {
                         background: '#ffffff'
                     }}>
                         <img
-                            src={img}
+                            src={resolveImageUrl(img)}
                             alt={`Product view ${index + 1}`}
                             style={{
                                 width: '100%',
@@ -201,6 +202,7 @@ const ImageCarousel = ({ images, direction, height = "280px" }) => {
                                 objectFit: 'contain',
                                 transition: 'transform 0.5s ease'
                             }}
+                            onError={(e) => handleImageError(e, img)}
                         />
                     </div>
                 ))}
@@ -1336,7 +1338,7 @@ export default function HeroSection({ isLoggedIn = false, currentUserEmail = '' 
                                                 src={product.url}
                                                 alt={product.alt}
                                                 className="hero-card-image"
-                                                style={{ height: '100%', objectFit: 'cover', cursor: isMain ? 'pointer' : 'default' }}
+                                                style={{ height: '100%', width: '100%', objectFit: 'contain', cursor: isMain ? 'pointer' : 'default' }}
                                             />
                                         </div>
 

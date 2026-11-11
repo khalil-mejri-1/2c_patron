@@ -146,6 +146,18 @@ function CheckoutModal({
         }
     }, [isOpen]);
 
+    // Close modal on Escape key
+    useEffect(() => {
+        if (!isOpen) return;
+        const handleKeyDown = (e) => {
+            if (e.key === 'Escape') {
+                onClose();
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [isOpen, onClose]);
+
     if (!isOpen) return null;
 
     const handleConfirm = async (e) => {
@@ -178,124 +190,174 @@ function CheckoutModal({
         return `https://wa.me/${whatsappNumber.replace(/\s+/g, '')}?text=${encodeURIComponent(text)}`;
     };
 
+    const itemsSectionTitle =
+        appLanguage === 'ar'
+            ? 'المنتجات في السلة'
+            : appLanguage === 'en'
+                ? 'Cart Items'
+                : 'Articles commandés';
+
+    const itemsCountText =
+        appLanguage === 'ar'
+            ? `${totalQty} منتج`
+            : appLanguage === 'en'
+                ? `${totalQty} ${totalQty > 1 ? 'items' : 'item'}`
+                : `${totalQty} ${totalQty > 1 ? 'articles' : 'article'}`;
+
+    const totalDisplayLabel =
+        appLanguage === 'ar'
+            ? 'الإجمالي للدفع'
+            : appLanguage === 'en'
+                ? 'TOTAL TO PAY'
+                : 'TOTAL À PAYER';
+
     return (
-        <div className="premium-modal-backdrop" onClick={onClose}>
-            <div className="premium-checkout-modal" onClick={e => e.stopPropagation()}>
-                <button className="premium-modal-close-icon" onClick={onClose}><FaTimes /></button>
-
-                <h3 className="checkout-modal-title">
-                    <span className="clipboard-icon-wrapper"><FaClipboardList /></span>
-                    {t.clientInfoTitle}
-                    {isAdmin && (
-                        <button
-                            className="edit-section-btn minimal"
-                            onClick={() => onEditClick('checkout')}
-                            title="Modifier"
-                            style={{ marginLeft: '10px' }}
-                        >
-                            <FaEdit />
-                        </button>
-                    )}
-                </h3>
-
-                <form onSubmit={handleConfirm} className="checkout-modal-form">
-                    <div className="checkout-form-row">
-                        <div className="checkout-form-group">
-                            <label>{t.clientNameLabel}</label>
-                            <input
-                                type="text"
-                                value={name}
-                                onChange={e => setName(e.target.value)}
-                                placeholder="..."
-                                required
-                            />
-                        </div>
-                        <div className="checkout-form-group">
-                            <label>{t.clientPhoneLabel}</label>
-                            <input
-                                type="text"
-                                value={phone}
-                                onChange={e => setPhone(e.target.value)}
-                                placeholder="+216..."
-                                required
-                            />
-                        </div>
-                    </div>
-
-                    <div className="checkout-form-group full-width">
-                        <label>{t.clientAddressLabel}</label>
-                        <input
-                            type="text"
-                            value={address}
-                            onChange={e => setAddress(e.target.value)}
-                            placeholder="..."
-                            required
-                        />
-                    </div>
-
-                    {/* mini listing of cart items */}
-                    <div className="checkout-items-list">
-                        {cartItems.map(item => {
-                            const cleanItemPrice = sanitizePrice(item.price);
-                            const cleanItemQty = sanitizeQuantity(item.quantity);
-                            const itemName = typeof item.name === 'object' ? (item.name[appLanguage] || item.name.fr || item.name.ar || '') : (item.name || '');
-                            return (
-                                <div key={item.id} className="checkout-item-mini">
-                                    <img
-                                        src={item.url || item.image}
-                                        alt={itemName}
-                                        className="checkout-item-mini-img"
-                                    />
-                                    <div className="checkout-item-mini-details">
-                                        <span className="checkout-item-mini-name">{itemName}</span>
-                                        <span className="checkout-item-mini-meta">{cleanItemQty}x {cleanItemPrice.toFixed(2)} DT</span>
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </div>
-
-                    <div className="checkout-summary-row">
-                        <div className="checkout-qty-selector">
-                            <span className="qty-control">-</span>
-                            <span className="qty-val">{totalQty}</span>
-                            <span className="qty-control">+</span>
-                        </div>
-                        <div className="checkout-total-display">
-                            <span className="total-display-label">{appLanguage === 'ar' ? 'الإجمالي للدفع' : 'TOTAL À PAYER'}</span>
-                            <span className="total-display-value">{itemsTotal.toFixed(2)} DT</span>
-                        </div>
-                    </div>
-
-                    <p className="checkout-free-delivery">
-                        {t.freeDeliveryText}
+        <div className="premium-modal-backdrop checkout-modal-backdrop" onClick={onClose}>
+            <div
+                className="premium-checkout-modal"
+                dir={appLanguage === 'ar' ? 'rtl' : 'ltr'}
+                role="dialog"
+                aria-modal="true"
+                onClick={e => e.stopPropagation()}
+            >
+                <div className="checkout-modal-header">
+                    <h3 className="checkout-modal-title">
+                        <span className="clipboard-icon-wrapper"><FaClipboardList /></span>
+                        <span>{t.clientInfoTitle}</span>
                         {isAdmin && (
                             <button
+                                type="button"
                                 className="edit-section-btn minimal"
                                 onClick={() => onEditClick('checkout')}
                                 title="Modifier"
-                                style={{ marginLeft: '5px', padding: '2px 6px', fontSize: '0.75rem' }}
                             >
                                 <FaEdit />
                             </button>
                         )}
-                    </p>
+                    </h3>
+                    <button
+                        type="button"
+                        className="premium-modal-close-icon"
+                        onClick={onClose}
+                        aria-label={appLanguage === 'ar' ? 'إغلاق' : 'Fermer'}
+                    >
+                        <FaTimes />
+                    </button>
+                </div>
 
-                    <div className="checkout-actions-container" style={{ display: 'flex', gap: '15px', marginTop: '15px' }}>
-                        <button type="submit" className="checkout-confirm-btn" style={{ flex: 1 }} disabled={isSubmitting}>
-                            <FaShoppingCart /> {t.confirmOrderBtn}
-                        </button>
+                <form onSubmit={handleConfirm} className="checkout-modal-form">
+                    <div className="checkout-modal-body">
+                        <div className="checkout-form-row">
+                            <div className="checkout-form-group">
+                                <label>{t.clientNameLabel}</label>
+                                <input
+                                    type="text"
+                                    value={name}
+                                    onChange={e => setName(e.target.value)}
+                                    placeholder="..."
+                                    required
+                                />
+                            </div>
+                            <div className="checkout-form-group">
+                                <label>{t.clientPhoneLabel}</label>
+                                <input
+                                    type="text"
+                                    value={phone}
+                                    onChange={e => setPhone(e.target.value)}
+                                    placeholder="+216..."
+                                    dir="ltr"
+                                    required
+                                />
+                            </div>
+                        </div>
+
+                        <div className="checkout-form-group full-width">
+                            <label>{t.clientAddressLabel}</label>
+                            <input
+                                type="text"
+                                value={address}
+                                onChange={e => setAddress(e.target.value)}
+                                placeholder="..."
+                                required
+                            />
+                        </div>
+
+                        {/* mini listing of cart items */}
+                        <div className="checkout-items-section">
+                            <div className="checkout-items-header">
+                                <span className="checkout-items-header-title">{itemsSectionTitle}</span>
+                                <span className="checkout-items-count-badge">{itemsCountText}</span>
+                            </div>
+                            <div className="checkout-items-list">
+                                {cartItems.map((item, idx) => {
+                                    const cleanItemPrice = sanitizePrice(item.price);
+                                    const cleanItemQty = sanitizeQuantity(item.quantity);
+                                    const itemName = typeof item.name === 'object' ? (item.name[appLanguage] || item.name.fr || item.name.ar || '') : (item.name || '');
+                                    return (
+                                        <div key={item.id || idx} className="checkout-item-mini">
+                                            <img
+                                                src={item.url || item.image}
+                                                alt={itemName}
+                                                className="checkout-item-mini-img"
+                                            />
+                                            <div className="checkout-item-mini-details">
+                                                <span className="checkout-item-mini-name" title={itemName}>{itemName}</span>
+                                                <span className="checkout-item-mini-meta">{cleanItemQty}× {cleanItemPrice.toFixed(2)} DT</span>
+                                            </div>
+                                            <span className="checkout-item-mini-subtotal">
+                                                {(cleanItemPrice * cleanItemQty).toFixed(2)} DT
+                                            </span>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
                     </div>
 
-                    <div className="checkout-whatsapp-link-wrapper" style={{ marginTop: '10px' }}>
-                        <a
-                            href={generateWhatsappLink()}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="checkout-whatsapp-link"
-                        >
-                            <FaWhatsapp /> {t.whatsappOrderBtn}
-                        </a>
+                    <div className="checkout-modal-footer">
+                        <div className="checkout-summary-row">
+                            <div className="checkout-qty-selector">
+                                <span className="qty-control">-</span>
+                                <span className="qty-val">{totalQty}</span>
+                                <span className="qty-control">+</span>
+                            </div>
+                            <div className="checkout-total-display">
+                                <span className="total-display-label">{totalDisplayLabel}</span>
+                                <span className="total-display-value">{itemsTotal.toFixed(2)} DT</span>
+                            </div>
+                        </div>
+
+                        <div className="checkout-free-delivery">
+                            <span>{t.freeDeliveryText}</span>
+                            {isAdmin && (
+                                <button
+                                    type="button"
+                                    className="edit-section-btn minimal"
+                                    onClick={() => onEditClick('checkout')}
+                                    title="Modifier"
+                                    style={{ padding: '2px 6px', fontSize: '0.75rem' }}
+                                >
+                                    <FaEdit />
+                                </button>
+                            )}
+                        </div>
+
+                        <div className="checkout-actions-container">
+                            <button type="submit" className="checkout-confirm-btn" disabled={isSubmitting}>
+                                <FaShoppingCart /> {t.confirmOrderBtn}
+                            </button>
+                        </div>
+
+                        <div className="checkout-whatsapp-link-wrapper">
+                            <a
+                                href={generateWhatsappLink()}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="checkout-whatsapp-link"
+                            >
+                                <FaWhatsapp /> {t.whatsappOrderBtn}
+                            </a>
+                        </div>
                     </div>
                 </form>
             </div>

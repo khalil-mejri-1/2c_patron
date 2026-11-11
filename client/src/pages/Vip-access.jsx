@@ -12,6 +12,7 @@ import { ProductGridSkeleton, PremiumErrorState } from '../comp/Skeletons';
 import './vip_premium.css';
 import './lessons_premium.css';
 import { syncAuthSession } from '../utils/authSession';
+import { getCategoryFallbackImage, resolveCategoryDisplayImage } from '../utils/categoryFallbacks';
 
 // Clé de localStorage pour mémoriser l'état
 const CERTIF_MODAL_KEY = 'hasSeenVipCertifModal';
@@ -231,7 +232,24 @@ export default function Vipaccess() {
             showAlert('success', 'Succès', 'Image téléchargée !');
         } catch (err) {
             console.error("Upload error:", err);
-            showAlert('error', 'Erreur', "Échec de l'upload.");
+            // Fallback: Read as base64 so admin can still preview and save category without interruption
+            const reader = new FileReader();
+            reader.onload = (loadEvt) => {
+                const base64Url = loadEvt.target.result;
+                if (langCode) {
+                    setCategoryFormData(prev => ({
+                        ...prev,
+                        image: {
+                            ...(typeof prev.image === 'object' ? prev.image : { fr: prev.image || '' }),
+                            [langCode]: base64Url
+                        }
+                    }));
+                } else {
+                    setCategoryFormData(prev => ({ ...prev, image: base64Url }));
+                }
+                showAlert('success', 'Succès', 'Image chargée avec succès !');
+            };
+            reader.readAsDataURL(file);
         } finally {
             setIsModalUploading(false);
             e.target.value = '';
@@ -446,7 +464,7 @@ export default function Vipaccess() {
             duration,
             order: data.order || 0,
             accessType: data.accessType || 'vip',
-            imageFit: data.imageFit || 'cover'
+            imageFit: data.imageFit || 'contain'
         };
     };
 
@@ -648,9 +666,10 @@ export default function Vipaccess() {
                                 const actualAccessType = course.accessType || 'vip';
                                 const isLocked = !isLoggedIn;
 
-                                // Logic for title and image per language
+                                // Logic for title and image per language with resilient fallback
                                 const displayTitle = typeof course.title === 'object' ? (course.title[appLanguage] || course.title.fr) : course.title;
-                                const displayImage = typeof course.image === 'object' ? (course.image[appLanguage] || course.image.fr || course.image['fr']) : (course.image || '');
+                                const fallbackImg = getCategoryFallbackImage(course, appLanguage);
+                                const displayImage = resolveCategoryDisplayImage(course, appLanguage);
                                 const technicalLink = course.technicalName ? encodeURIComponent(course.technicalName) : encodeURIComponent(typeof course.title === 'object' ? (course.title.fr || course.title[Object.keys(course.title)[0]]) : course.title);
 
                                 return (
@@ -673,7 +692,18 @@ export default function Vipaccess() {
 
                                     >
                                         <div className="vip-card-img-wrapper">
-                                            <img src={displayImage} alt={displayTitle} className="vip-card-img" style={{ objectFit: course.imageFit || 'cover' }} />
+                                            <img 
+                                                src={displayImage} 
+                                                alt={displayTitle} 
+                                                className="vip-card-img" 
+                                                style={{ objectFit: course.imageFit || 'contain' }}
+                                                onError={(e) => {
+                                                    if (e.currentTarget.src !== fallbackImg) {
+                                                        e.currentTarget.onerror = null;
+                                                        e.currentTarget.src = fallbackImg;
+                                                    }
+                                                }}
+                                            />
                                             <div className="vip-card-overlay">
                                                 {isAdmin && (
                                                     <div className="admin-card-controls" onClick={(e) => e.stopPropagation()}>
@@ -912,7 +942,7 @@ export default function Vipaccess() {
                                                     <img
                                                         src={typeof categoryFormData.image === 'object' ? categoryFormData.image[lang.code] : categoryFormData.image}
                                                         alt="Preview"
-                                                        style={{ width: '100%', height: '150px', objectFit: 'cover', borderRadius: '12px', border: '1px solid #e2e8f0' }}
+                                                        style={{ width: '100%', height: '150px', objectFit: 'contain', background: '#f8fafc', padding: '6px', borderRadius: '12px', border: '1px solid #e2e8f0' }}
                                                     />
                                                 </div>
                                             )}

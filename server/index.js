@@ -35,6 +35,7 @@ Abonnement.collection.dropIndex('mail_1').catch(() => { });
 const Message = require("./models/message.js");
 const VipCategory = require('./models/VipCategory');
 const SpecializedCourse = require('./models/SpecializedCourse.js');
+const Image = require('./models/Image.js');
 const SpecializedVideo = require('./models/SpecializedVideo.js');
 const SiteSetting = require('./models/SiteSetting.js');
 const ShopCategory = require('./models/ShopCategory.js');
@@ -80,7 +81,39 @@ const videoStorage = multer.diskStorage({
 });
 const uploadVideo = multer({ storage: videoStorage });
 
-// Serve uploads directory
+// -------------------- Serve Images directly from MongoDB Atlas Database --------------------
+app.get('/uploads/images/:filename', async (req, res, next) => {
+    try {
+        const { filename } = req.params;
+        const img = await Image.findOne({ filename });
+        if (img && img.data) {
+            res.set('Content-Type', img.contentType || 'image/webp');
+            res.set('Cache-Control', 'public, max-age=31536000, immutable');
+            return res.send(img.data);
+        }
+    } catch (err) {
+        console.error('Error serving image from DB:', err.message);
+    }
+    next();
+});
+
+app.get('/api/images/:filename', async (req, res) => {
+    try {
+        const { filename } = req.params;
+        const img = await Image.findOne({ filename });
+        if (!img || !img.data) {
+            return res.status(404).send('Image non trouvée dans la base de données');
+        }
+        res.set('Content-Type', img.contentType || 'image/webp');
+        res.set('Cache-Control', 'public, max-age=31536000, immutable');
+        res.send(img.data);
+    } catch (err) {
+        console.error('Error serving image from DB:', err.message);
+        res.status(500).send('Erreur serveur');
+    }
+});
+
+// Serve uploads directory (videos, static fallbacks)
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // -------------------- Google Drive Stream Proxy (Instant Pipeline) --------------------
@@ -118,10 +151,10 @@ app.get('/api/drive-stream/:id', async (req, res) => {
 const getClientIp = (req) => {
     const headers = req.headers || {};
     let ip = headers['cf-connecting-ip'] ||
-             headers['x-real-ip'] ||
-             headers['x-client-ip'] ||
-             headers['x-forwarded-for']?.split(',')[0]?.trim() ||
-             req.socket?.remoteAddress;
+        headers['x-real-ip'] ||
+        headers['x-client-ip'] ||
+        headers['x-forwarded-for']?.split(',')[0]?.trim() ||
+        req.socket?.remoteAddress;
     if (ip && typeof ip === 'string' && ip.startsWith('::ffff:')) {
         ip = ip.replace('::ffff:', '');
     }
@@ -190,27 +223,34 @@ app.post('/api/meta/event', async (req, res) => {
 });
 
 
-// -------------------- Cloudinary Upload Route --------------------
+// -------------------- Smart Image Upload Route (Cloudinary + Local Disk Fallback) --------------------
+// -------------------- Smart Image Upload Route (Stores directly in MongoDB Database) --------------------
 app.post('/api/upload', upload.single('image'), async (req, res) => {
     try {
         if (!req.file) {
             return res.status(400).json({ message: 'Aucun fichier fourni' });
         }
-        // استخدام upload_stream لرفع الملف من الذاكرة مباشرة دون الحاجة لحفظه على قرص الخادم (Vercel يمنع ذلك)
-        const stream = cloudinary.uploader.upload_stream(
-            { resource_type: 'auto', folder: 'magasin' },
-            (error, result) => {
-                if (error) {
-                    console.error("Erreur d'upload Cloudinary:", error);
-                    return res.status(500).json({ message: 'Échec de l\'upload de l\'image', error: error.message });
-                }
-                res.status(200).json({ url: result.secure_url });
-            }
-        );
-        stream.end(req.file.buffer);
+
+        const ext = path.extname(req.file.originalname) || '.webp';
+        const filename = `img-${Date.now()}-${Math.round(Math.random() * 1E9)}${ext}`;
+
+        const newImage = new Image({
+            filename,
+            contentType: req.file.mimetype || 'image/webp',
+            data: req.file.buffer,
+            size: req.file.size
+        });
+        await newImage.save();
+
+        const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+        const host = req.get('host');
+        const fileUrl = `${protocol}://${host}/uploads/images/${filename}`;
+        console.log(`✅ Image uploaded and stored permanently in MongoDB Atlas: ${filename}`);
+
+        return res.status(200).json({ url: fileUrl });
     } catch (error) {
-        console.error("Erreur d'upload:", error);
-        res.status(500).json({ message: 'Échec de l\'upload', error: error.message });
+        console.error("Erreur d'upload dans la base de données:", error);
+        return res.status(500).json({ message: "Échec de l'upload dans la base de données", error: error.message });
     }
 });
 
@@ -426,7 +466,7 @@ const parseDurationToExpiration = (durationStr, baseDate = new Date()) => {
     const str = durationStr.toString().toLowerCase().trim();
     const match = str.match(/(\d+)\s*(min|minute|minutes|h|heure|heures|j|jour|jours|d|day|days|m|mois|month|months|a|an|ans|year|years)/);
     const now = new Date(baseDate.getTime());
-    
+
     if (!match) {
         now.setMonth(now.getMonth() + 1);
         return now;
@@ -484,20 +524,25 @@ app.post('/api/login-traditional', async (req, res) => {
             let firstLogin = false;
 
             // Handle Fingerprint logic (Replaces IP/Device Info)
-            if (!user.lockedFingerprint) {
-                // First login: Generate and lock the fingerprint
-                const newFingerprint = crypto.randomBytes(32).toString('hex');
-                user.lockedFingerprint = newFingerprint;
-                await user.save();
-                firstLogin = true;
-                console.log(`🔒 Device locked for user: ${mail}`);
-            } else {
-                // Subsequent login: Check if provided fingerprint matches
-                if (user.statut !== 'admin' && user.lockedFingerprint !== fingerprint) {
-                    return res.status(403).json({
-                        errorType: 'IP_LOCKED', // Keep same error type for frontend compatibility
-                        error: 'Accès restreint : الجهاز غير معترف به.'
-                    });
+            // Admins are completely exempt from device fingerprint locking to allow login from all devices
+            const isAdminUser = user.statut === 'admin' || user.mail.toLowerCase() === 'admin@gmail.com' || user.mail.toLowerCase() === 'admin@admin.com';
+
+            if (!isAdminUser) {
+                if (!user.lockedFingerprint) {
+                    // First login: Generate and lock the fingerprint
+                    const newFingerprint = crypto.randomBytes(32).toString('hex');
+                    user.lockedFingerprint = newFingerprint;
+                    await user.save();
+                    firstLogin = true;
+                    console.log(`🔒 Device locked for user: ${mail}`);
+                } else {
+                    // Subsequent login: Check if provided fingerprint matches
+                    if (user.lockedFingerprint !== fingerprint) {
+                        return res.status(403).json({
+                            errorType: 'IP_LOCKED', // Keep same error type for frontend compatibility
+                            error: 'Accès restreint : الجهاز غير معترف به.'
+                        });
+                    }
                 }
             }
 
@@ -527,10 +572,10 @@ app.get('/api/users/check-status', async (req, res) => {
         if (!email) return res.status(400).json({ error: 'Email query parameter is required.' });
 
         const lowercaseEmail = email.toLowerCase();
-        if (lowercaseEmail === 'admin@admin.com' || lowercaseEmail === 'taher@cpatron.com') {
+        if (lowercaseEmail === 'admin@admin.com' || lowercaseEmail === 'taher@cpatron.com' || lowercaseEmail === 'admin@gmail.com') {
             return res.status(200).json({
                 id: 'master_admin_id',
-                nom: 'Master Admin',
+                nom: 'Admin',
                 statut: 'admin',
                 abonne: 'oui'
             });
@@ -1082,7 +1127,7 @@ app.get("/api/users/:email", async (req, res) => {
         const email = req.params.email.toLowerCase();
 
         // Check if it's one of the hardcoded admin accounts
-        if (email === 'admin@admin.com' || email === 'taher@cpatron.com') {
+        if (email === 'admin@admin.com' || email === 'taher@cpatron.com' || email === 'admin@gmail.com') {
             return res.status(200).json({ abonne: "oui", exists: true, statut: "admin", isExpired: false });
         }
 
@@ -1485,6 +1530,10 @@ app.delete('/api/abonnement/:id', async (req, res) => {
         // ❌ تم حذف محاولة حذف الصورة من السيرفر (fs.unlinkSync)
 
 
+        if (abonnement.generated_mail) {
+            await User.deleteMany({ mail: { $regex: new RegExp("^" + abonnement.generated_mail + "$", "i") } });
+        }
+
         await Abonnement.findByIdAndDelete(req.params.id);
         res.json({ message: 'Abonnement supprimé avec succès.' });
     } catch (error) {
@@ -1548,6 +1597,46 @@ app.post('/api/abonnement/generate-account/:id', async (req, res) => {
     } catch (error) {
         console.error("Error generating account:", error);
         res.status(500).json({ message: "Erreur lors de la génération du compte.", error: error.message });
+    }
+});
+
+app.post('/api/abonnement/regenerate-account/:id', async (req, res) => {
+    try {
+        const abonnementId = req.params.id;
+        const abo = await Abonnement.findById(abonnementId);
+        if (!abo) return res.status(404).json({ message: "Demande non trouvée." });
+
+        const oldEmail = abo.generated_mail;
+
+        // Supprimer l'ancien utilisateur pour que l'ancien Email et Mot de passe ne soient plus valides
+        if (oldEmail) {
+            await User.deleteMany({ mail: { $regex: new RegExp("^" + oldEmail + "$", "i") } });
+            console.log(`🗑️ Ancien compte utilisateur supprimé pour l'email: ${oldEmail}`);
+        }
+
+        // Générer un nouvel Email et Mot de passe uniques
+        const generatedEmail = await generateEmail(abo.nom);
+        const generatedPassword = generatePassword();
+
+        // Mettre à jour la demande d'abonnement
+        abo.statut_abonnement = 'approuvé';
+        abo.generated_mail = generatedEmail;
+        abo.generated_password = generatedPassword;
+        if (!abo.vipExpiresAt) {
+            abo.vipExpiresAt = parseDurationToExpiration(abo.duree, new Date());
+        }
+        await abo.save();
+
+        res.status(200).json({
+            message: "Nouveaux identifiants générés avec succès. Anciens identifiants supprimés.",
+            email: generatedEmail,
+            password: generatedPassword,
+            vipExpiresAt: abo.vipExpiresAt,
+            abonnement: abo
+        });
+    } catch (error) {
+        console.error("Error regenerating account:", error);
+        res.status(500).json({ message: "Erreur lors de la régénération du compte.", error: error.message });
     }
 });
 
@@ -2460,8 +2549,32 @@ app.get(/(.*)/, (req, res) => {
 });
 
 mongoose.connect(MONGODB_URI)
-    .then(() => {
+    .then(async () => {
         console.log('🎉 Successfully connected to MongoDB!');
+        try {
+            const adminEmail = 'admin@gmail.com';
+            const existingAdmin = await User.findOne({ mail: adminEmail });
+            if (!existingAdmin) {
+                await User.create({
+                    nom: 'Admin',
+                    mail: adminEmail,
+                    mot_de_pass: '123456',
+                    statut: 'admin',
+                    abonne: 'oui',
+                    lockedFingerprint: null
+                });
+                console.log(`✅ Default admin seeded: ${adminEmail}`);
+            } else {
+                existingAdmin.statut = 'admin';
+                existingAdmin.mot_de_pass = '123456';
+                existingAdmin.abonne = 'oui';
+                existingAdmin.lockedFingerprint = null;
+                await existingAdmin.save();
+                console.log(`✅ Default admin updated: ${adminEmail}`);
+            }
+        } catch (seedErr) {
+            console.error('Error ensuring default admin account:', seedErr.message);
+        }
         app.listen(PORT, () => {
             console.log(`🚀 Server is running on port ${PORT}`);
         });

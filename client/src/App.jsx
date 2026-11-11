@@ -135,9 +135,17 @@ function AppContent() {
             const authStatus = session.isLoggedIn || (localStorage.getItem('login') === 'true' && !!userEmail);
             setIsAuthenticated(prev => prev !== authStatus ? authStatus : prev);
 
+            const currentPath = location.pathname.toLowerCase();
+            const isLessonPath = currentPath.startsWith('/leçons') || currentPath.startsWith('/les_leçons');
+            const isTrialMode = location.search.includes('trial=true') || sessionStorage.getItem('is_trial_mode') === 'true';
+
             if (!authStatus || !userEmail) {
+                // Allow free trial lesson preview without login
+                if (isTrialMode && isLessonPath) {
+                    return;
+                }
+
                 // If they are on a VIP or Admin route but not authenticated, redirect them
-                const currentPath = location.pathname.toLowerCase();
                 const isVipPath = vipRequiredPaths.some(path => currentPath.startsWith(path.toLowerCase())) || currentPath.startsWith('/les_leçons');
                 const isAdminPath = currentPath.startsWith('/admin') && !currentPath.startsWith('/admin-login');
                 if (isVipPath || isAdminPath) {
@@ -177,7 +185,6 @@ function AppContent() {
                     vipStatus = true;
                 }
 
-                const currentPath = location.pathname;
                 const isVipPath = vipRequiredPaths.some(path => currentPath.toLowerCase().startsWith(path.toLowerCase())) || currentPath.toLowerCase().startsWith('/les_leçons');
                 const isAdminPath = currentPath.toLowerCase().startsWith('/admin') && !currentPath.toLowerCase().startsWith('/admin-login');
 
@@ -189,6 +196,9 @@ function AppContent() {
 
                 // 🛑 Immediate Redirect for Expired or Non-VIP users accessing VIP paths to Home page
                 if (isVipPath && (isExpiredOrNotVip && data.statut !== 'admin')) {
+                    if (isTrialMode && isLessonPath) {
+                        return;
+                    }
                     console.warn("🚫 VIP Access expired. Immediate redirect to home.");
                     navigate('/', { replace: true });
                     return;
@@ -198,9 +208,8 @@ function AppContent() {
             }
 
             setIsVip(prev => prev !== vipStatus ? vipStatus : prev);
-            const currentPath = location.pathname;
 
-            if (authStatus && restrictedPathsForAuthenticated.includes(currentPath)) {
+            if (authStatus && restrictedPathsForAuthenticated.includes(location.pathname)) {
                 navigate('/');
                 return;
             }

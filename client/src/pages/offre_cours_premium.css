@@ -1071,3 +1071,55 @@
     color: #f0d060;
 }
 
+/* --- 🎬 TRIAL LESSON BUTTON 🎬 --- */
+.card-trial-btn {
+    padding: 13px 20px;
+    border-radius: 12px;
+    font-weight: 900;
+    font-size: 0.95rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    text-decoration: none;
+    border: none;
+    background: #ffcc00;
+    color: #000000;
+    width: 100%;
+    margin-top: 4px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 16px rgba(255, 204, 0, 0.4), 0 2px 4px rgba(0, 0, 0, 0.15);
+    position: relative;
+    overflow: hidden;
+    letter-spacing: 0.3px;
+}
+
+.card-trial-btn:hover {
+    background: #ffd633;
+    color: #000000;
+    transform: translateY(-2px);
+    box-shadow: 0 7px 22px rgba(255, 204, 0, 0.55), 0 3px 6px rgba(0, 0, 0, 0.2);
+}
+
+.card-trial-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(255, 204, 0, 0.35);
+}
+
+.card-trial-btn .trial-icon {
+    font-size: 0.9rem;
+    color: #000000;
+    transition: transform 0.25s ease;
+    display: flex;
+    align-items: center;
+}
+
+.card-trial-btn:hover .trial-icon {
+    transform: scale(1.15) translateX(2px);
+    color: #000000;
+}
+
+
+

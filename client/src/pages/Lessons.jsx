@@ -12,6 +12,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { useAlert } from '../context/AlertContext';
 import { CoursePlayerSkeleton } from '../comp/Skeletons';
 import './lessons_premium.css';
+import { getCategoryFallbackImage } from '../utils/categoryFallbacks';
 
 // 🌐 كائن الترجمة
 const translations = {
@@ -40,7 +41,7 @@ const translations = {
         requestSentTitle: "تم استلام طلبك!",
         requestSentMsg: "سنقوم بمراجعة طلبك والاتصال بك في أقرب وقت ممكن. شكراً لاهتمامك!",
         rotateBtn: "تدوير الشاشة بالعرض",
-        exitRotateBtn: "إغلاق الشاشة الكاملة"
+        exitRotateBtn: "تصغير الفيديو وإرجاعه"
     },
     fr: {
         loading: "Chargement du contenu...",
@@ -67,7 +68,7 @@ const translations = {
         requestSentTitle: "Demande Reçue !",
         requestSentMsg: "Nous avons bien reçu votre demande. Un administrateur vous contactera sous peu. Merci !",
         rotateBtn: "Pivoter l'écran (Plein écran)",
-        exitRotateBtn: "Quitter le plein écran"
+        exitRotateBtn: "Réduire la vidéo"
     },
     en: {
         loading: "Loading content...",
@@ -94,7 +95,7 @@ const translations = {
         requestSentTitle: "Request Received!",
         requestSentMsg: "We have received your request. An administrator will contact you shortly. Thank you!",
         rotateBtn: "Rotate Screen (Landscape)",
-        exitRotateBtn: "Exit Fullscreen"
+        exitRotateBtn: "Minimize Video"
     },
     tn: {
         loading: "جاري تحميل محتوى الدورة...",
@@ -121,7 +122,7 @@ const translations = {
         requestSentTitle: "تم استلام طلبك!",
         requestSentMsg: "سنقوم بمراجعة طلبك والاتصال بك في أقرب وقت ممكن. شكراً لاهتمامك!",
         rotateBtn: "تدوير الشاشة بالعرض",
-        exitRotateBtn: "إغلاق الشاشة الكاملة"
+        exitRotateBtn: "تصغير الفيديو وإرجاعه"
     }
 };
 
@@ -149,14 +150,48 @@ const getThumbnailUrl = (url, fallbackTitle) => {
     return `https://images.unsplash.com/photo-1558769132-cb1aea458c5e?q=80&w=2574&auto=format&fit=crop`;
 };
 
-const LessonCard = ({ video, isActive, onSelect, lang, isAdmin, onEdit, onDelete, onUploadThumbnail, uploadingId, appLanguage }) => {
+// Helper to determine if a lesson is accessible in free trial mode (Patron, Coupe, Couture)
+const isTrialAllowedVideo = (video, idx) => {
+    if (!video) return false;
+    // The first video (e.g. Patron) is always accessible
+    if (idx === 0) return true;
+
+    // By position in curriculum: Patron (idx 0), Coupe (idx 1), Couture (idx 2)
+    if (idx === 1 || idx === 2) return true;
+
+    // Check title in all language variants
+    const titleCandidates = [
+        video.title,
+        video.title_lang?.fr,
+        video.title_lang?.ar,
+        video.title_lang?.en,
+        video.title_lang?.tn,
+        video.category,
+        video.subCategory
+    ].filter(Boolean).map(t => t.toString().toLowerCase().trim());
+
+    return titleCandidates.some(t =>
+        t.includes('coupe') ||
+        t.includes('couture') ||
+        t.includes('patron') ||
+        t.includes('قص') ||
+        t.includes('فصالة') ||
+        t.includes('خياطة') ||
+        t.includes('باترون') ||
+        t.includes('cut') ||
+        t.includes('sew')
+    );
+};
+
+const LessonCard = ({ video, isActive, onSelect, lang, isAdmin, onEdit, onDelete, onUploadThumbnail, uploadingId, appLanguage, isTrialMode, isTrialVideo }) => {
     const fileRef = useRef(null);
+    const isLocked = isTrialMode && !isAdmin && !isTrialVideo;
 
     return (
         <div
-            className={`lesson-card-item-premium ${isActive ? 'is-active' : ''}`}
+            className={`lesson-card-item-premium ${isActive ? 'is-active' : ''} ${isLocked ? 'trial-locked-card' : ''}`}
             onClick={() => onSelect(video)}
-            style={{ position: 'relative' }}
+            style={{ position: 'relative', opacity: isLocked ? 0.7 : 1 }}
         >
             {isAdmin && (
                 <div style={{ position: 'absolute', top: '10px', right: '10px', zIndex: 12, display: 'flex', gap: '5px' }}>
@@ -191,22 +226,60 @@ const LessonCard = ({ video, isActive, onSelect, lang, isAdmin, onEdit, onDelete
                     </button>
                 </div>
             )}
+
+            {/* Trial mode badges */}
+            {isTrialMode && !isAdmin && (
+                <div style={{
+                    position: 'absolute', top: '8px', left: '8px', zIndex: 12,
+                    padding: '3px 8px', borderRadius: '8px', fontSize: '0.72rem', fontWeight: 800,
+                    background: isTrialVideo ? 'linear-gradient(135deg,#d4af37,#f5e478)' : 'rgba(30,41,59,0.85)',
+                    color: isTrialVideo ? '#1e293b' : '#94a3b8',
+                    border: isTrialVideo ? 'none' : '1px solid rgba(148,163,184,0.3)',
+                    backdropFilter: 'blur(4px)',
+                    display: 'flex', alignItems: 'center', gap: '4px'
+                }}>
+                    {isTrialVideo
+                        ? <>{appLanguage === 'ar' ? '⭐ درس تجريبي' : '⭐ Essai'}</>
+                        : <><FaLock size={10} /> {appLanguage === 'ar' ? 'مقفل' : 'VIP'}</>
+                    }
+                </div>
+            )}
+
             <div className="l-card-preview-box">
-                <img src={video.thumbnail} alt={video.title} className="l-card-preview-img" />
+                <img 
+                    src={video.thumbnail || getCategoryFallbackImage(video.title, appLanguage)} 
+                    alt={video.title} 
+                    className="l-card-preview-img" 
+                    onError={(e) => {
+                        const fallback = getCategoryFallbackImage(video.title, appLanguage);
+                        if (e.currentTarget.src !== fallback) {
+                            e.currentTarget.onerror = null;
+                            e.currentTarget.src = fallback;
+                        }
+                    }}
+                />
                 <div className="l-play-overlay">
                     <div className="l-play-btn-circle">
-                        {isActive ? <FaPlayCircle /> : <FaPlay />}
+                        {isLocked ? <FaLock style={{ color: '#d4af37' }} /> : (isActive ? <FaPlayCircle /> : <FaPlay />)}
                     </div>
                 </div>
             </div>
             <div className="l-card-details" style={{ textAlign: appLanguage === 'ar' ? 'right' : 'left' }}>
                 <h3 className="l-card-title-text">{video.title}</h3>
                 <div className="l-card-meta-bar">
-                    {(isActive || video.status_lang?.[appLanguage] || video.isVip) && (
+                    {isActive ? (
                         <span className="l-meta-tag">
-                            {isActive ? (video.playing_text || lang.playing) : (video.status_lang?.[appLanguage] || (video.isVip ? 'VIP' : ''))}
+                            {video.playing_text || lang.playing}
                         </span>
-                    )}
+                    ) : (isTrialMode && isTrialVideo) ? (
+                        <span className="l-meta-tag" style={{ color: '#d4af37' }}>
+                            {appLanguage === 'ar' ? 'تجربة مجانية' : 'Essai gratuit'}
+                        </span>
+                    ) : (video.status_lang?.[appLanguage] || video.isVip) ? (
+                        <span className="l-meta-tag">
+                            {video.status_lang?.[appLanguage] || (video.isVip ? 'VIP' : '')}
+                        </span>
+                    ) : null}
                 </div>
             </div>
         </div>
@@ -288,83 +361,149 @@ export default function Lessons() {
 
     const topRef = useRef(null);
     const videoSectionRef = useRef(null);
+    const iframeRef = useRef(null);
     const [isLandscapeMode, setIsLandscapeMode] = useState(false);
 
-    // Listen for browser fullscreen exit events (ESC / device exit)
+    // Sync fullscreen state with browser events
     useEffect(() => {
         const handleFullscreenChange = () => {
-            const isFull = !!(document.fullscreenElement || document.webkitFullscreenElement);
-            if (!isFull) {
+            const isFs = !!(
+                document.fullscreenElement ||
+                document.webkitFullscreenElement ||
+                document.mozFullScreenElement ||
+                document.msFullscreenElement
+            );
+            if (!isFs) {
                 setIsLandscapeMode(false);
-                if (screen.orientation && screen.orientation.unlock) {
-                    screen.orientation.unlock().catch(() => {});
-                }
+                try {
+                    if (window.screen?.orientation?.unlock) {
+                        window.screen.orientation.unlock();
+                    } else if (window.screen?.unlockOrientation) {
+                        window.screen.unlockOrientation();
+                    }
+                } catch (e) {}
+            } else {
+                setIsLandscapeMode(true);
             }
         };
 
         document.addEventListener('fullscreenchange', handleFullscreenChange);
         document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+        document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+        document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+
         return () => {
             document.removeEventListener('fullscreenchange', handleFullscreenChange);
             document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+            document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
+            document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
         };
     }, []);
 
-    const toggleRotateLandscape = async () => {
-        const elem = videoSectionRef.current;
-        if (!elem) return;
+    // Handle Escape key to exit landscape fullscreen
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (e.key === 'Escape' && isLandscapeMode) {
+                toggleRotateLandscape();
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [isLandscapeMode]);
 
-        if (!isLandscapeMode && !document.fullscreenElement && !document.webkitFullscreenElement) {
+    const toggleRotateLandscape = async () => {
+        const isCurrentlyFullscreen = !!(
+            document.fullscreenElement ||
+            document.webkitFullscreenElement ||
+            document.mozFullScreenElement ||
+            document.msFullscreenElement ||
+            isLandscapeMode
+        );
+
+        if (!isCurrentlyFullscreen) {
             setIsLandscapeMode(true);
 
-            // 1. Enter Fullscreen Mode
-            try {
-                if (elem.requestFullscreen) {
-                    await elem.requestFullscreen();
-                } else if (elem.webkitRequestFullscreen) {
-                    await elem.webkitRequestFullscreen();
-                } else if (elem.msRequestFullscreen) {
-                    await elem.msRequestFullscreen();
+            // 1. Enter native fullscreen on the container (videoSectionRef) so the minimize button remains visible on top of the video
+            const target = videoSectionRef.current || iframeRef.current;
+            if (target) {
+                try {
+                    if (target.requestFullscreen) {
+                        await target.requestFullscreen();
+                    } else if (target.webkitRequestFullscreen) {
+                        await target.webkitRequestFullscreen();
+                    } else if (target.mozRequestFullScreen) {
+                        await target.mozRequestFullScreen();
+                    } else if (target.msRequestFullscreen) {
+                        await target.msRequestFullscreen();
+                    }
+                } catch (err) {
+                    console.log("Container fullscreen notice, trying iframe fallback:", err);
+                    if (iframeRef.current && target !== iframeRef.current) {
+                        try {
+                            if (iframeRef.current.requestFullscreen) {
+                                await iframeRef.current.requestFullscreen();
+                            } else if (iframeRef.current.webkitRequestFullscreen) {
+                                await iframeRef.current.webkitRequestFullscreen();
+                            }
+                        } catch (e2) {}
+                    }
                 }
-            } catch (e) {
-                console.log("Native fullscreen error / fallback:", e);
             }
 
-            // 2. Lock Orientation to Landscape if supported
+            // 2. Lock screen orientation to landscape horizontally on mobile devices
             try {
-                if (screen.orientation && screen.orientation.lock) {
-                    await screen.orientation.lock('landscape');
+                if (window.screen?.orientation?.lock) {
+                    await window.screen.orientation.lock('landscape');
+                } else if (window.screen?.lockOrientation) {
+                    window.screen.lockOrientation('landscape');
+                } else if (window.screen?.webkitLockOrientation) {
+                    window.screen.webkitLockOrientation('landscape');
+                } else if (window.screen?.mozLockOrientation) {
+                    window.screen.mozLockOrientation('landscape');
                 }
             } catch (e) {
-                console.log("Screen orientation lock notice:", e);
+                console.log("Orientation lock notice:", e);
             }
         } else {
             setIsLandscapeMode(false);
 
-            // 1. Exit Fullscreen
+            // 1. Unlock screen orientation
             try {
-                if (document.exitFullscreen) {
-                    await document.exitFullscreen();
-                } else if (document.webkitExitFullscreen) {
-                    await document.webkitExitFullscreen();
+                if (window.screen?.orientation?.unlock) {
+                    window.screen.orientation.unlock();
+                } else if (window.screen?.unlockOrientation) {
+                    window.screen.unlockOrientation();
                 }
             } catch (e) {}
 
-            // 2. Unlock Orientation
+            // 2. Exit native fullscreen if active
             try {
-                if (screen.orientation && screen.orientation.unlock) {
-                    await screen.orientation.unlock();
+                if (
+                    document.fullscreenElement ||
+                    document.webkitFullscreenElement ||
+                    document.mozFullScreenElement ||
+                    document.msFullscreenElement
+                ) {
+                    if (document.exitFullscreen) await document.exitFullscreen();
+                    else if (document.webkitExitFullscreen) await document.webkitExitFullscreen();
+                    else if (document.mozCancelFullScreen) await document.mozCancelFullScreen();
+                    else if (document.msExitFullscreen) await document.msExitFullscreen();
                 }
             } catch (e) {}
         }
     };
 
     const { leconTitle } = useParams();
-    const { pathname } = useLocation();
+    const location = useLocation();
+    const { pathname } = location;
     const navigate = useNavigate();
     const [isFullscreenCard, setIsFullscreenCard] = useState(false);
     const actualTitle = decodeURIComponent(leconTitle);
     const isCoursagePath = pathname.startsWith('/les_Leçons') || pathname.startsWith('/les_Leçons');
+    const isTrialMode = location.search.includes('trial=true') || sessionStorage.getItem('is_trial_mode') === 'true';
+
+    // State for trial-mode locked lesson modal
+    const [showLockedModal, setShowLockedModal] = useState(false);
 
     const t = translations[appLanguage] || translations.fr;
     const direction = appLanguage === 'ar' ? 'rtl' : 'ltr';
@@ -527,7 +666,8 @@ export default function Lessons() {
                         !firstVideo.isVip;
 
                     const loggedIn = localStorage.getItem('login') === 'true';
-                    if (loggedIn || isLessonFree) {
+                    // Allow trial mode: first video plays freely without login
+                    if (loggedIn || isLessonFree || isTrialMode) {
                         return firstVideo;
                     } else {
                         navigate('/login');
@@ -865,6 +1005,21 @@ export default function Lessons() {
             video.status_lang?.[appLanguage]?.toLowerCase().includes('مجاني') ||
             !video.isVip;
 
+        // In trial mode: allow Patron, Coupe, and Couture lessons freely. Others show locked modal.
+        if (isTrialMode && !isAdmin) {
+            const videoIdx = videos.findIndex(v => v._id === video._id);
+            const isAllowed = isTrialAllowedVideo(video, videoIdx);
+            if (!isAllowed) {
+                setShowLockedModal(true);
+                return;
+            }
+            setCurrentVideo(video);
+            if (topRef.current) {
+                topRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+            return;
+        }
+
         if (!isLoggedIn && !isLessonFree) {
             navigate('/login');
             return;
@@ -1026,6 +1181,62 @@ export default function Lessons() {
                         {currentVideo?.title || actualTitle}
                     </div>
                 </nav>
+
+                {/* --- ⭐ TRIAL MODE WELCOME BANNER --- */}
+                {isTrialMode && !isAdmin && (
+                    <div style={{
+                        background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.15), rgba(30, 41, 59, 0.95))',
+                        border: '1.5px solid rgba(212, 175, 55, 0.4)',
+                        borderRadius: '16px',
+                        padding: '14px 20px',
+                        marginTop: '16px',
+                        marginBottom: '20px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        flexWrap: 'wrap',
+                        gap: '12px',
+                        boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+                        backdropFilter: 'blur(8px)'
+                    }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <span style={{ fontSize: '1.5rem' }}>⭐</span>
+                            <div>
+                                <strong style={{ color: '#d4af37', fontSize: '0.95rem', display: 'block', marginBottom: '2px' }}>
+                                    {appLanguage === 'ar' ? 'أنت في وضع التجربة المجانية' : 'Mode Essai Gratuit'}
+                                </strong>
+                                <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>
+                                    {appLanguage === 'ar'
+                                        ? 'يمكنك مشاهدة دروس هذا النموذج التجريبي (الباترون، القص، الخياطة) مجاناً وبدون تسجيل الدخول. لمشاهدة بقية الدروس والدورات، تفضل بالاشتراك في عروضنا.'
+                                        : 'Vous pouvez visionner les leçons de ce modèle (Patron, Coupe, Couture) gratuitement et sans inscription. Pour débloquer toutes les leçons, découvrez nos offres.'}
+                                </span>
+                            </div>
+                        </div>
+                        <button
+                            onClick={() => {
+                                sessionStorage.removeItem('is_trial_mode');
+                                navigate('/offre-de-cours');
+                            }}
+                            style={{
+                                background: 'linear-gradient(135deg, #d4af37, #f5e478)',
+                                color: '#1e293b',
+                                border: 'none',
+                                borderRadius: '10px',
+                                padding: '9px 18px',
+                                fontWeight: 700,
+                                fontSize: '0.85rem',
+                                cursor: 'pointer',
+                                whiteSpace: 'nowrap',
+                                transition: 'all 0.2s ease',
+                                boxShadow: '0 2px 10px rgba(212,175,55,0.3)'
+                            }}
+                            onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-1px)'}
+                            onMouseLeave={e => e.currentTarget.style.transform = 'none'}
+                        >
+                            {appLanguage === 'ar' ? 'عرض خطط الاشتراك ←' : 'Voir les offres VIP →'}
+                        </button>
+                    </div>
+                )}
                 <br />
 
 
@@ -1094,41 +1305,57 @@ export default function Lessons() {
 
                         <div className="premium-video-card">
                             <div className="video-card-screen" style={{ position: 'relative' }}>
-                                {/* 🔄 Rotate button — overlaid at the top of the video */}
+                                {/* 🔄 Rotate & Minimize button — overlaid at top of video */}
                                 <button
                                     onClick={toggleRotateLandscape}
-                                    className="rotate-screen-btn"
+                                    className={`rotate-screen-btn ${isLandscapeMode ? 'is-minimized-state' : ''}`}
                                     type="button"
-                                    title={isLandscapeMode ? (t.exitRotateBtn || 'إغلاق الشاشة الكاملة') : (t.rotateBtn || 'تدوير الشاشة بالعرض')}
+                                    title={isLandscapeMode ? (t.exitRotateBtn || 'تصغير الفيديو وإرجاعه') : (t.rotateBtn || 'تدوير الشاشة بالعرض')}
                                     style={{
                                         position: 'absolute',
-                                        top: '12px',
-                                        [direction === 'rtl' ? 'left' : 'right']: '12px',
-                                        zIndex: 20,
+                                        top: isLandscapeMode ? '14px' : '12px',
+                                        [direction === 'rtl' ? 'left' : 'right']: isLandscapeMode ? '16px' : '12px',
+                                        zIndex: 2147483647,
                                         display: 'inline-flex',
                                         alignItems: 'center',
                                         gap: '8px',
-                                        padding: '7px 16px',
+                                        padding: isLandscapeMode ? '8px 18px' : '7px 16px',
                                         borderRadius: '30px',
                                         background: isLandscapeMode
-                                            ? 'rgba(220,38,38,0.85)'
+                                            ? 'linear-gradient(135deg, rgba(220, 38, 38, 0.95), rgba(185, 28, 28, 0.95))'
                                             : 'rgba(15,23,42,0.78)',
                                         backdropFilter: 'blur(8px)',
+                                        WebkitBackdropFilter: 'blur(8px)',
                                         color: '#ffffff',
-                                        border: '1px solid rgba(212,175,55,0.45)',
+                                        border: isLandscapeMode
+                                            ? '1.5px solid rgba(255,255,255,0.6)'
+                                            : '1px solid rgba(212,175,55,0.45)',
                                         fontWeight: '700',
-                                        fontSize: '0.82rem',
+                                        fontSize: isLandscapeMode ? '0.86rem' : '0.82rem',
                                         cursor: 'pointer',
-                                        boxShadow: '0 4px 16px rgba(0,0,0,0.35)',
+                                        pointerEvents: 'auto',
+                                        touchAction: 'manipulation',
+                                        boxShadow: isLandscapeMode
+                                            ? '0 6px 20px rgba(220,38,38,0.5)'
+                                            : '0 4px 16px rgba(0,0,0,0.35)',
                                         transition: 'all 0.25s ease',
                                     }}
                                 >
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d4af37" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                                        <rect x="2" y="6" width="20" height="12" rx="2" transform="rotate(90 12 12)" />
-                                        <path d="M12 2v4M12 18v4M4 12H2M22 12h-2" />
-                                    </svg>
-                                    <span>{isLandscapeMode ? (t.exitRotateBtn || 'إغلاق الشاشة الكاملة') : (t.rotateBtn || 'تدوير الشاشة بالعرض')}</span>
-                                    {isLandscapeMode ? <FaCompress style={{ color: '#ffffff' }} /> : <FaExpand style={{ color: '#d4af37' }} />}
+                                    {isLandscapeMode ? (
+                                        <>
+                                            <FaCompress style={{ color: '#ffffff', fontSize: '0.95rem' }} />
+                                            <span>{t.exitRotateBtn || 'تصغير الفيديو وإرجاعه'}</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d4af37" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                                <rect x="2" y="6" width="20" height="12" rx="2" transform="rotate(90 12 12)" />
+                                                <path d="M12 2v4M12 18v4M4 12H2M22 12h-2" />
+                                            </svg>
+                                            <span>{t.rotateBtn || 'تدوير الشاشة بالعرض'}</span>
+                                            <FaExpand style={{ color: '#d4af37' }} />
+                                        </>
+                                    )}
                                 </button>
 
                                 {(() => {
@@ -1180,8 +1407,27 @@ export default function Lessons() {
 
                                     if (isIframe) {
                                         return (
-                                            <div style={{ position: 'relative', paddingTop: '56.25%', width: '100%' }}>
+                                            <div
+                                                className="lesson-video-iframe-wrapper"
+                                                style={{
+                                                    position: 'relative',
+                                                    width: '100%',
+                                                    ...(isLandscapeMode ? {
+                                                        height: '100vh',
+                                                        maxHeight: '100vh',
+                                                        width: '100vw',
+                                                        maxWidth: '100vw',
+                                                        paddingTop: 0,
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                    } : {
+                                                        paddingTop: '56.25%',
+                                                    })
+                                                }}
+                                            >
                                                 <iframe
+                                                    ref={iframeRef}
                                                     key={iframeSrc}
                                                     src={iframeSrc}
                                                     loading="lazy"
@@ -1191,8 +1437,12 @@ export default function Lessons() {
                                                     style={{
                                                         border: 0,
                                                         position: 'absolute',
-                                                        top: 0, left: 0,
-                                                        height: '100%', width: '100%',
+                                                        top: 0,
+                                                        left: 0,
+                                                        height: '100%',
+                                                        width: '100%',
+                                                        pointerEvents: 'auto',
+                                                        touchAction: 'auto',
                                                     }}
                                                 />
                                             </div>
@@ -1238,7 +1488,7 @@ export default function Lessons() {
                 </div>
 
                 <div className="lessons-selection-grid">
-                    {videos.map(video => (
+                    {videos.map((video, idx) => (
                         <LessonCard
                             key={video._id}
                             video={{ ...video, playing_text: curriculumInfo[appLanguage]?.playing }}
@@ -1251,10 +1501,85 @@ export default function Lessons() {
                             onUploadThumbnail={handleVideoThumbnailUpload}
                             uploadingId={uploadingToCloudinary}
                             appLanguage={appLanguage}
+                            isTrialMode={isTrialMode}
+                            isTrialVideo={isTrialMode && isTrialAllowedVideo(video, idx)}
                         />
                     ))}
                 </div>
             </main>
+
+            {/* --- 🔒 TRIAL MODE LOCKED LESSON MODAL --- */}
+            {showLockedModal && (
+                <div
+                    className="premium-modal-backdrop"
+                    onClick={() => setShowLockedModal(false)}
+                    style={{ zIndex: 9999 }}
+                >
+                    <div
+                        className="premium-modal-content"
+                        onClick={e => e.stopPropagation()}
+                        style={{
+                            maxWidth: '420px',
+                            textAlign: 'center',
+                            padding: '40px 30px',
+                            background: 'linear-gradient(135deg,#0f172a 60%,#1a103c)',
+                            border: '1.5px solid rgba(212,175,55,0.35)',
+                            borderRadius: '24px',
+                            boxShadow: '0 20px 60px rgba(0,0,0,0.6)'
+                        }}
+                    >
+                        <button
+                            className="premium-modal-close-icon"
+                            onClick={() => setShowLockedModal(false)}
+                            style={{ position: 'absolute', top: '14px', right: '14px' }}
+                        >
+                            <FaTimes />
+                        </button>
+                        <div style={{ fontSize: '3rem', marginBottom: '16px' }}>🔒</div>
+                        <h2 style={{ color: '#f5eed4', fontSize: '1.3rem', fontWeight: 800, marginBottom: '12px' }}>
+                            {appLanguage === 'ar' ? 'هذا الدرس مقفل (VIP)' : 'Cette leçon est réservée aux membres VIP'}
+                        </h2>
+                        <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginBottom: '24px', lineHeight: 1.6 }}>
+                            {appLanguage === 'ar'
+                                ? 'أنت في وضع التجربة المجانية. لمشاهدة باقي الدروس، يرجى الاشتراك في عرض VIP.'
+                                : 'Vous êtes en mode essai gratuit. Pour accéder à toutes les leçons, abonnez-vous à une offre VIP.'}
+                        </p>
+                        <button
+                            onClick={() => {
+                                sessionStorage.removeItem('is_trial_mode');
+                                navigate('/offre-de-cours');
+                            }}
+                            style={{
+                                padding: '14px 28px',
+                                background: 'linear-gradient(135deg,#d4af37,#f5e478)',
+                                color: '#1e293b',
+                                border: 'none',
+                                borderRadius: '14px',
+                                fontWeight: 800,
+                                fontSize: '0.95rem',
+                                cursor: 'pointer',
+                                width: '100%',
+                                marginBottom: '10px',
+                                transition: 'transform 0.2s',
+                            }}
+                            onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
+                            onMouseLeave={e => e.currentTarget.style.transform = 'none'}
+                        >
+                            {appLanguage === 'ar' ? '⭐ اشترك الآن في عرض VIP' : '⭐ S\'abonner à une offre VIP'}
+                        </button>
+                        <button
+                            onClick={() => setShowLockedModal(false)}
+                            style={{
+                                background: 'transparent', border: '1px solid rgba(148,163,184,0.3)',
+                                color: '#94a3b8', borderRadius: '10px', padding: '10px 20px',
+                                cursor: 'pointer', fontSize: '0.85rem', width: '100%'
+                            }}
+                        >
+                            {appLanguage === 'ar' ? 'العودة للدرس التجريبي' : 'Retour à l\'essai'}
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {isEditingHero && (
                 <div className="premium-modal-backdrop" onClick={() => setIsEditingHero(false)}>

@@ -5,21 +5,21 @@ export default function ExtensionBlocker() {
   const [detection, setDetection] = useState({ detected: false, name: '', detail: '' });
   const [isScanning, setIsScanning] = useState(false);
 
-  const runDetection = async () => {
-    setIsScanning(true);
+  const runDetection = async (isManual = false) => {
+    if (isManual) setIsScanning(true);
     try {
       const res = await detectVideoDownloaderExtensions();
       if (res && res.detected) {
         setDetection(res);
         document.body.style.overflow = 'hidden';
       } else {
-        setDetection({ detected: false, name: '', detail: '' });
+        setDetection((prev) => (prev.detected ? { detected: false, name: '', detail: '' } : prev));
         document.body.style.overflow = 'auto';
       }
     } catch (e) {
       console.error('Extension detection error:', e);
     } finally {
-      setIsScanning(false);
+      if (isManual) setIsScanning(false);
     }
   };
 
@@ -27,10 +27,10 @@ export default function ExtensionBlocker() {
     // Initial check on mount
     runDetection();
 
-    // High frequency interval (every 300ms) to catch IDM when video loads/hovers
+    // Periodic interval to catch IDM when video loads/hovers
     const intervalId = setInterval(() => {
       runDetection();
-    }, 300);
+    }, 1000);
 
     // Attach listeners to videos on page
     const handleVideoEvent = () => runDetection();
@@ -182,9 +182,10 @@ export default function ExtensionBlocker() {
 
         {/* Action Button */}
         <button
-          onClick={() => {
-            runDetection();
-            if (!detection.detected) {
+          onClick={async () => {
+            await runDetection(true);
+            const res = await detectVideoDownloaderExtensions();
+            if (!res || !res.detected) {
               window.location.reload();
             }
           }}

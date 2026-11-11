@@ -11,6 +11,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { ProductGridSkeleton, PremiumErrorState } from '../comp/Skeletons';
 import './cours_premium.css';
 import { syncAuthSession } from '../utils/authSession';
+import { getCategoryFallbackImage } from '../utils/categoryFallbacks';
 
 // 🌐 كائن الترجمة
 const translations = {
@@ -751,20 +752,7 @@ export default function Cours() {
                     <div className="skeleton-hero-title skeleton-shimmer"></div>
                 </div>
 
-                {/* Skeleton Intro */}
-                <div className="skeleton-intro-box">
-                    <div className="skeleton-intro-left">
-                        <div className="skeleton-line title skeleton-shimmer"></div>
-                        <div className="skeleton-line skeleton-shimmer"></div>
-                        <div className="skeleton-line skeleton-shimmer"></div>
-                        <div className="skeleton-line short skeleton-shimmer"></div>
-                        <div className="skeleton-meta-lines">
-                            <div className="skeleton-meta-row skeleton-shimmer"></div>
-                            <div className="skeleton-meta-row skeleton-shimmer"></div>
-                        </div>
-                    </div>
-                    <div className="skeleton-intro-right skeleton-shimmer"></div>
-                </div>
+
 
                 <div className="skeleton-section-title skeleton-shimmer"></div>
 
@@ -859,18 +847,6 @@ export default function Cours() {
                     </div>
                 </nav>
 
-                {(videoUrl || introContent[appLanguage]?.videoUrl) && (
-                    <VideoIntroduction
-                        videoUrl={introContent[appLanguage]?.videoUrl || videoUrl}
-                        title={actualTitle}
-                        appLanguage={appLanguage}
-                        isAdmin={isAdmin}
-                        onEdit={() => setShowVideoModal(true)}
-                        onDelete={handleDeleteIntro}
-                        introData={introContent[appLanguage]}
-                    />
-                )}
-
                 <div className="lessons-section-header">
                     <h2 className="lessons-section-title">
                         {heroContent[appLanguage]?.sectionTitle || (appLanguage === 'en' ? t.coursesAccent : t.coursesTitle)}
@@ -878,11 +854,6 @@ export default function Cours() {
                     </h2>
                     {isAdmin && (
                         <div style={{ display: 'flex', gap: '8px' }}>
-                            {!videoUrl && (
-                                <button className="premium-btn-add" onClick={() => setShowVideoModal(true)} style={{ background: '#d4af37', color: '#1e293b' }}>
-                                    <FaPlus /> {appLanguage === 'ar' ? 'إضافة مقدمة' : 'Ajouter une introduction'}
-                                </button>
-                            )}
                             <button className="premium-btn-add" onClick={() => setIsEditingSection(true)} style={{ background: '#e2e8f0', color: '#1e293b' }}>
                                 <FaEdit /> {appLanguage === 'ar' ? 'تعديل العنوان' : 'Modifier le Titre'}
                             </button>
@@ -923,7 +894,19 @@ export default function Cours() {
 
                                     >
                                         <div className="l-card-img-wrapper">
-                                            <img src={course.image} alt={courseTitleStr} className="l-card-img" />
+                                            <img 
+                                                src={course.image || getCategoryFallbackImage(courseTitleStr, appLanguage)} 
+                                                alt={courseTitleStr} 
+                                                className="l-card-img" 
+                                                style={{ objectFit: 'contain' }}
+                                                onError={(e) => {
+                                                    const fallback = getCategoryFallbackImage(courseTitleStr, appLanguage);
+                                                    if (e.currentTarget.src !== fallback) {
+                                                        e.currentTarget.onerror = null;
+                                                        e.currentTarget.src = fallback;
+                                                    }
+                                                }}
+                                            />
                                             {isAdmin && (
                                                 <div className="admin-card-controls" onClick={(e) => e.stopPropagation()}>
                                                     <button className="control-btn edit" onClick={() => handleOpenEditLesson(group._id, idx, course)}><FaEdit /></button>
@@ -1077,7 +1060,7 @@ export default function Cours() {
                                 </div>
                                 {lessonData.image && (
                                     <div style={{ marginTop: '10px' }}>
-                                        <img src={lessonData.image} alt="Preview" style={{ width: '100px', height: '60px', objectFit: 'cover', borderRadius: '8px', border: '1px solid #e2e8f0' }} />
+                                        <img src={lessonData.image} alt="Preview" style={{ width: '100px', height: '60px', objectFit: 'contain', background: '#f8fafc', padding: '4px', borderRadius: '8px', border: '1px solid #e2e8f0' }} />
                                     </div>
                                 )}
                             </div>
@@ -1095,140 +1078,7 @@ export default function Cours() {
                 </div>
             )}
 
-            {showVideoModal && (
-                <div className="premium-modal-backdrop" onClick={() => setShowVideoModal(false)}>
-                    <div className="premium-modal-content large" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '800px', maxHeight: '90vh', overflowY: 'auto' }}>
-                        <button className="premium-modal-close-icon" onClick={() => setShowVideoModal(false)}><FaTimes /></button>
-                        <h2 className="premium-modal-title">{t.editIntro}</h2>
 
-                        <div className="premium-form-grid" style={{ gridTemplateColumns: '1fr' }}>
-                            {languages.filter(l => l.code === appLanguage).map(lang => (
-                                <div key={lang.code} className="premium-lang-section" style={{ border: 'none', background: 'none' }}>
-                                    <h4 className="lang-indicator" style={{ background: '#d4af37', display: 'inline-block', marginBottom: '10px' }}>{lang.label}</h4>
-                                    
-                                    <div className="premium-form-group">
-                                        <label>{t.videoUrl}</label>
-                                        <input
-                                            type="text"
-                                            placeholder="https://www.youtube.com/embed/..."
-                                            value={editIntroContent[lang.code]?.videoUrl || ''}
-                                            onChange={(e) => {
-                                                setEditIntroContent({
-                                                    ...editIntroContent,
-                                                    [lang.code]: { ...editIntroContent[lang.code], videoUrl: e.target.value }
-                                                });
-                                            }}
-                                            dir={lang.code === 'ar' ? 'rtl' : 'ltr'}
-                                        />
-                                    </div>
-
-                                    <div className="premium-form-group">
-                                        <label>{lang.code === 'ar' ? 'البادجة (مقدمة)' : 'Tag (Badge intro)'}</label>
-                                        <input
-                                            type="text"
-                                            value={editIntroContent[lang.code]?.tag || ''}
-                                            onChange={(e) => {
-                                                setEditIntroContent({
-                                                    ...editIntroContent,
-                                                    [lang.code]: { ...editIntroContent[lang.code], tag: e.target.value }
-                                                });
-                                            }}
-                                            dir={lang.code === 'ar' ? 'rtl' : 'ltr'}
-                                        />
-                                    </div>
-
-                                    <div className="premium-form-group">
-                                        <label>{lang.code === 'ar' ? 'العنوان' : 'Titre'}</label>
-                                        <input
-                                            type="text"
-                                            value={editIntroContent[lang.code]?.title || ''}
-                                            onChange={(e) => {
-                                                setEditIntroContent({
-                                                    ...editIntroContent,
-                                                    [lang.code]: { ...editIntroContent[lang.code], title: e.target.value }
-                                                });
-                                            }}
-                                            dir={lang.code === 'ar' ? 'rtl' : 'ltr'}
-                                        />
-                                    </div>
-
-                                    <div className="premium-form-group">
-                                        <label>{lang.code === 'ar' ? 'الوصف' : 'Description / Sous-titre'}</label>
-                                        <textarea
-                                            value={editIntroContent[lang.code]?.subtitle || ''}
-                                            onChange={(e) => {
-                                                setEditIntroContent({
-                                                    ...editIntroContent,
-                                                    [lang.code]: { ...editIntroContent[lang.code], subtitle: e.target.value }
-                                                });
-                                            }}
-                                            dir={lang.code === 'ar' ? 'rtl' : 'ltr'}
-                                            rows="3"
-                                        />
-                                    </div>
-
-                                    <div className="premium-form-group">
-                                        <label>{lang.code === 'ar' ? 'ميزة 1' : 'Feature 1'}</label>
-                                        <input
-                                            type="text"
-                                            value={editIntroContent[lang.code]?.feature1 || ''}
-                                            onChange={(e) => {
-                                                setEditIntroContent({
-                                                    ...editIntroContent,
-                                                    [lang.code]: { ...editIntroContent[lang.code], feature1: e.target.value }
-                                                });
-                                            }}
-                                            dir={lang.code === 'ar' ? 'rtl' : 'ltr'}
-                                        />
-                                    </div>
-
-                                    <div className="premium-form-group">
-                                        <label>{lang.code === 'ar' ? 'ميزة 2' : 'Feature 2'}</label>
-                                        <input
-                                            type="text"
-                                            value={editIntroContent[lang.code]?.feature2 || ''}
-                                            onChange={(e) => {
-                                                setEditIntroContent({
-                                                    ...editIntroContent,
-                                                    [lang.code]: { ...editIntroContent[lang.code], feature2: e.target.value }
-                                                });
-                                            }}
-                                            dir={lang.code === 'ar' ? 'rtl' : 'ltr'}
-                                        />
-                                    </div>
-
-                                    <div className="premium-form-group">
-                                        <label>{lang.code === 'ar' ? 'ميزة 3' : 'Feature 3'}</label>
-                                        <input
-                                            type="text"
-                                            value={editIntroContent[lang.code]?.feature3 || ''}
-                                            onChange={(e) => {
-                                                setEditIntroContent({
-                                                    ...editIntroContent,
-                                                    [lang.code]: { ...editIntroContent[lang.code], feature3: e.target.value }
-                                                });
-                                            }}
-                                            dir={lang.code === 'ar' ? 'rtl' : 'ltr'}
-                                        />
-                                    </div>
-                                </div>
-                            ))}
-                            <p style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '-10px', marginBottom: '15px' }}>
-                                {appLanguage === 'ar' ? 'استخدم رابط التضمين (embed).' : "Utilisez le lien d'intégration (embed)."}
-                            </p>
-                        </div>
-
-                        <div className="premium-btn-group" style={{ justifyContent: 'center', marginTop: '20px' }}>
-                            <button type="button" className="premium-btn-cta secondary" onClick={() => setShowVideoModal(false)} style={{ width: '150px' }}>
-                                {t.cancel}
-                            </button>
-                            <button type="button" className="premium-btn-cta gold" onClick={handleVideoUpdate} style={{ width: '150px' }}>
-                                {t.save}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
 
             {isEditingHero && (
                 <div className="premium-modal-backdrop" onClick={() => setIsEditingHero(false)}>
