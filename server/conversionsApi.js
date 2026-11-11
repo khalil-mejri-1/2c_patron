@@ -269,6 +269,7 @@ const sendToConversionsAPI = async ({
   }
 
   const rawTestCode = custom_data.test_event_code || process.env.META_TEST_EVENT_CODE;
+  console.log('rawTestCode', rawTestCode);
   const testEventCode = rawTestCode ? String(rawTestCode).split(',')[0].trim() : undefined;
 
   // Clone custom_data to avoid side-effects
